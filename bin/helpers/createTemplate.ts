@@ -8,11 +8,11 @@ interface CreateTemplateOptions {
   baseUrl: string;
   port: number;
   staticPath: string;
-  withTypescript: boolean;
+  ts: boolean;
 }
 
 export const createTemplate = (options: CreateTemplateOptions) => {
-  const language = options.withTypescript ? 'ts' : 'js';
+  const language = options.ts ? 'ts' : 'js';
   const templatePath = path.join(__dirname, '..', `templates/${language}/${options.apiType}`);
 
   fs.cpSync(`${templatePath}/mock-requests`, `${APP_PATH}/mock-requests`, {

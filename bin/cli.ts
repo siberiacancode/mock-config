@@ -1,10 +1,19 @@
+import color from 'ansi-colors';
+import fs from 'node:fs';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
-import type { MockServerConfigArgv } from '../src';
+import { playgroundDataSchema } from '@/utils/validate';
+
+import type {
+  MockServerConfigArgv,
+  MockServerConfigInitArgv,
+  MockServerConfigPlaygroundArgv
+} from '../src';
 
 import { build } from './build';
 import { init } from './init';
+import { playground } from './playground';
 
 const initOptions = {
   baseUrl: {
@@ -27,8 +36,40 @@ const initOptions = {
 export const cli = () => {
   const processArgv = hideBin(process.argv);
 
+  if (processArgv.includes('playground')) {
+    const argv = yargs(processArgv)
+      .command('playground <data>', 'Run playground server', (yargs) =>
+        yargs.positional('data', {
+          describe: 'Path to json file',
+          type: 'string',
+          required: true
+        })
+      )
+      .strict()
+      .parse() as MockServerConfigPlaygroundArgv;
+
+    if (!fs.existsSync(argv.data)) {
+      console.error(`${color.red('Error')}: File ${argv.data} does not exist`);
+      process.exit(1);
+    }
+
+    const dataContent = fs.readFileSync(argv.data, 'utf-8');
+    try {
+      const { error } = playgroundDataSchema.safeParse(JSON.parse(dataContent));
+
+      if (error) throw new Error(`Data file should be a valid object`);
+    } catch (error) {
+      console.error(
+        `${color.red('Error')}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+      process.exit(1);
+    }
+
+    return playground(argv);
+  }
+
   if (processArgv.includes('init')) {
-    const argv = yargs(processArgv).options(initOptions).parse() as MockServerConfigArgv;
+    const argv = yargs(processArgv).options(initOptions).parse() as MockServerConfigInitArgv;
 
     return init(argv);
   }

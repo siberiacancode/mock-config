@@ -15,7 +15,7 @@
     "baseUrl": "./",
     "paths": {
       "@/server": ["./src/server"],
-      "@/core/database": ["./src/core/database"],
+      "@/core/playground": ["./src/core/playground"],
       "@/core/rest": ["./src/core/rest"],
       "@/core/graphql": ["./src/core/graphql"],
       "@/core/middlewares": ["./src/core/middlewares"],
