@@ -4,11 +4,11 @@ import type { PlainObject } from '@/utils/types';
 
 import { baseUrlSchema } from './baseUrlSchema/baseUrlSchema';
 import { corsSchema } from './corsSchema/corsSchema';
-import { databaseConfigSchema } from './databaseConfigSchema/databaseConfigSchema';
 import { getMostSpecificPathFromError } from './getMostSpecificPathFromError';
 import { getValidationMessageFromPath } from './getValidationMessageFromPath';
 import { graphqlConfigSchema } from './graphqlConfigSchema/graphqlConfigSchema';
 import { interceptorsSchema } from './interceptorsSchema/interceptorsSchema';
+import { playgroundConfigSchema } from './playgroundConfigSchema/playgroundConfigSchema';
 import { portSchema } from './portSchema/portSchema';
 import { restConfigSchema } from './restConfigSchema/restConfigSchema';
 import { staticPathSchema } from './staticPathSchema/staticPathSchema';
@@ -34,7 +34,7 @@ export const validateMockServerConfig = (mockServerConfig: PlainObject) => {
     cors: corsSchema.optional(),
     rest: restConfigSchema.optional(),
     graphql: graphqlConfigSchema.optional(),
-    database: databaseConfigSchema.optional()
+    database: playgroundConfigSchema.optional()
   });
 
   const validationResult = mockServerConfigSchema.safeParse(mockServerConfig);

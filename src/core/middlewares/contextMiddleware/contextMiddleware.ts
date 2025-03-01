@@ -7,7 +7,7 @@ import type {
   MockServerConfig
 } from '@/utils/types';
 
-import { createOrm, createStorage } from '@/core/database';
+import { createOrm, createStorage } from '@/core/playground';
 import { getGraphQLInput, parseQuery } from '@/utils/helpers';
 
 declare global {

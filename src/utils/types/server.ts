@@ -67,8 +67,10 @@ export interface GraphQLMockServerConfig extends BaseMockServerConfig {
   database?: DatabaseConfig;
 }
 
-export interface DatabaseMockServerConfig extends BaseMockServerConfig {
+export interface DatabaseMockServerConfig {
+  baseUrl?: BaseUrl;
   data: `${string}.json` | Record<string, unknown>;
+  port?: Port;
   routes?: `${string}.json` | Record<`/${string}`, `/${string}`>;
 }
 
@@ -78,6 +80,18 @@ export type MockServerConfigArgv = Arguments<{
   staticPath?: string;
   config?: string;
   watch?: boolean;
+}>;
+
+export type MockServerConfigInitArgv = Arguments<{
+  baseUrl?: string;
+  port?: number;
+  staticPath?: string;
+}>;
+
+export type MockServerConfigPlaygroundArgv = Arguments<{
+  baseUrl?: string;
+  port?: number;
+  data: `${string}.json`;
 }>;
 
 declare global {
