@@ -367,7 +367,7 @@ const flatMockServerConfig = [
                 postId: {
                   checkMode: 'function',
                   value: (actualValue) => +actualValue >= 0 && +actualValue <= 50
-                },
+                }
               },
               cookies: {
                 authToken: {
@@ -1027,6 +1027,14 @@ For multiple search
 
 ```
 GET /users?_q=siberia&_q=24
+```
+
+### Embed
+
+```
+GET /posts?_embed=users
+GET /posts/1?_embed=users
+GET /posts/1?_embed=users&_embed=author
 ```
 
 ### File example
