@@ -26,6 +26,20 @@ describe('CreateNestedDatabaseRoutes', () => {
         address: { city: 'Tomsk' },
         hobbies: ['sport', 'games']
       }
+    ],
+    posts: [
+      {
+        id: 1,
+        title: 'John Doe Post',
+        users: [1, 2],
+        userId: 1
+      },
+      {
+        id: 2,
+        title: 'Jane Smith Post',
+        users: [1, 2],
+        userId: 2
+      }
     ]
   });
 
@@ -674,6 +688,202 @@ describe('CreateNestedDatabaseRoutes', () => {
           hobbies: ['sport', 'games']
         }
       ]);
+    });
+  });
+
+  describe('createNestedDatabaseRoutes: embed function', () => {
+    const nestedDatabase = createNestedDatabase();
+    const server = createServer(nestedDatabase);
+
+    it('Should embed related data for single object request', async () => {
+      const response = await request(server).get('/posts/1?_embed=user');
+
+      expect(response.body).toStrictEqual({
+        id: 1,
+        title: 'John Doe Post',
+        user: {
+          address: {
+            city: 'Novosibirsk'
+          },
+          age: 25,
+          hobbies: ['music', 'sport'],
+          id: 1,
+          name: 'John Doe'
+        },
+        users: [1, 2]
+      });
+    });
+
+    it('Should embed array related data for single object request', async () => {
+      const response = await request(server).get('/posts/1?_embed=users');
+
+      expect(response.body).toStrictEqual({
+        id: 1,
+        title: 'John Doe Post',
+        userId: 1,
+        users: [
+          {
+            id: 1,
+            age: 25,
+            name: 'John Doe',
+            address: { city: 'Novosibirsk' },
+            hobbies: ['music', 'sport']
+          },
+          {
+            id: 2,
+            age: 30,
+            name: 'Jane Smith',
+            address: { city: 'Tomsk' },
+            hobbies: ['sport', 'games']
+          }
+        ]
+      });
+    });
+
+    it('Should embed related data for array request', async () => {
+      const response = await request(server).get('/posts?_embed=user');
+
+      expect(response.body).toStrictEqual([
+        {
+          id: 1,
+          title: 'John Doe Post',
+          user: {
+            id: 1,
+            age: 25,
+            name: 'John Doe',
+            address: { city: 'Novosibirsk' },
+            hobbies: ['music', 'sport']
+          },
+          users: [1, 2]
+        },
+        {
+          id: 2,
+          title: 'Jane Smith Post',
+          user: {
+            id: 2,
+            age: 30,
+            name: 'Jane Smith',
+            address: { city: 'Tomsk' },
+            hobbies: ['sport', 'games']
+          },
+          users: [1, 2]
+        }
+      ]);
+    });
+
+    it('Should embed array related data for array request', async () => {
+      const response = await request(server).get('/posts?_embed=users');
+
+      expect(response.body).toStrictEqual([
+        {
+          id: 1,
+          title: 'John Doe Post',
+          userId: 1,
+          users: [
+            {
+              id: 1,
+              age: 25,
+              name: 'John Doe',
+              address: { city: 'Novosibirsk' },
+              hobbies: ['music', 'sport']
+            },
+            {
+              id: 2,
+              age: 30,
+              name: 'Jane Smith',
+              address: { city: 'Tomsk' },
+              hobbies: ['sport', 'games']
+            }
+          ]
+        },
+        {
+          id: 2,
+          title: 'Jane Smith Post',
+          userId: 2,
+          users: [
+            {
+              id: 1,
+              age: 25,
+              name: 'John Doe',
+              address: { city: 'Novosibirsk' },
+              hobbies: ['music', 'sport']
+            },
+            {
+              id: 2,
+              age: 30,
+              name: 'Jane Smith',
+              address: { city: 'Tomsk' },
+              hobbies: ['sport', 'games']
+            }
+          ]
+        }
+      ]);
+    });
+
+    it('Should embed related data by multiple query', async () => {
+      const response = await request(server).get('/posts?_embed=user&_embed=users');
+
+      expect(response.body).toStrictEqual([
+        {
+          id: 1,
+          title: 'John Doe Post',
+          user: {
+            id: 1,
+            age: 25,
+            name: 'John Doe',
+            address: { city: 'Novosibirsk' },
+            hobbies: ['music', 'sport']
+          },
+          users: [
+            {
+              id: 1,
+              age: 25,
+              name: 'John Doe',
+              address: { city: 'Novosibirsk' },
+              hobbies: ['music', 'sport']
+            },
+            {
+              id: 2,
+              age: 30,
+              name: 'Jane Smith',
+              address: { city: 'Tomsk' },
+              hobbies: ['sport', 'games']
+            }
+          ]
+        },
+        {
+          id: 2,
+          title: 'Jane Smith Post',
+          user: {
+            id: 2,
+            age: 30,
+            name: 'Jane Smith',
+            address: { city: 'Tomsk' },
+            hobbies: ['sport', 'games']
+          },
+          users: [
+            {
+              id: 1,
+              age: 25,
+              name: 'John Doe',
+              address: { city: 'Novosibirsk' },
+              hobbies: ['music', 'sport']
+            },
+            {
+              id: 2,
+              age: 30,
+              name: 'Jane Smith',
+              address: { city: 'Tomsk' },
+              hobbies: ['sport', 'games']
+            }
+          ]
+        }
+      ]);
+    });
+
+    it('Should return unchanged data when embed query is not passed', async () => {
+      const response = await request(server).get('/posts?_embed=author');
+      expect(response.body).toStrictEqual(nestedDatabase.posts);
     });
   });
 });

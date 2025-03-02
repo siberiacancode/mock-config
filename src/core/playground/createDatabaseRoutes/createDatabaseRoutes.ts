@@ -15,8 +15,6 @@ const isVariableJsonFile = (variable: unknown): variable is `${string}.json` =>
   typeof variable === 'string' && variable.endsWith('.json');
 
 export const createDatabaseRoutes = (router: IRouter, { data, routes }: DatabaseConfig) => {
-  console.log(data, routes);
-
   if (routes) {
     const storage = createStorage(routes);
     createRewrittenDatabaseRoutes(router, storage.read());

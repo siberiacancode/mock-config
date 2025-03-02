@@ -5,10 +5,7 @@ import type { ShallowDatabase } from '@/utils/types';
 
 import type { MemoryStorage } from '../../storages';
 
-import { filter } from '../filter/filter';
-import { pagination } from '../pagination/pagination';
-import { search } from '../search/search';
-import { sort } from '../sort/sort';
+import { filter, pagination, search, sort } from '../functions';
 
 export const createShallowDatabaseRoutes = (
   router: IRouter,

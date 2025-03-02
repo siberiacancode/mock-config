@@ -88,6 +88,7 @@
     "express-urlrewrite": "^2.0.3",
     "flat": "^5.0.2",
     "graphql": "^16.10.0",
+    "inflection": "^3.0.2",
     "please-upgrade-node": "^3.2.0",
     "prompts": "^2.4.2",
     "yargs": "^17.7.2",
