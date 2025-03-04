@@ -12,8 +12,8 @@ const getOrder = (order?: string) => {
 
 const sortArray = (array: any[], key: string, order: Order) =>
   array.sort((a, b) => {
-    const flattenedA = flatten<any, any>(a);
-    const flattenedB = flatten<any, any>(b);
+    const flattenedA = flatten<string, any>(a);
+    const flattenedB = flatten<string, any>(b);
 
     if (!flattenedA[key] || !flattenedB[key]) return 0;
 
