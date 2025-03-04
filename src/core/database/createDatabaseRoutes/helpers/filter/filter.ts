@@ -21,7 +21,7 @@ const OPERATORS = {
 const OPERATORS_KEYS = Object.keys(OPERATORS);
 const OPERATOR_REGEXP = new RegExp(`^(.+)_(${OPERATORS_KEYS.join('|')})$`);
 
-const getEntities = (object: any, key: string) => {
+const getEntities = (object: Record<string, any>, key: string) => {
   const parts = key.match(OPERATOR_REGEXP);
 
   if (!parts) {
@@ -51,7 +51,7 @@ const getEntities = (object: any, key: string) => {
 
 export const filter = (array: any[], filters: ParsedUrlQuery) =>
   array.filter((arrayElement) => {
-    const flattenedArrayElement = flatten<any, any>(arrayElement);
+    const flattenedArrayElement = flatten<string, any>(arrayElement);
 
     return Object.entries(filters).every(([key, filter]) => {
       if (Array.isArray(filter)) {
