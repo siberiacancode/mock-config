@@ -2,7 +2,8 @@ import type { Express } from 'express';
 
 import type { RequestInterceptor } from '@/utils/types';
 
-import { asyncHandler, callRequestInterceptor } from '@/utils/helpers';
+import { callRequestInterceptor } from '@/core/interceptors';
+import { asyncHandler } from '@/utils/helpers';
 
 interface RequestInterceptorMiddlewareParams {
   interceptor: RequestInterceptor;

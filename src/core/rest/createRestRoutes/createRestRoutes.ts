@@ -18,10 +18,9 @@ import type {
   TopLevelPlainEntityDescriptor
 } from '@/utils/types';
 
+import { callRequestInterceptor, callResponseInterceptors } from '@/core/interceptors';
 import {
   asyncHandler,
-  callRequestInterceptor,
-  callResponseInterceptors,
   convertToEntityDescriptor,
   isEntityDescriptor,
   isFileDescriptor,

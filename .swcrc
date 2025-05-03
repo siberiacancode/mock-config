@@ -19,6 +19,8 @@
       "@/core/rest": ["./src/core/rest"],
       "@/core/graphql": ["./src/core/graphql"],
       "@/core/middlewares": ["./src/core/middlewares"],
+      "@/core/interceptors": ["./src/core/interceptors"],
+      "@/core/logger": ["./src/core/logger"],
       "@/utils/helpers": ["./src/utils/helpers"],
       "@/utils/helpers/tests": ["./src/utils/helpers/tests"],
       "@/utils/types": ["./src/utils/types"],

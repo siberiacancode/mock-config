@@ -1,6 +1,6 @@
 import type { PlainObject } from '@/utils/types';
 
-import { formatTimestamp } from '../../../date';
+import { formatTimestamp } from '@/utils/helpers';
 
 export const formatTokens = (tokens: PlainObject) => {
   const { timestamp, method } = tokens;
