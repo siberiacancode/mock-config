@@ -37,13 +37,13 @@ export const build = async (argv: MockServerConfigArgv) => {
           instance?.destroy();
         });
 
-        build.onEnd((result) => {
+        build.onEnd(async (result) => {
           if (!result.errors.length) {
             const mockConfig = resolveConfigFile(result.outputFiles![0].text);
             const isFlatConfig = Array.isArray(mockConfig);
 
             if (isFlatConfig) {
-              instance = runFlatConfig(mockConfig, argv);
+              instance = await runFlatConfig(mockConfig, argv);
               return;
             }
 
