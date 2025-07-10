@@ -17,7 +17,7 @@
       "@/utils/validate": ["./src/utils/validate"]
     },
     "resolveJsonModule": true,
-    "types": ["node", "vitest/globals"],
+    "types": ["vitest/globals"],
     "allowJs": true,
     "strict": true,
     "noFallthroughCasesInSwitch": true,
