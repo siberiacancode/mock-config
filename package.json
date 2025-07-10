@@ -42,8 +42,10 @@
     "packages/*"
   ],
   "scripts": {
+    "build": "pnpm --recursive run build",
     "lint": "pnpm --recursive lint",
     "format": "prettier --write .",
+    "pretty": "pnpm --recursive run pretty",
     "unit-test": "pnpm --recursive run unit-test",
     "lint-staged": "pnpm --recursive run lint-staged",
     "prepare": "husky"
