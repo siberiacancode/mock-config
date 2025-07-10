@@ -1,2 +1,2 @@
-yarn unit-test --run
-yarn build
+pnpm unit-test --run
+pnpm build

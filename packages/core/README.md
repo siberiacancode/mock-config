@@ -367,7 +367,7 @@ const flatMockServerConfig = [
                 postId: {
                   checkMode: 'function',
                   value: (actualValue) => +actualValue >= 0 && +actualValue <= 50
-                },
+                }
               },
               cookies: {
                 authToken: {
