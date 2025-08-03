@@ -5,14 +5,13 @@ import type { PlainObject } from '@/utils/types';
 import { baseUrlSchema } from './baseUrlSchema/baseUrlSchema';
 import { corsSchema } from './corsSchema/corsSchema';
 import { databaseConfigSchema } from './databaseConfigSchema/databaseConfigSchema';
-import { getMostSpecificPathFromError } from './getMostSpecificPathFromError';
-import { getValidationMessageFromPath } from './getValidationMessageFromPath';
+import { getValidationMessage } from './getValidationMessage';
 import { graphqlRequestConfigSchema } from './graphqlConfigSchema/graphqlConfigSchema';
+// import { graphqlRequestConfigSchema } from './graphqlConfigSchema/graphqlConfigSchema';
 import { interceptorsSchema } from './interceptorsSchema/interceptorsSchema';
 import { portSchema } from './portSchema/portSchema';
 import { restRequestConfigSchema } from './restConfigSchema/restConfigSchema';
 import { staticPathSchema } from './staticPathSchema/staticPathSchema';
-import { plainObjectSchema } from './utils';
 
 export const validateFlatMockServerConfig = (flatMockServerConfig: PlainObject) => {
   if (!flatMockServerConfig.length) {
@@ -25,7 +24,7 @@ export const validateFlatMockServerConfig = (flatMockServerConfig: PlainObject) 
     baseUrl: baseUrlSchema.optional(),
     port: portSchema.optional(),
     staticPath: staticPathSchema.optional(),
-    interceptors: plainObjectSchema(interceptorsSchema).optional(),
+    interceptors: interceptorsSchema.optional(),
     cors: corsSchema.optional(),
     database: databaseConfigSchema.optional()
   });
@@ -33,20 +32,24 @@ export const validateFlatMockServerConfig = (flatMockServerConfig: PlainObject) 
   const flatMockServerComponentSchema = z.strictObject({
     name: z.string().optional(),
     baseUrl: baseUrlSchema.optional(),
-    interceptors: plainObjectSchema(interceptorsSchema).optional(),
+    interceptors: interceptorsSchema.optional(),
     configs: z.array(z.union([restRequestConfigSchema, graphqlRequestConfigSchema]))
   });
 
-  const flatMockServerConfigSchema = z
-    .tuple([plainObjectSchema(flatMockServerSettingsSchema).or(flatMockServerComponentSchema)])
-    .rest(flatMockServerComponentSchema);
+  const flatMockServerConfigSchema = z.tuple(
+    [z.union([flatMockServerSettingsSchema, flatMockServerComponentSchema])],
+    flatMockServerComponentSchema
+  );
 
   const validationFlatMockServerConfigSchemaResult =
     flatMockServerConfigSchema.safeParse(flatMockServerConfig);
 
   if (!validationFlatMockServerConfigSchemaResult.success) {
-    const path = getMostSpecificPathFromError(validationFlatMockServerConfigSchemaResult.error);
-    const validationMessage = getValidationMessageFromPath(path);
+    console.log('ee');
+
+    const validationMessage = getValidationMessage(
+      validationFlatMockServerConfigSchemaResult.error.issues
+    );
 
     throw new Error(
       `Validation Error: configuration${validationMessage} does not match the API schema. Click here to see correct type: https://github.com/siberiacancode/mock-config-server`

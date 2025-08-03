@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 const stringOrRegExpSchema = z.union([z.string(), z.instanceof(RegExp)]);
-const originSchema = z.union([stringOrRegExpSchema, z.array(stringOrRegExpSchema), z.function()]);
+const originSchema = z.union([stringOrRegExpSchema, z.array(stringOrRegExpSchema), z.instanceof(Function)]);
 
 export const corsSchema = z.strictObject({
   origin: originSchema,

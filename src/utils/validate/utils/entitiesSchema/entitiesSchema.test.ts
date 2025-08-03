@@ -12,7 +12,7 @@ it('Should return correct error path: firstly check object as a descriptor', () 
   expect(topLevelParseResult.success).toBe(false);
 
   if (!topLevelParseResult.success) {
-    const path = getMostSpecificPathFromError(topLevelParseResult.error);
+    const path = getMostSpecificPathFromError(topLevelParseResult.error.issues);
     const validationMessage = getValidationMessageFromPath(path);
     expect(validationMessage).toBe('.value');
   }
@@ -28,7 +28,7 @@ it('Should return correct error path: firstly check object as a descriptor', () 
   expect(propertyLevelParseResult.success).toBe(false);
 
   if (!propertyLevelParseResult.success) {
-    const path = getMostSpecificPathFromError(propertyLevelParseResult.error);
+    const path = getMostSpecificPathFromError(propertyLevelParseResult.error.issues);
     const validationMessage = getValidationMessageFromPath(path);
     expect(validationMessage).toBe('.property.value');
   }

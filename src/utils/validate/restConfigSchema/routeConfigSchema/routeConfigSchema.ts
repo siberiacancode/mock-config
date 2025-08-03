@@ -2,78 +2,78 @@ import { z } from 'zod';
 
 import type { RestMethod } from '@/utils/types';
 
-import { isPlainObject } from '@/utils/helpers';
-
 import { interceptorsSchema } from '../../interceptorsSchema/interceptorsSchema';
-import { isOnlyRequestedDataResolvingPropertyExists } from '../../isOnlyRequestedDataResolvingPropertyExists';
 import { queueSchema } from '../../queueSchema/queueSchema';
 import { settingsSchema } from '../../settingsSchema/settingsSchema';
-import { bodyPlainEntitySchema, mappedEntitySchema, plainObjectSchema } from '../../utils';
+import { bodyPlainEntitySchema, mappedEntitySchema } from '../../utils';
+import { oneKeyDispatchSchema } from '../../utils/testSchema';
 
 const METHODS_WITH_BODY = ['post', 'put', 'patch'];
 const entitiesByEntityNameSchema = (method: RestMethod) => {
   const isMethodWithBody = METHODS_WITH_BODY.includes(method);
-  return plainObjectSchema(
-    z.strictObject({
-      headers: mappedEntitySchema.optional(),
-      cookies: mappedEntitySchema.optional(),
-      params: mappedEntitySchema.optional(),
-      query: mappedEntitySchema.optional(),
-      ...(isMethodWithBody && { body: bodyPlainEntitySchema.optional() })
-    })
-  );
+  return z.strictObject({
+    headers: mappedEntitySchema.optional(),
+    cookies: mappedEntitySchema.optional(),
+    params: mappedEntitySchema.optional(),
+    query: mappedEntitySchema.optional(),
+    ...(isMethodWithBody && { body: bodyPlainEntitySchema.optional() })
+  });
 };
 
 const baseRouteConfigSchema = (method: RestMethod) =>
   z.strictObject({
     entities: entitiesByEntityNameSchema(method).optional(),
-    interceptors: plainObjectSchema(interceptorsSchema).optional()
+    interceptors: interceptorsSchema.optional()
   });
 
 const dataRouteConfigSchema = (method: RestMethod) =>
-  z
-    .strictObject({
-      settings: plainObjectSchema(
-        settingsSchema.extend({ polling: z.literal(false).optional() })
-      ).optional(),
-      data: z.union([z.function(), z.any()])
-    })
-    .merge(baseRouteConfigSchema(method));
+  z.strictObject({
+    ...baseRouteConfigSchema(method).shape,
+    settings: settingsSchema.extend({ polling: z.literal(false).optional() }).optional(),
+    data: z.union([z.instanceof(Function), z.any()])
+  });
 
 const fileRouteConfigSchema = (method: RestMethod) =>
-  z
-    .strictObject({
-      settings: plainObjectSchema(
-        settingsSchema.extend({ polling: z.literal(false).optional() })
-      ).optional(),
-      file: z.string()
-    })
-    .merge(baseRouteConfigSchema(method));
+  z.strictObject({
+    ...baseRouteConfigSchema(method).shape,
+    settings: settingsSchema.extend({ polling: z.literal(false).optional() }).optional(),
+    file: z.string()
+  });
 
 const queueRouteConfigSchema = (method: RestMethod) =>
-  z
-    .strictObject({
-      settings: settingsSchema.extend({ polling: z.literal(true) }),
-      queue: queueSchema
-    })
-    .merge(baseRouteConfigSchema(method));
+  z.strictObject({
+    ...baseRouteConfigSchema(method).shape,
+    settings: settingsSchema.extend({ polling: z.literal(true) }),
+    queue: queueSchema
+  });
 
+// Todo: по моему это не работает как надо, т.к. если есть queue и ошибка в queue, то все равно выведет data.
+/*
+const mockServerConfig: FlatMockServerConfig = [
+  {
+    port: 31299
+  },
+  {
+    name: 'rest',
+    configs: [
+      {
+        method: 'get',
+        path: '/users',
+        routes: [
+          {
+            file: 'hehe.txt',
+            lol: 'lol'
+          }
+        ]
+      }
+    ]
+  }
+];
+its an example of config that validated incorrectly because of z.union implementation
+*/
 export const routeConfigSchema = (method: RestMethod) =>
-  z.union([
-    z
-      .custom(
-        (value) => isPlainObject(value) && isOnlyRequestedDataResolvingPropertyExists(value, 'data')
-      )
-      .pipe(dataRouteConfigSchema(method)),
-    z
-      .custom(
-        (value) => isPlainObject(value) && isOnlyRequestedDataResolvingPropertyExists(value, 'file')
-      )
-      .pipe(fileRouteConfigSchema(method)),
-    z
-      .custom(
-        (value) =>
-          isPlainObject(value) && isOnlyRequestedDataResolvingPropertyExists(value, 'queue')
-      )
-      .pipe(queueRouteConfigSchema(method))
-  ]);
+  oneKeyDispatchSchema({
+    data: dataRouteConfigSchema(method),
+    file: fileRouteConfigSchema(method),
+    queue: queueRouteConfigSchema(method)
+  });

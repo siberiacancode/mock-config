@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-import { isPlainObject } from '@/utils/helpers';
-
 import {
   checkActualValueCheckModeSchema,
   compareWithDescriptorAnyValueCheckModeSchema,
@@ -9,27 +7,28 @@ import {
   compareWithDescriptorValueCheckModeSchema,
   entityDescriptorSchema
 } from '../checkModeSchema/checkModeSchema';
-import { extendedDiscriminatedUnion } from '../extendedDiscriminatedUnion/extendedDiscriminatedUnion';
-import { nestedObjectOrArraySchema } from '../nestedObjectOrArraySchema/nestedObjectOrArraySchema';
-import { plainObjectSchema } from '../plainObjectSchema/plainObjectSchema';
 
 /* ----- Plain entity schema ----- */
 
 const plainEntityPrimitiveValueSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
-const plainEntityObjectiveValueSchema = nestedObjectOrArraySchema(plainEntityPrimitiveValueSchema);
+const plainEntityObjectiveValueSchema = z.union([
+  z.array(z.json()),
+  // todo add noCheckMode check here
+  z.record(z.string(), z.json())
+]);
 
-const topLevelPlainEntityDescriptorSchema = extendedDiscriminatedUnion('checkMode', [
+const topLevelPlainEntityDescriptorSchema = z.discriminatedUnion('checkMode', [
   entityDescriptorSchema(checkActualValueCheckModeSchema),
-  entityDescriptorSchema(z.literal('function'), z.function()),
+  entityDescriptorSchema(z.literal('function'), z.instanceof(Function)),
   entityDescriptorSchema(
     compareWithDescriptorAnyValueCheckModeSchema,
     plainEntityObjectiveValueSchema
   )
 ]);
 
-const propertyLevelPlainEntityDescriptorSchema = extendedDiscriminatedUnion('checkMode', [
+const propertyLevelPlainEntityDescriptorSchema = z.discriminatedUnion('checkMode', [
   entityDescriptorSchema(checkActualValueCheckModeSchema),
-  entityDescriptorSchema(z.literal('function'), z.function()),
+  entityDescriptorSchema(z.literal('function'), z.instanceof(Function)),
   entityDescriptorSchema(z.literal('regExp'), z.instanceof(RegExp)),
   entityDescriptorSchema(
     compareWithDescriptorAnyValueCheckModeSchema,
@@ -41,23 +40,22 @@ const propertyLevelPlainEntityDescriptorSchema = extendedDiscriminatedUnion('che
   )
 ]);
 
+// A more idiomatic Zod v4 approach is to use .refine on z.object() to ensure it does not have 'checkMode' as a key.
+// We can also use .passthrough() to allow extra fields, but block 'checkMode' specifically.
+
 const nonCheckModeSchema = (schema: z.ZodTypeAny) =>
   z
-    .custom((value) => typeof value === 'object')
-    .superRefine((value, context) => {
-      if (isPlainObject(value) && 'checkMode' in value) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['checkMode'],
-          fatal: true
-        });
-        return z.NEVER;
-      }
+    .object({})
+    .passthrough()
+    .refine((obj) => !Object.prototype.hasOwnProperty.call(obj, 'checkMode'), {
+      message: "Object must not contain 'checkMode' property",
+      path: ['checkMode']
     })
-    .pipe(schema);
+    .or(schema);
 
 const topLevelPlainEntityRecordSchema = nonCheckModeSchema(
   z.record(
+    z.string(),
     z.union([
       propertyLevelPlainEntityDescriptorSchema,
       nonCheckModeSchema(plainEntityObjectiveValueSchema),
@@ -85,13 +83,14 @@ export const variablesPlainEntitySchema = z.union([
 
 const mappedEntityValueSchema = z.union([z.string(), z.number(), z.boolean()]);
 
-const mappedEntityDescriptorSchema = extendedDiscriminatedUnion('checkMode', [
+const mappedEntityDescriptorSchema = z.discriminatedUnion('checkMode', [
   entityDescriptorSchema(checkActualValueCheckModeSchema),
-  entityDescriptorSchema(z.literal('function'), z.function()),
+  entityDescriptorSchema(z.literal('function'), z.instanceof(Function)),
   entityDescriptorSchema(z.literal('regExp'), z.instanceof(RegExp)),
   entityDescriptorSchema(compareWithDescriptorValueCheckModeSchema, mappedEntityValueSchema)
 ]);
 
-export const mappedEntitySchema = plainObjectSchema(
-  z.record(z.union([mappedEntityValueSchema, mappedEntityDescriptorSchema]))
+export const mappedEntitySchema = z.record(
+  z.string(),
+  z.union([mappedEntityValueSchema, mappedEntityDescriptorSchema])
 );

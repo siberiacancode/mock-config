@@ -18,7 +18,7 @@ describe('routeConfigSchema: data resolving properties combinations', () => {
         expect(parseResult.success).toBe(false);
 
         if (!parseResult.success) {
-          const path = getMostSpecificPathFromError(parseResult.error);
+          const path = getMostSpecificPathFromError(parseResult.error.issues);
           const validationMessage = getValidationMessageFromPath(path);
           expect(validationMessage).toBe('');
         }

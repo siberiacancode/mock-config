@@ -12,7 +12,6 @@ import { interceptorsSchema } from './interceptorsSchema/interceptorsSchema';
 import { portSchema } from './portSchema/portSchema';
 import { restConfigSchema } from './restConfigSchema/restConfigSchema';
 import { staticPathSchema } from './staticPathSchema/staticPathSchema';
-import { plainObjectSchema } from './utils';
 
 export const validateApiMockServerConfig = (
   mockServerConfig: PlainObject,
@@ -24,25 +23,20 @@ export const validateApiMockServerConfig = (
     );
   }
 
-  const isConfigsContainAtLeastOneElement =
-    Array.isArray(mockServerConfig.configs) && !!mockServerConfig.configs.length;
-
   const mockServerConfigSchema = z.strictObject({
     baseUrl: baseUrlSchema.optional(),
     port: portSchema.optional(),
     staticPath: staticPathSchema.optional(),
-    interceptors: plainObjectSchema(interceptorsSchema).optional(),
+    interceptors: interceptorsSchema.optional(),
     cors: corsSchema.optional(),
     database: databaseConfigSchema.optional(),
-    ...(isConfigsContainAtLeastOneElement &&
-      api === 'graphql' && { configs: graphqlConfigSchema.shape.configs }),
-    ...(isConfigsContainAtLeastOneElement &&
-      api === 'rest' && { configs: restConfigSchema.shape.configs })
+    ...(api === 'graphql' && { configs: graphqlConfigSchema.shape.configs.optional() }),
+    ...(api === 'rest' && { configs: restConfigSchema.shape.configs.optional() })
   });
 
   const validationResult = mockServerConfigSchema.safeParse(mockServerConfig);
   if (!validationResult.success) {
-    const path = getMostSpecificPathFromError(validationResult.error);
+    const path = getMostSpecificPathFromError(validationResult.error.issues);
     const validationMessage = getValidationMessageFromPath(path);
 
     throw new Error(
