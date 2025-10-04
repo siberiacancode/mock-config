@@ -162,9 +162,10 @@ Temporary Items
 # Local
 .env
 dist
-packages/core/mock-server.config.*
-packages/core/!bin/templates/**/mock-server.config.*
-packages/core/mock-requests
+mock-server.config.*
+!packages/core/bin/templates/**/mock-server.config.*
+mock-requests
+!packages/core/bin/templates/**/mock-requests
 
 # Logs
 logs
