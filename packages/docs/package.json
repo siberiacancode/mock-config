@@ -1,0 +1,45 @@
+{
+  "name": "docs",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev --turbo",
+    "start": "next start",
+    "postinstall": "fumadocs-mdx",
+    "lint": "eslint . --fix",
+    "format": "prettier --write .",
+    "pretty": "yarn type && yarn lint && yarn format",
+    "lint-staged": "lint-staged"
+  },
+  "dependencies": {
+    "fumadocs-core": "15.8.2",
+    "fumadocs-mdx": "12.0.1",
+    "fumadocs-twoslash": "^3.1.4",
+    "fumadocs-ui": "15.8.2",
+    "lucide-react": "^0.544.0",
+    "next": "15.5.4",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "twoslash": "^0.3.2"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4.1.13",
+    "@types/mdx": "^2.0.13",
+    "@types/node": "24.5.2",
+    "@types/react": "^19.1.14",
+    "@types/react-dom": "^19.1.9",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.4",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.13",
+    "typescript": "^5.9.2"
+  },
+  "lint-staged": {
+    "*.{js,ts,md,mdx,tsx,mjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}
