@@ -1,0 +1,54 @@
+---
+title: Quick start 🚀
+description: Install and setup mock-config-server
+---
+
+## Installation
+
+Install the Core package using your preferred package manager:
+
+```package-install
+mock-config-server
+```
+
+## Configuration
+
+Create a `mock-server.config.ts` file with server configuration and export it as default.
+
+```ts
+import { FlatMockServerConfig } from 'mock-config-server';
+
+const flatMockSeverConfig: FlatMockServerConfig = [
+  {
+    baseUrl: '/api'
+  },
+  {
+    configs: [
+      {
+        path: '/user',
+        method: 'get',
+        routes: [{ data: { emoji: '🦁', name: 'Nursultan' } }]
+      }
+    ]
+  }
+];
+
+export default flatMockSeverConfig;
+```
+
+## Starting
+
+Start 🎉 Mock Config Server
+
+```bash
+npx mock-config-server -w
+```
+
+Or you can add the following script to your package.json and quickly start the mock server. 🐆
+
+<Tabs items={['npm', 'yarn', 'pnpm']}>
+  <Tab value='npm'>"mock": "npm run mcs -w"</Tab>
+  <Tab value='yarn'>"mock": "yarn mcs -w"</Tab>
+  <Tab value='pnpm'>"mock": "pnpm mcs -w"</Tab>
+  <Tab value='bun'>"mock": "bun run mcs -w"</Tab>
+</Tabs>
