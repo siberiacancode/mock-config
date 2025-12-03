@@ -2,7 +2,9 @@ import { HomeLayout } from 'fumadocs-ui/layouts/home';
 
 import { baseOptions } from '@/lib/layout.shared';
 
-const Layout = ({ children }: LayoutProps<'/'>) => (
+type HomeLayoutProps = LayoutProps<'/'>;
+
+const Layout = ({ children }: HomeLayoutProps) => (
   <HomeLayout {...baseOptions()}>{children}</HomeLayout>
 );
 

@@ -12,7 +12,7 @@ export async function GET(_req: Request, { params }: RouteContext<'/og/docs/[...
   if (!page) notFound();
 
   return new ImageResponse(
-    <DefaultImage site='My App' title={page.data.title} description={page.data.description} />,
+    <DefaultImage site='Mock config' title={page.data.title} description={page.data.description} />,
     {
       width: 1200,
       height: 630
@@ -20,9 +20,8 @@ export async function GET(_req: Request, { params }: RouteContext<'/og/docs/[...
   );
 }
 
-export function generateStaticParams() {
-  return source.getPages().map((page) => ({
+export const generateStaticParams = () =>
+  source.getPages().map((page) => ({
     lang: page.locale,
     slug: getPageImage(page).segments
   }));
-}

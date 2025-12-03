@@ -1,3 +1,8 @@
-# 🎉 Mock Config Server
+# 🎉 Mock Config Docs
 
-Tool that easily and quickly imitates server operation, create full fake api in few steps
+## Usage 🚀
+
+To start with docs you need:
+
+- install dependencies using `pnpm install`
+- start project using `pnpm dev`

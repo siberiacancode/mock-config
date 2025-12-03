@@ -21,6 +21,5 @@ export default defineConfig({
       },
       transformers: [...(rehypeCodeDefaultOptions.transformers ?? []), transformerTwoslash()]
     }
-  },
-  lastModifiedTime: 'git'
+  }
 });

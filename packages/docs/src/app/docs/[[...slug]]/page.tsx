@@ -7,11 +7,11 @@ import { notFound } from 'next/navigation';
 import { getPageImage, source } from '@/lib/source';
 import { getMDXComponents } from '@/mdx-components';
 
-export async function generateStaticParams() {
-  return source.generateParams();
-}
+type DocsPageProps = PageProps<'/docs/[[...slug]]'>;
 
-export async function generateMetadata(props: PageProps<'/docs/[[...slug]]'>): Promise<Metadata> {
+export const generateStaticParams = async () => source.generateParams();
+
+export const generateMetadata = async (props: DocsPageProps): Promise<Metadata> => {
   const params = await props.params;
   const page = source.getPage(params.slug);
   if (!page) notFound();
@@ -23,9 +23,9 @@ export async function generateMetadata(props: PageProps<'/docs/[[...slug]]'>): P
       images: getPageImage(page).url
     }
   };
-}
+};
 
-const Page = async (props: PageProps<'/docs/[[...slug]]'>) => {
+const Page = async (props: DocsPageProps) => {
   const params = await props.params;
   const page = source.getPage(params.slug);
   if (!page) notFound();
@@ -39,7 +39,6 @@ const Page = async (props: PageProps<'/docs/[[...slug]]'>) => {
       <DocsBody>
         <MDX
           components={getMDXComponents({
-            // this allows you to link to other pages with relative file paths
             a: createRelativeLink(source, page)
           })}
         />

@@ -6,9 +6,7 @@ const withMDX = createMDX();
 const config = {
   reactStrictMode: true,
   output: 'export',
-  basePath: '/mock-config-server',
-  typescript: { ignoreBuildErrors: true },
-  eslint: { ignoreDuringBuilds: true },
+  basePath: '/mock-config',
   serverExternalPackages: ['typescript', 'twoslash']
 };
 

@@ -8,7 +8,9 @@ const mulish = Mulish({
   subsets: ['latin']
 });
 
-const Layout = ({ children }: LayoutProps<'/'>) => (
+type AppLayoutProps = LayoutProps<'/'>;
+
+const Layout = ({ children }: AppLayoutProps) => (
   <html className={mulish.className} lang='en' suppressHydrationWarning>
     <body className='flex flex-col min-h-screen'>
       <RootProvider>{children}</RootProvider>
