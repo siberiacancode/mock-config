@@ -6,7 +6,6 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev --turbo",
-    "start": "next start",
     "postinstall": "fumadocs-mdx",
     "lint": "eslint . --fix",
     "format": "prettier --write .",
