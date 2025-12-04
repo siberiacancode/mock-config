@@ -42,6 +42,7 @@
     "packages/*"
   ],
   "scripts": {
+    "docs:build": "pnpm --filter mock-config-docs build",
     "build": "pnpm --recursive run build",
     "lint": "pnpm --recursive lint",
     "format": "prettier --write .",
