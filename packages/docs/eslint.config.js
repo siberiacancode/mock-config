@@ -8,7 +8,7 @@ export default eslint(
     next: true
   },
   {
-    name: '@mock-config-docs/rewrites',
+    name: 'mock-config-docs/rewrites',
     rules: {
       'ts/ban-ts-comment': 'warn'
     }
