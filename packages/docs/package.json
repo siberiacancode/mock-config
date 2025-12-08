@@ -6,6 +6,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev --turbo",
+    "prod": "next build && tsx server.ts",
     "postinstall": "fumadocs-mdx",
     "lint": "eslint . --fix",
     "format": "prettier --write .",
@@ -30,8 +31,11 @@
     "@types/node": "24.5.2",
     "@types/react": "^19.1.14",
     "@types/react-dom": "^19.1.9",
+    "@types/serve-handler": "^6.1.4",
     "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.13"
+    "serve-handler": "^6.1.6",
+    "tailwindcss": "^4.1.13",
+    "tsx": "^4.21.0"
   },
   "lint-staged": {
     "*.{js,ts,md,mdx,tsx,mjs}": [
