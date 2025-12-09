@@ -1,38 +1,19 @@
 {
-  "name": "@mock-config-server/core",
+  "name": "mock-config-server",
   "version": "4.0.3",
   "description": "Tool that easily and quickly imitates server operation, create full fake api in few steps",
   "author": {
     "name": "SIBERIA CAN CODE 🧊",
     "url": "https://github.com/siberiacancode"
   },
-  "contributors": [
-    {
-      "name": "Dmitry Babin",
-      "url": "https://github.com/debabin"
-    },
-    {
-      "name": "Nursultan Zianurov",
-      "url": "https://github.com/MiaInturi"
-    },
-    {
-      "name": "Sergey Kryavkin",
-      "url": "https://github.com/RiceWithMeat"
-    },
-    {
-      "name": "Alexander Vasilchuk",
-      "url": "https://github.com/anv296"
-    },
-    {
-      "name": "Daria Bortsova",
-      "url": "https://github.com/kvelian"
-    }
-  ],
   "license": "MIT",
-  "homepage": "https://github.com/siberiacancode/mock-config-server",
+  "homepage": "https://github.com/siberiacancode/mock-config",
   "repository": {
     "type": "git",
-    "url": "https://github.com/siberiacancode/mock-config-server.git"
+    "url": "git+https://github.com/siberiacancode/mock-config-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/siberiacancode/mock-config/issues"
   },
   "keywords": [
     "server",
@@ -95,8 +76,6 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@siberiacancode/eslint": "^2.6.0",
-    "@siberiacancode/prettier": "^1.1.1",
     "@siberiacancode/vitest": "^1.2.4",
     "@swc/cli": "^0.6.0",
     "@swc/core": "^1.10.7",
@@ -107,7 +86,6 @@
     "shx": "^0.3.4",
     "supertest": "^7.0.0",
     "tsc-alias": "^1.8.10",
-    "typescript": "^5.7.3",
     "vitest": "^3.2.4"
   },
   "lint-staged": {

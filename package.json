@@ -1,38 +1,15 @@
 {
-  "name": "mock-config-server",
+  "name": "mock-config",
   "license": "MIT",
-  "homepage": "https://github.com/siberiacancode/mock-config-server",
+  "homepage": "https://github.com/siberiacancode/mock-config",
   "version": "0.0.0",
-  "description": "Tool that easily and quickly imitates server operation, create full fake api in few steps",
   "private": true,
   "author": {
     "name": "SIBERIA CAN CODE 🧊",
     "url": "https://github.com/siberiacancode"
   },
-  "contributors": [
-    {
-      "name": "Dmitry Babin",
-      "url": "https://github.com/debabin"
-    },
-    {
-      "name": "Nursultan Zianurov",
-      "url": "https://github.com/MiaInturi"
-    },
-    {
-      "name": "Sergey Kryavkin",
-      "url": "https://github.com/RiceWithMeat"
-    },
-    {
-      "name": "Alexander Vasilchuk",
-      "url": "https://github.com/anv296"
-    },
-    {
-      "name": "Daria Bortsova",
-      "url": "https://github.com/kvelian"
-    }
-  ],
   "bugs": {
-    "url": "https://github.com/siberiacancode/mock-config-server/issues"
+    "url": "https://github.com/siberiacancode/mock-config/issues"
   },
   "repository": {
     "type": "git",
@@ -44,7 +21,7 @@
   "scripts": {
     "build": "pnpm -r run build",
     "lint": "pnpm -r run lint",
-    "format": "prettier --write .",
+    "format": "pnpm -r run format",
     "pretty": "pnpm -r run pretty",
     "unit-test": "pnpm -r run unit-test",
     "prepare": "husky"
