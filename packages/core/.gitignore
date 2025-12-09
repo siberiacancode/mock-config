@@ -1,0 +1,6 @@
+.env
+dist
+mock-server.config.*
+!packages/core/bin/templates/**/mock-server.config.*
+mock-requests
+!packages/core/bin/templates/**/mock-requests

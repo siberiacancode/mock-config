@@ -60,6 +60,7 @@
   },
   "scripts": {
     "prepublishOnly": "git diff --exit-code",
+    "lint-staged": "lint-staged",
     "prepare": "husky && pnpm build",
     "build:types": "tsc -p tsconfig.production.json && tsc-alias -p tsconfig.production.json",
     "build:swc": "swc bin src index.ts -d dist --extensions .ts --copy-files --ignore **/*.test.ts --ignore bin/templates",
@@ -71,7 +72,6 @@
     "unit-test": "vitest",
     "lint": "eslint . --fix",
     "lint-inspector": "npx @eslint/config-inspector",
-    "stylelint": "stylelint \"src/static/**/*.css\" --fix",
     "format": "prettier --write \"**/*.(ts|js)\"",
     "pretty": "pnpm format && pnpm lint"
   },
@@ -111,9 +111,6 @@
     "vitest": "^3.2.4"
   },
   "lint-staged": {
-    "*.css": [
-      "stylelint --fix"
-    ],
     "*.js": [
       "prettier --write"
     ],

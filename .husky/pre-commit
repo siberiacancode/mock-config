@@ -1,1 +1,1 @@
-pnpm lint-staged --no-stash
+pnpm run -F="./packages/**" lint-staged --no-stash

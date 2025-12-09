@@ -42,19 +42,17 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "pnpm --recursive run build",
-    "lint": "pnpm --recursive lint",
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
     "format": "prettier --write .",
-    "pretty": "pnpm --recursive run pretty",
-    "unit-test": "pnpm --recursive run unit-test",
-    "lint-staged": "pnpm --recursive run lint-staged",
+    "pretty": "pnpm -r run pretty",
+    "unit-test": "pnpm -r run unit-test",
     "prepare": "husky"
   },
   "devDependencies": {
     "@siberiacancode/eslint": "^2.9.0",
     "@siberiacancode/prettier": "^1.3.0",
     "husky": "^9.1.7",
-    "lint-staged": "^15.5.0",
     "typescript": "^5.8.2"
   }
 }
