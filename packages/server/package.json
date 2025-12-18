@@ -54,7 +54,7 @@
     "lint": "eslint . --fix",
     "lint-inspector": "npx @eslint/config-inspector",
     "format": "prettier --write \"**/*.(ts|js)\"",
-    "pretty": "pnpm format && pnpm lint"
+    "pretty": "pnpm lint && pnpm format"
   },
   "dependencies": {
     "@types/body-parser": "^1.19.5",
@@ -93,8 +93,8 @@
       "prettier --write"
     ],
     "*.ts": [
-      "prettier --write",
-      "eslint --no-error-on-unmatched-pattern --fix"
+      "eslint --no-error-on-unmatched-pattern --fix",
+      "prettier --write"
     ]
   }
 }
