@@ -1,6 +1,6 @@
 .env
 dist
 mock-server.config.*
-!packages/server/bin/templates/**/mock-server.config.*
+!bin/templates/**/mock-server.config.*
 mock-requests
-!packages/server/bin/templates/**/mock-requests
+!bin/templates/**/mock-requests

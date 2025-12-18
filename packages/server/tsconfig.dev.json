@@ -31,5 +31,5 @@
     "isolatedModules": true,
     "skipLibCheck": true
   },
-  "exclude": ["examples", "bin/templates", "dist", "node_modules", "vi.config.js"]
+  "exclude": ["examples", "bin/templates", "dist", "node_modules"]
 }

@@ -1,5 +1,5 @@
 emoji=$(git config user.emoji || echo "🎉")
-branch=$(git symbolic-ref --short HEAD)
+branch=$(git symbolic-ref --short HEAD || git rev-parse --short HEAD)
 message=$(cat "$1")
 
 if echo "$message" | (! grep -qF "${branch} ${emoji}") &&\
