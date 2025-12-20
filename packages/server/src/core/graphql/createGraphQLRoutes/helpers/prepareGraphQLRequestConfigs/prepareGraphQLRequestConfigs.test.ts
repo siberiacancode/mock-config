@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import type { GraphQLRequestConfig } from '@/utils/types';
 
 import { prepareGraphQLRequestConfigs } from './prepareGraphQLRequestConfigs';

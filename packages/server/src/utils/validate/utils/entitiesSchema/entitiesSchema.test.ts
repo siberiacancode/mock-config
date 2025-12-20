@@ -1,3 +1,5 @@
+import { expect, it } from 'vitest';
+
 import { getMostSpecificPathFromError } from '../../getMostSpecificPathFromError';
 import { getValidationMessageFromPath } from '../../getValidationMessageFromPath';
 import { bodyPlainEntitySchema } from './entitiesSchema';

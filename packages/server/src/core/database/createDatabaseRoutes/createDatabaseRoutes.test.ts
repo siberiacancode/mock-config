@@ -4,6 +4,7 @@ import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import request from 'supertest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { DatabaseConfig, MockServerConfig } from '@/utils/types';
 

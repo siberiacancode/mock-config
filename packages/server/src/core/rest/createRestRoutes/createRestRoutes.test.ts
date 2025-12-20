@@ -4,6 +4,7 @@ import { Buffer } from 'node:buffer';
 import fs from 'node:fs';
 import path from 'node:path';
 import request from 'supertest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { MockServerConfig, RestConfig, RestMethod } from '@/utils/types';
 

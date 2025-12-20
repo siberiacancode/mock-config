@@ -1,5 +1,6 @@
 import express from 'express';
 import request from 'supertest';
+import { describe, expect, it } from 'vitest';
 
 import { cookieParseMiddleware } from './cookieParseMiddleware';
 

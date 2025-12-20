@@ -1,6 +1,7 @@
 import bodyParser from 'body-parser';
 import express from 'express';
 import request from 'supertest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { GraphqlConfig, GraphQLOperationType, MockServerConfig } from '@/utils/types';
 

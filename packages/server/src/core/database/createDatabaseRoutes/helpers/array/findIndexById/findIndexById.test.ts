@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { findIndexById } from './findIndexById';
 
 describe('findIndexById', () => {

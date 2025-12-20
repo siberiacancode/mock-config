@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { getMostSpecificPathFromError } from '../../getMostSpecificPathFromError';
 import { getValidationMessageFromPath } from '../../getValidationMessageFromPath';
 import { routeConfigSchema } from './routeConfigSchema';

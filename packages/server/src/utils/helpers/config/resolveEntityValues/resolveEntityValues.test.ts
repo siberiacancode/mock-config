@@ -1,3 +1,5 @@
+import { describe, expect, it, vi } from 'vitest';
+
 import type { CheckFunction, CheckMode } from '@/utils/types';
 
 import { resolveEntityValues } from './resolveEntityValues';

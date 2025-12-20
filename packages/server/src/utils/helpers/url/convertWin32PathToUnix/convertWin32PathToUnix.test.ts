@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { convertWin32PathToUnix } from './convertWin32PathToUnix';
 
 describe('convertWin32PathToUnix', () => {

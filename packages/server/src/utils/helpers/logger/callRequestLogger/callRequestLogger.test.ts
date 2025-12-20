@@ -1,5 +1,7 @@
 import type { Request } from 'express';
 
+import { describe, expect, it, vi } from 'vitest';
+
 import { callRequestLogger } from './callRequestLogger';
 
 describe('callRequestLogger', () => {

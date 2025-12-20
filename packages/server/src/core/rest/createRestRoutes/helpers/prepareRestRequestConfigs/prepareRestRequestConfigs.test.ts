@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import type { RestRequestConfig } from '@/utils/types';
 
 import { prepareRestRequestConfigs } from './prepareRestRequestConfigs';

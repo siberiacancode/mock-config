@@ -1,5 +1,7 @@
 import type { Request, Response } from 'express';
 
+import { describe, expect, it, vi } from 'vitest';
+
 import type { ResponseInterceptor } from '@/utils/types';
 
 import { callResponseInterceptors } from './callResponseInterceptors';
