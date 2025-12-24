@@ -22,7 +22,7 @@
     "lucide-react": "^0.544.0",
     "next": "16.0.7",
     "react": "^19.2.1",
-    "react-dom": "^19.2.0",
+    "react-dom": "^19.2.1",
     "twoslash": "^0.3.2"
   },
   "devDependencies": {
