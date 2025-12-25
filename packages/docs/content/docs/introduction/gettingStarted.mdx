@@ -1,11 +1,11 @@
 ---
 title: Getting Started
-description: Install and setup mock-config-server
+description: Install and set up mock-config-server
 ---
 
 ## Installation
 
-Install the Core package using your preferred package manager:
+Install the core package using your preferred package manager:
 
 ```package-install
 mock-config-server
@@ -18,7 +18,7 @@ Create a `mock-server.config.ts` file with server configuration and export it as
 ```ts
 import { FlatMockServerConfig } from 'mock-config-server';
 
-const flatMockSeverConfig: FlatMockServerConfig = [
+const flatMockServerConfig: FlatMockServerConfig = [
   {
     baseUrl: '/api'
   },
@@ -33,7 +33,7 @@ const flatMockSeverConfig: FlatMockServerConfig = [
   }
 ];
 
-export default flatMockSeverConfig;
+export default flatMockServerConfig;
 ```
 
 ## Starting
@@ -44,7 +44,7 @@ Start Mock Config
 npx mock-config-server -w
 ```
 
-Or you can add the following script to your package.json and quickly start the mock server.
+Or, you can add the following script to your package.json to quickly start the mock server.
 
 ```json
 "mock": "mcs -w"
