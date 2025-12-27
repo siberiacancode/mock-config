@@ -19,7 +19,7 @@ const plainEntityObjectiveValueSchema = z.union([
 
 const topLevelPlainEntityDescriptorSchema = z.discriminatedUnion('checkMode', [
   entityDescriptorSchema(checkActualValueCheckModeSchema),
-  entityDescriptorSchema(z.literal('function'), z.instanceof(Function)),
+  entityDescriptorSchema(z.literal('function'), z.function()),
   entityDescriptorSchema(
     compareWithDescriptorAnyValueCheckModeSchema,
     plainEntityObjectiveValueSchema
@@ -28,7 +28,7 @@ const topLevelPlainEntityDescriptorSchema = z.discriminatedUnion('checkMode', [
 
 const propertyLevelPlainEntityDescriptorSchema = z.discriminatedUnion('checkMode', [
   entityDescriptorSchema(checkActualValueCheckModeSchema),
-  entityDescriptorSchema(z.literal('function'), z.instanceof(Function)),
+  entityDescriptorSchema(z.literal('function'), z.function()),
   entityDescriptorSchema(z.literal('regExp'), z.instanceof(RegExp)),
   entityDescriptorSchema(
     compareWithDescriptorAnyValueCheckModeSchema,
@@ -85,7 +85,7 @@ const mappedEntityValueSchema = z.union([z.string(), z.number(), z.boolean()]);
 
 const mappedEntityDescriptorSchema = z.discriminatedUnion('checkMode', [
   entityDescriptorSchema(checkActualValueCheckModeSchema),
-  entityDescriptorSchema(z.literal('function'), z.instanceof(Function)),
+  entityDescriptorSchema(z.literal('function'), z.function()),
   entityDescriptorSchema(z.literal('regExp'), z.instanceof(RegExp)),
   entityDescriptorSchema(compareWithDescriptorValueCheckModeSchema, mappedEntityValueSchema)
 ]);

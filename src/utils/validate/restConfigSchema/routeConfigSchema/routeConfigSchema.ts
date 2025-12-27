@@ -30,7 +30,7 @@ const dataRouteConfigSchema = (method: RestMethod) =>
   z.strictObject({
     ...baseRouteConfigSchema(method).shape,
     settings: settingsSchema.extend({ polling: z.literal(false).optional() }).optional(),
-    data: z.union([z.instanceof(Function), z.any()])
+    data: z.union([z.function(), z.any()])
   });
 
 const fileRouteConfigSchema = (method: RestMethod) =>

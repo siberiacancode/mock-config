@@ -12,7 +12,7 @@ export const queueSchema = z.array(
       .pipe(
         z.strictObject({
           time: z.number().int().nonnegative().optional(),
-          data: z.union([z.instanceof(Function), z.any()])
+          data: z.union([z.function(), z.any()])
         })
       ),
     z.strictObject({
