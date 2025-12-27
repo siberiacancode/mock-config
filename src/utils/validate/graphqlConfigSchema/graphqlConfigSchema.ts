@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { baseUrlSchema } from '../baseUrlSchema/baseUrlSchema';
 import { interceptorsSchema } from '../interceptorsSchema/interceptorsSchema';
-import { oneKeyDispatchSchema } from '../utils/testSchema';
+import { oneKeyDispatchSchema } from '../utils';
 import { routeConfigSchema } from './routeConfigSchema/routeConfigSchema';
 
 const baseRequestConfigSchema = z.strictObject({

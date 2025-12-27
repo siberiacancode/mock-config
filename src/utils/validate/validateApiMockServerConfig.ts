@@ -5,8 +5,7 @@ import type { PlainObject } from '@/utils/types';
 import { baseUrlSchema } from './baseUrlSchema/baseUrlSchema';
 import { corsSchema } from './corsSchema/corsSchema';
 import { databaseConfigSchema } from './databaseConfigSchema/databaseConfigSchema';
-import { getMostSpecificPathFromError } from './getMostSpecificPathFromError';
-import { getValidationMessageFromPath } from './getValidationMessageFromPath';
+import { getValidationMessage } from './getValidationMessage';
 import { graphqlConfigSchema } from './graphqlConfigSchema/graphqlConfigSchema';
 import { interceptorsSchema } from './interceptorsSchema/interceptorsSchema';
 import { portSchema } from './portSchema/portSchema';
@@ -36,8 +35,7 @@ export const validateApiMockServerConfig = (
 
   const validationResult = mockServerConfigSchema.safeParse(mockServerConfig);
   if (!validationResult.success) {
-    const path = getMostSpecificPathFromError(validationResult.error.issues);
-    const validationMessage = getValidationMessageFromPath(path);
+    const validationMessage = getValidationMessage(validationResult.error.issues);
 
     throw new Error(
       `Validation Error: configuration${validationMessage} does not match the API schema. Click here to see correct type: https://github.com/siberiacancode/mock-config-server`

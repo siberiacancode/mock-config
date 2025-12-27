@@ -5,8 +5,7 @@ import type { RestMethod } from '@/utils/types';
 import { interceptorsSchema } from '../../interceptorsSchema/interceptorsSchema';
 import { queueSchema } from '../../queueSchema/queueSchema';
 import { settingsSchema } from '../../settingsSchema/settingsSchema';
-import { bodyPlainEntitySchema, mappedEntitySchema } from '../../utils';
-import { oneKeyDispatchSchema } from '../../utils/testSchema';
+import { bodyPlainEntitySchema, mappedEntitySchema, oneKeyDispatchSchema } from '../../utils';
 
 const METHODS_WITH_BODY = ['post', 'put', 'patch'];
 const entitiesByEntityNameSchema = (method: RestMethod) => {

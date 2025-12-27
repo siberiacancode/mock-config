@@ -1,5 +1,4 @@
-import { getMostSpecificPathFromError } from '../../getMostSpecificPathFromError';
-import { getValidationMessageFromPath } from '../../getValidationMessageFromPath';
+import { getValidationMessage } from '../../getValidationMessage';
 import { routeConfigSchema } from './routeConfigSchema';
 
 describe('routeConfigSchema: data resolving properties combinations', () => {
@@ -18,8 +17,7 @@ describe('routeConfigSchema: data resolving properties combinations', () => {
         expect(parseResult.success).toBe(false);
 
         if (!parseResult.success) {
-          const path = getMostSpecificPathFromError(parseResult.error.issues);
-          const validationMessage = getValidationMessageFromPath(path);
+          const validationMessage = getValidationMessage(parseResult.error.issues);
           expect(validationMessage).toBe('');
         }
       });

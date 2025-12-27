@@ -3,8 +3,7 @@ import { z } from 'zod';
 import { interceptorsSchema } from '../../interceptorsSchema/interceptorsSchema';
 import { queueSchema } from '../../queueSchema/queueSchema';
 import { settingsSchema } from '../../settingsSchema/settingsSchema';
-import { mappedEntitySchema, variablesPlainEntitySchema } from '../../utils';
-import { oneKeyDispatchSchema } from '../../utils/testSchema';
+import { mappedEntitySchema, oneKeyDispatchSchema, variablesPlainEntitySchema } from '../../utils';
 
 const baseRouteConfigSchema = z.strictObject({
   entities: z
