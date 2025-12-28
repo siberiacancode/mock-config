@@ -13,7 +13,6 @@ import {
 const plainEntityPrimitiveValueSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 const plainEntityObjectiveValueSchema = z.union([
   z.array(z.json()),
-  // todo add noCheckMode check here
   z.record(z.string(), z.json())
 ]);
 
@@ -40,25 +39,18 @@ const propertyLevelPlainEntityDescriptorSchema = z.discriminatedUnion('checkMode
   )
 ]);
 
-// A more idiomatic Zod v4 approach is to use .refine on z.object() to ensure it does not have 'checkMode' as a key.
-// We can also use .passthrough() to allow extra fields, but block 'checkMode' specifically.
-
-const nonCheckModeSchema = (schema: z.ZodTypeAny) =>
+const withoutCheckModeSchema = (schema: z.ZodObject<any> | z.ZodRecord<any> | z.ZodUnion<any>) =>
   z
-    .object({})
-    .passthrough()
-    .refine((obj) => !Object.prototype.hasOwnProperty.call(obj, 'checkMode'), {
-      message: "Object must not contain 'checkMode' property",
-      path: ['checkMode']
-    })
-    .or(schema);
+    .looseObject({})
+    .refine((value) => !('checkMode' in value))
+    .pipe(schema);
 
-const topLevelPlainEntityRecordSchema = nonCheckModeSchema(
+const topLevelPlainEntityRecordSchema = withoutCheckModeSchema(
   z.record(
     z.string(),
     z.union([
       propertyLevelPlainEntityDescriptorSchema,
-      nonCheckModeSchema(plainEntityObjectiveValueSchema),
+      withoutCheckModeSchema(plainEntityObjectiveValueSchema),
       plainEntityPrimitiveValueSchema
     ])
   )
