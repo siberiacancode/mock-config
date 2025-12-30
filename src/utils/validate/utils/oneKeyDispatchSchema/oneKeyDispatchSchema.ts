@@ -6,7 +6,7 @@ import { getMostSpecificPathFromError } from '../../getValidationMessage';
 
 // ✅ important:
 // Runs only the schema that matches the single existing key
-export const oneKeyDispatchSchema = <S extends Record<string, z.ZodTypeAny>>(schemasByKey: S) => {
+export const oneKeyDispatchSchema = (schemasByKey: Record<string, z.ZodTypeAny>) => {
   const keys = Object.keys(schemasByKey);
 
   return z

@@ -17,14 +17,12 @@ const baseRouteConfigSchema = z.strictObject({
   interceptors: interceptorsSchema.optional()
 });
 
-// data will be presented because of routeConfigSchema oneKeyDispatchSchema
 const dataRouteConfigSchema = z.strictObject({
   ...baseRouteConfigSchema.shape,
   settings: settingsSchema.extend({ polling: z.literal(false).optional() }).optional(),
   data: z.union([z.function(), z.any()])
 });
 
-// queue will be presented because of routeConfigSchema oneKeyDispatchSchema
 const queueRouteConfigSchema = z.strictObject({
   ...baseRouteConfigSchema.shape,
   settings: settingsSchema.extend({ polling: z.literal(true) }),
