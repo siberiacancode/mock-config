@@ -7,7 +7,6 @@ import { corsSchema } from './corsSchema/corsSchema';
 import { databaseConfigSchema } from './databaseConfigSchema/databaseConfigSchema';
 import { getValidationMessage } from './getValidationMessage';
 import { graphqlRequestConfigSchema } from './graphqlConfigSchema/graphqlConfigSchema';
-// import { graphqlRequestConfigSchema } from './graphqlConfigSchema/graphqlConfigSchema';
 import { interceptorsSchema } from './interceptorsSchema/interceptorsSchema';
 import { portSchema } from './portSchema/portSchema';
 import { restRequestConfigSchema } from './restConfigSchema/restConfigSchema';
@@ -45,8 +44,6 @@ export const validateFlatMockServerConfig = (flatMockServerConfig: PlainObject) 
     flatMockServerConfigSchema.safeParse(flatMockServerConfig);
 
   if (!validationFlatMockServerConfigSchemaResult.success) {
-    console.log('ee');
-
     const validationMessage = getValidationMessage(
       validationFlatMockServerConfigSchemaResult.error.issues
     );

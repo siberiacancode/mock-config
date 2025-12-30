@@ -63,7 +63,7 @@
     "prepare": "husky && yarn build",
     "build:types": "tsc -p tsconfig.production.json && tsc-alias -p tsconfig.production.json",
     "build:swc": "swc bin src index.ts -d dist --extensions .ts --copy-files --ignore **/*.test.ts --ignore bin/templates",
-    "build:copy-templates": "shx mkdir -p dist/bin/templates/ts && shx cp -r bin/templates/ts dist/bin/templates && shx mkdir -p dist/bin/templates/js && shx cp -r bin/templates/js dist/bin/templates",
+    "build:copy-templates": "tsc --noEmit -p bin/templates/tsconfig.json && shx mkdir -p dist/bin/templates/ts && shx cp -r bin/templates/ts dist/bin/templates && shx mkdir -p dist/bin/templates/js && shx cp -r bin/templates/js dist/bin/templates",
     "build": "shx rm -rf dist && yarn build:types && yarn build:swc && yarn build:copy-templates",
     "start": "yarn build && node ./dist/bin/bin.js",
     "dev": "nodemon --watch src --watch bin --watch mock-server.config.* -e js,ts --exec \"yarn start\"",
