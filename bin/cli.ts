@@ -9,6 +9,7 @@ import type { MockServerConfigArgv } from '../src';
 import { build } from './build';
 import { init } from './init';
 
+// TODO: add link to documentation for thrown errors
 const initOptions: Record<
   keyof Pick<MockServerConfigArgv, 'baseUrl' | 'port' | 'staticPath'>,
   yargs.Options
@@ -20,8 +21,8 @@ const initOptions: Record<
     coerce(value: any) {
       try {
         return baseUrlSchema.parse(value);
-      } catch {
-        throw new Error(`Invalid value for 'baseUrl': ${JSON.stringify(value)}`);
+      } catch (error: unknown) {
+        throw new Error(`Invalid value for 'baseUrl': ${value}`, { cause: error });
       }
     }
   },
@@ -31,9 +32,9 @@ const initOptions: Record<
     type: 'number',
     coerce(value: any) {
       try {
-        return portSchema.parse(+value);
-      } catch {
-        throw new Error(`Invalid value for 'port': ${JSON.stringify(value)}`);
+        return portSchema.parse(value);
+      } catch (error: unknown) {
+        throw new TypeError(`Invalid value for 'port': ${value}`, { cause: error });
       }
     }
   },
@@ -44,8 +45,8 @@ const initOptions: Record<
     coerce(value: any) {
       try {
         return staticPathSchema.parse(value);
-      } catch {
-        throw new Error(`Invalid value for 'staticPath': ${JSON.stringify(value)}`);
+      } catch (error: unknown) {
+        throw new Error(`Invalid value for 'staticPath': ${value}`, { cause: error });
       }
     }
   }
