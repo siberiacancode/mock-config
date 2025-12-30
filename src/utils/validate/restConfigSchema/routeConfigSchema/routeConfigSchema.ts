@@ -46,30 +46,6 @@ const queueRouteConfigSchema = (method: RestMethod) =>
     queue: queueSchema
   });
 
-// Todo: по моему это не работает как надо, т.к. если есть queue и ошибка в queue, то все равно выведет data.
-/*
-const mockServerConfig: FlatMockServerConfig = [
-  {
-    port: 31299
-  },
-  {
-    name: 'rest',
-    configs: [
-      {
-        method: 'get',
-        path: '/users',
-        routes: [
-          {
-            file: 'hehe.txt',
-            lol: 'lol'
-          }
-        ]
-      }
-    ]
-  }
-];
-its an example of config that validated incorrectly because of z.union implementation
-*/
 export const routeConfigSchema = (method: RestMethod) =>
   oneKeyDispatchSchema({
     data: dataRouteConfigSchema(method),

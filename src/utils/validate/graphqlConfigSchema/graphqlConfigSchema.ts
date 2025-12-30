@@ -23,7 +23,6 @@ const queryRequestConfigSchema = z.strictObject({
   query: z.string()
 });
 
-// TODO at least operationName or query should exist
 export const graphqlRequestConfigSchema = oneKeyDispatchSchema({
   operationName: operationNameRequestConfigSchema,
   query: queryRequestConfigSchema
