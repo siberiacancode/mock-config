@@ -1,0 +1,20 @@
+---
+title: Run
+description: Run a mock server using the `mock-config` CLI
+---
+
+### Overview
+
+`mcs run` — Start a mock server. It starts a mock server in the current directory using a configuration file (`.mock-config.js`, `.mock-config.ts`, or `.mock-config.json`). The command auto-detects the API type (REST, GraphQL or mixed) from your config, merges optional CLI arguments, and starts the appropriate server.
+
+### Using
+
+`mcs run [options]`
+
+### Arguments
+
+The `run` command accepts optional CLI arguments to override config values:
+
+- `baseUrl` (string): override the base URL path from config. Must start with `/`.
+- `port` (number): override the server port from config.
+- `staticPath` (string): override the static assets path from config. Must start with `/`.

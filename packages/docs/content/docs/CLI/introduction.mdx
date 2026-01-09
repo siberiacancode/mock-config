@@ -1,0 +1,30 @@
+---
+title: Introduction
+description: Learn the essential CLI commands for working with mock-config
+---
+
+### Overview
+
+The Command Line Interface (CLI) provides two main commands to help you quickly scaffold and run mock servers for your projects.
+
+### Commands
+
+This section covers the essential `mock-config` CLI commands:
+
+- **[`mcs init`](./init)** — Create a new project template. Scaffolds a new mock-config project with an interactive setup flow. Choose your language (TypeScript or JavaScript), select an API type (REST, GraphQL, or both), and configure basic server settings. Generates a config file with sample request examples.
+
+- **[`mcs run`](./run)** — Start a mock server. Runs a mock server using your configuration file. Automatically detects the API type and starts the appropriate server, with optional CLI arguments to override config values.
+
+### Quick Start
+
+Get started in seconds:
+
+```bash
+# Create a new mock project
+npx mcs init
+
+# Start the mock server
+npx mcs run
+```
+
+Both commands are designed to be simple and straightforward. If you're new — begin with `init` to scaffold your first project, then use `run` to start the server.
