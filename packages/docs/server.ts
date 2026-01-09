@@ -12,7 +12,7 @@ const server = http.createServer((req, res) => {
 
   if (req.url.startsWith(BASE_PATH)) {
     const stripped = req.url.slice(BASE_PATH.length);
-    req.url = stripped.length > 0 ? stripped : '/';
+    req.url = stripped.length ? stripped : '/';
   }
 
   if (!req.url.startsWith('/')) {
