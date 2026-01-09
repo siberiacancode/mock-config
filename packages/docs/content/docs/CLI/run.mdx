@@ -1,15 +1,17 @@
 ---
 title: Run
-description: Run a mock server using the `mock-config` CLI
+description: Run a mock server
 ---
 
 ### Overview
 
-`mcs run` — Start a mock server. It starts a mock server in the current directory using a configuration file (`.mock-config.js`, `.mock-config.ts`, or `.mock-config.json`). The command auto-detects the API type (REST, GraphQL or mixed) from your config, merges optional CLI arguments, and starts the appropriate server.
+`mcs run` — Start a mock server. It starts a mock server in the current directory using a configuration file (`.mock-config`).
 
 ### Using
 
-`mcs run [options]`
+```bash
+npx mcs run [options]
+```
 
 ### Arguments
 
