@@ -14,10 +14,6 @@ const server = http.createServer((req, res) => {
     req.url = req.url.slice(BASE_PATH.length);
   }
 
-  if (req.url) {
-    req.url = `/${req.url}`;
-  }
-
   return handler(req, res, {
     public: OUT_DIR
   });
