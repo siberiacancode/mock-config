@@ -5,7 +5,7 @@ description: Run a mock server
 
 ### Overview
 
-`mcs run` — Start a mock server. It starts a mock server in the current directory using a configuration file (`.mock-config`).
+`mcs run` — Starts a mock server in the current directory using a configuration file `.mock-config.ts` (or `.js`).
 
 ### Using
 
@@ -20,3 +20,27 @@ The `run` command accepts optional CLI arguments to override config values:
 - `baseUrl` (string): override the base URL path from config. Must start with `/`.
 - `port` (number): override the server port from config.
 - `staticPath` (string): override the static assets path from config. Must start with `/`.
+
+### Examples
+
+Run the mock server with default config values:
+
+```bash
+npx mcs run
+```
+
+Override the port:
+
+```bash
+npx mcs run --port 3000
+# or using alias
+npx mcs run -p 3000
+```
+
+Override multiple values:
+
+```bash
+npx mcs run --baseUrl /api --port 3000 --staticPath /assets
+# or using aliases
+npx mcs run -b /api -p 3000 -s /assets
+```
