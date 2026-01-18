@@ -91,6 +91,8 @@ declare global {
 }
 export interface FlatMockServerComponent {
   baseUrl?: BaseUrl;
+  // TODO:
+  // this type doesn't corresponds to validation schema
   configs: Array<GraphQLRequestConfig | RestRequestConfig>;
   interceptors?: Interceptors;
   name?: string;

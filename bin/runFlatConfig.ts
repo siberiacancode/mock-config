@@ -1,6 +1,5 @@
-#!/usr/bin/env node
-
 import { startFlatMockServer } from '@/server';
+import { validateFlatMockServerConfig } from '@/utils/validate';
 
 import type { FlatMockServerConfig, MockServerConfigArgv } from '../src';
 
@@ -9,6 +8,7 @@ export const runFlatConfig = (
   { baseUrl, port, staticPath }: MockServerConfigArgv
 ) => {
   try {
+    validateFlatMockServerConfig(flatMockServerConfig);
     const [option, ...flatMockServerComponents] = flatMockServerConfig;
     const flatMockServerSettings = !('configs' in option) ? option : undefined;
 

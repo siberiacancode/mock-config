@@ -21,10 +21,11 @@ export const compareWithDescriptorValueCheckModeSchema = z.enum(
   COMPARE_WITH_DESCRIPTOR_VALUE_CHECK_MODES
 );
 
+// TODO why this fn in that file?
 export interface EntityDescriptorSchema {
   (
     checkModeSchema: typeof checkActualValueCheckModeSchema
-  ): z.ZodObject<{ checkMode: typeof checkModeSchema }, 'strict'>;
+  ): z.ZodObject<{ checkMode: typeof checkModeSchema }, z.core.$strict>;
 
   (
     checkModeSchema:
@@ -35,7 +36,6 @@ export interface EntityDescriptorSchema {
       | typeof compareWithDescriptorValueCheckModeSchema,
     valueSchema: z.ZodTypeAny
   ): z.ZodDiscriminatedUnion<
-    'oneOf',
     [
       z.ZodObject<
         {
@@ -43,7 +43,7 @@ export interface EntityDescriptorSchema {
           oneOf: z.ZodLiteral<true>;
           value: z.ZodArray<typeof valueSchema>;
         },
-        'strict'
+        z.core.$strict
       >,
       z.ZodObject<
         {
@@ -51,9 +51,10 @@ export interface EntityDescriptorSchema {
           oneOf: z.ZodOptional<z.ZodLiteral<false>>;
           value: typeof valueSchema;
         },
-        'strict'
+        z.core.$strict
       >
-    ]
+    ],
+    'oneOf'
   >;
 }
 

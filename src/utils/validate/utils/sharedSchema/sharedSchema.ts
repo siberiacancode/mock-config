@@ -1,5 +1,5 @@
 import { z } from 'zod';
 
-export const stringForwardSlashSchema = z.string().startsWith('/');
+export const stringForwardSlashSchema = z.templateLiteral(['/', z.string()]);
 
-export const stringJsonFilenameSchema = z.string().endsWith('.json');
+export const stringJsonFilenameSchema = z.templateLiteral([z.string(), '.json']);
