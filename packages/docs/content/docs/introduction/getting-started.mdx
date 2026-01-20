@@ -1,0 +1,78 @@
+---
+title: Getting Started
+description: Install and set up mock-config
+---
+
+Install the core package using your preferred package manager:
+
+```package-install
+mock-config-server
+```
+
+Create a `mock-server.config.ts` file with server configuration and export it as default.
+
+<Tabs items={['Rest', 'GraphQL']}>
+  <Tab value='Rest'>
+
+```typescript
+export default [
+  {
+    baseUrl: '/api'
+  },
+  {
+    configs: [
+      {
+        path: '/user',
+        method: 'get',
+        routes: [{ data: { emoji: '🧊', name: 'Siberia can code' } }]
+      }
+    ]
+  }
+] satisfies MockServerConfig;
+```
+
+  </Tab>
+
+<Tab value='GraphQL'>
+
+```typescript
+export default [
+  {
+    baseUrl: '/api'
+  },
+  {
+    configs: [
+      {
+        operationType: 'query',
+        operationName: 'GetUser',
+        routes: [{ data: { emoji: '🧊', name: 'Siberia can code' } }]
+      }
+    ]
+  }
+] satisfies MockServerConfig;
+```
+
+  </Tab>
+</Tabs>
+
+Start mock
+
+```bash
+npx mcs
+```
+
+## Next Steps
+
+<Cards>
+  <Card
+    title='Introducing'
+    href='/docs/server/introducing'
+    description='Learn about the core concepts of mock-config'
+  />
+  <Card title='Rest' href='/docs/server/Rest' description='Build REST API mocks with ease' />
+  <Card
+    title='GraphQL'
+    href='/docs/server/GraphQL'
+    description='Create GraphQL API mocks and queries'
+  />
+</Cards>
