@@ -9,11 +9,20 @@ The Command Line Interface (CLI) provides two main commands to help you quickly 
 
 ### Commands
 
-- **[`mcs init`](./init)** — Create a mock configuration. Generates a `.mock-config.ts` (or `.js`) file with a config template and sample request examples. Choose your language (TypeScript or JavaScript), select an API type (REST, GraphQL, or both), and configure basic server settings.
+<Cards>
+  <Card
+    title='Run'
+    href='/docs/CLI/run'
+    description='Start a mock server using your configuration file with optional CLI arguments to override config values'
+  />
+  <Card
+    title='Init'
+    href='/docs/CLI/init'
+    description='Create a mock configuration. Generates a `.mock-config.(js|ts)` file with a config template and sample request examples. Choose your language (TypeScript or JavaScript), select an API type (REST, GraphQL, or both), and configure basic server settings.'
+  />
+</Cards>
 
-- **[`mcs run`](./run)** — Start a mock server using your configuration file with optional CLI arguments to override config values.
-
-### Quick Start
+### Usage
 
 Get started in seconds:
 
@@ -25,4 +34,4 @@ npx mcs init
 npx mcs run
 ```
 
-Both commands are designed to be simple and straightforward. If you're new, begin with `init` to scaffold your first project, then use `run` to start the server.
+Start with `init` to scaffold your first project, then use `run` to launch the server. Both commands come with built-in validation to ensure your configuration is correct and help you avoid common mistakes.
