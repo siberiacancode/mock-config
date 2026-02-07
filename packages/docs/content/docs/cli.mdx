@@ -1,0 +1,65 @@
+---
+title: CLI
+description: Command Line Interface for mock-config-server
+---
+
+## Run mock-config-server
+
+`mock-config-server`
+
+Start a mock server in the current directory using a configuration file `mock-server.config.(js|ts)`.
+
+### Usage
+
+```bash
+npx mock-config-server [options]
+```
+
+> If the package is already installed, you can use short command `mcs`
+
+### Options
+
+| Option         | Short | Description                                                      | Default value                 |
+| -------------- | ----- | ---------------------------------------------------------------- | ----------------------------- |
+| `--baseUrl`    | `-b`  | Specify the base URL path from config. Must start with `/`.      | `/`                           |
+| `--port`       | `-p`  | Specify the server port from config.                             | `31299`                       |
+| `--staticPath` | `-s`  | Specify the static assets path from config. Must start with `/`. |                               |
+| `--config`     | `-c`  | Set path to the config file.                                     | `mock-server.config.(js\|ts)` |
+| `--watch`      | `-w`  | Enables server restart after config file changes.                | `false`                       |
+| `--help`       | `-h`  | Display help for command.                                        |                               |
+| `--version`    | `-v`  | Display the mock-config-server version.                          |                               |
+
+## Create a mock-config-server template
+
+`mock-config-server init`
+
+Create a mock configuration. It generates a `mock-server.config.(js|ts)` file with a config template and sample request examples in the current directory. An interactive flow lets you choose between TypeScript and JavaScript, select an API type (REST, GraphQL or both), and set basic server options like base URL, port and static path.
+
+### Usage
+
+```bash
+npx mock-config-server init
+```
+
+> If the package is already installed, you can use short command `mcs`
+
+### Interactive flow
+
+The command asks a few short questions:
+
+```bash
+? Would you like to use TypeScript? › No / Yes
+? Choose api type (Use arrow keys)
+❯ Rest
+  GraphQL
+  Both
+? Base url (must start with a forward slash): › /
+? Port: › (31299)
+? Static path (must start with a forward slash): › /
+```
+
+- `Would you like to use TypeScript?` (toggle): choose whether to generate a TypeScript or JavaScript configuration file.
+- `Choose api type` (select): select the type of API to generate mock examples for. Options: `Rest`, `GraphQL`, or `Both`.
+- `Base url` (string): set the base URL path for the mock server. Must start with `/`. Default: `/`.
+- `Port` (number): set the port number for the mock server. Default: `31299`.
+- `Static path` (string): set the static assets path for the mock server. Must start with `/`. Default: `/`.
