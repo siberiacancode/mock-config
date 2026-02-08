@@ -6,7 +6,7 @@ const HomePage = () => (
     <p className='text-fd-muted-foreground'>
       You can open{' '}
       <Link
-        href='/docs/introduction/what-is-mock-config'
+        href='/docs/introduction/what-is-mock-config-server'
         className='text-fd-foreground font-semibold underline'
       >
         /docs

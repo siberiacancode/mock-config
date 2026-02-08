@@ -3,13 +3,13 @@ title: What is mock-config-server
 description: A data mocking tool built to fit your workflow, not the other way around.
 ---
 
-Mock Config Server is a tool that, easily, quickly simulates the work of a server. The main difference from solutions such as [json-server](https://www.npmjs.com/package/json-server) and [mock-service-worker](https://mswjs.io/) is the ease of filling in data and flexible emulation of any and usual cases.
+Mock Config Server is a tool that, easily, quickly simulates the server behavior. The main difference from solutions such as [json-server](https://www.npmjs.com/package/json-server) and [mock-service-worker](https://mswjs.io/) is the ease of filling in data and flexible emulation of any and usual cases.
 
 ## Philosophy
 
 ### Simplicity
 
-We obsess over the things that steal time from shipping. Mock Config strives to keep the developer experience short and predictable: concise configuration, sensible defaults, and composable primitives. This lets you focus on the scenarios, not the setup.
+We obsess over the things that steal time from shipping. Mock Config keeps the developer experience fast and predictable: concise configuration, sensible defaults, and composable primitives. This lets you focus on the scenarios, not the setup.
 
 <hr />
 
@@ -21,38 +21,4 @@ Production systems are often complex, but creating mocks shouldn’t be. Mock Co
 
 ### Transparency
 
-Mocks shouldn’t be a black box. Mock Config makes it easy to see why a response was returned: which rule matched, what data was generated, and how the request was processed. You can log requests and responses and inspect how scenarios are evaluated to better understand behavior, troubleshoot issues, and trust your mocks.
-
-## Features
-
-<Cards>
-  <Card
-    title="Rest"
-    href="/docs/server/Rest"
-    description="Build REST API mocks with ease"
-  />
-
-<Card
-  title='GraphQL'
-  href='/docs/server/GraphQL'
-  description='Create GraphQL API mocks and queries'
-/>
-
-<Card
-  title='Cors'
-  href='/docs/server/Cors'
-  description='Enable and configure CORS for your mocks'
-/>
-
-<Card
-  title='Database | ORM'
-  href='/docs/server/database-orm'
-  description='Mock database queries and ORM interactions'
-/>
-
-  <Card
-    title="Logger"
-    href="/docs/server/logger"
-    description="Debug and monitor requests with detailed logging"
-  />
-</Cards>
+Mocks shouldn’t be a black box. Mock Config makes it easy to see why a response was returned: what data was generated, and how the request was processed. You can log requests and responses and inspect how scenarios are evaluated to better understand behavior, troubleshoot issues, and trust your mocks.

@@ -11,7 +11,7 @@ mock-config-server
 
 Create a `mock-server.config.ts` file with server configuration and export it as default. This is the default file path, but you can [change it](/docs/cli/run).
 
-<Tabs items={['Rest', 'GraphQL']}>
+<Tabs items={['REST', 'GraphQL']}>
   <Tab value='Rest'>
 
 ```typescript
@@ -38,7 +38,7 @@ export default [
 ```typescript
 export default [
   {
-    baseUrl: '/api'
+    baseUrl: '/graphql'
   },
   {
     configs: [
@@ -55,17 +55,17 @@ export default [
   </Tab>
 </Tabs>
 
-Start mock
+Start the mock server:
 
 ```bash
 npx mock-config-server
 ```
 
-> If the package is already installed you can use short command `mcs`
+> If the package is already installed, you can use short command `mcs`
 
 ## Next Steps
 
-This guide is a good starting point but you can do so much more with mock-config-server. We highly encourage you to explore this documentation to learn more about the capabilities of Mock Config. Here are some great topics to follow up on:
+This guide is a good starting point, but you can do so much more with mock-config-server. We highly encourage you to explore this documentation to learn more about the capabilities of Mock Config. Here are some great topics to follow up on:
 
 <Cards>
   <Card
@@ -73,10 +73,33 @@ This guide is a good starting point but you can do so much more with mock-config
     href='/docs/server/introducing'
     description='Learn about the core concepts of mock-config-server'
   />
-  <Card title='Rest' href='/docs/server/Rest' description='Build REST API mocks with ease' />
+<Card
+  title="REST"
+  href="/docs/server/rest"
+  description="Build REST API mocks with ease"
+/>
+
+<Card
+  title='GraphQL'
+  href='/docs/server/GraphQL'
+  description='Create GraphQL API mocks and queries'
+/>
+
+<Card
+  title='CORS'
+  href='/docs/server/cors'
+  description='Enable and configure CORS for your mocks'
+/>
+
+<Card
+  title='Database | ORM'
+  href='/docs/server/database-orm'
+  description='Mock database queries and ORM interactions'
+/>
+
   <Card
-    title='GraphQL'
-    href='/docs/server/GraphQL'
-    description='Create GraphQL API mocks and queries'
+    title="Logger"
+    href="/docs/server/logger"
+    description="Debug and monitor requests with detailed logging"
   />
 </Cards>
