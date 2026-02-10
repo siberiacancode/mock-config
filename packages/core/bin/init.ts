@@ -22,25 +22,25 @@ export const init = async (argv: MockServerConfigArgv) => {
         {
           type: 'select',
           name: 'apiType',
-          message: 'Choose api type',
+          message: 'Choose API type',
           initial: 0,
           choices: [
-            { title: 'Rest', description: 'Rest api sample', value: 'rest' },
-            { title: 'GraphQL', description: 'GraphQL api sample', value: 'graphql' },
-            { title: 'Both', description: 'Rest api and GraphQL api sample', value: 'full' }
+            { title: 'REST', description: 'REST API sample', value: 'rest' },
+            { title: 'GraphQL', description: 'GraphQL API sample', value: 'graphql' },
+            { title: 'Both', description: 'REST API and GraphQL API sample', value: 'full' }
           ]
         },
         {
           name: 'baseUrl',
           type: argv.baseUrl ? null : 'text',
-          message: 'Base url (must start with a forward slash):',
+          message: 'Base URL (must start with a forward slash):',
           initial: '/',
           validate: (baseUrl) => {
             try {
               baseUrlSchema.parse(baseUrl);
               return true;
             } catch {
-              return 'Invalid base url value';
+              return 'Invalid base URL value';
             }
           }
         },
