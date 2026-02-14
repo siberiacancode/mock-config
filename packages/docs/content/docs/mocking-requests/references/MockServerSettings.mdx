@@ -1,0 +1,38 @@
+---
+title: MockServerSettings
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+<TypeTable
+  type={{
+    baseUrl: {
+      description: 'The base URL of the concrete component',
+      type: '`/${string}`'
+    },
+    cors: {
+      description: 'CORS settings for the server',
+      type: 'Cors',
+      typeDescriptionLink: './Cors'
+    },
+    database: {
+      description: 'Database settings for the server',
+      type: 'DatabaseConfig',
+      typeDescriptionLink: './DatabaseConfig'
+    },
+    interceptors: {
+      description: 'Interceptors applied to all requests in this component',
+      type: 'Interceptors',
+      typeDescriptionLink: './Interceptors'
+    },
+    port: {
+      description: 'The port on which the server will run',
+      type: 'number'
+    },
+    staticPath: {
+      description: 'The path to the static files to be served by the server',
+      type: 'StaticPath',
+      typeDescriptionLink: './StaticPath'
+    }
+  }}
+/>

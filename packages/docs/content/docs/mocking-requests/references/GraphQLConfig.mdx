@@ -1,0 +1,170 @@
+---
+title: GraphQLConfig
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+ 
+<a id="GraphqlConfig"></a>
+## GraphqlConfig
+
+<TypeTable
+  type={{
+    baseUrl: {
+      description: 'Optional base URL for GraphQL endpoints',
+      type: '`/${string}`'
+    },
+    configs: {
+      description: 'Array of GraphQL request configurations',
+      type: 'GraphQLRequestConfig[]',
+      typeDescriptionLink: '#GraphQLRequestConfig',
+      required: true
+    },
+    interceptors: {
+      description: 'Optional interceptors applied to GraphQL handlers',
+      type: "Interceptors<'graphql'>",
+      typeDescriptionLink: './Interceptors'
+    }
+  }}
+/>
+
+<a id='GraphQLOperationType'></a>
+## GraphQLOperationType
+
+Operation types supported by GraphQL configs
+
+```typescript
+type GraphQLOperationType = 'mutation' | 'query';
+```
+
+<a id='GraphQLRequestConfig'></a>
+## GraphQLRequestConfig
+
+<TypeTable
+  type={{
+    operationType: {
+      description: 'Operation type (query or mutation)',
+      type: 'GraphQLOperationType',
+      typeDescriptionLink: '#GraphQLOperationType',
+      required: true
+    },
+    operationName: {
+      description: 'Operation name (string or RegExp) used to match requests',
+      type: 'GraphQLOperationName',
+      typeDescriptionLink: '#GraphQLOperationName'
+    },
+    query: {
+      description: 'GraphQL query string to match against incoming requests',
+      type: 'string'
+    },
+    routes: {
+      description: 'One or more route responses or queues for this operation',
+      type: 'GraphQLRouteConfig[]',
+      typeDescriptionLink: '#GraphQLRouteConfig',
+      required: true
+    },
+    interceptors: {
+      description: 'Optional interceptors for this specific GraphQL config',
+      type: "Interceptors<'graphql'>",
+      typeDescriptionLink: './Interceptors'
+    }
+  }}
+/>
+
+<a id='GraphQLRouteConfig'></a>
+## GraphQLRouteConfig
+
+There are 2 ways to specify a GraphQL route:
+
+You can pass a `queue` field with an array of timed responses (for polling/queues):
+
+<TypeTable
+  type={{
+    settings: {
+      description: 'Optional response settings (delay, polling, status)',
+      type: 'GraphQLSettings & { polling: true }',
+      typeDescriptionLink: '#GraphQLSettings'
+    },
+    queue: {
+      description: 'Sequence of timed responses (for polling/queues)',
+      type: 'Array<{ time?: number; data: GraphqlDataResponse }>',
+      required: true
+    },
+    entities: {
+      description: 'Optional request entities mapping (cookies, headers, query, variables)',
+      type: 'GraphQLEntitiesByEntityName',
+      typeDescriptionLink: '#GraphQLEntitiesByEntityName'
+    },
+    interceptors: {
+      description: 'Optional interceptors applied to GraphQL routes',
+      type: "Interceptors<'graphql'>",
+      typeDescriptionLink: './Interceptors'
+    }
+  }}
+/>
+
+Or you can specify a single response with the `data` field:
+
+<TypeTable
+  type={{
+    settings: {
+      description: 'Optional response settings (delay, polling, status)',
+      type: 'GraphQLSettings & { polling?: false }',
+      typeDescriptionLink: '#GraphQLSettings'
+    },
+    data: {
+      description: 'Static or dynamic response data (function or value)',
+      type: 'GraphqlDataResponse',
+      typeDescriptionLink: '#GraphqlDataResponse',
+      required: true
+    },
+    entities: {
+      description: 'Optional request entities mapping (cookies, headers, query, variables)',
+      type: 'GraphQLEntitiesByEntityName',
+      typeDescriptionLink: '#GraphQLEntitiesByEntityName'
+    },
+    interceptors: {
+      description: 'Optional interceptors applied to GraphQL routes',
+      type: "Interceptors<'graphql'>",
+      typeDescriptionLink: './Interceptors'
+    }
+  }}
+/>
+
+<a id='GraphqlDataResponse'></a>
+## GraphqlDataResponse
+
+<TypeTable
+  type={{
+    GraphqlDataResponse: {
+      description: 'Either a static Data value or a function producing Data (sync or async)',
+      type: 'Data | (request: Request, entities: GraphQLEntitiesByEntityName) => Data | Promise<Data>'
+    }
+  }}
+/>
+
+<a id='GraphQLSettings'></a>
+## GraphQLSettings
+
+<TypeTable
+  type={{
+    delay: {
+      description: 'Optional artificial delay (ms) applied to this response',
+      type: 'number'
+    },
+    polling: {
+      description: 'Whether this route is polling (returns queued responses)',
+      type: 'boolean'
+    },
+    status: {
+      description: 'Optional HTTP status code for the response',
+      type: 'number'
+    }
+  }}
+/>
+
+<a id='GraphQLEntitiesByEntityName'></a>
+## GraphQLEntitiesByEntityName
+
+```typescript
+Record<'cookies' | 'headers' | 'query' | 'variables', GraphQLEntity>;
+```

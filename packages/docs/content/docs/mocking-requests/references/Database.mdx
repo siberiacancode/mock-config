@@ -1,0 +1,109 @@
+---
+title: Database
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+## DatabaseConfig
+
+<TypeTable
+  type={{
+    data: {
+      description: 'Initial data for the database',
+      type: '`${string}.json` | Record<string, unknown>',
+      required: true
+    },
+    routes: {
+      description: 'Optional array of route configurations for database operations',
+      type: '`${string}.json` | Record<`/${string}`, `/${string}`>'
+    }
+  }}
+/>
+
+<a id='Orm'></a>
+## ORM
+
+The ORM type is determined by the structure of your database. If a database is an array where each element has an `id` property, it uses `NestedOrm`. Otherwise, it uses `ShallowOrm`.
+
+## ShallowOrm{'<'}Item{'>'}
+
+Used for non-array database fields or arrays without `id` properties.
+
+<TypeTable
+  type={{
+    get: {
+      description: 'Get the current value',
+      type: '() => Item',
+      required: true
+    },
+    update: {
+      description: 'Update the value',
+      type: '(data: Item) => void',
+      required: true
+    }
+  }}
+/>
+
+## NestedOrm{'<'}Item{'>'}
+
+Used for array database fields where each element has an `id` property. Provides full CRUD operations.
+
+<TypeTable
+  type={{
+    count: {
+      description: 'Get the number of items in the collection',
+      type: '() => number',
+      required: true
+    },
+    create: {
+      description: 'Create a new item (id will be auto-generated)',
+      type: '(item: Omit<Item, "id">) => Item',
+      required: true
+    },
+    createMany: {
+      description: 'Create multiple items at once',
+      type: '(items: Omit<Item, "id">[]) => void',
+      required: true
+    },
+    delete: {
+      description: 'Delete an item by id',
+      type: '(id: StorageIndex) => void',
+      required: true
+    },
+    deleteMany: {
+      description: 'Delete multiple items by their ids',
+      type: '(ids: StorageIndex[]) => void',
+      required: true
+    },
+    exists: {
+      description: 'Check if an item exists matching the filters',
+      type: '(filters: Partial<Item>) => boolean',
+      required: true
+    },
+    findById: {
+      description: 'Find an item by its id',
+      type: '(id: StorageIndex) => Item | undefined',
+      required: true
+    },
+    findFirst: {
+      description: 'Find the first item matching the filters',
+      type: '(filters?: Partial<Item>) => Item | undefined',
+      required: true
+    },
+    findMany: {
+      description: 'Find all items matching the filters',
+      type: '(filters?: Partial<Item>) => Item[]',
+      required: true
+    },
+    update: {
+      description: 'Update an item by its id',
+      type: '(id: StorageIndex, item: Partial<Omit<Item, "id">>) => void',
+      required: true
+    },
+    updateMany: {
+      description: 'Update multiple items by their ids',
+      type: '(ids: StorageIndex[], item: Partial<Omit<Item, "id">>) => number',
+      required: true
+    }
+  }}
+/>

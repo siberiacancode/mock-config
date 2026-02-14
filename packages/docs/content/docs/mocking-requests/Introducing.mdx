@@ -1,0 +1,38 @@
+---
+title: Introducing
+description: Introduction to mock-config-server
+---
+
+<img src='/mock-config/configSchemaLight.svg' className='dark:hidden' />
+<img src='/mock-config/configSchemaDark.svg' className='hidden dark:block' />
+
+The global mock configuration is represented as an array in which the first element is either `settings` or a `component`, and all subsequent elements are components.
+
+## Settings
+
+`Settings` define global parameters for the mock server. They enable you to configure features such as CORS, logging, artificial delays, and other operational options that apply to the entire server.
+
+Settings are optional and can be placed as the first element in your configuration array. For detailed information, refer to the [Settings](./settings) section.
+
+## Components
+
+`Components` are modular units that organize and group related mock requests. They allow you to:
+
+- Scope requests under a common base URL
+- Apply shared interceptors to all requests within the component
+- Group related endpoints together for better organization
+
+Each component contains a `configs` array, which holds the actual request definitions. These configs are where you define how individual API endpoints should be mocked.
+
+For detailed type information, refer to the [MockServerComponent](./references/MockServerComponent) reference.
+
+## Configs
+
+`Configs` are a fundamental concept in the mock server. Each config defines how to handle a single API endpoint.
+
+Configs are easy to fill and maintain. They allow you to emulate various application behaviors by specifying matching criteria:
+
+- For **REST requests**: `headers`, `cookies`, `query`, `params`, or `body`
+- For **GraphQL requests**: `headers`, `cookies`, `query`, or `variables`
+
+Using these matching criteria, you can define different responses for different request conditions, making it easy to simulate various server behaviors and edge cases.

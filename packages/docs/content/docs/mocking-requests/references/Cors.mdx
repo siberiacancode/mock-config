@@ -1,0 +1,66 @@
+---
+title: CORS
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+## Cors
+
+<TypeTable
+  type={{
+    allowedHeaders: {
+      description: 'List of allowed headers for CORS',
+      type: 'string[]',
+      default: '*'
+    },
+    credentials: {
+      description: 'Whether to allow sending credentials (cookies, auth headers)',
+      type: 'boolean',
+      default: true
+    },
+    exposedHeaders: {
+      description: 'Headers exposed to the browser',
+      type: 'string[]',
+      default: '*'
+    },
+    maxAge: {
+      description: 'How long (in seconds) the results of a preflight request can be cached',
+      type: 'number',
+      default: 3600
+    },
+    methods: {
+      description: 'Allowed HTTP methods (uppercased)',
+      type: 'Uppercase<RestMethod>[]',
+      typeDescriptionLink: './restConfig#RestMethod',
+      default: 'GET,OPTIONS,PUT,PATCH,POST,DELETE'
+    },
+    origin: {
+      description:
+        'Allowed origin(s) — string, RegExp, array of strings/RegExps, or a function returning them',
+      type: (
+        <span>
+          ((request: Request) {'=>'}{' '}
+          <a className='underline' href='#CorsOrigin'>
+            CorsOrigin
+          </a>{' '}
+          | Promise{'<'}
+          <a className='underline' href='#CorsOrigin'>
+            CorsOrigin
+          </a>
+          {'>'}) |{' '}
+          <a className='underline' href='#CorsOrigin'>
+            CorsOrigin
+          </a>
+        </span>
+      ),
+      required: true
+    }
+  }}
+/>
+
+<a id='CorsOrigin'></a>
+## CorsOrigin
+
+```typescript
+string | (string | RegExp)[] | RegExp
+```

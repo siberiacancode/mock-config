@@ -1,0 +1,163 @@
+---
+title: Interceptors
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+## Interceptors{'<'}Api{'>'}
+
+<TypeTable
+  type={{
+    request: {
+      description: 'The request interceptor',
+      type: (
+        <span>
+          (params:{' '}
+          <a href='#RequestInterceptorParams' className='underline'>
+            RequestInterceptorParams{'<'}Api{'>'}
+          </a>
+          ) {'=>'} void | Promise{'<void>'}
+        </span>
+      ),
+      parameters: [
+        {
+          name: 'params',
+          description: 'The parameters of the request interceptor',
+          type: 'RequestInterceptorParams<Api>'
+        }
+      ]
+    },
+    response: {
+      description: 'The response interceptor',
+      type: (
+        <span>
+          (params:{' '}
+          <a href='#ResponseInterceptorParams' className='underline'>
+            ResponseInterceptorParam{'<'}Api{'>'}
+          </a>
+          , data: any) {'=>'} void | Promise{'<void>'}
+        </span>
+      ),
+      parameters: [
+        {
+          name: 'params',
+          description: 'The parameters of the response interceptor'
+        },
+        {
+          name: 'data',
+          description: 'Mock data of request'
+        }
+      ]
+    }
+  }}
+/>
+
+<a id='RequestInterceptorParams'></a>
+## RequestInterceptorParams{'<'}Api{'>'}
+
+<TypeTable
+  type={{
+    orm: {
+      description: 'ORM instance for database access',
+      type: 'Orm<Database>',
+      typeDescriptionLink: './Database#Orm'
+    },
+    request: {
+      description: 'Request object',
+      type: 'Request'
+    },
+    getCookie: {
+      description: 'Get cookie value by name',
+      type: '(name: string) => InterceptorCookieValue'
+    },
+    getHeader: {
+      description: 'Get header value by name',
+      type: '(field: string) => InterceptorHeaderValue'
+    },
+    getHeaders: {
+      description: 'Get all headers',
+      type: '() => Record<string, InterceptorHeaderValue>'
+    },
+    log: {
+      description: 'Log request data',
+      type: "(logger?: Logger<'request', Api>) => Partial<LoggerTokens>"
+    },
+    setDelay: {
+      description: 'Set an artificial request delay (ms)',
+      type: '(delay: number) => Promise<void>'
+    }
+  }}
+/>
+
+<a id='ResponseInterceptorParams'></a>
+## ResponseInterceptorParams{'<'}Api{'>'}
+
+<TypeTable
+  type={{
+    orm: {
+      description: 'ORM instance for database access',
+      type: 'Orm<Database>',
+      typeDescriptionLink: './Database#Orm'
+    },
+    request: {
+      description: 'Incoming request object',
+      type: 'Request'
+    },
+    response: {
+      description: 'Response object',
+      type: 'Response'
+    },
+    appendHeader: {
+      description: 'Append a header to the response',
+      type: '(field: string, value?: string | string[]) => void'
+    },
+    attachment: {
+      description: 'Set response as an attachment with the given filename',
+      type: '(filename: string) => void'
+    },
+    clearCookie: {
+      description: 'Clear a cookie by name',
+      type: '(name: string, options?: CookieOptions) => void'
+    },
+    getCookie: {
+      description: 'Get cookie value by name',
+      type: '(name: string) => InterceptorCookieValue'
+    },
+    getRequestHeader: {
+      description: 'Get header value by name from the request',
+      type: '(field: string) => InterceptorHeaderValue'
+    },
+    getRequestHeaders: {
+      description: 'Get all headers from the request',
+      type: '() => Record<string, InterceptorHeaderValue>'
+    },
+    getResponseHeader: {
+      description: 'Get header value by name from the response',
+      type: '(field: string) => InterceptorHeaderValue'
+    },
+    getResponseHeaders: {
+      description: 'Get all headers from the response',
+      type: '() => Record<string, InterceptorHeaderValue>'
+    },
+    log: {
+      description: 'Log response data',
+      type: "(logger?: Logger<'response', Api>) => Partial<LoggerTokens>"
+    },
+    setCookie: {
+      description: 'Set a cookie on the response',
+      type: '(name: string, value: string, options?: CookieOptions) => void'
+    },
+    setDelay: {
+      description: 'Set an artificial response delay (ms)',
+      type: '(delay: number) => Promise<void>'
+    },
+    setHeader: {
+      description: 'Set or replace a response header',
+      type: '(field: string, value?: string | string[]) => void'
+    },
+    setStatusCode: {
+      description: 'Set the response status code',
+      type: '(statusCode: number) => void'
+    }
+  }}
+/>

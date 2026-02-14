@@ -1,0 +1,203 @@
+---
+title: RestConfig
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+ 
+## RestConfig
+
+<TypeTable
+  type={{
+    baseUrl: {
+      description: 'Optional base URL for REST routes',
+      type: '`/${string}`'
+    },
+    configs: {
+      description: 'Array of REST request configurations',
+      type: 'RestRequestConfig[]',
+      typeDescriptionLink: '#RestRequestConfig',
+      required: true
+    },
+    interceptors: {
+      description: 'Optional interceptors applied to REST handlers',
+      type: "Interceptors<'rest'>",
+      typeDescriptionLink: './Interceptors'
+    }
+  }}
+/>
+
+<a id='RestRequestConfig'></a>
+## RestRequestConfig
+
+<TypeTable
+  type={{
+    method: {
+      description: 'HTTP method for this config',
+      type: 'RestMethod',
+      typeDescriptionLink: '#RestMethod',
+      required: true
+    },
+    path: {
+      description: 'Route path',
+      type: 'RegExp | `/${string}`',
+      typeDescriptionLink: '#RestPathString',
+      required: true
+    },
+    routes: {
+      description: 'One or more route responses or queues for this path',
+      type: 'RestRouteConfig<Method>[]',
+      typeDescriptionLink: '#RestRouteConfig',
+      required: true
+    },
+    interceptors: {
+      description: 'Optional interceptors for this specific request config',
+      type: "Interceptors<'rest'>",
+      typeDescriptionLink: '#Interceptors'
+    }
+  }}
+/>
+
+<a id='RestRouteConfig'></a>
+## RestRouteConfig{'<'}Method{'>'}
+
+There are 3 ways to specify the RestRequestConfig:
+
+You can pass a queue field with an array of timed responses (for polling/queues):
+
+<TypeTable
+  type={{
+    settings: {
+      description: 'Optional response settings (delay, polling, status)',
+      type: 'RestSettings & { polling: true }',
+      typeDescriptionLink: '#RestSettings'
+    },
+    queue: {
+      description: 'Sequence of timed responses (for polling/queues)',
+      type: 'Array<{ time?: number; data: RestDataResponse<Method> } | { time?: number; file: string }>',
+      required: true
+    },
+    entities: {
+      description: 'Optional request entities mapping (params, headers, query, etc.)',
+      type: 'RestEntitiesByEntityName<Method>',
+      typeDescriptionLink: '#RestEntitiesByEntityName'
+    },
+    interceptors: {
+      description: 'Optional interceptors applied to routes',
+      type: "Interceptors<'rest'>",
+      typeDescriptionLink: './Interceptors'
+    }
+  }}
+/>
+
+Or you can specify a single response with the data field:
+
+<TypeTable
+  type={{
+    settings: {
+      description: 'Optional response settings (delay, polling, status)',
+      type: 'RestSettings & { polling: true }',
+      typeDescriptionLink: '#RestSettings'
+    },
+    data: {
+      description: 'Static or dynamic response data (function or value)',
+      type: 'RestDataResponse<Method>',
+      typeDescriptionLink: '#RestDataResponse'
+    },
+    entities: {
+      description: 'Optional request entities mapping (params, headers, query, etc.)',
+      type: 'RestEntitiesByEntityName<Method>',
+      typeDescriptionLink: '#RestEntitiesByEntityName'
+    },
+    interceptors: {
+      description: 'Optional interceptors applied to routes',
+      type: "Interceptors<'rest'>",
+      typeDescriptionLink: './Interceptors'
+    }
+  }}
+/>
+
+Or you can specify a file response with the file field:
+
+<TypeTable
+  type={{
+    settings: {
+      description: 'Optional response settings (delay, polling, status)',
+      type: 'RestSettings & { polling: true }',
+      typeDescriptionLink: '#RestSettings'
+    },
+    file: {
+      description: 'Path to a file to return as response',
+      type: 'string'
+    },
+    entities: {
+      description: 'Optional request entities mapping (params, headers, query, etc.)',
+      type: 'RestEntitiesByEntityName<Method>',
+      typeDescriptionLink: '#RestEntitiesByEntityName'
+    },
+    interceptors: {
+      description: 'Optional interceptors applied to routes',
+      type: "Interceptors<'rest'>",
+      typeDescriptionLink: './Interceptors'
+    }
+  }}
+/>
+
+<a id='RestDataResponse'></a>
+## RestDataResponse{'<'}Method{'>'}
+
+```typescript
+<Method extends RestMethod = RestMethod>
+((request: Request, entities: RestEntitiesByEntityName<Method>) => Data | Promise<Data>) | Data;
+```
+
+<a id='RestSettings'></a>
+## RestSettings
+
+<TypeTable
+  type={{
+    delay: {
+      description: 'Optional artificial delay (ms) applied to this response',
+      type: 'number'
+    },
+    polling: {
+      description: 'Whether this route is polling (returns queued responses)',
+      type: 'boolean'
+    },
+    status: {
+      description: 'Optional HTTP status code for the response',
+      type: 'number'
+    }
+  }}
+/>
+
+<a id='RestMethod'></a>
+## RestMethod
+
+<TypeTable
+  type={{
+    RestMethod: {
+      description: 'HTTP methods supported by REST configs',
+      type: "'delete' | 'get' | 'options' | 'patch' | 'post' | 'put'"
+    }
+  }}
+/>
+
+<a id='RestEntitiesByEntityName'></a>
+## RestEntitiesByEntityName{'<'}Method{'>'}
+
+A record type that maps entity names to their corresponding entity definitions. The available entity names depend on the HTTP method.
+
+**For GET, DELETE, and OPTIONS requests (methods without request body)**:
+
+```typescript
+Record<'cookies' | 'headers' | 'params' | 'query', RestEntity>;
+```
+
+**For POST, PUT, and PATCH requests (methods with request body)**:
+
+```typescript
+<Method extends RestMethod = RestMethod>
+Record<'cookies' | 'headers' | 'params' | 'query', 'body', RestEntity>
+```
+
+These methods support all the same entities as above, plus an optional `body` entity for matching request body content.

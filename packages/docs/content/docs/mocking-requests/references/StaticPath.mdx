@@ -1,0 +1,29 @@
+---
+title: StaticPath
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+## StaticPath
+
+```typescript
+`/${string}` | (`/${string}` | StaticPathObject)[] | StaticPathObject
+```
+
+<a id='StaticPathObject'></a>
+## StaticPathObject
+
+<TypeTable
+  type={{
+    path: {
+      description: 'Path to your static files',
+      type: '`/${string}`',
+      required: true
+    },
+    prefix: {
+      description: 'Path prefix for request',
+      type: '`/${string}`',
+      required: true
+    }
+  }}
+/>
