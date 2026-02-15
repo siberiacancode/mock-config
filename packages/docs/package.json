@@ -1,0 +1,46 @@
+{
+  "name": "mock-config-docs",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "prod": "next build && node server.ts",
+    "postinstall": "fumadocs-mdx",
+    "lint": "eslint . --fix",
+    "format": "prettier --write .",
+    "type": "tsc --noEmit",
+    "pretty": "pnpm type && pnpm lint && pnpm format",
+    "lint-staged": "lint-staged"
+  },
+  "dependencies": {
+    "fumadocs-core": "16.2.2",
+    "fumadocs-mdx": "14.0.4",
+    "fumadocs-twoslash": "^3.1.10",
+    "fumadocs-ui": "16.2.2",
+    "lucide-react": "^0.544.0",
+    "next": "16.0.10",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.0",
+    "twoslash": "^0.3.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.13",
+    "@types/mdx": "^2.0.13",
+    "@types/node": "24.5.2",
+    "@types/react": "^19.1.14",
+    "@types/react-dom": "^19.1.9",
+    "@types/serve-handler": "^6.1.4",
+    "postcss": "^8.5.6",
+    "serve-handler": "^6.1.6",
+    "tailwindcss": "^4.1.13",
+    "lint-staged": "^15.3.0"
+  },
+  "lint-staged": {
+    "*.{js,ts,md,mdx,tsx,mjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}
