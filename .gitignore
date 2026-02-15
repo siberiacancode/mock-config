@@ -158,14 +158,6 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-=======
-# Local
-.env
-dist
-packages/core/mock-server.config.*
-packages/core/!bin/templates/**/mock-server.config.*
-packages/core/mock-requests
-
 # Logs
 logs
 *.log

@@ -17,14 +17,72 @@ importers:
       husky:
         specifier: ^9.1.7
         version: 9.1.7
-      lint-staged:
-        specifier: ^15.5.0
-        version: 15.5.2
       typescript:
         specifier: ^5.8.2
         version: 5.8.3
 
-  packages/core:
+  packages/docs:
+    dependencies:
+      fumadocs-core:
+        specifier: 16.2.2
+        version: 16.2.2(@types/react@19.2.0)(lucide-react@0.544.0(react@19.2.1))(next@16.0.10(react-dom@19.2.0(react@19.2.1))(react@19.2.1))(react-dom@19.2.0(react@19.2.1))(react@19.2.1)
+      fumadocs-mdx:
+        specifier: 14.0.4
+        version: 14.0.4(fumadocs-core@16.2.2(@types/react@19.2.0)(lucide-react@0.544.0(react@19.2.1))(next@16.0.10(react-dom@19.2.0(react@19.2.1))(react@19.2.1))(react-dom@19.2.0(react@19.2.1))(react@19.2.1))(next@16.0.10(react-dom@19.2.0(react@19.2.1))(react@19.2.1))(react@19.2.1)
+      fumadocs-twoslash:
+        specifier: ^3.1.10
+        version: 3.1.10(@types/react-dom@19.2.0(@types/react@19.2.0))(@types/react@19.2.0)(fumadocs-ui@16.2.2(@types/react-dom@19.2.0(@types/react@19.2.0))(@types/react@19.2.0)(lucide-react@0.544.0(react@19.2.1))(next@16.0.10(react-dom@19.2.0(react@19.2.1))(react@19.2.1))(react-dom@19.2.0(react@19.2.1))(react@19.2.1)(tailwindcss@4.1.14))(react-dom@19.2.0(react@19.2.1))(react@19.2.1)(typescript@5.9.3)
+      fumadocs-ui:
+        specifier: 16.2.2
+        version: 16.2.2(@types/react-dom@19.2.0(@types/react@19.2.0))(@types/react@19.2.0)(lucide-react@0.544.0(react@19.2.1))(next@16.0.10(react-dom@19.2.0(react@19.2.1))(react@19.2.1))(react-dom@19.2.0(react@19.2.1))(react@19.2.1)(tailwindcss@4.1.14)
+      lucide-react:
+        specifier: ^0.544.0
+        version: 0.544.0(react@19.2.1)
+      next:
+        specifier: 16.0.10
+        version: 16.0.10(react-dom@19.2.0(react@19.2.1))(react@19.2.1)
+      react:
+        specifier: ^19.2.1
+        version: 19.2.1
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.2.0(react@19.2.1)
+      twoslash:
+        specifier: ^0.3.2
+        version: 0.3.4(typescript@5.9.3)
+    devDependencies:
+      '@tailwindcss/postcss':
+        specifier: ^4.1.13
+        version: 4.1.14
+      '@types/mdx':
+        specifier: ^2.0.13
+        version: 2.0.13
+      '@types/node':
+        specifier: 24.5.2
+        version: 24.5.2
+      '@types/react':
+        specifier: ^19.1.14
+        version: 19.2.0
+      '@types/react-dom':
+        specifier: ^19.1.9
+        version: 19.2.0(@types/react@19.2.0)
+      '@types/serve-handler':
+        specifier: ^6.1.4
+        version: 6.1.4
+      lint-staged:
+        specifier: ^15.3.0
+        version: 15.5.2
+      postcss:
+        specifier: ^8.5.6
+        version: 8.5.6
+      serve-handler:
+        specifier: ^6.1.6
+        version: 6.1.6
+      tailwindcss:
+        specifier: ^4.1.13
+        version: 4.1.14
+
+  packages/server:
     dependencies:
       '@types/body-parser':
         specifier: ^1.19.5
@@ -78,12 +136,6 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
     devDependencies:
-      '@siberiacancode/eslint':
-        specifier: ^2.6.0
-        version: 2.11.0(@typescript-eslint/utils@8.36.0(eslint@9.27.0(jiti@2.6.1))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(jiti@2.6.1)(ts-api-utils@2.1.0(typescript@5.8.3))(typescript@5.8.3)(vitest@3.2.4(@types/debug@4.1.12)(@types/node@24.5.2)(jsdom@24.1.3)(lightningcss@1.30.1))
-      '@siberiacancode/prettier':
-        specifier: ^1.1.1
-        version: 1.3.0(prettier@3.6.2)
       '@siberiacancode/vitest':
         specifier: ^1.2.4
         version: 1.2.4(jsdom@24.1.3)(vitest@3.2.4(@types/debug@4.1.12)(@types/node@24.5.2)(jsdom@24.1.3)(lightningcss@1.30.1))
@@ -114,70 +166,9 @@ importers:
       tsc-alias:
         specifier: ^1.8.10
         version: 1.8.16
-      typescript:
-        specifier: ^5.7.3
-        version: 5.8.3
       vitest:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.5.2)(jsdom@24.1.3)(lightningcss@1.30.1)
-
-  packages/docs:
-    dependencies:
-      fumadocs-core:
-        specifier: 16.2.2
-        version: 16.2.2(@types/react@19.2.0)(lucide-react@0.544.0(react@19.2.1))(next@16.0.10(react-dom@19.2.0(react@19.2.1))(react@19.2.1))(react-dom@19.2.0(react@19.2.1))(react@19.2.1)
-      fumadocs-mdx:
-        specifier: 14.0.4
-        version: 14.0.4(fumadocs-core@16.2.2(@types/react@19.2.0)(lucide-react@0.544.0(react@19.2.1))(next@16.0.10(react-dom@19.2.0(react@19.2.1))(react@19.2.1))(react-dom@19.2.0(react@19.2.1))(react@19.2.1))(next@16.0.10(react-dom@19.2.0(react@19.2.1))(react@19.2.1))(react@19.2.1)
-      fumadocs-twoslash:
-        specifier: ^3.1.10
-        version: 3.1.10(@types/react-dom@19.2.0(@types/react@19.2.0))(@types/react@19.2.0)(fumadocs-ui@16.2.2(@types/react-dom@19.2.0(@types/react@19.2.0))(@types/react@19.2.0)(lucide-react@0.544.0(react@19.2.1))(next@16.0.10(react-dom@19.2.0(react@19.2.1))(react@19.2.1))(react-dom@19.2.0(react@19.2.1))(react@19.2.1)(tailwindcss@4.1.14))(react-dom@19.2.0(react@19.2.1))(react@19.2.1)(typescript@5.9.3)
-      fumadocs-ui:
-        specifier: 16.2.2
-        version: 16.2.2(@types/react-dom@19.2.0(@types/react@19.2.0))(@types/react@19.2.0)(lucide-react@0.544.0(react@19.2.1))(next@16.0.10(react-dom@19.2.0(react@19.2.1))(react@19.2.1))(react-dom@19.2.0(react@19.2.1))(react@19.2.1)(tailwindcss@4.1.14)
-      lucide-react:
-        specifier: ^0.544.0
-        version: 0.544.0(react@19.2.1)
-      next:
-        specifier: 16.0.10
-        version: 16.0.10(react-dom@19.2.0(react@19.2.1))(react@19.2.1)
-      react:
-        specifier: ^19.2.1
-        version: 19.2.1
-      react-dom:
-        specifier: ^19.2.0
-        version: 19.2.0(react@19.2.1)
-      twoslash:
-        specifier: ^0.3.2
-        version: 0.3.4(typescript@5.9.3)
-    devDependencies:
-      '@tailwindcss/postcss':
-        specifier: ^4.1.13
-        version: 4.1.14
-      '@types/mdx':
-        specifier: ^2.0.13
-        version: 2.0.13
-      '@types/node':
-        specifier: 24.5.2
-        version: 24.5.2
-      '@types/react':
-        specifier: ^19.1.14
-        version: 19.2.0
-      '@types/react-dom':
-        specifier: ^19.1.9
-        version: 19.2.0(@types/react@19.2.0)
-      '@types/serve-handler':
-        specifier: ^6.1.4
-        version: 6.1.4
-      postcss:
-        specifier: ^8.5.6
-        version: 8.5.6
-      serve-handler:
-        specifier: ^6.1.6
-        version: 6.1.6
-      tailwindcss:
-        specifier: ^4.1.13
-        version: 4.1.14
 
 packages:
 
@@ -2010,9 +2001,6 @@ packages:
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
 
-  '@types/node@24.0.12':
-    resolution: {integrity: sha512-LtOrbvDf5ndC9Xi+4QZjVL0woFymF/xSTKZKPgrrl7H7XoeDvnD+E2IclKVDyaK9UM756W/3BXqSU+JEHopA9g==}
-
   '@types/node@24.5.2':
     resolution: {integrity: sha512-FYxk1I7wPv3K2XBaoyH2cTnocQEu8AOZ60hPbsyukMPLv5/5qr7V1i8PLHdl6Zf87I+xZXFvPCXYjiTFq+YSDQ==}
 
@@ -3614,7 +3602,7 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   globals@14.0.0:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
@@ -5539,9 +5527,6 @@ packages:
   undici-types@7.12.0:
     resolution: {integrity: sha512-goOacqME2GYyOZZfb5Lgtu+1IDmAlAEu5xnD3+xTzS10hT0vzpf0SPjkXwAw9Jm+4n/mQGDP3LO8CPbYROeBfQ==}
 
-  undici-types@7.8.0:
-    resolution: {integrity: sha512-9UJ2xGDvQ43tYyVMpuHlsgApydB8ZKfVYTsLDhXkFL/6gfkp+U8xTGdh8pMJv1SpZna0zxG1DwsKZsreLbXBxw==}
-
   unified@11.0.5:
     resolution: {integrity: sha512-xKvGhPWw3k84Qjh8bI3ZeJjqnyadK+GEFtazSfZv/rKeTkTjOJho6mFqh2SM96iIcZokxiOpg78GazTSg8+KHA==}
 
@@ -7353,7 +7338,7 @@ snapshots:
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
-      '@types/node': 24.0.12
+      '@types/node': 24.5.2
 
   '@types/chai@5.2.2':
     dependencies:
@@ -7386,7 +7371,7 @@ snapshots:
 
   '@types/express-serve-static-core@5.0.7':
     dependencies:
-      '@types/node': 24.0.12
+      '@types/node': 24.5.2
       '@types/qs': 6.14.0
       '@types/range-parser': 1.2.7
       '@types/send': 0.17.5
@@ -7422,17 +7407,13 @@ snapshots:
 
   '@types/ms@2.1.0': {}
 
-  '@types/node@24.0.12':
-    dependencies:
-      undici-types: 7.8.0
-
   '@types/node@24.5.2':
     dependencies:
       undici-types: 7.12.0
 
   '@types/prompts@2.4.9':
     dependencies:
-      '@types/node': 24.0.12
+      '@types/node': 24.5.2
       kleur: 3.0.3
 
   '@types/qs@6.14.0': {}
@@ -7666,7 +7647,7 @@ snapshots:
     dependencies:
       '@vitest/spy': 3.2.4
       estree-walker: 3.0.3
-      magic-string: 0.30.17
+      magic-string: 0.30.19
     optionalDependencies:
       vite: 5.4.19(@types/node@24.5.2)(lightningcss@1.30.1)
 
@@ -7683,7 +7664,7 @@ snapshots:
   '@vitest/snapshot@3.2.4':
     dependencies:
       '@vitest/pretty-format': 3.2.4
-      magic-string: 0.30.17
+      magic-string: 0.30.19
       pathe: 2.0.3
 
   '@vitest/spy@3.2.4':
@@ -11822,8 +11803,6 @@ snapshots:
 
   undici-types@7.12.0: {}
 
-  undici-types@7.8.0: {}
-
   unified@11.0.5:
     dependencies:
       '@types/unist': 3.0.3
@@ -11981,13 +11960,13 @@ snapshots:
       chai: 5.2.1
       debug: 4.4.1(supports-color@5.5.0)
       expect-type: 1.2.2
-      magic-string: 0.30.17
+      magic-string: 0.30.19
       pathe: 2.0.3
-      picomatch: 4.0.2
+      picomatch: 4.0.3
       std-env: 3.9.0
       tinybench: 2.9.0
       tinyexec: 0.3.2
-      tinyglobby: 0.2.14
+      tinyglobby: 0.2.15
       tinypool: 1.1.1
       tinyrainbow: 2.0.0
       vite: 5.4.19(@types/node@24.5.2)(lightningcss@1.30.1)

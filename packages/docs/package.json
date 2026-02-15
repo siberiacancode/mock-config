@@ -34,7 +34,8 @@
     "@types/serve-handler": "^6.1.4",
     "postcss": "^8.5.6",
     "serve-handler": "^6.1.6",
-    "tailwindcss": "^4.1.13"
+    "tailwindcss": "^4.1.13",
+    "lint-staged": "^15.3.0"
   },
   "lint-staged": {
     "*.{js,ts,md,mdx,tsx,mjs}": [
