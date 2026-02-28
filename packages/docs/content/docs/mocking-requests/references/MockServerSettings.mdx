@@ -7,7 +7,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 <TypeTable
   type={{
     baseUrl: {
-      description: 'The base URL of the concrete component',
+      description: 'The base URL',
       type: '`/${string}`'
     },
     cors: {
@@ -18,10 +18,10 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
     database: {
       description: 'Database settings for the server',
       type: 'DatabaseConfig',
-      typeDescriptionLink: './DatabaseConfig'
+      typeDescriptionLink: './Database'
     },
     interceptors: {
-      description: 'Interceptors applied to all requests in this component',
+      description: 'Interceptors applied to all requests',
       type: 'Interceptors',
       typeDescriptionLink: './Interceptors'
     },

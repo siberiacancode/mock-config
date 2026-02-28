@@ -1,12 +1,12 @@
 {
   "pages": [
-    "MockServerComponent.mdx",
     "MockServerSettings.mdx",
+    "MockServerComponent.mdx",
     "Interceptors.mdx",
-    "RestConfig.mdx",
-    "GraphQLConfig.mdx",
     "Cors.mdx",
     "Database.mdx",
-    "StaticPath.mdx"
+    "StaticPath.mdx",
+    "Rest.mdx",
+    "GraphQL.mdx"
   ]
 }

@@ -8,12 +8,23 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
   type={{
     baseUrl: {
       description: 'The base URL of the concrete component',
-      typeDescriptionLink: './baseUrl',
-      type: 'BaseUrl'
+      type: '`/${string}`'
     },
     configs: {
       description: 'The configuration of the component',
-      type: 'Array<GraphQLRequestConfig | RestRequestConfig>',
+      type: (
+        <span>
+          Array{'<'}
+          <a className='underline' href='GraphQL#GraphQLRequestConfig'>
+            GraphQLRequestConfig
+          </a>{' '}
+          |{' '}
+          <a className='underline' href='Rest#RestRequestConfig'>
+            RestRequestConfig
+          </a>
+          {'>'}
+        </span>
+      ),
       required: true
     },
     name: {

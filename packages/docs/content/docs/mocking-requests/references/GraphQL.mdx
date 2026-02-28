@@ -1,16 +1,15 @@
 ---
-title: GraphQLConfig
+title: GraphQL
 ---
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
  
-<a id="GraphqlConfig"></a>
 ## GraphqlConfig
 
 <TypeTable
   type={{
     baseUrl: {
-      description: 'Optional base URL for GraphQL endpoints',
+      description: 'The base URL',
       type: '`/${string}`'
     },
     configs: {
@@ -26,15 +25,6 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
     }
   }}
 />
-
-<a id='GraphQLOperationType'></a>
-## GraphQLOperationType
-
-Operation types supported by GraphQL configs
-
-```typescript
-type GraphQLOperationType = 'mutation' | 'query';
-```
 
 <a id='GraphQLRequestConfig'></a>
 ## GraphQLRequestConfig
@@ -161,6 +151,15 @@ Or you can specify a single response with the `data` field:
     }
   }}
 />
+
+<a id='GraphQLOperationType'></a>
+## GraphQLOperationType
+
+Operation types supported by GraphQL configs
+
+```typescript
+type GraphQLOperationType = 'mutation' | 'query';
+```
 
 <a id='GraphQLEntitiesByEntityName'></a>
 ## GraphQLEntitiesByEntityName
