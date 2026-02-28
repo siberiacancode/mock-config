@@ -1,5 +1,6 @@
 import type { GraphQLRequestConfig, GraphQLRouteConfig } from '@/utils/types';
 
+import { checkModeSymbol } from '@/utils/constants';
 import { isPlainObject } from '@/utils/helpers';
 
 const calculateRouteConfigWeight = (graphQLRouteConfig: GraphQLRouteConfig) => {
@@ -7,16 +8,16 @@ const calculateRouteConfigWeight = (graphQLRouteConfig: GraphQLRouteConfig) => {
   if (!entities) return 0;
 
   let routeConfigWeight = 0;
-  const { headers, cookies, query, variables } = entities;
+  const { headers, cookies, queries, variables } = entities;
 
   if (headers) routeConfigWeight += Object.keys(headers).length;
   if (cookies) routeConfigWeight += Object.keys(cookies).length;
-  if (query) routeConfigWeight += Object.keys(query).length;
+  if (queries) routeConfigWeight += Object.keys(queries).length;
   if (variables) {
-    if (variables.checkMode) {
+    if (variables[checkModeSymbol]) {
       // ✅ important:
       // check that actual value check modes does not have `value` for compare
-      if (variables.checkMode === 'exists' || variables.checkMode === 'notExists') {
+      if (variables[checkModeSymbol] === 'exists' || variables[checkModeSymbol] === 'notExists') {
         routeConfigWeight += 1;
         return routeConfigWeight;
       }

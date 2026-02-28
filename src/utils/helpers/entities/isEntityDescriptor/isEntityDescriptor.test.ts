@@ -1,3 +1,5 @@
+import { checkModeSymbol } from '@/utils/constants';
+
 import { isEntityDescriptor } from './isEntityDescriptor';
 
 describe('isEntityDescriptor', () => {
@@ -9,7 +11,7 @@ describe('isEntityDescriptor', () => {
     expect(isEntityDescriptor('string')).toEqual(false);
     expect(isEntityDescriptor([])).toEqual(false);
     expect(isEntityDescriptor({ key: 'value' })).toEqual(false);
-    expect(isEntityDescriptor({ checkMode: 'exists' })).toEqual(true);
-    expect(isEntityDescriptor({ checkMode: 'equals', value: 'string' })).toEqual(true);
+    expect(isEntityDescriptor({ [checkModeSymbol]: 'exists' })).toEqual(true);
+    expect(isEntityDescriptor({ [checkModeSymbol]: 'equals', value: 'string' })).toEqual(true);
   });
 });

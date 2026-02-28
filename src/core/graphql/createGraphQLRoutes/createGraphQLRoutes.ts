@@ -9,10 +9,12 @@ import type {
   GraphQLEntitiesByEntityName,
   GraphQLEntity,
   Interceptors,
+  NonSymbolEntries,
   PlainObject,
   TopLevelPlainEntityDescriptor
 } from '@/utils/types';
 
+import { checkModeSymbol } from '@/utils/constants';
 import {
   asyncHandler,
   callRequestInterceptor,
@@ -100,28 +102,33 @@ export const createGraphQLRoutes = ({
         if (isEntityVariablesByTopLevelDescriptor) {
           const variablesDescriptor = entityDescriptorOrValue as EntityDescriptor;
           if (
-            variablesDescriptor.checkMode === 'exists' ||
-            variablesDescriptor.checkMode === 'notExists'
+            variablesDescriptor[checkModeSymbol] === 'exists' ||
+            variablesDescriptor[checkModeSymbol] === 'notExists'
           ) {
             return resolveEntityValues({
               actualValue: graphQLInput.variables,
-              checkMode: variablesDescriptor.checkMode
+              [checkModeSymbol]: variablesDescriptor[checkModeSymbol]
             });
           }
 
           return resolveEntityValues({
             actualValue: graphQLInput.variables,
             descriptorValue: variablesDescriptor.value,
-            checkMode: variablesDescriptor.checkMode,
+            [checkModeSymbol]: variablesDescriptor[checkModeSymbol],
             oneOf: variablesDescriptor.oneOf ?? false
           });
         }
 
         const actualEntity = flatten<PlainObject, PlainObject>(
-          entityName === 'variables' ? graphQLInput.variables : request[entityName]
+          entityName === 'variables'
+            ? graphQLInput.variables
+            : entityName === 'queries'
+              ? request.query
+              : request[entityName]
         );
-        const entityValueEntries = Object.entries(entityDescriptorOrValue) as Entries<
-          Exclude<GraphQLEntity, TopLevelPlainEntityDescriptor>
+
+        const entityValueEntries = Object.entries(entityDescriptorOrValue) as NonSymbolEntries<
+          Entries<Exclude<GraphQLEntity, TopLevelPlainEntityDescriptor>>
         >;
         return entityValueEntries.every(([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
           const entityPropertyDescriptor = convertToEntityDescriptor(
@@ -134,19 +141,19 @@ export const createGraphQLRoutes = ({
           const actualPropertyValue = actualEntity[actualPropertyKey];
 
           if (
-            entityPropertyDescriptor.checkMode === 'exists' ||
-            entityPropertyDescriptor.checkMode === 'notExists'
+            entityPropertyDescriptor[checkModeSymbol] === 'exists' ||
+            entityPropertyDescriptor[checkModeSymbol] === 'notExists'
           ) {
             return resolveEntityValues({
               actualValue: actualPropertyValue,
-              checkMode: entityPropertyDescriptor.checkMode
+              [checkModeSymbol]: entityPropertyDescriptor[checkModeSymbol]
             });
           }
 
           return resolveEntityValues({
             actualValue: actualPropertyValue,
             descriptorValue: entityPropertyDescriptor.value,
-            checkMode: entityPropertyDescriptor.checkMode,
+            [checkModeSymbol]: entityPropertyDescriptor[checkModeSymbol],
             oneOf: entityPropertyDescriptor.oneOf ?? false
           });
         });

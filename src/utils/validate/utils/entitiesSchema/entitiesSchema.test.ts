@@ -1,10 +1,12 @@
+import { checkModeSymbol } from '@/utils/constants';
+
 import { getMostSpecificPathFromError } from '../../getMostSpecificPathFromError';
 import { getValidationMessageFromPath } from '../../getValidationMessageFromPath';
 import { bodyPlainEntitySchema } from './entitiesSchema';
 
 it('Should return correct error path: firstly check object as a descriptor', () => {
   const incorrectTopLevelDescriptorBodyEntities = {
-    checkMode: 'equals'
+    [checkModeSymbol]: 'equals'
   };
   const topLevelParseResult = bodyPlainEntitySchema.safeParse(
     incorrectTopLevelDescriptorBodyEntities
@@ -19,7 +21,7 @@ it('Should return correct error path: firstly check object as a descriptor', () 
 
   const incorrectPropertyLevelDescriptorBodyEntities = {
     property: {
-      checkMode: 'equals'
+      [checkModeSymbol]: 'equals'
     }
   };
   const propertyLevelParseResult = bodyPlainEntitySchema.safeParse(

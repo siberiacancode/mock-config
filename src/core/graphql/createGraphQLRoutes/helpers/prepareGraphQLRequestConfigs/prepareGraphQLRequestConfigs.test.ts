@@ -1,5 +1,7 @@
 import type { GraphQLRequestConfig } from '@/utils/types';
 
+import { checkModeSymbol } from '@/utils/constants';
+
 import { prepareGraphQLRequestConfigs } from './prepareGraphQLRequestConfigs';
 
 describe('prepareGraphQLRequestConfigs', () => {
@@ -54,7 +56,7 @@ describe('prepareGraphQLRequestConfigs', () => {
               headers: {
                 header1: 'value'
               },
-              query: {
+              queries: {
                 query1: 'value',
                 query2: 'value'
               },
@@ -78,7 +80,7 @@ describe('prepareGraphQLRequestConfigs', () => {
               headers: {
                 header1: 'value'
               },
-              query: {
+              queries: {
                 query1: 'value',
                 query2: 'value'
               },
@@ -132,7 +134,7 @@ describe('prepareGraphQLRequestConfigs', () => {
           {
             entities: {
               variables: {
-                checkMode: 'equals',
+                [checkModeSymbol]: 'equals',
                 value: {
                   key1: 'value',
                   key2: 'value',
@@ -153,7 +155,7 @@ describe('prepareGraphQLRequestConfigs', () => {
           {
             entities: {
               variables: {
-                checkMode: 'equals',
+                [checkModeSymbol]: 'equals',
                 value: {
                   key1: 'value',
                   key2: 'value',
@@ -189,7 +191,7 @@ describe('prepareGraphQLRequestConfigs', () => {
           {
             entities: {
               variables: {
-                checkMode: 'exists'
+                [checkModeSymbol]: 'exists'
               }
             },
             data: { name: 'John', surname: 'Doe' }
@@ -197,7 +199,7 @@ describe('prepareGraphQLRequestConfigs', () => {
           {
             entities: {
               variables: {
-                checkMode: 'notExists'
+                [checkModeSymbol]: 'notExists'
               }
             },
             data: { name: 'John', surname: 'Doe' }

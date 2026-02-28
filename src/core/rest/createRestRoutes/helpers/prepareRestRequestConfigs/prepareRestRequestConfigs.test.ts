@@ -1,5 +1,7 @@
 import type { RestRequestConfig } from '@/utils/types';
 
+import { checkModeSymbol } from '@/utils/constants';
+
 import { prepareRestRequestConfigs } from './prepareRestRequestConfigs';
 
 describe('prepareRestRequestConfigs', () => {
@@ -110,7 +112,7 @@ describe('prepareRestRequestConfigs', () => {
               headers: {
                 header1: 'value'
               },
-              query: {
+              queries: {
                 query1: 'value',
                 query2: 'value'
               }
@@ -130,7 +132,7 @@ describe('prepareRestRequestConfigs', () => {
               headers: {
                 header1: 'value'
               },
-              query: {
+              queries: {
                 query1: 'value',
                 query2: 'value'
               }
@@ -228,7 +230,7 @@ describe('prepareRestRequestConfigs', () => {
           {
             entities: {
               body: {
-                checkMode: 'equals',
+                [checkModeSymbol]: 'equals',
                 value: {
                   key1: 'value',
                   key2: 'value',
@@ -249,7 +251,7 @@ describe('prepareRestRequestConfigs', () => {
           {
             entities: {
               body: {
-                checkMode: 'equals',
+                [checkModeSymbol]: 'equals',
                 value: {
                   key1: 'value',
                   key2: 'value',
@@ -283,7 +285,7 @@ describe('prepareRestRequestConfigs', () => {
           {
             entities: {
               body: {
-                checkMode: 'exists'
+                [checkModeSymbol]: 'exists'
               }
             },
             data: { name: 'John', surname: 'Doe' }
@@ -291,7 +293,7 @@ describe('prepareRestRequestConfigs', () => {
           {
             entities: {
               body: {
-                checkMode: 'notExists'
+                [checkModeSymbol]: 'notExists'
               }
             },
             data: { name: 'John', surname: 'Doe' }

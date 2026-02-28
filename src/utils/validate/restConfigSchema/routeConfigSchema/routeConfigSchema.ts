@@ -18,7 +18,7 @@ const entitiesByEntityNameSchema = (method: RestMethod) => {
       headers: mappedEntitySchema.optional(),
       cookies: mappedEntitySchema.optional(),
       params: mappedEntitySchema.optional(),
-      query: mappedEntitySchema.optional(),
+      queries: mappedEntitySchema.optional(),
       ...(isMethodWithBody && { body: bodyPlainEntitySchema.optional() })
     })
   );

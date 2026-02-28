@@ -4,6 +4,7 @@ import request from 'supertest';
 
 import type { GraphqlConfig, GraphQLOperationType, MockServerConfig } from '@/utils/types';
 
+import { checkModeSymbol } from '@/utils/constants';
 import { urlJoin } from '@/utils/helpers';
 
 import { createGraphQLRoutes } from './createGraphQLRoutes';
@@ -151,7 +152,7 @@ describe('createGraphQLRoutes: routing', () => {
                     key1: 'value1',
                     key2: 'value2'
                   },
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
@@ -281,13 +282,13 @@ describe('createGraphQLRoutes: content', () => {
             routes: [
               {
                 entities: {
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
-                data: ({ url }, { query }) => ({
+                data: ({ url }, { queries }) => ({
                   url,
-                  query
+                  queries
                 })
               }
             ]
@@ -304,7 +305,7 @@ describe('createGraphQLRoutes: content', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({
       url: `/?query=${encodeURIComponent('query GetUsers { users { name } }')}&key1=value1`,
-      query: {
+      queries: {
         key1: 'value1'
       }
     });
@@ -321,15 +322,15 @@ describe('createGraphQLRoutes: content', () => {
               {
                 settings: { polling: true },
                 entities: {
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
                 queue: [
                   {
-                    data: ({ url }, { query }) => ({
+                    data: ({ url }, { queries }) => ({
                       url,
-                      query
+                      queries
                     })
                   }
                 ]
@@ -348,7 +349,7 @@ describe('createGraphQLRoutes: content', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({
       url: `/?query=${encodeURIComponent('query GetUsers { users { name } }')}&key1=value1`,
-      query: {
+      queries: {
         key1: 'value1'
       }
     });
@@ -539,7 +540,7 @@ describe('createGraphQLRoutes: entities', () => {
                     key1: 'value1',
                     key2: 'value2'
                   },
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
@@ -587,7 +588,7 @@ describe('createGraphQLRoutes: entities', () => {
                     key1: 'value1',
                     key2: 'value2'
                   },
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
@@ -599,7 +600,7 @@ describe('createGraphQLRoutes: entities', () => {
                     key1: 'value1',
                     key2: 'value2'
                   },
-                  query: {
+                  queries: {
                     key1: 'value1',
                     key2: 'value2'
                   }
@@ -645,7 +646,7 @@ describe('createGraphQLRoutes: entities', () => {
               {
                 entities: {
                   variables: {
-                    checkMode: 'equals',
+                    [checkModeSymbol]: 'equals',
                     value: {
                       key1: 'value1',
                       key2: { nestedKey1: 'nestedValue1' }
@@ -719,7 +720,7 @@ describe('createGraphQLRoutes: entities', () => {
                   variables: {
                     'key1.nestedKey1': 'nestedValue1',
                     'key2.nestedKey2': {
-                      checkMode: 'equals',
+                      [checkModeSymbol]: 'equals',
                       value: 'nestedValue2'
                     }
                   }

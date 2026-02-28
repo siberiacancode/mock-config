@@ -8,6 +8,7 @@ import type {
   EntityDescriptor,
   Entries,
   Interceptors,
+  NonSymbolEntries,
   PlainObject,
   RestConfig,
   RestDataResponse,
@@ -18,6 +19,7 @@ import type {
   TopLevelPlainEntityDescriptor
 } from '@/utils/types';
 
+import { checkModeSymbol } from '@/utils/constants';
 import {
   asyncHandler,
   callRequestInterceptor,
@@ -67,19 +69,19 @@ export const createRestRoutes = ({
             if (isEntityBodyByTopLevelDescriptor) {
               const bodyDescriptor: EntityDescriptor = entityDescriptorOrValue;
               if (
-                bodyDescriptor.checkMode === 'exists' ||
-                bodyDescriptor.checkMode === 'notExists'
+                bodyDescriptor[checkModeSymbol] === 'exists' ||
+                bodyDescriptor[checkModeSymbol] === 'notExists'
               ) {
                 return resolveEntityValues({
                   actualValue: request.body,
-                  checkMode: bodyDescriptor.checkMode
+                  [checkModeSymbol]: bodyDescriptor[checkModeSymbol]
                 });
               }
 
               return resolveEntityValues({
                 actualValue: request.body,
                 descriptorValue: bodyDescriptor.value,
-                checkMode: bodyDescriptor.checkMode,
+                [checkModeSymbol]: bodyDescriptor[checkModeSymbol],
                 oneOf: bodyDescriptor.oneOf ?? false
               });
             }
@@ -92,13 +94,16 @@ export const createRestRoutes = ({
               return resolveEntityValues({
                 actualValue: request.body,
                 descriptorValue: entityDescriptorOrValue,
-                checkMode: 'equals'
+                [checkModeSymbol]: 'equals'
               });
             }
 
-            const actualEntity = flatten<PlainObject, PlainObject>(request[entityName]);
-            const entityValueEntries = Object.entries(entityDescriptorOrValue) as Entries<
-              Exclude<RestEntity, TopLevelPlainEntityArray | TopLevelPlainEntityDescriptor>
+            const actualEntity = flatten<PlainObject, PlainObject>(
+              entityName === 'queries' ? request.query : request[entityName]
+            );
+
+            const entityValueEntries = Object.entries(entityDescriptorOrValue) as NonSymbolEntries<
+              Entries<Exclude<RestEntity, TopLevelPlainEntityArray | TopLevelPlainEntityDescriptor>>
             >;
             return entityValueEntries.every(
               ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
@@ -112,19 +117,19 @@ export const createRestRoutes = ({
                 const actualPropertyValue = actualEntity[actualPropertyKey];
 
                 if (
-                  entityPropertyDescriptor.checkMode === 'exists' ||
-                  entityPropertyDescriptor.checkMode === 'notExists'
+                  entityPropertyDescriptor[checkModeSymbol] === 'exists' ||
+                  entityPropertyDescriptor[checkModeSymbol] === 'notExists'
                 ) {
                   return resolveEntityValues({
                     actualValue: actualPropertyValue,
-                    checkMode: entityPropertyDescriptor.checkMode
+                    [checkModeSymbol]: entityPropertyDescriptor[checkModeSymbol]
                   });
                 }
 
                 return resolveEntityValues({
                   actualValue: actualPropertyValue,
                   descriptorValue: entityPropertyDescriptor.value,
-                  checkMode: entityPropertyDescriptor.checkMode,
+                  [checkModeSymbol]: entityPropertyDescriptor[checkModeSymbol],
                   oneOf: entityPropertyDescriptor.oneOf ?? false
                 });
               }

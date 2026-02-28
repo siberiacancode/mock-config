@@ -5,13 +5,13 @@ import { isPlainObject } from '@/utils/helpers';
 import { getMostSpecificPathFromError } from '../../getMostSpecificPathFromError';
 
 type ExtendedDiscriminatedUnionVariant<
-  Discriminator extends string,
+  Discriminator extends string | symbol,
   Option extends z.ZodObject<{ [Key in Discriminator]: z.ZodTypeAny }> = z.ZodObject<{
     [Key in Discriminator]: z.ZodTypeAny;
   }>
 > = Option | z.ZodDiscriminatedUnion<string, [Option, ...Option[]]>;
 
-export const extendedDiscriminatedUnion = <Discriminator extends string>(
+export const extendedDiscriminatedUnion = <Discriminator extends string | symbol>(
   discriminator: Discriminator,
   variants: [
     ExtendedDiscriminatedUnionVariant<Discriminator>,
@@ -42,7 +42,7 @@ export const extendedDiscriminatedUnion = <Discriminator extends string>(
       if (!variantWithMatchedDiscriminator) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
-          path: [discriminator],
+          path: [typeof discriminator === 'symbol' ? 'checkModeSymbol' : discriminator],
           fatal: true
         });
         return z.NEVER;

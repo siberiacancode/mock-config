@@ -4,7 +4,7 @@ import type { MappedEntity, VariablesPlainEntity } from './entities';
 import type { Interceptors } from './interceptors';
 import type { Data } from './values';
 
-export type GraphQLEntityName = 'cookies' | 'headers' | 'query' | 'variables';
+export type GraphQLEntityName = 'cookies' | 'headers' | 'queries' | 'variables';
 
 export type GraphQLEntity<EntityName extends GraphQLEntityName = GraphQLEntityName> =
   EntityName extends 'variables' ? VariablesPlainEntity : MappedEntity;

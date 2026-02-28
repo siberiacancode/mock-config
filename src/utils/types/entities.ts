@@ -1,3 +1,5 @@
+import type { checkModeSymbol } from '@/utils/constants';
+
 import type {
   CheckActualValueCheckMode,
   CheckFunction,
@@ -44,7 +46,7 @@ type PropertyLevelPlainEntityDescriptor<Check extends CheckMode = CheckMode> =
             ? EntityDescriptor<Check>
             : never;
 
-type NonCheckMode<T extends object> = T & { checkMode?: never };
+type NonCheckMode<T extends object> = T & { checkMode?: never; [checkModeSymbol]?: never };
 
 type TopLevelPlainEntityRecord = NonCheckMode<
   Record<
@@ -79,3 +81,6 @@ type MappedEntityDescriptor<Check extends CheckMode = CheckMode> = Check extends
         : never;
 
 export type MappedEntity = Record<string, MappedEntityDescriptor | MappedEntityValue>;
+
+/* ----- Entity handlers ----- */
+export type NonSymbolEntries<T> = [string, T[keyof T]][];

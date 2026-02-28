@@ -7,6 +7,7 @@ import request from 'supertest';
 
 import type { MockServerConfig, RestConfig, RestMethod } from '@/utils/types';
 
+import { checkModeSymbol } from '@/utils/constants';
 import { urlJoin } from '@/utils/helpers';
 import { createTmpDir } from '@/utils/helpers/tests';
 
@@ -147,13 +148,13 @@ describe('createRestRoutes: content', () => {
             routes: [
               {
                 entities: {
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
-                data: ({ url }, { query }) => ({
+                data: ({ url }, { queries }) => ({
                   url,
-                  query
+                  queries
                 })
               }
             ]
@@ -167,7 +168,7 @@ describe('createRestRoutes: content', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({
       url: '/users?key1=value1',
-      query: {
+      queries: {
         key1: 'value1'
       }
     });
@@ -184,15 +185,15 @@ describe('createRestRoutes: content', () => {
               {
                 settings: { polling: true },
                 entities: {
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
                 queue: [
                   {
-                    data: ({ url }, { query }) => ({
+                    data: ({ url }, { queries }) => ({
                       url,
-                      query
+                      queries
                     })
                   }
                 ]
@@ -208,7 +209,7 @@ describe('createRestRoutes: content', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({
       url: '/users?key1=value1',
-      query: {
+      queries: {
         key1: 'value1'
       }
     });
@@ -630,7 +631,7 @@ describe('createRestRoutes: entities', () => {
                     key1: 'value1',
                     key2: 'value2'
                   },
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
@@ -665,7 +666,7 @@ describe('createRestRoutes: entities', () => {
                     key1: 'value1',
                     key2: 'value2'
                   },
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
@@ -677,7 +678,7 @@ describe('createRestRoutes: entities', () => {
                     key1: 'value1',
                     key2: 'value2'
                   },
-                  query: {
+                  queries: {
                     key1: 'value1',
                     key2: 'value2'
                   }
@@ -710,7 +711,7 @@ describe('createRestRoutes: entities', () => {
               {
                 entities: {
                   body: {
-                    checkMode: 'equals',
+                    [checkModeSymbol]: 'equals',
                     value: [
                       {
                         key1: 'value1',
@@ -752,7 +753,7 @@ describe('createRestRoutes: entities', () => {
               {
                 entities: {
                   body: {
-                    checkMode: 'equals',
+                    [checkModeSymbol]: 'equals',
                     value: {
                       key1: 'value1',
                       key2: { nestedKey1: 'nestedValue1' }
@@ -794,7 +795,7 @@ describe('createRestRoutes: entities', () => {
                   body: {
                     'key1.nestedKey1': 'nestedValue1',
                     'key2.nestedKey2': {
-                      checkMode: 'equals',
+                      [checkModeSymbol]: 'equals',
                       value: 'nestedValue2'
                     }
                   }
@@ -859,7 +860,7 @@ describe('createRestRoutes: entities', () => {
               {
                 entities: {
                   body: {
-                    checkMode: 'equals',
+                    [checkModeSymbol]: 'equals',
                     value: {}
                   }
                 },

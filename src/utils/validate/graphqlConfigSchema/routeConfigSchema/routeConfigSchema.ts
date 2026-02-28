@@ -13,7 +13,7 @@ const baseRouteConfigSchema = z.strictObject({
     z.strictObject({
       headers: mappedEntitySchema.optional(),
       cookies: mappedEntitySchema.optional(),
-      query: mappedEntitySchema.optional(),
+      queries: mappedEntitySchema.optional(),
       variables: variablesPlainEntitySchema.optional()
     })
   ).optional(),

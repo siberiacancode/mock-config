@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import {
   CHECK_ACTUAL_VALUE_CHECK_MODES,
+  checkModeSymbol,
   COMPARE_WITH_DESCRIPTOR_ANY_VALUE_CHECK_MODES,
   COMPARE_WITH_DESCRIPTOR_STRING_VALUE_CHECK_MODES,
   COMPARE_WITH_DESCRIPTOR_VALUE_CHECK_MODES
@@ -24,7 +25,7 @@ export const compareWithDescriptorValueCheckModeSchema = z.enum(
 export interface EntityDescriptorSchema {
   (
     checkModeSchema: typeof checkActualValueCheckModeSchema
-  ): z.ZodObject<{ checkMode: typeof checkModeSchema }, 'strict'>;
+  ): z.ZodObject<{ [checkModeSymbol]: typeof checkModeSchema }, 'strict'>;
 
   (
     checkModeSchema:
@@ -39,7 +40,7 @@ export interface EntityDescriptorSchema {
     [
       z.ZodObject<
         {
-          checkMode: typeof checkModeSchema;
+          [checkModeSymbol]: typeof checkModeSchema;
           oneOf: z.ZodLiteral<true>;
           value: z.ZodArray<typeof valueSchema>;
         },
@@ -47,7 +48,7 @@ export interface EntityDescriptorSchema {
       >,
       z.ZodObject<
         {
-          checkMode: typeof checkModeSchema;
+          [checkModeSymbol]: typeof checkModeSchema;
           oneOf: z.ZodOptional<z.ZodLiteral<false>>;
           value: typeof valueSchema;
         },
@@ -70,18 +71,17 @@ export const entityDescriptorSchema = ((
   const isCheckActualValueCheckMode = !valueSchema;
   if (isCheckActualValueCheckMode) {
     return z.strictObject({
-      checkMode: checkModeSchema
+      [checkModeSymbol]: checkModeSchema
     });
   }
-
   return z.discriminatedUnion('oneOf', [
     z.strictObject({
-      checkMode: checkModeSchema,
+      [checkModeSymbol]: checkModeSchema,
       value: valueSchema,
       oneOf: z.literal(false).optional()
     }),
     z.strictObject({
-      checkMode: checkModeSchema,
+      [checkModeSymbol]: checkModeSchema,
       value: z.array(valueSchema),
       oneOf: z.literal(true)
     })

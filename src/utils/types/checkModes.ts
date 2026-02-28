@@ -1,3 +1,5 @@
+import type { checkModeSymbol } from '@/utils/constants';
+
 export type CheckActualValueCheckMode = 'exists' | 'notExists';
 
 export type CompareWithDescriptorAnyValueCheckMode = 'equals' | 'notEquals';
@@ -25,10 +27,10 @@ export type EntityDescriptor<
   Check extends CheckMode = CheckMode,
   Value = any
 > = Check extends CheckActualValueCheckMode
-  ? { checkMode: Check }
+  ? { [checkModeSymbol]: Check }
   :
-      | { checkMode: Check; value: Value; oneOf?: false }
-      | { checkMode: Check; value: Value[]; oneOf: true };
+      | { [checkModeSymbol]: Check; value: Value; oneOf?: false }
+      | { [checkModeSymbol]: Check; value: Value[]; oneOf: true };
 
 export type CheckFunction = <ActualValue = any, DescriptorValue = any>(
   checkMode: CheckMode,

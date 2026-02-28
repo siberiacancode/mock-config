@@ -1,19 +1,25 @@
 import type { CheckFunction, CheckMode } from '@/utils/types';
 
+import { checkModeSymbol } from '@/utils/constants';
+
 import { resolveEntityValues } from './resolveEntityValues';
 
 describe('resolveEntityValues: checkMode without descriptor value', () => {
   it('"exists"/"notExists" checkMode should return false/true only for undefined', () => {
     const existedValues = ['string', true, 3000, null, {}, [], () => {}, /\d/];
     existedValues.forEach((value) => {
-      expect(resolveEntityValues({ checkMode: 'exists', actualValue: value })).toBe(true);
-      expect(resolveEntityValues({ checkMode: 'notExists', actualValue: value })).toBe(false);
+      expect(resolveEntityValues({ [checkModeSymbol]: 'exists', actualValue: value })).toBe(true);
+      expect(resolveEntityValues({ [checkModeSymbol]: 'notExists', actualValue: value })).toBe(
+        false
+      );
     });
 
     const nonExistedValues = [undefined];
     nonExistedValues.forEach((value) => {
-      expect(resolveEntityValues({ checkMode: 'exists', actualValue: value })).toBe(false);
-      expect(resolveEntityValues({ checkMode: 'notExists', actualValue: value })).toBe(true);
+      expect(resolveEntityValues({ [checkModeSymbol]: 'exists', actualValue: value })).toBe(false);
+      expect(resolveEntityValues({ [checkModeSymbol]: 'notExists', actualValue: value })).toBe(
+        true
+      );
     });
   });
 });
@@ -23,14 +29,14 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
     it('Should correctly test actual value against descriptor regExp', () => {
       expect(
         resolveEntityValues({
-          checkMode: 'regExp',
+          [checkModeSymbol]: 'regExp',
           actualValue: 'string',
           descriptorValue: /string/
         })
       ).toBe(true);
       expect(
         resolveEntityValues({
-          checkMode: 'regExp',
+          [checkModeSymbol]: 'regExp',
           actualValue: 'String',
           descriptorValue: /string/
         })
@@ -43,14 +49,14 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
       const regExpWithGlobalFlag = /string/g;
       expect(
         resolveEntityValues({
-          checkMode: 'regExp',
+          [checkModeSymbol]: 'regExp',
           actualValue: 'string',
           descriptorValue: regExpWithGlobalFlag
         })
       ).toBe(true);
       expect(
         resolveEntityValues({
-          checkMode: 'regExp',
+          [checkModeSymbol]: 'regExp',
           actualValue: 'string',
           descriptorValue: regExpWithGlobalFlag
         })
@@ -62,14 +68,14 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
     it('Should define resolving result by descriptor function truthy/falsy return value', () => {
       expect(
         resolveEntityValues({
-          checkMode: 'function',
+          [checkModeSymbol]: 'function',
           actualValue: 'primitive',
           descriptorValue: () => 'truthy'
         })
       ).toBe(true);
       expect(
         resolveEntityValues({
-          checkMode: 'function',
+          [checkModeSymbol]: 'function',
           actualValue: 'primitive',
           descriptorValue: () => ''
         })
@@ -79,7 +85,7 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
     it('Should call descriptor function with correct arguments', () => {
       const descriptorFn = vi.fn();
       resolveEntityValues({
-        checkMode: 'function',
+        [checkModeSymbol]: 'function',
         actualValue: 'primitive',
         descriptorValue: descriptorFn
       });
@@ -90,7 +96,7 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
     it('Should support nested function calls using checkFunction', () => {
       expect(
         resolveEntityValues({
-          checkMode: 'function',
+          [checkModeSymbol]: 'function',
           actualValue: 'primitive',
           descriptorValue: (actualValue: string, checkFunction: CheckFunction) =>
             checkFunction('function', actualValue, () => actualValue === 'primitive')
@@ -109,35 +115,35 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
     positiveCheckModes.forEach((positiveCheckMode) => {
       expect(
         resolveEntityValues({
-          checkMode: positiveCheckMode,
+          [checkModeSymbol]: positiveCheckMode,
           actualValue: '12',
           descriptorValue: 12
         })
       ).toBe(true);
       expect(
         resolveEntityValues({
-          checkMode: positiveCheckMode,
+          [checkModeSymbol]: positiveCheckMode,
           actualValue: 'true',
           descriptorValue: true
         })
       ).toBe(true);
       expect(
         resolveEntityValues({
-          checkMode: positiveCheckMode,
+          [checkModeSymbol]: positiveCheckMode,
           actualValue: 'string',
           descriptorValue: 'string'
         })
       ).toBe(true);
       expect(
         resolveEntityValues({
-          checkMode: positiveCheckMode,
+          [checkModeSymbol]: positiveCheckMode,
           actualValue: 'null',
           descriptorValue: null
         })
       ).toBe(true);
       expect(
         resolveEntityValues({
-          checkMode: positiveCheckMode,
+          [checkModeSymbol]: positiveCheckMode,
           actualValue: 'undefined',
           descriptorValue: undefined
         })
@@ -153,35 +159,35 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
     negativeCheckModes.forEach((negativeCheckMode) => {
       expect(
         resolveEntityValues({
-          checkMode: negativeCheckMode,
+          [checkModeSymbol]: negativeCheckMode,
           actualValue: '12',
           descriptorValue: 12
         })
       ).toBe(false);
       expect(
         resolveEntityValues({
-          checkMode: negativeCheckMode,
+          [checkModeSymbol]: negativeCheckMode,
           actualValue: 'true',
           descriptorValue: true
         })
       ).toBe(false);
       expect(
         resolveEntityValues({
-          checkMode: negativeCheckMode,
+          [checkModeSymbol]: negativeCheckMode,
           actualValue: 'string',
           descriptorValue: 'string'
         })
       ).toBe(false);
       expect(
         resolveEntityValues({
-          checkMode: negativeCheckMode,
+          [checkModeSymbol]: negativeCheckMode,
           actualValue: 'null',
           descriptorValue: null
         })
       ).toBe(false);
       expect(
         resolveEntityValues({
-          checkMode: negativeCheckMode,
+          [checkModeSymbol]: negativeCheckMode,
           actualValue: 'undefined',
           descriptorValue: undefined
         })
@@ -199,14 +205,14 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
     positiveCheckModes.forEach((positiveCheckMode) => {
       expect(
         resolveEntityValues({
-          checkMode: positiveCheckMode,
+          [checkModeSymbol]: positiveCheckMode,
           actualValue: 'primitive',
           descriptorValue: ['primitive', { property: 'primitive' }]
         })
       ).toBe(false);
       expect(
         resolveEntityValues({
-          checkMode: positiveCheckMode,
+          [checkModeSymbol]: positiveCheckMode,
           actualValue: ['primitive', { property: 'primitive' }],
           descriptorValue: 'primitive'
         })
@@ -222,14 +228,14 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
     negativeCheckModes.forEach((negativeCheckMode) => {
       expect(
         resolveEntityValues({
-          checkMode: negativeCheckMode,
+          [checkModeSymbol]: negativeCheckMode,
           actualValue: 'primitive',
           descriptorValue: ['primitive', { property: 'primitive' }]
         })
       ).toBe(true);
       expect(
         resolveEntityValues({
-          checkMode: negativeCheckMode,
+          [checkModeSymbol]: negativeCheckMode,
           actualValue: ['primitive', { property: 'primitive' }],
           descriptorValue: 'primitive'
         })
@@ -240,14 +246,14 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
   it('"equals"/"notEquals" checkMode should return true/false when actual and descriptor values are equal', () => {
     expect(
       resolveEntityValues({
-        checkMode: 'equals',
+        [checkModeSymbol]: 'equals',
         actualValue: 'primitive',
         descriptorValue: 'primitive'
       })
     ).toBe(true);
     expect(
       resolveEntityValues({
-        checkMode: 'equals',
+        [checkModeSymbol]: 'equals',
         actualValue: ['primitive', { property: 'primitive' }],
         descriptorValue: ['primitive', { property: 'primitive' }]
       })
@@ -255,14 +261,14 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
 
     expect(
       resolveEntityValues({
-        checkMode: 'notEquals',
+        [checkModeSymbol]: 'notEquals',
         actualValue: 'primitive',
         descriptorValue: 'primitive'
       })
     ).toBe(false);
     expect(
       resolveEntityValues({
-        checkMode: 'notEquals',
+        [checkModeSymbol]: 'notEquals',
         actualValue: ['primitive', { property: 'primitive' }],
         descriptorValue: ['primitive', { property: 'primitive' }]
       })
@@ -272,14 +278,14 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
   it('"includes"/"notIncludes" checkMode should return true/false when actual value includes descriptor value', () => {
     expect(
       resolveEntityValues({
-        checkMode: 'includes',
+        [checkModeSymbol]: 'includes',
         actualValue: 'primitive',
         descriptorValue: 'primitive'.slice(1, 2)
       })
     ).toBe(true);
     expect(
       resolveEntityValues({
-        checkMode: 'includes',
+        [checkModeSymbol]: 'includes',
         actualValue: ['primitive', { property: 'primitive' }],
         descriptorValue: ['primitive'.slice(1, 2), { property: 'primitive'.slice(1, 2) }]
       })
@@ -287,14 +293,14 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
 
     expect(
       resolveEntityValues({
-        checkMode: 'notIncludes',
+        [checkModeSymbol]: 'notIncludes',
         actualValue: 'primitive',
         descriptorValue: 'primitive'.slice(1, 2)
       })
     ).toBe(false);
     expect(
       resolveEntityValues({
-        checkMode: 'notIncludes',
+        [checkModeSymbol]: 'notIncludes',
         actualValue: ['primitive', { property: 'primitive' }],
         descriptorValue: ['primitive'.slice(1, 2), { property: 'primitive'.slice(1, 2) }]
       })
@@ -304,14 +310,14 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
   it('"startsWith"/"notStartsWith" checkMode should return true/false when actual value starts with descriptor value', () => {
     expect(
       resolveEntityValues({
-        checkMode: 'startsWith',
+        [checkModeSymbol]: 'startsWith',
         actualValue: 'primitive',
         descriptorValue: 'primitive'.slice(0, 2)
       })
     ).toBe(true);
     expect(
       resolveEntityValues({
-        checkMode: 'startsWith',
+        [checkModeSymbol]: 'startsWith',
         actualValue: ['primitive', { property: 'primitive' }],
         descriptorValue: ['primitive'.slice(0, 2), { property: 'primitive'.slice(0, 2) }]
       })
@@ -319,14 +325,14 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
 
     expect(
       resolveEntityValues({
-        checkMode: 'notStartsWith',
+        [checkModeSymbol]: 'notStartsWith',
         actualValue: 'primitive',
         descriptorValue: 'primitive'.slice(0, 2)
       })
     ).toBe(false);
     expect(
       resolveEntityValues({
-        checkMode: 'notStartsWith',
+        [checkModeSymbol]: 'notStartsWith',
         actualValue: ['primitive', { property: 'primitive' }],
         descriptorValue: ['primitive'.slice(0, 2), { property: 'primitive'.slice(0, 2) }]
       })
@@ -336,14 +342,14 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
   it('"endsWith"/"notEndsWith" checkMode should return true/false when actual value ends with descriptor value', () => {
     expect(
       resolveEntityValues({
-        checkMode: 'endsWith',
+        [checkModeSymbol]: 'endsWith',
         actualValue: 'primitive',
         descriptorValue: 'primitive'.slice(1)
       })
     ).toBe(true);
     expect(
       resolveEntityValues({
-        checkMode: 'endsWith',
+        [checkModeSymbol]: 'endsWith',
         actualValue: ['primitive', { property: 'primitive' }],
         descriptorValue: ['primitive'.slice(1), { property: 'primitive'.slice(1) }]
       })
@@ -351,14 +357,14 @@ describe('resolveEntityValues: checkMode with descriptor value', () => {
 
     expect(
       resolveEntityValues({
-        checkMode: 'notEndsWith',
+        [checkModeSymbol]: 'notEndsWith',
         actualValue: 'primitive',
         descriptorValue: 'primitive'.slice(1)
       })
     ).toBe(false);
     expect(
       resolveEntityValues({
-        checkMode: 'notEndsWith',
+        [checkModeSymbol]: 'notEndsWith',
         actualValue: ['primitive', { property: 'primitive' }],
         descriptorValue: ['primitive'.slice(1), { property: 'primitive'.slice(1) }]
       })
@@ -370,7 +376,7 @@ describe('resolveEntityValues: oneOf', () => {
   it('Should return true with oneOf=true if at least one passed descriptor value matched to actual value', () => {
     expect(
       resolveEntityValues({
-        checkMode: 'equals',
+        [checkModeSymbol]: 'equals',
         actualValue: [1, 2, 3],
         descriptorValue: [1, 2, 3],
         oneOf: true
@@ -379,7 +385,7 @@ describe('resolveEntityValues: oneOf', () => {
 
     expect(
       resolveEntityValues({
-        checkMode: 'equals',
+        [checkModeSymbol]: 'equals',
         actualValue: [1, 2, 3],
         descriptorValue: [[1], [1, 2], [1, 2, 3]],
         oneOf: true
@@ -390,14 +396,14 @@ describe('resolveEntityValues: oneOf', () => {
   it('Should return true with oneOf=false/undefined if full passed descriptor value matched to actual value', () => {
     expect(
       resolveEntityValues({
-        checkMode: 'equals',
+        [checkModeSymbol]: 'equals',
         actualValue: [1, 2, 3],
         descriptorValue: [1, 2, 3]
       })
     ).toBe(true);
     expect(
       resolveEntityValues({
-        checkMode: 'equals',
+        [checkModeSymbol]: 'equals',
         actualValue: [1, 2, 3],
         descriptorValue: [1, 2, 3],
         oneOf: false
@@ -406,7 +412,7 @@ describe('resolveEntityValues: oneOf', () => {
 
     expect(
       resolveEntityValues({
-        checkMode: 'equals',
+        [checkModeSymbol]: 'equals',
         actualValue: [1, 2, 3],
         descriptorValue: [[1], [1, 2], [1, 2, 3]]
       })
@@ -414,7 +420,7 @@ describe('resolveEntityValues: oneOf', () => {
   });
   expect(
     resolveEntityValues({
-      checkMode: 'equals',
+      [checkModeSymbol]: 'equals',
       actualValue: [1, 2, 3],
       descriptorValue: [[1], [1, 2], [1, 2, 3]],
       oneOf: false

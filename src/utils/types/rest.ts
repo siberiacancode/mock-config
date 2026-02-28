@@ -5,7 +5,7 @@ import type { Interceptors } from './interceptors';
 import type { Data } from './values';
 
 export type RestMethod = 'delete' | 'get' | 'options' | 'patch' | 'post' | 'put';
-export type RestEntityName = 'body' | 'cookies' | 'headers' | 'params' | 'query';
+export type RestEntityName = 'body' | 'cookies' | 'headers' | 'params' | 'queries';
 
 export type RestEntity<EntityName extends RestEntityName = RestEntityName> =
   EntityName extends 'body' ? BodyPlainEntity : MappedEntity;
