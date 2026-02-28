@@ -13,8 +13,8 @@ import type { NestedObjectOrArray } from './utils';
 
 /* ----- Plain entity ----- */
 
-type PlainEntityPrimitiveValue = boolean | number | string | null;
-type PlainEntityObjectiveValue = NestedObjectOrArray<PlainEntityPrimitiveValue>;
+export type PlainEntityPrimitiveValue = boolean | number | string | null;
+export type PlainEntityObjectiveValue = NestedObjectOrArray<PlainEntityPrimitiveValue>;
 
 export type EntityFunctionDescriptorValue<ActualValue> = (
   actualValue: ActualValue,
@@ -30,7 +30,7 @@ export type TopLevelPlainEntityDescriptor<Check extends CheckMode = CheckMode> =
         ? EntityDescriptor<Check>
         : never;
 
-type PropertyLevelPlainEntityDescriptor<Check extends CheckMode = CheckMode> =
+export type PropertyLevelPlainEntityDescriptor<Check extends CheckMode = CheckMode> =
   Check extends 'function'
     ? EntityDescriptor<
         Check,
@@ -68,9 +68,9 @@ export type VariablesPlainEntity = TopLevelPlainEntityDescriptor | TopLevelPlain
 
 /* ----- Mapped entity ----- */
 
-type MappedEntityValue = boolean | number | string;
+export type MappedEntityValue = boolean | number | string;
 
-type MappedEntityDescriptor<Check extends CheckMode = CheckMode> = Check extends 'function'
+export type MappedEntityDescriptor<Check extends CheckMode = CheckMode> = Check extends 'function'
   ? EntityDescriptor<Check, EntityFunctionDescriptorValue<MappedEntityValue>>
   : Check extends 'regExp'
     ? EntityDescriptor<Check, RegExp>
@@ -83,4 +83,5 @@ type MappedEntityDescriptor<Check extends CheckMode = CheckMode> = Check extends
 export type MappedEntity = Record<string, MappedEntityDescriptor | MappedEntityValue>;
 
 /* ----- Entity handlers ----- */
+
 export type NonSymbolEntries<T> = [string, T[keyof T]][];

@@ -51,7 +51,6 @@ const checkFunction: CheckFunction = (checkMode, actualValue, descriptorValue?) 
 };
 
 const compareEntityValues = (checkMode: CheckMode, actualValue: any, descriptorValue?: any) => {
-  console.log('compareEntityValues checkMode=', checkMode);
   if (checkMode === 'exists' || checkMode === 'notExists') {
     return checkFunction(checkMode, actualValue);
   }
@@ -121,7 +120,6 @@ type ResolveEntityValuesParams =
   | ResolveEntityValuesParamsWithEnabledOneOf;
 
 export const resolveEntityValues = (params: ResolveEntityValuesParams) => {
-  console.log('resolveEntityValues params=', params);
   if (params[checkModeSymbol] === 'exists' || params[checkModeSymbol] === 'notExists') {
     return compareEntityValues(params[checkModeSymbol], params.actualValue);
   }
@@ -130,7 +128,6 @@ export const resolveEntityValues = (params: ResolveEntityValuesParams) => {
     ResolveEntityValuesParams,
     ResolveEntityValuesParamsWithCheckActualValueCheckMode
   >;
-  console.log('descriptorValue=', descriptorValue);
 
   if (!oneOf) {
     return compareEntityValues(params[checkModeSymbol], params.actualValue, descriptorValue);
