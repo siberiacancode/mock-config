@@ -1,4 +1,0 @@
-import { z } from 'zod';
-export declare const bodyPlainEntitySchema: z.ZodUnion<[z.ZodEffects<z.ZodType<unknown, z.ZodTypeDef, unknown>, unknown, unknown>, z.ZodPipeline<z.ZodEffects<z.ZodType<unknown, z.ZodTypeDef, unknown>, unknown, unknown>, z.ZodTypeAny>, z.ZodArray<z.ZodUnion<[z.ZodUnion<[z.ZodString, z.ZodNumber, z.ZodBoolean, z.ZodNull]>, z.ZodType<import("../../../types").NestedObjectOrArray<string | number | boolean | null>, z.ZodTypeDef, import("../../../types").NestedObjectOrArray<string | number | boolean | null>>]>, "many">]>;
-export declare const variablesPlainEntitySchema: z.ZodUnion<[z.ZodEffects<z.ZodType<unknown, z.ZodTypeDef, unknown>, unknown, unknown>, z.ZodPipeline<z.ZodEffects<z.ZodType<unknown, z.ZodTypeDef, unknown>, unknown, unknown>, z.ZodTypeAny>]>;
-export declare const mappedEntitySchema: z.ZodPipeline<z.ZodType<unknown, z.ZodTypeDef, unknown>, z.ZodTypeAny>;
