@@ -11,7 +11,7 @@ mock-config-server
 
 Create a `mock-server.config.ts` file with server configuration and export it as default. This is the default file path, but you can [change it](/docs/cli/run).
 
-<Tabs items={['REST', 'GraphQL']}>
+<Tabs groupId="type" items={['REST', 'GraphQL']}>
   <Tab value='REST'>
 
 ```typescript
@@ -45,7 +45,14 @@ export default [
       {
         operationType: 'query',
         operationName: 'GetUser',
-        routes: [{ data: { emoji: '🧊', name: 'Siberia can code' } }]
+        routes: [
+          {
+            entities: {
+              headers: { 'name-header': 'Siberia_can_code' }
+            },
+            data: { emoji: '🧊', name: 'Siberia can code' }
+          }
+        ]
       }
     ]
   }
@@ -62,6 +69,39 @@ npx mock-config-server
 ```
 
 > If the package is already installed, you can use the short command `mcs`
+
+Now you can make a request:
+
+<Tabs groupId="type" items={['REST', 'GraphQL']}>
+  <Tab value='REST'>
+```typescript
+fetch('http://localhost:31299/api/user')
+  .then((res) => res.json())
+  .then((data) => console.log(data));
+```
+  </Tab>
+
+<Tab value='GraphQL'>
+
+```typescript
+const body = JSON.stringify({
+  query: 'query GetUser { name }'
+});
+
+fetch('http://localhost:31299/graphql', {
+  method: 'POST',
+  headers: {
+    'name-header': 'Siberia_can_code',
+    'Content-Type': 'application/json'
+  },
+  body
+})
+  .then((response) => response.json())
+  .then((data) => console.log(data));
+```
+
+  </Tab>
+</Tabs>
 
 ## Next Steps
 
