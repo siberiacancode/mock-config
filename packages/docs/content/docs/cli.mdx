@@ -7,7 +7,7 @@ description: Command Line Interface for mock-config-server
 
 `mock-config-server`
 
-Start a mock server in the current directory using a configuration file `mock-server.config.(js|ts)`.
+Starts a mock server in the current directory using a configuration file `mock-server.config.(js|ts)`.
 
 ### Usage
 
@@ -15,25 +15,25 @@ Start a mock server in the current directory using a configuration file `mock-se
 npx mock-config-server [options]
 ```
 
-> If the package is already installed, you can use short command `mcs`
+> If the package is already installed, you can use the short command `mcs`
 
 ### Options
 
-| Option         | Short | Description                                                      | Default value                 |
-| -------------- | ----- | ---------------------------------------------------------------- | ----------------------------- |
-| `--baseUrl`    | `-b`  | Specify the base URL path from config. Must start with `/`.      | `/`                           |
-| `--port`       | `-p`  | Specify the server port from config.                             | `31299`                       |
-| `--staticPath` | `-s`  | Specify the static assets path from config. Must start with `/`. |                               |
-| `--config`     | `-c`  | Set path to the config file.                                     | `mock-server.config.(js\|ts)` |
-| `--watch`      | `-w`  | Enables server restart after config file changes.                | `false`                       |
-| `--help`       | `-h`  | Display help for command.                                        |                               |
-| `--version`    | `-v`  | Display the mock-config-server version.                          |                               |
+| Option         | Short | Description                                                          | Default value                 |
+| -------------- | ----- | -------------------------------------------------------------------- | ----------------------------- |
+| `--baseUrl`    | `-b`  | Specify the base URL path from config. Must start with `/`.          | `/`                           |
+| `--port`       | `-p`  | Specify the server port from config.                                 | `31299`                       |
+| `--staticPath` | `-s`  | Specify the static assets path from the config. Must start with `/`. |                               |
+| `--config`     | `-c`  | Set path to the config file.                                         | `mock-server.config.(js\|ts)` |
+| `--watch`      | `-w`  | Enables server restart when config file changes.                     | `false`                       |
+| `--help`       | `-h`  | Display help for the command.                                        |                               |
+| `--version`    | `-v`  | Display the mock-config-server version.                              |                               |
 
 ## Create a mock-config-server template
 
 `mock-config-server init`
 
-Create a mock configuration. It generates a `mock-server.config.(js|ts)` file with a config template and sample request examples in the current directory. An interactive flow lets you choose between TypeScript and JavaScript, select an API type (REST, GraphQL or both), and set basic server options like base URL, port and static path.
+Creates a mock configuration. It generates a `mock-server.config.(js|ts)` file with a config template and sample request examples in the current directory. An interactive flow lets you choose between TypeScript and JavaScript, select an API type (REST, GraphQL or both), and set basic server options like base URL, port and static path.
 
 ### Usage
 
@@ -41,7 +41,15 @@ Create a mock configuration. It generates a `mock-server.config.(js|ts)` file wi
 npx mock-config-server init
 ```
 
-> If the package is already installed, you can use short command `mcs`
+> If the package is already installed, you can use the short command `mcs`
+
+### Options
+
+| Option         | Short | Description                                                          | Default value |
+| -------------- | ----- | -------------------------------------------------------------------- | ------------- |
+| `--baseUrl`    | `-b`  | Specify the base URL path from config. Must start with `/`.          | `/`           |
+| `--port`       | `-p`  | Specify the server port from config.                                 | `31299`       |
+| `--staticPath` | `-s`  | Specify the static assets path from the config. Must start with `/`. |               |
 
 ### Interactive flow
 
@@ -59,7 +67,7 @@ The command asks a few short questions:
 ```
 
 - `Would you like to use TypeScript?` (toggle): choose whether to generate a TypeScript or JavaScript configuration file.
-- `Choose api type` (select): select the type of API to generate mock examples for. Options: `Rest`, `GraphQL`, or `Both`.
+- `Choose API type` (select): select the type of API to generate mock examples for. Options: `REST`, `GraphQL`, or `Both`.
 - `Base URL` (string): set the base URL path for the mock server. Must start with `/`. Default: `/`.
 - `Port` (number): set the port number for the mock server. Default: `31299`.
 - `Static path` (string): set the static assets path for the mock server. Must start with `/`. Default: `/`.
