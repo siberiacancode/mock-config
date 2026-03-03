@@ -1,0 +1,10 @@
+{
+  "pages": [
+    "settings.mdx",
+    "logger.mdx",
+    "cors.mdx",
+    "database-orm.mdx",
+    "logger.mdx",
+    "static-files.mdx"
+  ]
+}

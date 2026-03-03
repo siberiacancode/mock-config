@@ -1,0 +1,147 @@
+---
+title: Logger
+description: Request and response logging
+---
+
+In `mock-config-server` you can log requests and responses using the `log` function inside interceptors. This helps you see what the client sends and what the server returns.
+
+## Quick Example
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    configs: [
+      {
+        path: '/posts',
+        method: 'get',
+        routes: [
+          {
+            interceptors: {
+              request: ({ log }) => {
+                log({
+                  options: {
+                    id: true,
+                    type: true,
+                    timestamp: true,
+                    method: true,
+                    url: true
+                  }
+                });
+              },
+              response: (data, { log }) => {
+                log({
+                  options: {
+                    type: true,
+                    statusCode: true,
+                    method: true,
+                    url: true
+                  },
+                  rewrite: ({ type, statusCode, method, url }) => {
+                    console.info(`${type} ${method}: ${url} => ${statusCode}`);
+                  }
+                });
+                return data;
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+```
+
+## How It Works
+
+`log` accepts an object with:
+
+- `options`: which tokens to log
+- `rewrite` (optional): custom output formatter
+
+By default, `timestamp` and `method` tokens are prettified.  
+Timestamp is formatted as `DD.MM.YYYY, HH:mm:ss,sss`, and method is upper‑cased.  
+If you use `rewrite`, tokens are passed as-is and you can format them yourself.
+
+## Logger Tokens
+
+Request/response tokens:
+
+- `type?` — `'request' | 'response'`
+- `id?` — unique id for pairing request and response logs
+- `timestamp?` — UNIX timestamp in milliseconds
+- `method?` — `'get' | 'post' | 'delete' | 'put' | 'patch' | 'options'`
+- `url?` — request URL
+- `graphQLOperationType?` — `'query' | 'mutation' | null`
+- `graphQLOperationName?` — `string | null`
+- `graphQLQuery?` — `string | null`
+- `variables?` — `Record<string, any> | null`
+- `headers?` — `Record<string, any>`
+- `cookies?` — `Record<string, any>`
+- `query?` — `Record<string, any>`
+- `params?` — `Record<string, any>`
+- `body?` — `any`
+
+Response‑only tokens:
+
+- `statusCode?` — response status code
+- `data?` — response data
+
+## Whitelist And Blacklist
+
+For mapped entities (`headers`, `cookies`, `query`, `params`), you can pass `Record<string, boolean>` instead of `true/false` to control which fields are logged.
+
+- If at least one field is `true`, **whitelist** mode applies and only `true` fields are logged.
+- If all fields are `false`, **blacklist** mode applies and everything except `false` fields is logged.
+- Whitelist has priority if both `true` and `false` are present.
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    configs: [
+      {
+        path: '/posts',
+        method: 'get',
+        routes: [
+          {
+            interceptors: {
+              request: ({ log }) => {
+                log({
+                  // whitelist: only query1 and query2 will be logged
+                  options: {
+                    query: {
+                      query1: true,
+                      query2: true
+                    }
+                  }
+                });
+                log({
+                  // whitelist: only cookie1 and cookie2 will be logged
+                  options: {
+                    cookies: {
+                      cookie1: true,
+                      cookie2: true,
+                      cookie3: false
+                    }
+                  }
+                });
+                log({
+                  // blacklist: all headers except header1
+                  options: {
+                    headers: {
+                      header1: false
+                    }
+                  }
+                });
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+```

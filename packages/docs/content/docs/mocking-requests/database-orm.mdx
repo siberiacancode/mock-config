@@ -1,0 +1,146 @@
+---
+title: Database & ORM
+description: Mock database and ORM setup
+---
+
+With `mock-config-server` you can create your own mock database with all CRUD operations.
+
+## Database Basics
+
+Enable the database by adding the `database` option to the server settings. You can pass:
+
+- `data`: initial data (object or `.json` file path)
+- `routes?`: custom route mapping (object or `.json` file path)
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    database: {
+      data: {
+        users: [{ id: 1, name: 'John' }],
+        settings: { blocked: false }
+      }
+    }
+  }
+];
+```
+
+### Auto‑generated Routes
+
+Routes are generated from your data:
+
+- **Collections** (arrays with unique `id`):
+  - `GET /users`
+  - `POST /users`
+  - `GET /users/1`
+  - `PUT /users/1`
+  - `PATCH /users/1`
+  - `DELETE /users/1`
+
+- **Single objects** (non‑arrays):
+  - `GET /settings`
+  - `POST /settings`
+  - `PUT /settings`
+  - `PATCH /settings`
+
+Two helper endpoints are also available:
+
+- `GET /__db` returns current database data
+- `GET /__routes` returns all database routes
+
+### Custom Routes
+
+You can map custom paths to existing database routes:
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    database: {
+      data: {
+        users: [{ id: 1, name: 'John' }],
+        settings: { blocked: false }
+      },
+      routes: {
+        '/api/users/:id': '/users/:id',
+        '/*/my-settings': '/settings'
+      }
+    }
+  }
+];
+```
+
+Notes:
+
+- Custom routes must start with `/`.
+- If you need an id param, use only `:id`.
+- `*` wildcard is allowed only in the custom route, not in the real route.
+
+### Filtering and Pagination
+
+Simple filters are supported:
+
+```
+GET /users?name=alex
+GET /users?id=1&id=2
+GET /users?author.name=alex
+```
+
+Pagination:
+
+```
+GET /users?_page=1
+GET /users?_page=1&_limit=5
+```
+
+`_limit` defaults to `10`. The response includes `_link` with pagination metadata.
+
+## ORM In Interceptors
+
+Inside request/response interceptors you can access `orm` and perform full CRUD operations on the mock database. This is useful when you need custom logic before or after a request.
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    database: {
+      data: {
+        users: [{ id: 1, name: 'John' }]
+      }
+    }
+  },
+  {
+    interceptors: {
+      request: ({ orm, request }) => {
+        if (request.path === '/users' && request.method === 'POST') {
+          orm.users.create({ name: 'Alice' });
+        }
+      },
+      response: (data, { orm }) => {
+        if (orm.users.exists({ name: 'Alice' })) {
+          return { ...data, created: true };
+        }
+        return data;
+      }
+    }
+  }
+];
+```
+
+### ORM API Overview
+
+For array collections with `id`, ORM exposes:
+
+- `create`, `createMany`
+- `findById`, `findFirst`, `findMany`, `exists`, `count`
+- `update`, `updateMany`
+- `delete`, `deleteMany`
+
+For single objects or arrays of objects without an `id`, ORM exposes:
+
+- `get`
+- `update`
