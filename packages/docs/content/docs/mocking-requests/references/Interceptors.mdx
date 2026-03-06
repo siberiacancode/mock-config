@@ -87,6 +87,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
     log: {
       description: 'Log request data',
       type: "(logger?: Logger<'request', Api>) => Partial<LoggerTokens>",
+      typeDescriptionLink: './Logger',
       required: true
     },
     setDelay: {
@@ -163,6 +164,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
     log: {
       description: 'Log response data',
       type: "(logger?: Logger<'response', Api>) => Partial<LoggerTokens>",
+      typeDescriptionLink: './Logger',
       required: true
     },
     setCookie: {
