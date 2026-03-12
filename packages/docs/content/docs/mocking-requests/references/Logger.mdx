@@ -48,7 +48,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 <TypeTable
   type={{
     type: {
-      type: 'string',
+      type: "'request' | 'response'",
       description: 'Type of log (`request` or `response`)'
     },
     id: {
@@ -61,6 +61,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
     },
     method: {
       type: 'RestMethod',
+      typeDescriptionLink: './Rest#RestMethod',
       description: 'HTTP method'
     },
     url: {
@@ -88,11 +89,25 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
       description: 'Request body'
     },
     graphQLOperationName: {
-      type: 'GraphQLOperationName | null',
+      type: (
+        <span>
+          <a href='./GraphQL#GraphQLOperationName' className='underline'>
+            GraphQLOperationName
+          </a>{' '}
+          | null
+        </span>
+      ),
       description: 'GraphQL operation name (`null` for non-GraphQL requests)'
     },
     graphQLOperationType: {
-      type: 'GraphQLOperationType | null',
+      type: (
+        <span>
+          <a href='./GraphQL#GraphQLOperationType' className='underline'>
+            GraphQLOperationType
+          </a>{' '}
+          | null
+        </span>
+      ),
       description: 'GraphQL operation type (`query` | `mutation` | `null`)'
     },
     graphQLQuery: {

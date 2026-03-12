@@ -173,14 +173,11 @@ Or you can specify a file response with the file field:
 <a id='RestMethod'></a>
 ## RestMethod
 
-<TypeTable
-  type={{
-    RestMethod: {
-      description: 'HTTP methods supported by REST configs',
-      type: "'delete' | 'get' | 'options' | 'patch' | 'post' | 'put'"
-    }
-  }}
-/>
+HTTP methods supported by REST configs
+
+```typescript
+'delete' | 'get' | 'options' | 'patch' | 'post' | 'put';
+```
 
 <a id='RestEntitiesByEntityName'></a>
 ## RestEntitiesByEntityName{'<'}Method{'>'}
@@ -196,8 +193,5 @@ Record<'cookies' | 'headers' | 'params' | 'query', RestEntity>;
 **For POST, PUT, and PATCH requests (methods with request body)**:
 
 ```typescript
-<Method extends RestMethod = RestMethod>
-Record<'cookies' | 'headers' | 'params' | 'query', 'body', RestEntity>
+Record<'cookies' | 'headers' | 'params' | 'query' | 'body', RestEntity>;
 ```
-
-These methods support all the same entities as above, plus an optional `body` entity for matching request body content.
