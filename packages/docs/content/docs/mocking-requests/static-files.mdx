@@ -3,9 +3,9 @@ title: Static Files
 description: Static file serving configuration
 ---
 
-Mock Config Server can serve static files. This is a dedicated server feature: you can serve HTML, JSON, images, styles, and any other files directly from your project directory.
+Mock Config Server can serve static files. You can serve HTML, JSON, images, styles, and any other files.
 
-## How to enable
+## Usage
 
 Set `staticPath` in the server config. This tells the server to mount static files.
 
@@ -14,6 +14,8 @@ Supported formats:
 1. `"/path"` — path to the static directory relative to the process working directory.
 2. `{ path: "/path", prefix: "/prefix" }` — directory path + URL prefix.
 3. An array of strings and/or objects for multiple sources.
+
+You can also pass `staticPath` to the CLI via `--staticPath` (or `-s`).
 
 ## Examples
 
@@ -58,9 +60,3 @@ export const mockServerConfig: MockServerConfig = [
   ...
 ];
 ```
-
-## CLI
-
-For a quick start, pass `--staticPath` (or `-s`) when running the CLI.
-
-If needed, combine static hosting with mock routes and the database in a single config.
