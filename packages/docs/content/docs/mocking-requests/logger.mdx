@@ -3,6 +3,8 @@ title: Logger
 description: Request and response logging
 ---
 
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
 In `mock-config-server` you can log requests and responses using the `log` function inside interceptors. This helps you see what the client sends and what the server returns.
 
 ## Quick Example
@@ -55,38 +57,101 @@ export const mockServerConfig: MockServerConfig = [
 
 ## How It Works
 
-`log` accepts an object with:
+`log` accepts following parameters:
 
 - `options`: which tokens to log
 - `rewrite` (optional): custom output formatter
 
-By default, `timestamp` and `method` tokens are prettified.  
-Timestamp is formatted as `DD.MM.YYYY, HH:mm:ss,sss`, and method is upper‑cased.  
-If you use `rewrite`, tokens are passed as-is and you can format them yourself.
+> By default, `timestamp` and `method` tokens are prettified.
+> Timestamp transforms from UNIX-timestamp number to `DD.MM.YYYY, HH:mm:ss,sss` string.
+> Method transforms from lower case to upper case.
+> If `rewrite` function is used, those tokens will remain unformatted. You can format them as you need.
 
 ## Logger Tokens
 
-Request/response tokens:
-
-- `type?` — `'request' | 'response'`
-- `id?` — unique id for pairing request and response logs
-- `timestamp?` — UNIX timestamp in milliseconds
-- `method?` — `'get' | 'post' | 'delete' | 'put' | 'patch' | 'options'`
-- `url?` — request URL
-- `graphQLOperationType?` — `'query' | 'mutation' | null`
-- `graphQLOperationName?` — `string | null`
-- `graphQLQuery?` — `string | null`
-- `variables?` — `Record<string, any> | null`
-- `headers?` — `Record<string, any>`
-- `cookies?` — `Record<string, any>`
-- `query?` — `Record<string, any>`
-- `params?` — `Record<string, any>`
-- `body?` — `any`
-
-Response‑only tokens:
-
-- `statusCode?` — response status code
-- `data?` — response data
+<TypeTable
+  type={{
+    type: {
+      type: "'request' | 'response'",
+      description: 'Type of log (`request` or `response`)'
+    },
+    id: {
+      type: 'number',
+      description: 'Unique request id to match request and response logs'
+    },
+    timestamp: {
+      type: 'number',
+      description: 'UNIX timestamp in milliseconds'
+    },
+    method: {
+      type: 'RestMethod',
+      typeDescriptionLink: './Rest#RestMethod',
+      description: 'HTTP method'
+    },
+    url: {
+      type: 'string',
+      description: 'Requested URL'
+    },
+    headers: {
+      type: 'Headers',
+      description: 'Headers object'
+    },
+    cookies: {
+      type: 'Cookies',
+      description: 'Cookies object'
+    },
+    query: {
+      type: 'Query',
+      description: 'Query object'
+    },
+    params: {
+      type: 'Params',
+      description: 'Params object'
+    },
+    body: {
+      type: 'any',
+      description: 'Request body'
+    },
+    graphQLOperationName: {
+      type: (
+        <span>
+          <a href='./GraphQL#GraphQLOperationName' className='underline'>
+            GraphQLOperationName
+          </a>{' '}
+          | null
+        </span>
+      ),
+      description: 'GraphQL operation name (`null` for non-GraphQL requests)'
+    },
+    graphQLOperationType: {
+      type: (
+        <span>
+          <a href='./GraphQL#GraphQLOperationType' className='underline'>
+            GraphQLOperationType
+          </a>{' '}
+          | null
+        </span>
+      ),
+      description: 'GraphQL operation type'
+    },
+    graphQLQuery: {
+      type: 'string | null',
+      description: 'GraphQL query (`null` for non-GraphQL requests)'
+    },
+    variables: {
+      type: 'PlainObject | null',
+      description: 'GraphQL variables (`null` for non-GraphQL requests or if not passed)'
+    },
+    data: {
+      type: 'any',
+      description: 'Response data returned to client (response only)'
+    },
+    statusCode: {
+      type: 'number',
+      description: 'Response status code (response only)'
+    }
+  }}
+/>
 
 ## Whitelist And Blacklist
 
@@ -129,7 +194,7 @@ export const mockServerConfig: MockServerConfig = [
                   }
                 });
                 log({
-                  // blacklist: all headers except header1
+                  // blacklist: all headers will be logged except header1
                   options: {
                     headers: {
                       header1: false

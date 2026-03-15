@@ -3,7 +3,7 @@ title: Settings
 description: Global mock server settings
 ---
 
-In global configuration you can optinally pass global mock server settings as the first array item. They enable you to configure features such as CORS, logging, base URL, and other operational options that apply to the entire server.
+In global configuration you can optinally pass global mock server settings as the first array item. They enable you to configure features such as CORS, logging, base URL, and other options that apply to the entire server.
 
 ```typescript
 import type { MockServerConfig } from 'mock-config-server';
@@ -123,6 +123,8 @@ const mockServerConfig: MockServerConfig = [
   ...
 ];
 ```
+
+All available interceptor types and their usage are described in the [Interceptors](./references/Interceptors) section.
 
 - `staticPath?: StaticPath`  
   Static file serving configuration. Supports:

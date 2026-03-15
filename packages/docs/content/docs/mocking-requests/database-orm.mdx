@@ -9,8 +9,8 @@ With `mock-config-server` you can create your own mock database with all CRUD op
 
 Enable the database by adding the `database` option to the server settings. You can pass:
 
-- `data`: initial data (object or `.json` file path)
-- `routes?`: custom route mapping (object or `.json` file path)
+- `data`: initial data (<code>{'Record<string, unknown>'}</code> or `.json` file path)
+- `routes?`: custom route mapping (<code>{'Record<`/${string}`, `/${string}`>'}</code> or `.json` file path)
 
 ```typescript
 import type { MockServerConfig } from 'mock-config-server';
@@ -23,7 +23,8 @@ export const mockServerConfig: MockServerConfig = [
         settings: { blocked: false }
       }
     }
-  }
+  },
+  ...
 ];
 ```
 
@@ -69,7 +70,8 @@ export const mockServerConfig: MockServerConfig = [
         '/*/my-settings': '/settings'
       }
     }
-  }
+  },
+  ...
 ];
 ```
 

@@ -5,13 +5,8 @@ description: Static file serving configuration
 
 Mock Config Server can serve static files. This is a dedicated server feature: you can serve HTML, JSON, images, styles, and any other files directly from your project directory.
 
-**Why it matters**
+## How to enable
 
-1. Spin up static hosting next to your mock API in minutes.
-2. Support multiple static directories and custom URL prefixes.
-3. Static files work in all server modes (flat, rest, graphql, database).
-
-**How to enable**
 Set `staticPath` in the server config. This tells the server to mount static files.
 
 Supported formats:
@@ -20,59 +15,52 @@ Supported formats:
 2. `{ path: "/path", prefix: "/prefix" }` — directory path + URL prefix.
 3. An array of strings and/or objects for multiple sources.
 
-**Examples**
+## Examples
 
 Minimal setup:
 
 ```ts
-import type { FlatMockServerConfig } from 'mock-config-server';
-import { createFlatMockServer, startFlatMockServer } from 'mock-config-server';
+import type { MockServerConfig } from 'mock-config-server';
 
-export const mockServerConfig: FlatMockServerConfig = [
+export const mockServerConfig: MockServerConfig = [
   {
     staticPath: '/images'
-  }
+  },
+  ...
 ];
-
-createFlatMockServer(mockServerConfig);
-startFlatMockServer(mockServerConfig);
 ```
 
 Static files with a prefix:
 
 ```ts
-import type { FlatMockServerConfig } from 'mock-config-server';
-import { createFlatMockServer, startFlatMockServer } from 'mock-config-server';
+import type { MockServerConfig } from 'mock-config-server';
 
-export const mockServerConfig: FlatMockServerConfig = [
+export const mockServerConfig: MockServerConfig = [
   {
     staticPath: {
       path: '/images',
       prefix: '/files'
     }
-  }
+  },
+  ...
 ];
 ```
 
 Multiple sources:
 
 ```ts
-import type { FlatMockServerConfig } from 'mock-config-server';
+import type { MockServerConfig } from 'mock-config-server';
 
-export const mockServerConfig: FlatMockServerConfig = [
+export const mockServerConfig: MockServerConfig = [
   {
     staticPath: ['/images', { path: '/assets', prefix: '/static' }]
-  }
+  },
+  ...
 ];
 ```
 
-**How it works**
+## CLI
 
-- Paths in `staticPath` are resolved relative to `process.cwd()` (the process working directory).
-- If `prefix` is set, the server mounts static files at `baseUrl + prefix`.
-- If only a path is provided, static files are available under `baseUrl`.
-
-**CLI**
 For a quick start, pass `--staticPath` (or `-s`) when running the CLI.
 
 If needed, combine static hosting with mock routes and the database in a single config.
