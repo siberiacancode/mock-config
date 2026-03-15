@@ -30,7 +30,7 @@ export const mockServerConfig: MockServerConfig = [
 
 ### origin
 
-Type: `string | RegExp | Array<string | RegExp> | (request) => origin | Promise<origin>`  
+Type: <code>((request: Request) => <a href='./references/Cors#CorsOrigin'>CorsOrigin</a> | Promise{'<'}<a href='./references/Cors#CorsOrigin'>CorsOrigin</a>{'>'}) | <a href='./references/Cors#CorsOrigin'>CorsOrigin</a></code>  
 Defines which origins are allowed to access the server. Use a string for a single origin, a RegExp for pattern matching, an array for multiple origins, or a function for dynamic rules.
 
 ```typescript
@@ -39,7 +39,7 @@ import type { MockServerConfig } from 'mock-config-server';
 export const mockServerConfig: MockServerConfig = [
   {
     cors: {
-      origin: ['https://example.com', /\\.example\\.com$/]
+      origin: ['https://example.com', /\.example\.com$/]
     }
   },
   ...
