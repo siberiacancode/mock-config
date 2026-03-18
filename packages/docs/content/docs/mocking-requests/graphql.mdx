@@ -1,0 +1,72 @@
+---
+title: GraphQL
+description: Mocking GraphQL requests
+---
+
+## Overview
+
+Mock Config Server lets you mock GraphQL operations with a declarative config. You define `operationType`, `operationName` or `query`, a list of `routes`, and optional `entities` to match requests. The server returns the first route that matches.
+
+Core entities:
+
+- **Config** — one GraphQL operation definition (`operationType`, `operationName`/`query`, `routes`).
+- **Route** — a specific response variant for the operation.
+- **Entities** — match conditions for a route (`headers`, `query`, `variables`, `cookies`).
+
+## Example 1: Operation Name Match
+
+```ts
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    baseUrl: '/graphql'
+  },
+  {
+    configs: [
+      {
+        operationType: 'query',
+        operationName: 'GetUser',
+        routes: [
+          { data: { emoji: '🎉', name: 'Nursultan' } },
+          {
+            data: { emoji: '🔥', name: 'Dmitriy' },
+            entities: {
+              headers: { 'name-header': 'Dmitriy' }
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+```
+
+## Example 2: Variables Match
+
+```ts
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    baseUrl: '/graphql'
+  },
+  {
+    configs: [
+      {
+        operationType: 'mutation',
+        operationName: 'UpdateUser',
+        routes: [
+          { data: { ok: true } },
+          {
+            data: { ok: false, reason: 'User is blocked' },
+            entities: {
+              variables: { id: 2 }
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+```

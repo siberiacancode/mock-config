@@ -1,0 +1,101 @@
+---
+title: Entities
+description: How entities match requests
+---
+
+## Overview
+
+`entities` let you select the right route based on request data. Each route can define an `entities` object, and the server will return the first route whose entities match the incoming request.
+
+You can match by:
+
+- `headers`
+- `cookies`
+- `query`
+- `params`
+- `body` (REST)
+- `variables` (GraphQL)
+
+## How Matching Works
+
+- `entities` is optional.
+- If multiple routes match, the first one is used.
+- If there is no match, the server returns the first route without entities or a 404 if all routes have entities.
+
+## Example: REST Query/Params
+
+```ts
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    configs: [
+      {
+        method: 'get',
+        path: '/users/:id',
+        routes: [
+          { data: { id: 1, emoji: '🎉' } },
+          {
+            data: { id: 2, emoji: '🔥' },
+            entities: {
+              params: { id: 2 }
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+```
+
+## Example: REST Body Match
+
+```ts
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    configs: [
+      {
+        method: 'post',
+        path: '/users',
+        routes: [
+          { data: { ok: true } },
+          {
+            data: { ok: false, reason: 'Emoji must be fire' },
+            entities: {
+              body: { emoji: '🔥' }
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+```
+
+## Example: GraphQL Variables Match
+
+```ts
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    configs: [
+      {
+        operationType: 'mutation',
+        operationName: 'UpdateUser',
+        routes: [
+          { data: { ok: true } },
+          {
+            data: { ok: false, reason: 'User is blocked' },
+            entities: {
+              variables: { id: 2 }
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+```

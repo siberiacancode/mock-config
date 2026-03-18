@@ -1,0 +1,3 @@
+{
+  "pages": ["entities.mdx", "interceptors.mdx", "rest.mdx", "graphql.mdx"]
+}

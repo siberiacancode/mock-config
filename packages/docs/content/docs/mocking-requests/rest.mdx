@@ -1,0 +1,93 @@
+---
+title: REST
+description: Mocking REST API requests
+---
+
+## Overview
+
+Mock Config Server uses a declarative REST config. You define endpoints with `method`, `path`, `routes`, and optional `entities` to match requests. The server returns the first route that matches.
+
+Core entities:
+
+- **Config** — one REST endpoint definition (`method`, `path`, `routes`).
+- **Route** — a specific response variant for the endpoint.
+- **Entities** — match conditions for a route (`headers`, `query`, `params`, `body`, `cookies`).
+
+## Examples
+
+### GET request with entitites
+
+```ts
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    baseUrl: '/api'
+  },
+  {
+    configs: [
+      {
+        method: 'get',
+        path: '/users',
+        routes: [
+          { data: [{ id: 1, emoji: '🎉' }] },
+          {
+            data: [{ id: 2, emoji: '🔥' }],
+            entities: {
+              query: { emoji: '🔥' }
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+```
+
+### POST request
+
+```ts
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    configs: [
+      {
+        method: 'post',
+        path: '/users',
+        routes: [
+          { data: { ok: true } },
+          {
+            data: { ok: false, reason: 'Emoji must be fire' },
+            entities: {
+              body: { emoji: '🔥' }
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+```
+
+### File response
+
+```ts
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    configs: [
+      {
+        method: 'get',
+        path: '/file',
+        routes: [
+          {
+            file: './relative/path/to/file'
+          }
+        ]
+      }
+    ]
+  }
+];
+```
