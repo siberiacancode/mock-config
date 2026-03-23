@@ -1,10 +1,9 @@
 import type { Express } from 'express';
 
-import type { Cors, CorsOrigin } from '@/shared/types';
+import type { Cors, CorsOrigin } from '../../types';
 
-import { DEFAULT } from '@/shared/constants';
-import { asyncHandler } from '@/shared/helpers';
-
+import { DEFAULT } from '../../constants';
+import { asyncHandler } from '../../helpers';
 import { getAllowedOrigins } from './helpers';
 
 export const corsMiddleware = (server: Express, cors: Cors) => {

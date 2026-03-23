@@ -1,6 +1,6 @@
 import type { Express } from 'express';
 
-import { DEFAULT } from '@/shared/constants';
+import { DEFAULT } from '../../constants';
 
 export const noCorsMiddleware = (server: Express) => {
   server.use((request, response, next) => {
