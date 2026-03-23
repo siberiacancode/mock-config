@@ -2,6 +2,7 @@ import type { Request } from 'express';
 
 import type { MappedEntity, VariablesPlainEntity } from './entities';
 import type { Interceptors } from './interceptors';
+import type { BaseUrl } from './server';
 import type { Data } from './values';
 
 export type GraphQLEntityName = 'cookies' | 'headers' | 'query' | 'variables';
@@ -38,7 +39,10 @@ export type GraphQLRouteConfig = (
       settings?: GraphQLSettings & { polling?: false };
       data: GraphqlDataResponse;
     }
-) & { entities?: GraphQLEntitiesByEntityName; interceptors?: Interceptors<'graphql'> };
+) & {
+  entities?: GraphQLEntitiesByEntityName;
+  interceptors?: Interceptors<'graphql'>;
+};
 
 interface BaseGraphQLRequestConfig {
   interceptors?: Interceptors<'graphql'>;
@@ -55,3 +59,21 @@ interface QueryGraphQLRequestConfig extends BaseGraphQLRequestConfig {
 }
 
 export type GraphQLRequestConfig = OperationNameGraphQLRequestConfig | QueryGraphQLRequestConfig;
+
+export interface GraphQLRequestArtifact {
+  baseUrl: BaseUrl;
+  componentRequestInterceptor?: Interceptors<'graphql'>['request'];
+  componentResponseInterceptor?: Interceptors<'graphql'>['response'];
+  config: GraphQLRouteConfig;
+  key: string;
+  operationName?: GraphQLOperationName;
+  operationType: GraphQLOperationType;
+  query?: string;
+  requestRequestInterceptor?: Interceptors<'graphql'>['request'];
+  requestResponseInterceptor?: Interceptors<'graphql'>['response'];
+  routeRequestInterceptor?: Interceptors<'graphql'>['request'];
+  routeResponseInterceptor?: Interceptors<'graphql'>['response'];
+  serverRequestInterceptor?: Interceptors<'graphql'>['request'];
+  serverResponseInterceptor?: Interceptors<'graphql'>['response'];
+  weight: number;
+}

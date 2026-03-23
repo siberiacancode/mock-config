@@ -12,7 +12,7 @@ interface CallResponseInterceptorsParams {
   interceptors?: {
     routeInterceptor?: ResponseInterceptor;
     requestInterceptor?: ResponseInterceptor;
-    apiInterceptor?: ResponseInterceptor;
+    componentInterceptor?: ResponseInterceptor;
     serverInterceptor?: ResponseInterceptor;
   };
 }
@@ -85,8 +85,8 @@ export const callResponseInterceptors = async (params: CallResponseInterceptorsP
   if (interceptors?.requestInterceptor) {
     updatedData = await interceptors.requestInterceptor(updatedData, responseInterceptorParams);
   }
-  if (interceptors?.apiInterceptor) {
-    updatedData = await interceptors.apiInterceptor(updatedData, responseInterceptorParams);
+  if (interceptors?.componentInterceptor) {
+    updatedData = await interceptors.componentInterceptor(updatedData, responseInterceptorParams);
   }
   if (interceptors?.serverInterceptor) {
     updatedData = await interceptors.serverInterceptor(updatedData, responseInterceptorParams);

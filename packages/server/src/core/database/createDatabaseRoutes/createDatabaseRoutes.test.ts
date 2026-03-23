@@ -6,7 +6,7 @@ import path from 'node:path';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import type { DatabaseConfig, MockServerConfig } from '@/utils/types';
+import type { BaseServerConfig, DatabaseConfig } from '@/utils/types';
 
 import { createDatabaseRoutes } from '@/core/database';
 import { createTmpDir } from '@/utils/helpers/tests';
@@ -15,7 +15,7 @@ import { findIndexById } from './helpers';
 
 describe('createDatabaseRoutes', () => {
   const createServer = (
-    mockServerConfig: Pick<MockServerConfig, 'baseUrl'> & { database: DatabaseConfig }
+    mockServerConfig: Pick<BaseServerConfig, 'baseUrl'> & { database: DatabaseConfig }
   ) => {
     const server = express();
     const routerBase = express.Router();

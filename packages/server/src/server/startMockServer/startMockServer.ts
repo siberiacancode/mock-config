@@ -9,10 +9,13 @@ import { createMockServer } from '../createMockServer/createMockServer';
 
 export const startMockServer = (mockServerConfig: MockServerConfig) => {
   const mockServer = createMockServer(mockServerConfig);
-  const port = mockServerConfig.port ?? DEFAULT.PORT;
+
+  const [option] = mockServerConfig;
+  const mockServerSettings = !('configs' in option) ? option : {};
+  const { port = DEFAULT.PORT } = mockServerSettings;
 
   const server = mockServer.listen(port, () => {
-    console.info(color.green(`🎉 Mock Server is running at http://localhost:${port}`));
+    console.log(color.green(`🎉 Mock Server is running at http://localhost:${port}`));
   });
 
   // ✅ important: add destroy method for closing keep-alive connections after server shutdown

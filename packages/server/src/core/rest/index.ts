@@ -1,1 +1,1 @@
-export * from './createRestRoutes/createRestRoutes';
+export * from './createRestRoute/createRestRoute';

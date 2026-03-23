@@ -2,6 +2,7 @@ import type { Request } from 'express';
 
 import type { BodyPlainEntity, MappedEntity } from './entities';
 import type { Interceptors } from './interceptors';
+import type { BaseUrl } from './server';
 import type { Data } from './values';
 
 export type RestMethod = 'delete' | 'get' | 'options' | 'patch' | 'post' | 'put';
@@ -77,3 +78,20 @@ export type RestRequestConfig =
   | RestPatchRequestConfig
   | RestPostRequestConfig
   | RestPutRequestConfig;
+
+export interface RestRequestArtifact {
+  baseUrl: BaseUrl;
+  componentRequestInterceptor?: Interceptors<'rest'>['request'];
+  componentResponseInterceptor?: Interceptors<'rest'>['response'];
+  config: RestRouteConfig<RestMethod>;
+  key: string;
+  method: RestMethod;
+  path: RegExp | RestPathString;
+  requestRequestInterceptor?: Interceptors<'rest'>['request'];
+  requestResponseInterceptor?: Interceptors<'rest'>['response'];
+  routeRequestInterceptor?: Interceptors<'rest'>['request'];
+  routeResponseInterceptor?: Interceptors<'rest'>['response'];
+  serverRequestInterceptor?: Interceptors<'rest'>['request'];
+  serverResponseInterceptor?: Interceptors<'rest'>['response'];
+  weight: number;
+}

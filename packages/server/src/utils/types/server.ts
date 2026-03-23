@@ -43,7 +43,7 @@ export interface DatabaseConfig {
   routes?: `${string}.json` | Record<`/${string}`, `/${string}`>;
 }
 
-export interface BaseMockServerConfig {
+export interface BaseServerConfig {
   baseUrl?: BaseUrl;
   cors?: Cors;
   interceptors?: Interceptors;
@@ -51,28 +51,7 @@ export interface BaseMockServerConfig {
   staticPath?: StaticPath;
 }
 
-export interface MockServerConfig extends BaseMockServerConfig {
-  database?: DatabaseConfig;
-  graphql?: GraphqlConfig;
-  rest?: RestConfig;
-}
-
-export interface RestMockServerConfig extends BaseMockServerConfig {
-  configs?: RestRequestConfig[];
-  database?: DatabaseConfig;
-}
-
-export interface GraphQLMockServerConfig extends BaseMockServerConfig {
-  configs?: GraphQLRequestConfig[];
-  database?: DatabaseConfig;
-}
-
-export interface DatabaseMockServerConfig extends BaseMockServerConfig {
-  data: `${string}.json` | Record<string, unknown>;
-  routes?: `${string}.json` | Record<`/${string}`, `/${string}`>;
-}
-
-export type MockServerConfigArgv = Arguments<{
+export type MockServerCliArgv = Arguments<{
   baseUrl?: string;
   port?: number;
   staticPath?: string;
@@ -89,14 +68,15 @@ declare global {
     }
   }
 }
-export interface FlatMockServerComponent {
+
+export interface MockServerComponent {
   baseUrl?: BaseUrl;
   configs: Array<GraphQLRequestConfig | RestRequestConfig>;
   interceptors?: Interceptors;
   name?: string;
 }
 
-export interface FlatMockServerSettings {
+export interface MockServerSettings {
   baseUrl?: BaseUrl;
   cors?: Cors;
   database?: DatabaseConfig;
@@ -105,7 +85,7 @@ export interface FlatMockServerSettings {
   staticPath?: StaticPath;
 }
 
-export type FlatMockServerConfig = [
-  option: FlatMockServerComponent | FlatMockServerSettings,
-  ...flatMockServerComponents: FlatMockServerComponent[]
+export type MockServerConfig = [
+  option: MockServerComponent | MockServerSettings,
+  ...mockServerComponents: MockServerComponent[]
 ];

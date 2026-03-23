@@ -2,13 +2,12 @@ import type { BuildOptions, Plugin } from 'esbuild';
 
 import { context, build as esBuild } from 'esbuild';
 
-import type { MockServerConfigArgv } from '@/utils/types';
+import type { MockServerCliArgv } from '@/utils/types';
 
 import { resolveConfigFile, resolveConfigFilePath } from './helpers';
 import { run } from './run';
-import { runFlatConfig } from './runFlatConfig';
 
-export const build = async (argv: MockServerConfigArgv) => {
+export const build = async (argv: MockServerCliArgv) => {
   const configFilePath = resolveConfigFilePath(argv.config);
   if (!configFilePath) {
     throw new Error('Cannot find config file mock-server.config.(ts|mts|cts|js|mjs|cjs)');
@@ -31,7 +30,7 @@ export const build = async (argv: MockServerConfigArgv) => {
     const watchPlugin: Plugin = {
       name: 'watch',
       setup: (build) => {
-        let instance: Awaited<ReturnType<typeof run | typeof runFlatConfig>>;
+        let instance: Awaited<ReturnType<typeof run>>;
 
         build.onStart(() => {
           instance?.destroy();
@@ -40,13 +39,6 @@ export const build = async (argv: MockServerConfigArgv) => {
         build.onEnd((result) => {
           if (!result.errors.length) {
             const mockConfig = resolveConfigFile(result.outputFiles![0].text);
-            const isFlatConfig = Array.isArray(mockConfig);
-
-            if (isFlatConfig) {
-              instance = runFlatConfig(mockConfig, argv);
-              return;
-            }
-
             instance = run(mockConfig, argv);
           }
         });
@@ -64,11 +56,5 @@ export const build = async (argv: MockServerConfigArgv) => {
   const { outputFiles } = await esBuild(buildOptions);
 
   const mockConfig = resolveConfigFile(outputFiles[0].text);
-  const isFlatConfig = Array.isArray(mockConfig);
-
-  if (isFlatConfig) {
-    return runFlatConfig(mockConfig, argv);
-  }
-
-  run(mockConfig, argv);
+  return run(mockConfig, argv);
 };

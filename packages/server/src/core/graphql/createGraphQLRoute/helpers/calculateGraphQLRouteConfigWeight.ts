@@ -1,8 +1,8 @@
-import type { GraphQLRequestConfig, GraphQLRouteConfig } from '@/utils/types';
+import type { GraphQLRouteConfig } from '@/utils/types';
 
 import { isPlainObject } from '@/utils/helpers';
 
-const calculateRouteConfigWeight = (graphQLRouteConfig: GraphQLRouteConfig) => {
+export const calculateGraphQLRouteConfigWeight = (graphQLRouteConfig: GraphQLRouteConfig) => {
   const { entities } = graphQLRouteConfig;
   if (!entities) return 0;
 
@@ -27,16 +27,4 @@ const calculateRouteConfigWeight = (graphQLRouteConfig: GraphQLRouteConfig) => {
   }
 
   return routeConfigWeight;
-};
-
-export const prepareGraphQLRequestConfigs = (requestConfigs: GraphQLRequestConfig[]) => {
-  requestConfigs.forEach((requestConfig) => {
-    requestConfig.routes.sort(
-      (first, second) =>
-        // ✅ important:
-        // Lift more specific configs for correct working of routes
-        calculateRouteConfigWeight(second) - calculateRouteConfigWeight(first)
-    );
-  });
-  return requestConfigs;
 };
