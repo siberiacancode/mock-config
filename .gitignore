@@ -195,3 +195,5 @@ build/Release
 
 husky.sh
 .emoji
+
+dist
