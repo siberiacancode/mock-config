@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createTmpDir } from '@/shared/helpers/tests';
-import { expect, describe, it, beforeEach, afterEach, vi } from 'vitest';
+import { createTmpDir } from '@/shared/tests';
 
 import { FileWriter } from './FileWriter';
 

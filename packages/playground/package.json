@@ -60,7 +60,8 @@
     "type": "tsc --noEmit",
     "format": "prettier --write .",
     "pretty": "pnpm type && pnpm lint && pnpm format",
-    "unit-test": "vitest"
+    "unit-test": "vitest",
+    "lint-staged": "lint-staged"
   },
   "dependencies": {
     "@types/express": "^4.17.25",

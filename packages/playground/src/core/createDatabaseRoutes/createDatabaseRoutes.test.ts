@@ -1,16 +1,16 @@
 import type { Express } from 'express';
-import { expect, describe, it, beforeAll, afterAll } from 'vitest';
 
 import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import request from 'supertest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { DatabaseConfig, MockServerConfig } from '@/shared/types';
 
-import { createDatabaseRoutes } from './createDatabaseRoutes';
-import { createTmpDir } from '@/shared/helpers/tests';
+import { createTmpDir } from '@/shared/tests';
 
+import { createDatabaseRoutes } from './createDatabaseRoutes';
 import { findIndexById } from './helpers';
 
 describe('createDatabaseRoutes', () => {
