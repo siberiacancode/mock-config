@@ -13,6 +13,7 @@ import { portSchema } from './portSchema/portSchema';
 import { restRequestConfigSchema } from './restConfigSchema/restConfigSchema';
 import { staticPathSchema } from './staticPathSchema/staticPathSchema';
 import { plainObjectSchema } from './utils';
+import { websocketRequestConfigSchema } from './websocketConfigSchema/websocketConfigSchema';
 
 export const validateFlatMockServerConfig = (flatMockServerConfig: PlainObject) => {
   if (!flatMockServerConfig.length) {
@@ -34,7 +35,9 @@ export const validateFlatMockServerConfig = (flatMockServerConfig: PlainObject) 
     name: z.string().optional(),
     baseUrl: baseUrlSchema.optional(),
     interceptors: plainObjectSchema(interceptorsSchema).optional(),
-    configs: z.array(z.union([restRequestConfigSchema, graphqlRequestConfigSchema]))
+    configs: z.array(
+      z.union([restRequestConfigSchema, graphqlRequestConfigSchema, websocketRequestConfigSchema])
+    )
   });
 
   const flatMockServerConfigSchema = z

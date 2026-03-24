@@ -1,4 +1,5 @@
 import type { Express } from 'express';
+import type { Server } from 'node:http';
 
 import bodyParser from 'body-parser';
 import express from 'express';
@@ -10,7 +11,9 @@ import type {
   GraphQLRequestArtifact,
   MockServerComponent,
   MockServerConfig,
-  RestRequestArtifact
+  RestRequestArtifact,
+  WebSocketInterceptors,
+  WebSocketRequestConfig
 } from '@/utils/types';
 
 import { createDatabaseRoutes } from '@/core/database';
@@ -28,6 +31,9 @@ import { validateMockServerConfig } from '@/utils/validate';
 
 import { calculateGraphQLRouteConfigWeight } from '../../core/graphql/createGraphQLRoute/helpers';
 import { calculateRestRouteConfigWeight } from '../../core/rest/createRestRoute/helpers';
+import { createWebSocketRoute } from '../../core/websocket/createWebSocketRoute/createWebSocketRoute';
+import { calculateWebSocketRouteConfigWeight } from '../../core/websocket/createWebSocketRoute/helpers';
+import type { WebSocketArtifact } from '../../core/websocket/createWebSocketRoute/createWebSocketRoute';
 
 export const createMockServer = (
   mockServerConfig: MockServerConfig,
@@ -83,7 +89,7 @@ export const createMockServer = (
     ? mockServerComponents
     : (mockServerConfig as MockServerComponent[]);
 
-  const { restRequestsArtifacts, graphQLRequestsArtifacts } = components.reduce(
+  const { restRequestsArtifacts, graphQLRequestsArtifacts, webSocketArtifacts } = components.reduce(
     (acc, component) => {
       component.configs.forEach((config) => {
         const isRest = 'method' in config;
@@ -132,13 +138,32 @@ export const createMockServer = (
             });
           });
         }
+
+        const isWebSocket = 'event' in config;
+        if (isWebSocket) {
+          const websocketRequestConfig = config as WebSocketRequestConfig;
+          const sortedWebSocketRoutes = websocketRequestConfig.routes.toSorted(
+            (first, second) =>
+              calculateWebSocketRouteConfigWeight(second) - calculateWebSocketRouteConfigWeight(first)
+          );
+          acc.webSocketArtifacts.push({
+            baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '/'),
+            event: websocketRequestConfig.event,
+            routes: sortedWebSocketRoutes,
+            serverInterceptors: interceptors as unknown as WebSocketInterceptors | undefined,
+            componentInterceptors: component.interceptors as unknown as WebSocketInterceptors | undefined,
+            requestInterceptors:
+              websocketRequestConfig.interceptors as unknown as WebSocketInterceptors | undefined
+          });
+        }
       });
 
       return acc;
     },
     {
       restRequestsArtifacts: [] as RestRequestArtifact[],
-      graphQLRequestsArtifacts: [] as GraphQLRequestArtifact[]
+      graphQLRequestsArtifacts: [] as GraphQLRequestArtifact[],
+      webSocketArtifacts: [] as WebSocketArtifact[]
     }
   );
 
@@ -148,6 +173,27 @@ export const createMockServer = (
   const sortedGraphQLRequestsArtifacts = graphQLRequestsArtifacts.toSorted(
     (first, second) => second.weight - first.weight
   );
+  const sortedWebSocketArtifacts = webSocketArtifacts.toSorted((first, second) => {
+    const firstMaxRouteWeight = Math.max(
+      ...first.routes.map((route) => calculateWebSocketRouteConfigWeight(route)),
+      0
+    );
+    const secondMaxRouteWeight = Math.max(
+      ...second.routes.map((route) => calculateWebSocketRouteConfigWeight(route)),
+      0
+    );
+    if (secondMaxRouteWeight !== firstMaxRouteWeight) {
+      return secondMaxRouteWeight - firstMaxRouteWeight;
+    }
+
+    const firstEventWeight = first.event instanceof RegExp ? 0 : 1;
+    const secondEventWeight = second.event instanceof RegExp ? 0 : 1;
+    if (secondEventWeight !== firstEventWeight) {
+      return secondEventWeight - firstEventWeight;
+    }
+
+    return second.baseUrl.length - first.baseUrl.length;
+  });
 
   if (sortedRestRequestsArtifacts.length) {
     createRestRoute({
@@ -161,6 +207,18 @@ export const createMockServer = (
       server,
       graphQLRequestArtifacts: sortedGraphQLRequestsArtifacts
     });
+  }
+
+  if (sortedWebSocketArtifacts.length) {
+    const baseListen = server.listen.bind(server);
+    (server.listen as typeof baseListen) = ((...args: Parameters<typeof baseListen>) => {
+      const httpServer = baseListen(...args) as Server;
+      createWebSocketRoute({
+        httpServer,
+        webSocketArtifacts: sortedWebSocketArtifacts
+      });
+      return httpServer;
+    }) as typeof baseListen;
   }
 
   errorMiddleware(server);

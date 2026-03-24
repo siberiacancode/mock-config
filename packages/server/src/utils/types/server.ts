@@ -5,6 +5,7 @@ import type { Database, Orm } from './database';
 import type { GraphQLRequestConfig } from './graphql';
 import type { Interceptors } from './interceptors';
 import type { RestMethod, RestRequestConfig } from './rest';
+import type { WebSocketRequestConfig } from './websocket';
 
 interface StaticPathObject {
   path: `/${string}`;
@@ -71,7 +72,7 @@ declare global {
 
 export interface MockServerComponent {
   baseUrl?: BaseUrl;
-  configs: Array<GraphQLRequestConfig | RestRequestConfig>;
+  configs: Array<GraphQLRequestConfig | RestRequestConfig | WebSocketRequestConfig>;
   interceptors?: Interceptors;
   name?: string;
 }

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mock Config WS Check</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 880px;
+        margin: 32px auto;
+        padding: 0 16px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      input,
+      textarea,
+      button {
+        font: inherit;
+        padding: 8px;
+      }
+      input,
+      textarea {
+        width: 100%;
+      }
+      textarea {
+        min-height: 120px;
+      }
+      #log {
+        white-space: pre-wrap;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 12px;
+        min-height: 220px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>WebSocket MVP Check</h1>
+
+    <div class="row">
+      <input id="url" value="ws://localhost:31299/ws" />
+      <button id="connect">Connect</button>
+      <button id="disconnect">Disconnect</button>
+    </div>
+
+    <div class="row">
+      <textarea id="message">
+{"event":"ping","payload":{"room":"main"}}
+      </textarea>
+    </div>
+
+    <div class="row">
+      <button id="send">Send JSON</button>
+      <button id="sendRaw">Send RAW "PING"</button>
+      <button id="clear">Clear Log</button>
+    </div>
+
+    <div id="log"></div>
+
+    <script>
+      /** @type {WebSocket | null} */
+      let socket = null;
+
+      const byId = (id) => document.getElementById(id);
+      const logEl = byId("log");
+
+      const log = (text) => {
+        const ts = new Date().toISOString();
+        logEl.textContent += `[${ts}] ${text}\n`;
+      };
+
+      const connect = () => {
+        const url = byId("url").value.trim();
+        if (!url) return;
+
+        socket = new WebSocket(url);
+        socket.addEventListener("open", () => log("connected"));
+        socket.addEventListener("close", () => log("closed"));
+        socket.addEventListener("error", () => log("error"));
+        socket.addEventListener("message", (event) => log(`message: ${event.data}`));
+      };
+
+      const disconnect = () => {
+        if (!socket) return;
+        socket.close();
+        socket = null;
+      };
+
+      const sendJson = () => {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+          log("socket is not connected");
+          return;
+        }
+
+        const value = byId("message").value;
+        socket.send(value);
+        log(`sent: ${value}`);
+      };
+
+      const sendRaw = () => {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+          log("socket is not connected");
+          return;
+        }
+
+        socket.send("PING");
+        log('sent raw: "PING"');
+      };
+
+      byId("connect").addEventListener("click", connect);
+      byId("disconnect").addEventListener("click", disconnect);
+      byId("send").addEventListener("click", sendJson);
+      byId("sendRaw").addEventListener("click", sendRaw);
+      byId("clear").addEventListener("click", () => {
+        logEl.textContent = "";
+      });
+    </script>
+  </body>
+</html>

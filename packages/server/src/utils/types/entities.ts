@@ -62,6 +62,11 @@ export type BodyPlainEntity =
   | TopLevelPlainEntityDescriptor
   | TopLevelPlainEntityRecord;
 
+export type MessagePlainEntity =
+  | TopLevelPlainEntityArray
+  | TopLevelPlainEntityDescriptor
+  | TopLevelPlainEntityRecord;
+
 export type VariablesPlainEntity = TopLevelPlainEntityDescriptor | TopLevelPlainEntityRecord;
 
 /* ----- Mapped entity ----- */

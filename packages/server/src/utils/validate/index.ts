@@ -10,3 +10,4 @@ export * from './restConfigSchema/restConfigSchema';
 export * from './staticPathSchema/staticPathSchema';
 export * from './utils';
 export * from './validateMockServerConfig';
+export * from './websocketConfigSchema/websocketConfigSchema';

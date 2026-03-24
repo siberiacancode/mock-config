@@ -76,6 +76,12 @@ export const bodyPlainEntitySchema = z.union([
   topLevelPlainEntityArraySchema
 ]);
 
+export const messagePlainEntitySchema = z.union([
+  topLevelPlainEntityDescriptorSchema,
+  topLevelPlainEntityRecordSchema,
+  topLevelPlainEntityArraySchema
+]);
+
 export const variablesPlainEntitySchema = z.union([
   topLevelPlainEntityDescriptorSchema,
   topLevelPlainEntityRecordSchema

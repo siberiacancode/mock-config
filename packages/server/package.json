@@ -72,6 +72,7 @@
     "graphql": "^16.10.0",
     "please-upgrade-node": "^3.2.0",
     "prompts": "^2.4.2",
+    "ws": "^8.18.3",
     "yargs": "^17.7.2",
     "zod": "^3.24.1"
   },
@@ -80,6 +81,7 @@
     "@swc/cli": "^0.6.0",
     "@swc/core": "^1.10.7",
     "@types/supertest": "^6.0.2",
+    "@types/ws": "^8.18.1",
     "husky": "^9.1.7",
     "lint-staged": "^15.3.0",
     "nodemon": "^3.1.9",
