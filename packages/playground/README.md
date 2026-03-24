@@ -1,55 +1,80 @@
 # Mock Config Playground
 
-Standalone **JSON database** mock server: full CRUD over REST, same database model as [**mock-config-server**](https://www.npmjs.com/package/mock-config-server) but without REST/GraphQL route configs — only `data` + optional `routes`, CORS, static files, and interceptors.
+`mock-config-playground` is a standalone package for running a JSON database mock server with REST CRUD routes.
 
 ## Install
 
 ```bash
 npm i mock-config-playground --save-dev
-# or
-pnpm add -D mock-config-playground
 ```
 
 ## Philosophy
 
-Use a single JSON file as the database, run a small Express server, and iterate on frontend or tools against predictable REST endpoints (`GET /collection`, `POST /collection`, nested resources, filters, pagination, etc.). For the full mock stack (REST + GraphQL + flat configs), use **mock-config-server**.
+`mock-config-playground` is an independent package for quick local mocking around a single JSON database model:
 
-## Features
+- start fast from one file (`db.json`) or one in-memory object
+- keep routes predictable and close to real CRUD behavior
+- use it as a lightweight dev/test backend for frontend, SDK, and integration scenarios
 
-- **TypeScript-first** — types exported from the package
-- **Database REST API** — collections, singletons, `/__db`, `/__routes`, filters, sort, pagination (see [Database](#database))
-- **CORS** — optional, same shape as mock-config-server
-- **Static files** — optional `staticPath`
-- **Request interceptors** — optional server-level request interceptor
+If you need advanced route configuration, use the full [`mock-config-server`](../server/README.md).
 
-## CLI
+## Usage
 
-The binary is **`mock-config-playground`** (short: **`mcp`**).
+You can run playground in two ways:
+
+1. **CLI**
+2. **Programmatic server**
+
+## Usage
+
+Binary:
+
+- `mock-playground`
+- short alias: `mp`
 
 ```text
-mock-config-playground playground <data> [options]
+mock-playground <data> [options]
 ```
 
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--baseUrl` | `-b` | URL prefix for the app (default `/`) |
-| `--port` | `-p` | Port (default from shared constants, same family as mock-config-server) |
-| `--staticPath` | `-s` | Static files path |
+| Option         | Alias | Description                             |
+| -------------- | ----- | --------------------------------------- |
+| `--baseUrl`    | `-b`  | URL prefix for all routes (default `/`) |
+| `--port`       | `-p`  | HTTP port (default: `7777`)             |
+| `--staticPath` | `-s`  | Path to static files                    |
 
-`<data>` must be a path to a **JSON file** whose root value is a **plain object** (validated before start).
+`<data>` is a path to a JSON file.
 
-### Examples
+### CLI examples
 
 ```bash
-npx mock-config-playground playground ./db.json --port 4000 --baseUrl /api
-npx mock-config-playground playground ./db.json -b / -p 31299
+npx mock-config-playground ./db.json --port 3000 --baseUrl /api
+```
+
+Use `startPlaygroundServer` to listen immediately, or `createPlaygroundServer` to get an server app.
+
+```typescript
+import {
+  createPlaygroundServer,
+  startPlaygroundServer,
+} from "mock-config-playground";
+import type { PlaygroundServerConfig } from "mock-config-playground";
+
+const config: PlaygroundServerConfig = {
+  port: 3000,
+  baseUrl: "/",
+  data: {
+    posts: [{ id: 1, title: "Hello" }],
+  },
+};
+
+const server = startPlaygroundServer(config);
+// or
+const app = createPlaygroundServer(config);
 ```
 
 ## Database
 
-Behavior matches the **Database** section of [mock-config-server README](../server/README.md#database): collections vs single routes, custom `routes` map, `/__db`, `/__routes`, filter / pagination / sort / search query params.
-
-Minimal example — `db.json`:
+Minimal `db.json` example:
 
 ```json
 {
@@ -58,7 +83,9 @@ Minimal example — `db.json`:
 }
 ```
 
-Typical routes:
+### Generated routes
+
+Collections:
 
 ```text
 GET    /users
@@ -67,43 +94,133 @@ GET    /users/1
 PUT    /users/1
 PATCH  /users/1
 DELETE /users/1
-GET    /settings
-...
 ```
 
-You can also point `data` / `routes` at JSON **file paths** inside the config when using the programmatic API (see types `DatabaseMockServerConfig`).
+Singletons:
 
-## Embed (programmatic API)
+```text
+GET   /settings
+POST  /settings
+PUT   /settings
+PATCH /settings
+```
 
-Import **`startPlaygroundServer`** to listen, or **`createPlaygroundServer`** if you mount the app yourself (tests, custom Express).
+Additional routes:
+
+```text
+GET /__db
+GET /__routes
+```
+
+You can provide `data` and `routes` as objects or as JSON file paths via programmatic config.
+
+## Routes override (custom aliases)
+
+You can remap incoming URLs to real database routes with `routes`.
 
 ```typescript
-import {
-  createPlaygroundServer,
-  startPlaygroundServer
-} from 'mock-config-playground';
-import type { DatabaseMockServerConfig } from 'mock-config-playground';
+import type { PlaygroundServerConfig } from "mock-config-playground";
 
-const config: DatabaseMockServerConfig = {
-  port: 31299,
-  baseUrl: '/',
+const config: PlaygroundServerConfig = {
   data: {
-    posts: [{ id: 1, title: 'Hello' }]
-  }
+    users: [{ id: 1, name: "John" }],
+    settings: { blocked: false },
+  },
+  routes: {
+    "/api/users/:id": "/users/:id",
+    "/*/my-settings": "/settings",
+  },
 };
-
-// Listens on config.port; returns http.Server with extra `destroy()` for clean shutdown
-const server = startPlaygroundServer(config);
-
-// Later (e.g. tests, watch mode):
-server.destroy(() => process.exit(0));
-
-// Or only build the Express app:
-const app = createPlaygroundServer({ ...config, data: config.data });
 ```
 
-`startPlaygroundServer` wraps the Node HTTP server with **`destroy()`** so open keep-alive connections do not block shutdown — use it before restarting or exiting the process.
+Now aliases resolve correctly:
 
-## See also
+```text
+GET /api/users/1 -> /users/1
+GET /v1/my-settings -> /settings
+```
 
-- Full mock server (REST, GraphQL, flat config, CLI `mcs`): [mock-config-server](../server/README.md)
+Notes:
+
+- custom route keys should start with `/`
+- use `:id` placeholder for id mapping
+- wildcard `*` can be used only on custom route key
+
+## Query parameters
+
+All examples below are supported for collection endpoints.
+
+### Filter
+
+```text
+GET /users?name=John
+GET /users?id=1&id=2
+GET /users?author.name=alice
+```
+
+### Pagination (`_page`, `_limit`)
+
+```text
+GET /users?_page=1
+GET /users?_page=1&_limit=5
+```
+
+Notes:
+
+- `_limit` default is `10`
+- response format:
+
+```json
+{
+  "_link": {
+    "count": 25,
+    "pages": 5,
+    "next": "?_page=2&_limit=5",
+    "prev": null
+  },
+  "results": []
+}
+```
+
+### Sort (`_sort`, `_order`)
+
+```text
+GET /users?_sort=name
+GET /users?_sort=address.city&_order=desc
+GET /users?_sort=id&_order=desc&_sort=name&_order=asc
+```
+
+`_order` default is `asc`.
+
+### Slice (`_begin`, `_end`)
+
+```text
+GET /users?_begin=20
+GET /users?_begin=20&_end=30
+```
+
+Works like JavaScript `Array.prototype.slice`. `X-Total-Count` header is included in response.
+
+### Full-text search (`_q`)
+
+```text
+GET /users?_q=john
+GET /users?_q=john&_q=24
+```
+
+Search applies to string and number values.
+
+### Embed related resources (`_embed`)
+
+Use `_embed` to include related entities into response items.
+
+```text
+GET /posts/1?_embed=user
+GET /posts?_embed=user
+GET /posts?_embed=user&_embed=users
+```
+
+Typical relation examples:
+
+- `posts.userId -> users.id` adds `user` object
+- `posts.usersIds -> users.id` adds `users` array

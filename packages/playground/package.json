@@ -42,7 +42,7 @@
   "module": "dist/esm/index.mjs",
   "types": "dist/esm/index.d.mts",
   "bin": {
-    "mock-playground": "dist/bin/bin.js",
+    "mock-config-playground": "dist/bin/bin.js",
     "mcp": "dist/bin/bin.js"
   },
   "files": [
