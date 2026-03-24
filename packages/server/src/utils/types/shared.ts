@@ -1,1 +1,1 @@
-export type ApiType = 'graphql' | 'rest';
+export type ApiType = "graphql" | "rest" | "websocket";

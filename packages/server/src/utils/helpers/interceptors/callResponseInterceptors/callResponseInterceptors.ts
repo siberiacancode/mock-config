@@ -1,9 +1,13 @@
-import type { Request, Response } from 'express';
+import type { Request, Response } from "express";
 
-import type { Data, ResponseInterceptor, ResponseInterceptorParams } from '@/utils/types';
+import type {
+  Data,
+  ResponseInterceptor,
+  ResponseInterceptorParams,
+} from "@/utils/types";
 
-import { callResponseLogger } from '../../logger';
-import { setDelay } from '../helpers/setDelay';
+import { callResponseLogger } from "../../logger";
+import { setDelay } from "../helpers/setDelay";
 
 interface CallResponseInterceptorsParams {
   data: Data;
@@ -17,46 +21,64 @@ interface CallResponseInterceptorsParams {
   };
 }
 
-export const callResponseInterceptors = async (params: CallResponseInterceptorsParams) => {
+export const callResponseInterceptors = async (
+  params: CallResponseInterceptorsParams
+) => {
   const { data, request, response, interceptors } = params;
 
-  const getRequestHeader: ResponseInterceptorParams['getRequestHeader'] = (field: string) =>
-    request.headers[field];
-  const getRequestHeaders: ResponseInterceptorParams['getRequestHeaders'] = () => request.headers;
+  const getRequestHeader: ResponseInterceptorParams["getRequestHeader"] = (
+    field: string
+  ) => request.headers[field];
+  const getRequestHeaders: ResponseInterceptorParams["getRequestHeaders"] =
+    () => request.headers;
 
-  const getResponseHeader: ResponseInterceptorParams['getResponseHeader'] = (field: string) =>
-    response.getHeader(field);
-  const getResponseHeaders: ResponseInterceptorParams['getResponseHeaders'] = () =>
-    response.getHeaders();
+  const getResponseHeader: ResponseInterceptorParams["getResponseHeader"] = (
+    field: string
+  ) => response.getHeader(field);
+  const getResponseHeaders: ResponseInterceptorParams["getResponseHeaders"] =
+    () => response.getHeaders();
 
   const setHeader = (field: string, value?: string | string[]) => {
     response.set(field, value);
   };
-  const appendHeader: ResponseInterceptorParams['appendHeader'] = (field, value) => {
+  const appendHeader: ResponseInterceptorParams["appendHeader"] = (
+    field,
+    value
+  ) => {
     response.append(field, value);
   };
 
-  const setStatusCode: ResponseInterceptorParams['setStatusCode'] = (statusCode) => {
+  const setStatusCode: ResponseInterceptorParams["setStatusCode"] = (
+    statusCode
+  ) => {
     response.statusCode = statusCode;
   };
 
-  const getCookie: ResponseInterceptorParams['getCookie'] = (name) => request.cookies[name];
-  const setCookie: ResponseInterceptorParams['setCookie'] = (name, value, options) => {
+  const getCookie: ResponseInterceptorParams["getCookie"] = (name) =>
+    request.cookies[name];
+  const setCookie: ResponseInterceptorParams["setCookie"] = (
+    name,
+    value,
+    options
+  ) => {
     if (options) {
       response.cookie(name, value, options);
       return;
     }
     response.cookie(name, value);
   };
-  const clearCookie: ResponseInterceptorParams['clearCookie'] = (name, options) => {
+  const clearCookie: ResponseInterceptorParams["clearCookie"] = (
+    name,
+    options
+  ) => {
     response.clearCookie(name, options);
   };
 
-  const attachment: ResponseInterceptorParams['attachment'] = (filename) => {
+  const attachment: ResponseInterceptorParams["attachment"] = (filename) => {
     response.attachment(filename);
   };
 
-  const log: ResponseInterceptorParams['log'] = (logger) =>
+  const log: ResponseInterceptorParams["log"] = (logger) =>
     callResponseLogger({ logger, data, request, response });
 
   const responseInterceptorParams: ResponseInterceptorParams = {
@@ -75,21 +97,34 @@ export const callResponseInterceptors = async (params: CallResponseInterceptorsP
     clearCookie,
     attachment,
     log,
-    orm: request.context.orm
+    orm: request.context.orm,
+    socket: request.context.socket,
   };
 
   let updatedData = data;
   if (interceptors?.routeInterceptor) {
-    updatedData = await interceptors.routeInterceptor(updatedData, responseInterceptorParams);
+    updatedData = await interceptors.routeInterceptor(
+      updatedData,
+      responseInterceptorParams
+    );
   }
   if (interceptors?.requestInterceptor) {
-    updatedData = await interceptors.requestInterceptor(updatedData, responseInterceptorParams);
+    updatedData = await interceptors.requestInterceptor(
+      updatedData,
+      responseInterceptorParams
+    );
   }
   if (interceptors?.componentInterceptor) {
-    updatedData = await interceptors.componentInterceptor(updatedData, responseInterceptorParams);
+    updatedData = await interceptors.componentInterceptor(
+      updatedData,
+      responseInterceptorParams
+    );
   }
   if (interceptors?.serverInterceptor) {
-    updatedData = await interceptors.serverInterceptor(updatedData, responseInterceptorParams);
+    updatedData = await interceptors.serverInterceptor(
+      updatedData,
+      responseInterceptorParams
+    );
   }
 
   return updatedData;

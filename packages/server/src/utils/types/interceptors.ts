@@ -1,19 +1,21 @@
-import type { CookieOptions, Request, Response } from 'express';
+import type { CookieOptions, Request, Response } from "express";
+import type { WebSocket } from "ws";
 
-import type { Database, Orm } from './database';
-import type { Logger, LoggerTokens } from './logger';
-import type { ApiType } from './shared';
+import type { Database, Orm } from "./database";
+import type { Logger, LoggerTokens } from "./logger";
+import type { ApiType } from "./shared";
 
 type InterceptorCookieValue = string | undefined;
 type InterceptorHeaderValue = number | string | string[] | undefined;
 
 export interface RequestInterceptorParams<Api extends ApiType = ApiType> {
   orm: Orm<Database>;
+  socket: WebSocket;
   request: Request;
   getCookie: (name: string) => InterceptorCookieValue;
   getHeader: (field: string) => InterceptorHeaderValue;
   getHeaders: () => Record<string, InterceptorHeaderValue>;
-  log: (logger?: Logger<'request', Api>) => Partial<LoggerTokens>;
+  log: (logger?: Logger<"request", Api>) => Partial<LoggerTokens>;
   setDelay: (delay: number) => Promise<void>;
 }
 
@@ -23,6 +25,7 @@ export type RequestInterceptor<Api extends ApiType = ApiType> = (
 
 export interface ResponseInterceptorParams<Api extends ApiType = ApiType> {
   orm: Orm<Database>;
+  socket: WebSocket;
   request: Request;
   response: Response;
   appendHeader: (field: string, value?: string | string[]) => void;
@@ -33,7 +36,7 @@ export interface ResponseInterceptorParams<Api extends ApiType = ApiType> {
   getRequestHeaders: () => Record<string, InterceptorHeaderValue>;
   getResponseHeader: (field: string) => InterceptorHeaderValue;
   getResponseHeaders: () => Record<string, InterceptorHeaderValue>;
-  log: (logger?: Logger<'response', Api>) => Partial<LoggerTokens>;
+  log: (logger?: Logger<"response", Api>) => Partial<LoggerTokens>;
   setCookie: (name: string, value: string, options?: CookieOptions) => void;
   setDelay: (delay: number) => Promise<void>;
   setHeader: (field: string, value?: string | string[]) => void;

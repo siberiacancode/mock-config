@@ -1,8 +1,8 @@
-import type { FlatMockServerConfig } from 'mock-config-server';
+import type { MockServerConfig } from 'mock-config-server';
 
-import { createFlatMockServer, startFlatMockServer } from 'mock-config-server';
+import { createMockServer, startMockServer } from 'mock-config-server';
 
-export const mockServerConfig: FlatMockServerConfig = [
+export const mockServerConfig: MockServerConfig = [
   {
     interceptors: {
       response: async (data, params) => {
@@ -26,5 +26,5 @@ export const mockServerConfig: FlatMockServerConfig = [
   }
 ];
 
-createFlatMockServer(mockServerConfig);
-startFlatMockServer(mockServerConfig);
+createMockServer(mockServerConfig);
+startMockServer(mockServerConfig);

@@ -1,8 +1,8 @@
-import type { FlatMockServerConfig } from 'mock-config-server';
+import type { MockServerConfig } from 'mock-config-server';
 
-import { createFlatMockServer, startFlatMockServer } from 'mock-config-server';
+import { createMockServer, startMockServer } from 'mock-config-server';
 
-export const flatMockServerConfig: FlatMockServerConfig = [
+export const flatMockServerConfig: MockServerConfig = [
   {
     baseUrl: '/api'
   },
@@ -30,5 +30,5 @@ export const flatMockServerConfig: FlatMockServerConfig = [
   }
 ];
 
-createFlatMockServer(flatMockServerConfig);
-startFlatMockServer(flatMockServerConfig);
+createMockServer(flatMockServerConfig);
+startMockServer(flatMockServerConfig);

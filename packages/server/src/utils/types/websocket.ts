@@ -1,47 +1,12 @@
-import type { IncomingMessage } from 'node:http';
+import type { Request } from "express";
 
-import type { Request } from 'express';
-import type WebSocket from 'ws';
-
-import type { MappedEntity, MessagePlainEntity } from './entities';
-import type { Data } from './values';
+import type { MappedEntity, MessagePlainEntity } from "./entities";
+import type { BaseUrl } from "./server";
+import type { Data } from "./values";
+import type { Interceptors } from './interceptors';
 
 interface WebSocketSettings {
   readonly delay?: number;
-}
-
-export interface WebSocketContext {
-  connectionId: string;
-  event?: string;
-  message: {
-    parsed?: Record<string, unknown>;
-    raw: string;
-  };
-  socket: WebSocket;
-}
-
-export interface WebSocketRequestInterceptorParams {
-  context: WebSocketContext;
-  request: IncomingMessage;
-  socket: WebSocket;
-}
-
-export type WebSocketRequestInterceptor = (
-  params: WebSocketRequestInterceptorParams
-) => Promise<void> | void;
-
-export interface WebSocketResponseInterceptorParams extends WebSocketRequestInterceptorParams {
-  setDelay: (delay: number) => Promise<void>;
-}
-
-export type WebSocketResponseInterceptor = (
-  event: Data | undefined,
-  params: WebSocketResponseInterceptorParams
-) => Promise<Data | undefined> | Data | undefined;
-
-export interface WebSocketInterceptors {
-  request?: WebSocketRequestInterceptor;
-  response?: WebSocketResponseInterceptor;
 }
 
 export type WebSocketEntitiesByEntityName = {
@@ -54,21 +19,35 @@ export type WebSocketEntitiesByEntityName = {
 export type WebSocketEventResponse =
   | ((
       request: Request,
-      entities: WebSocketEntitiesByEntityName,
-      context: WebSocketContext
+      entities: WebSocketEntitiesByEntityName
     ) => Data | Promise<Data>)
   | Data;
 
 export interface WebSocketRouteConfig {
   event?: WebSocketEventResponse;
   entities?: WebSocketEntitiesByEntityName;
-  interceptors?: WebSocketInterceptors;
+  interceptors?: Interceptors<"websocket">;
   settings?: WebSocketSettings;
 }
 
 export interface WebSocketRequestConfig {
   event: RegExp | string;
-  interceptors?: WebSocketInterceptors;
+  interceptors?: Interceptors<"websocket">;
   routes: WebSocketRouteConfig[];
 }
 
+export interface WebSocketRequestArtifact {
+  baseUrl: BaseUrl;
+  componentRequestInterceptor?: Interceptors<"websocket">["request"];
+  componentResponseInterceptor?: Interceptors<"websocket">["response"];
+  config: WebSocketRouteConfig;
+  event: RegExp | string;
+  key: string;
+  requestRequestInterceptor?: Interceptors<"websocket">["request"];
+  requestResponseInterceptor?: Interceptors<"websocket">["response"];
+  routeRequestInterceptor?: Interceptors<"websocket">["request"];
+  routeResponseInterceptor?: Interceptors<"websocket">["response"];
+  serverRequestInterceptor?: Interceptors<"websocket">["request"];
+  serverResponseInterceptor?: Interceptors<"websocket">["response"];
+  weight: number;
+}

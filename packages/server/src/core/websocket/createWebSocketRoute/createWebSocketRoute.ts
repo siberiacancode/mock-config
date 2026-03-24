@@ -1,106 +1,140 @@
-import { flatten } from 'flat';
-import type { Server } from 'node:http';
-import type { IncomingMessage } from 'node:http';
-import type { RawData, WebSocket } from 'ws';
-
-import type { Request } from 'express';
-import { WebSocketServer } from 'ws';
+import { flatten } from "flat";
+import type { IncomingMessage, Server } from "node:http";
+import type { RawData, WebSocket } from "ws";
+import { WebSocketServer } from "ws";
 
 import type {
   EntityDescriptor,
+  Entries,
   MessagePlainEntity,
-  WebSocketInterceptors,
-  WebSocketRouteConfig
-} from '@/utils/types';
+  PlainObject,
+  TopLevelPlainEntityArray,
+  TopLevelPlainEntityDescriptor,
+  WebSocketDataResponse,
+  WebSocketRequestArtifact,
+} from "@/utils/types";
 
-import { parseCookie } from '@/core/middlewares/cookieParseMiddleware/helpers/parseCookie/parseCookie';
+import { parseCookie } from "@/core/middlewares/cookieParseMiddleware/helpers/parseCookie/parseCookie";
 import {
+  callResponseInterceptors,
   convertToEntityDescriptor,
   isEntityDescriptor,
   isPlainObject,
   resolveEntityValues,
-  sleep
-} from '@/utils/helpers';
-
-export interface WebSocketArtifact {
-  baseUrl: string;
-  componentInterceptors?: WebSocketInterceptors;
-  event: RegExp | string;
-  requestInterceptors?: WebSocketInterceptors;
-  routes: WebSocketRouteConfig[];
-  serverInterceptors?: WebSocketInterceptors;
-}
+  sleep,
+} from "@/utils/helpers";
 
 interface CreateWebSocketRouteParams {
   httpServer: Server;
-  webSocketArtifacts: WebSocketArtifact[];
+  webSocketRequestArtifacts: WebSocketRequestArtifact[];
 }
 
-const parseIncomingSocketMessage = (value: Buffer | Buffer[] | string) => {
+interface ParsedSocketMessage {
+  raw: string;
+  parsed?: PlainObject;
+  event?: string;
+}
+
+interface WebSocketRouteContext {
+  connectionId: string;
+  socket: WebSocket;
+  request: IncomingMessage;
+  event?: string;
+  message: {
+    raw: string;
+    parsed?: PlainObject;
+  };
+}
+
+const parseIncomingSocketMessage = (value: RawData): ParsedSocketMessage => {
   const raw = Array.isArray(value)
-    ? Buffer.concat(value).toString('utf-8')
+    ? Buffer.concat(value).toString("utf-8")
     : Buffer.isBuffer(value)
-      ? value.toString('utf-8')
-      : String(value);
+    ? value.toString("utf-8")
+    : String(value);
 
   try {
     const parsed = JSON.parse(raw);
+
     if (isPlainObject(parsed)) {
       return {
         raw,
         parsed,
-        event: typeof parsed.event === 'string' ? parsed.event : undefined
+        event: typeof parsed.event === "string" ? parsed.event : undefined,
       };
     }
   } catch {
-    // keep raw as-is if parse failed
+    // noop
   }
 
   return {
     raw,
     parsed: undefined,
-    event: undefined
+    event: undefined,
   };
 };
 
 const isPathMatchedByBaseUrl = (path: string, baseUrl: string) => {
-  if (baseUrl === '/') return true;
+  if (baseUrl === "/") return true;
   return path === baseUrl || path.startsWith(`${baseUrl}/`);
 };
 
-const isMappedEntityMatched = (descriptor: Record<string, any>, actualValue: Record<string, any>) => {
-  const flattenActualValue = flatten<Record<string, any>, Record<string, any>>(actualValue);
-  return Object.entries(descriptor).every(([key, value]) => {
-    const descriptorEntity = convertToEntityDescriptor(value);
-    const actualKey = key.toLowerCase();
-    const actualEntityValue = flattenActualValue[actualKey];
+const isMappedEntityMatched = (
+  descriptor: Record<string, unknown>,
+  actualValue: Record<string, unknown>
+) => {
+  const flattenedActualValue = flatten<
+    Record<string, unknown>,
+    Record<string, unknown>
+  >(actualValue);
 
-    if (descriptorEntity.checkMode === 'exists' || descriptorEntity.checkMode === 'notExists') {
+  return Object.entries(descriptor).every(
+    ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
+      const entityPropertyDescriptor = convertToEntityDescriptor(
+        entityPropertyDescriptorOrValue
+      );
+      const actualPropertyKey = entityPropertyKey.toLowerCase();
+      const actualPropertyValue = flattenedActualValue[actualPropertyKey];
+
+      if (
+        entityPropertyDescriptor.checkMode === "exists" ||
+        entityPropertyDescriptor.checkMode === "notExists"
+      ) {
+        return resolveEntityValues({
+          actualValue: actualPropertyValue,
+          checkMode: entityPropertyDescriptor.checkMode,
+        });
+      }
+
       return resolveEntityValues({
-        actualValue: actualEntityValue,
-        checkMode: descriptorEntity.checkMode
+        actualValue: actualPropertyValue,
+        descriptorValue: entityPropertyDescriptor.value,
+        checkMode: entityPropertyDescriptor.checkMode,
+        oneOf: entityPropertyDescriptor.oneOf ?? false,
       });
     }
-
-    return resolveEntityValues({
-      actualValue: actualEntityValue,
-      checkMode: descriptorEntity.checkMode,
-      descriptorValue: descriptorEntity.value,
-      oneOf: descriptorEntity.oneOf ?? false
-    });
-  });
+  );
 };
 
 const isMessageEntityMatched = (
-  messageDescriptor: MessagePlainEntity,
-  messageValue: Record<string, any>
+  entityDescriptorOrValue:
+    | MessagePlainEntity
+    | TopLevelPlainEntityDescriptor
+    | TopLevelPlainEntityArray,
+  messageValue: unknown
 ) => {
-  if (isEntityDescriptor(messageDescriptor)) {
-    const descriptor = messageDescriptor as EntityDescriptor;
-    if (descriptor.checkMode === 'exists' || descriptor.checkMode === 'notExists') {
+  const isTopLevelDescriptor = isEntityDescriptor(entityDescriptorOrValue);
+
+  if (isTopLevelDescriptor) {
+    const descriptor = entityDescriptorOrValue as EntityDescriptor;
+
+    if (
+      descriptor.checkMode === "exists" ||
+      descriptor.checkMode === "notExists"
+    ) {
       return resolveEntityValues({
         actualValue: messageValue,
-        checkMode: descriptor.checkMode
+        checkMode: descriptor.checkMode,
       });
     }
 
@@ -108,210 +142,221 @@ const isMessageEntityMatched = (
       actualValue: messageValue,
       descriptorValue: descriptor.value,
       checkMode: descriptor.checkMode,
-      oneOf: descriptor.oneOf ?? false
+      oneOf: descriptor.oneOf ?? false,
     });
   }
 
-  if (Array.isArray(messageDescriptor)) {
+  const isTopLevelArray = Array.isArray(entityDescriptorOrValue);
+
+  if (isTopLevelArray) {
+    if (!Array.isArray(messageValue)) return false;
+
     return resolveEntityValues({
       actualValue: messageValue,
-      descriptorValue: messageDescriptor,
-      checkMode: 'equals'
+      descriptorValue: entityDescriptorOrValue,
+      checkMode: "equals",
     });
   }
 
-  return isMappedEntityMatched(messageDescriptor, messageValue);
+  if (!isPlainObject(messageValue)) return false;
+
+  return isMappedEntityMatched(
+    entityDescriptorOrValue as Record<string, unknown>,
+    messageValue as Record<string, unknown>
+  );
 };
 
-const isRouteMatched = (
-  route: WebSocketRouteConfig,
-  params: {
-    cookies: Record<string, string>;
-    headers: Record<string, any>;
-    message: Record<string, any>;
-    query: Record<string, string>;
-  }
-) => {
-  if (!route.entities) return true;
-
-  return Object.entries(route.entities).every(([entityName, descriptor]) => {
-    if (!descriptor) return true;
-    if (entityName === 'headers') {
-      return isMappedEntityMatched(descriptor, params.headers);
-    }
-    if (entityName === 'cookies') {
-      return isMappedEntityMatched(descriptor, params.cookies);
-    }
-    if (entityName === 'query') {
-      return isMappedEntityMatched(descriptor, params.query);
-    }
-    if (entityName === 'message') {
-      return isMessageEntityMatched(descriptor as MessagePlainEntity, params.message);
-    }
-
-    return true;
-  });
-};
-
-const callWebSocketRequestInterceptor = async (
-  interceptor: WebSocketInterceptors['request'],
-  params: Parameters<NonNullable<WebSocketInterceptors['request']>>[0]
-) => {
-  if (!interceptor) return;
-  await interceptor(params);
-};
-
-const callWebSocketResponseInterceptor = async (
-  interceptor: WebSocketInterceptors['response'],
-  event: any,
-  params: Parameters<NonNullable<WebSocketInterceptors['response']>>[1]
-) => {
-  if (!interceptor) return event;
-  return interceptor(event, params);
-};
-
-export const createWebSocketRoute = ({ httpServer, webSocketArtifacts }: CreateWebSocketRouteParams) => {
-  if (!webSocketArtifacts.length) return;
+export const createWebSocketRoute = ({
+  httpServer,
+  webSocketRequestArtifacts,
+}: CreateWebSocketRouteParams) => {
+  if (!webSocketRequestArtifacts.length) return;
 
   const webSocketServer = new WebSocketServer({ noServer: true });
   let connectionId = 0;
 
-  httpServer.on('upgrade', (request: IncomingMessage, socket, head) => {
-    const requestPath = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`)
-      .pathname;
+  httpServer.on("upgrade", (request, socket, head) => {
+    const url = new URL(
+      request.url ?? "/",
+      `http://${request.headers.host ?? "localhost"}`
+    );
+    const requestPath = url.pathname;
 
-    const isWebSocketPath = webSocketArtifacts.some((artifact) =>
+    const isWebSocketPathMatched = webSocketRequestArtifacts.some((artifact) =>
       isPathMatchedByBaseUrl(requestPath, artifact.baseUrl)
     );
-    if (!isWebSocketPath) {
+
+    if (!isWebSocketPathMatched) {
       socket.destroy();
       return;
     }
 
-    webSocketServer.handleUpgrade(request, socket, head, (websocket: WebSocket) => {
-      webSocketServer.emit('connection', websocket, request);
+    webSocketServer.handleUpgrade(request, socket, head, (webSocket) => {
+      webSocketServer.emit("connection", webSocket, request);
     });
   });
 
-  webSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
+  webSocketServer.on("connection", (socket, request) => {
     connectionId += 1;
+
     const currentConnectionId = String(connectionId);
-    const requestPath = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`)
-      .pathname;
-    const cookies = parseCookie(request.headers.cookie ?? '');
-    const query = Object.fromEntries(
-      new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`).searchParams
+    const url = new URL(
+      request.url ?? "/",
+      `http://${request.headers.host ?? "localhost"}`
     );
+    const requestPath = url.pathname;
+    const query = Object.fromEntries(url.searchParams.entries());
+    const cookies = parseCookie(request.headers.cookie ?? "");
+    const headers = request.headers as Record<string, unknown>;
 
-    socket.on('message', async (message: RawData) => {
-      const normalizedMessage = parseIncomingSocketMessage(message as Buffer | Buffer[] | string);
-      const messageEvent = normalizedMessage.event ?? normalizedMessage.raw;
-      const messageValue = normalizedMessage.parsed ?? { raw: normalizedMessage.raw };
-      const headers = request.headers as Record<string, any>;
+    socket.on("message", async (rawMessage) => {
+      const parsedMessage = parseIncomingSocketMessage(rawMessage);
 
-      const matchedArtifact = webSocketArtifacts.find((artifact) => {
-        const isBaseUrlMatched = isPathMatchedByBaseUrl(requestPath, artifact.baseUrl);
-        if (!isBaseUrlMatched) return false;
+      const matchedRequestArtifacts = webSocketRequestArtifacts.filter(
+        (artifact) => {
+          const isBaseUrlMatched = isPathMatchedByBaseUrl(
+            requestPath,
+            artifact.baseUrl
+          );
+          if (!isBaseUrlMatched) return false;
 
-        if (artifact.event instanceof RegExp) return artifact.event.test(messageEvent);
-        return artifact.event === messageEvent;
-      });
-      if (!matchedArtifact) return;
+          const actualEvent = parsedMessage.event ?? parsedMessage.raw;
 
-      const matchedRoute = matchedArtifact.routes.find((route) =>
-        isRouteMatched(route, {
-          headers,
-          cookies,
-          query,
-          message: messageValue
-        })
+          if (artifact.event instanceof RegExp) {
+            return artifact.event.test(actualEvent);
+          }
+
+          return artifact.event === actualEvent;
+        }
       );
-      if (!matchedRoute) return;
 
-      let delay = matchedRoute.settings?.delay ?? 0;
-      const context = {
+      if (!matchedRequestArtifacts.length) return;
+
+      const matchedRouteConfig = matchedRequestArtifacts.find(({ config }) => {
+        if (!config.entities) return true;
+
+        const entityEntries = Object.entries(config.entities) as Entries<
+          typeof config.entities
+        >;
+
+        return entityEntries.every(([entityName, entityDescriptorOrValue]) => {
+          if (!entityDescriptorOrValue) return true;
+
+          if (entityName === "headers") {
+            return isMappedEntityMatched(
+              entityDescriptorOrValue as Record<string, unknown>,
+              headers
+            );
+          }
+
+          if (entityName === "cookies") {
+            return isMappedEntityMatched(
+              entityDescriptorOrValue as Record<string, unknown>,
+              cookies
+            );
+          }
+
+          if (entityName === "query") {
+            return isMappedEntityMatched(
+              entityDescriptorOrValue as Record<string, unknown>,
+              query
+            );
+          }
+
+          if (entityName === "message") {
+            return isMessageEntityMatched(
+              entityDescriptorOrValue as MessagePlainEntity,
+              parsedMessage.parsed ?? { raw: parsedMessage.raw }
+            );
+          }
+
+          return true;
+        });
+      });
+
+      if (!matchedRouteConfig) return;
+
+      const context: WebSocketRouteContext = {
         connectionId: currentConnectionId,
         socket,
-        event: normalizedMessage.event,
-        message: {
-          raw: normalizedMessage.raw,
-          parsed: normalizedMessage.parsed
-        }
-      };
-      const interceptorContextParams = {
         request,
-        socket,
-        context
+        event: parsedMessage.event,
+        message: {
+          raw: parsedMessage.raw,
+          parsed: parsedMessage.parsed,
+        },
       };
 
-      await callWebSocketRequestInterceptor(
-        matchedArtifact.serverInterceptors?.request,
-        interceptorContextParams
-      );
-      await callWebSocketRequestInterceptor(
-        matchedArtifact.componentInterceptors?.request,
-        interceptorContextParams
-      );
-      await callWebSocketRequestInterceptor(
-        matchedArtifact.requestInterceptors?.request,
-        interceptorContextParams
-      );
-      await callWebSocketRequestInterceptor(matchedRoute.interceptors?.request, interceptorContextParams);
+      if (matchedRouteConfig.serverRequestInterceptor) {
+        await callWebSocketRequestInterceptor({
+          interceptor: matchedRouteConfig.serverRequestInterceptor,
+          context,
+        });
+      }
 
-      const routeEvent = matchedRoute.event;
-      let event =
-        typeof routeEvent === 'function'
-          ? await routeEvent(request as unknown as Request, (matchedRoute.entities ?? {}) as any, context)
-          : routeEvent;
+      if (matchedRouteConfig.componentRequestInterceptor) {
+        await callWebSocketRequestInterceptor({
+          interceptor: matchedRouteConfig.componentRequestInterceptor,
+          context,
+        });
+      }
 
-      const responseContextParams = {
-        ...interceptorContextParams,
-        setDelay: async (nextDelay: number) => {
-          delay = nextDelay;
-          await sleep(nextDelay);
-        }
-      };
+      if (matchedRouteConfig.requestRequestInterceptor) {
+        await callWebSocketRequestInterceptor({
+          interceptor: matchedRouteConfig.requestRequestInterceptor,
+          context,
+        });
+      }
 
-      event = await callWebSocketResponseInterceptor(
-        matchedRoute.interceptors?.response,
-        event,
-        responseContextParams
-      );
-      event = await callWebSocketResponseInterceptor(
-        matchedArtifact.requestInterceptors?.response,
-        event,
-        responseContextParams
-      );
-      event = await callWebSocketResponseInterceptor(
-        matchedArtifact.componentInterceptors?.response,
-        event,
-        responseContextParams
-      );
-      event = await callWebSocketResponseInterceptor(
-        matchedArtifact.serverInterceptors?.response,
-        event,
-        responseContextParams
-      );
+      if (matchedRouteConfig.routeRequestInterceptor) {
+        await callWebSocketRequestInterceptor({
+          interceptor: matchedRouteConfig.routeRequestInterceptor,
+          context,
+        });
+      }
 
-      if (delay > 0) {
+      let delay = matchedRouteConfig.config.settings?.delay ?? 0;
+
+      let resolvedData: WebSocketDataResponse | undefined =
+        typeof matchedRouteConfig.config.data === "function"
+          ? await matchedRouteConfig.config.data(
+              context,
+              matchedRouteConfig.config.entities ?? {}
+            )
+          : matchedRouteConfig.config.data;
+
+      resolvedData = await callResponseInterceptors({
+        data: resolvedData,
+        request: context.request,
+        response: context.socket,
+        interceptors: {
+          routeInterceptor: matchedRouteConfig.routeResponseInterceptor,
+          requestInterceptor: matchedRouteConfig.requestResponseInterceptor,
+          componentInterceptor: matchedRouteConfig.componentResponseInterceptor,
+          serverInterceptor: matchedRouteConfig.serverResponseInterceptor,
+        },
+      });
+
+      if (delay) {
         await sleep(delay);
       }
 
-      if (typeof event === 'undefined') return;
-      if (typeof event === 'string') {
-        socket.send(event);
+      if (typeof resolvedData === "undefined") return;
+
+      if (typeof resolvedData === "string") {
+        socket.send(resolvedData);
         return;
       }
 
-      socket.send(JSON.stringify(event));
+      socket.send(JSON.stringify(resolvedData));
     });
   });
 
-  httpServer.on('close', () => {
-    webSocketServer.clients.forEach((client: WebSocket) => {
+  httpServer.on("close", () => {
+    webSocketServer.clients.forEach((client) => {
       client.close();
     });
+
     webSocketServer.close();
   });
 };
-

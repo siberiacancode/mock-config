@@ -4,22 +4,17 @@ import { createMockServer, startMockServer } from 'mock-config-server';
 
 export const mockServerConfig: MockServerConfig = [
   {
+    baseUrl: '/ws'
+  },
+  {
     configs: [
       {
-        method: 'get',
-        path: '/users',
+        event: 'get-users',
         routes: [
           {
-            data: [{ id: 1, emoji: '🎉' }]
+            event: [{ id: 1, emoji: '🎉' }]
           }
-        ],
-        interceptors: {
-          response: (data, params) => {
-            console.log(data);
-            console.log(params.getHeaders());
-            return data;
-          }
-        }
+        ]
       }
     ]
   }

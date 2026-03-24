@@ -10,16 +10,15 @@ export const mockServerConfig: MockServerConfig = [
         path: '/users',
         routes: [
           {
-            data: [{ id: 1, emoji: '🎉' }]
+            settings: {
+              polling: true
+            },
+            queue: [
+              { data: [{ id: 1, emoji: '🎉' }] },
+              { time: 1000, data: [{ id: 2, emoji: '🔥' }] }
+            ]
           }
-        ],
-        interceptors: {
-          response: (data, params) => {
-            console.log(data);
-            console.log(params.getHeaders());
-            return data;
-          }
-        }
+        ]
       }
     ]
   }

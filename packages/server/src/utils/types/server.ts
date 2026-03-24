@@ -1,17 +1,21 @@
-import type { Request } from 'express';
-import type { Arguments } from 'yargs';
+import type { Request } from "express";
+import type { Arguments } from "yargs";
+import type { WebSocket } from "ws";
 
-import type { Database, Orm } from './database';
-import type { GraphQLRequestConfig } from './graphql';
-import type { Interceptors } from './interceptors';
-import type { RestMethod, RestRequestConfig } from './rest';
-import type { WebSocketRequestConfig } from './websocket';
+import type { Database, Orm } from "./database";
+import type { GraphQLRequestConfig } from "./graphql";
+import type { Interceptors } from "./interceptors";
+import type { RestMethod, RestRequestConfig } from "./rest";
+import type { WebSocketRequestConfig } from "./websocket";
 
 interface StaticPathObject {
   path: `/${string}`;
   prefix: `/${string}`;
 }
-export type StaticPath = `/${string}` | (`/${string}` | StaticPathObject)[] | StaticPathObject;
+export type StaticPath =
+  | `/${string}`
+  | (`/${string}` | StaticPathObject)[]
+  | StaticPathObject;
 
 type CorsHeader = string;
 export type CorsOrigin = string | (string | RegExp)[] | RegExp;
@@ -30,13 +34,13 @@ export type BaseUrl = `/${string}`;
 export interface RestConfig {
   baseUrl?: BaseUrl;
   configs: RestRequestConfig[];
-  interceptors?: Interceptors<'rest'>;
+  interceptors?: Interceptors<"rest">;
 }
 
 export interface GraphqlConfig {
   baseUrl?: BaseUrl;
   configs: GraphQLRequestConfig[];
-  interceptors?: Interceptors<'graphql'>;
+  interceptors?: Interceptors<"graphql">;
 }
 
 export interface DatabaseConfig {
@@ -65,6 +69,7 @@ declare global {
     interface Request {
       context: {
         orm: Orm<Database>;
+        socket: WebSocket;
       };
     }
   }
@@ -72,7 +77,9 @@ declare global {
 
 export interface MockServerComponent {
   baseUrl?: BaseUrl;
-  configs: Array<GraphQLRequestConfig | RestRequestConfig | WebSocketRequestConfig>;
+  configs: Array<
+    GraphQLRequestConfig | RestRequestConfig | WebSocketRequestConfig
+  >;
   interceptors?: Interceptors;
   name?: string;
 }

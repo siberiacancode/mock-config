@@ -1,26 +1,10 @@
-import type { MessagePlainEntity, WebSocketRouteConfig } from '@/utils/types';
+import type { WebSocketRouteConfig } from "@/utils/types";
 
-import { isPlainObject } from '@/utils/helpers';
+import { isPlainObject } from "@/utils/helpers";
 
-const getMessageEntityWeight = (message: MessagePlainEntity) => {
-  if (Array.isArray(message)) return 1;
-
-  if (isPlainObject(message) && 'checkMode' in message) {
-    if (message.checkMode === 'exists' || message.checkMode === 'notExists') {
-      return 1;
-    }
-
-    if ('value' in message) {
-      return isPlainObject(message.value) ? Object.keys(message.value).length : 1;
-    }
-
-    return 1;
-  }
-
-  return isPlainObject(message) ? Object.keys(message).length : 1;
-};
-
-export const calculateWebSocketRouteConfigWeight = (webSocketRouteConfig: WebSocketRouteConfig) => {
+export const calculateWebSocketRouteConfigWeight = (
+  webSocketRouteConfig: WebSocketRouteConfig
+) => {
   const { entities } = webSocketRouteConfig;
   if (!entities) return 0;
 
@@ -30,8 +14,23 @@ export const calculateWebSocketRouteConfigWeight = (webSocketRouteConfig: WebSoc
   if (headers) routeConfigWeight += Object.keys(headers).length;
   if (cookies) routeConfigWeight += Object.keys(cookies).length;
   if (query) routeConfigWeight += Object.keys(query).length;
-  if (message) routeConfigWeight += getMessageEntityWeight(message);
+  if (message) {
+    if (isPlainObject(message) && message.checkMode) {
+      // ✅ important:
+      // check that actual value check modes does not have `value` for compare
+      if (message.checkMode === "exists" || message.checkMode === "notExists") {
+        routeConfigWeight += 1;
+        return routeConfigWeight;
+      }
+      routeConfigWeight += isPlainObject(message.value)
+        ? Object.keys(message.value).length
+        : 1;
+      return routeConfigWeight;
+    }
+    routeConfigWeight += isPlainObject(message)
+      ? Object.keys(message).length
+      : 1;
+  }
 
   return routeConfigWeight;
 };
-

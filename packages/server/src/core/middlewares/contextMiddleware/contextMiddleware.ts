@@ -1,14 +1,15 @@
-import type { Express } from 'express';
+import type { Express } from "express";
+import type { WebSocket } from "ws";
 
 import type {
   DatabaseConfig,
   GraphQLEntity,
   GraphQLOperationName,
-  GraphQLOperationType
-} from '@/utils/types';
+  GraphQLOperationType,
+} from "@/utils/types";
 
-import { createOrm, createStorage } from '@/core/database';
-import { getGraphQLInput, parseQuery } from '@/utils/helpers';
+import { createOrm, createStorage } from "@/core/database";
+import { getGraphQLInput, parseQuery } from "@/utils/helpers";
 
 declare global {
   namespace Express {
@@ -19,15 +20,21 @@ declare global {
         operationType: GraphQLOperationType;
         operationName?: GraphQLOperationName;
         query: string;
-        variables?: GraphQLEntity<'variables'>;
+        variables?: GraphQLEntity<"variables">;
       } | null;
     }
   }
 }
 
-export const contextMiddleware = (server: Express, { database }: { database?: DatabaseConfig }) => {
+export const contextMiddleware = (
+  server: Express,
+  { database }: { database?: DatabaseConfig }
+) => {
   let requestId = 0;
-  const context: Express['request']['context'] = { orm: {} };
+  const context: Express["request"]["context"] = {
+    orm: {},
+    socket: {} as WebSocket,
+  };
 
   if (database) {
     const storage = createStorage(database.data);
@@ -42,16 +49,16 @@ export const contextMiddleware = (server: Express, { database }: { database?: Da
     request.timestamp = Date.now();
 
     request.graphQL = null;
-    if (request.method === 'GET' || request.method === 'POST') {
+    if (request.method === "GET" || request.method === "POST") {
       const graphQLInput = getGraphQLInput(request);
-      const graphQLQuery = parseQuery(graphQLInput.query ?? '');
+      const graphQLQuery = parseQuery(graphQLInput.query ?? "");
 
       if (graphQLInput.query && graphQLQuery) {
         request.graphQL = {
           operationType: graphQLQuery.operationType as GraphQLOperationType,
           operationName: graphQLQuery.operationName,
           query: graphQLInput.query,
-          variables: graphQLInput.variables
+          variables: graphQLInput.variables,
         };
       }
     }

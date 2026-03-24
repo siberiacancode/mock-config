@@ -1,24 +1,33 @@
-import type { Request } from 'express';
+import type { Request } from "express";
 
-import type { RequestInterceptor, RequestInterceptorParams } from '@/utils/types';
+import type {
+  RequestInterceptor,
+  RequestInterceptorParams,
+} from "@/utils/types";
 
-import { callRequestLogger } from '../../logger';
-import { setDelay } from '../helpers/setDelay';
+import { callRequestLogger } from "../../logger";
+import { setDelay } from "../helpers/setDelay";
 
 interface CallRequestInterceptorParams {
   interceptor: RequestInterceptor;
   request: Request;
 }
 
-export const callRequestInterceptor = async (params: CallRequestInterceptorParams) => {
+export const callRequestInterceptor = async (
+  params: CallRequestInterceptorParams
+) => {
   const { request, interceptor } = params;
 
-  const getHeader: RequestInterceptorParams['getHeader'] = (field) => request.headers[field];
-  const getHeaders: RequestInterceptorParams['getHeaders'] = () => request.headers;
+  const getHeader: RequestInterceptorParams["getHeader"] = (field) =>
+    request.headers[field];
+  const getHeaders: RequestInterceptorParams["getHeaders"] = () =>
+    request.headers;
 
-  const getCookie: RequestInterceptorParams['getCookie'] = (name) => request.cookies[name];
+  const getCookie: RequestInterceptorParams["getCookie"] = (name) =>
+    request.cookies[name];
 
-  const log: RequestInterceptorParams['log'] = (logger) => callRequestLogger({ logger, request });
+  const log: RequestInterceptorParams["log"] = (logger) =>
+    callRequestLogger({ logger, request });
 
   const requestInterceptorParams: RequestInterceptorParams = {
     request,
@@ -27,7 +36,8 @@ export const callRequestInterceptor = async (params: CallRequestInterceptorParam
     getHeaders,
     getCookie,
     log,
-    orm: request.context.orm
+    orm: request.context.orm,
+    socket: request.context.socket,
   };
 
   await interceptor(requestInterceptorParams);
