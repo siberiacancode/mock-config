@@ -303,6 +303,12 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         return response.send(data.file);
       }
 
+      if (
+        response.getHeader('content-type')?.toString().toLowerCase().includes('text/event-stream')
+      ) {
+        return;
+      }
+
       response.json(data);
     })
   );

@@ -202,11 +202,58 @@ const createRestFactory = <Method extends RestMethod>(method: Method) => {
   return createRequestConfig;
 };
 
+interface RestSseClient<Response extends string> {
+  close: () => void;
+  send: (data: Response) => void;
+}
+
+type RestSseFunction<Method extends RestMethod, Response extends string> = (
+  params: RestParams<Method> & { client: RestSseClient<Response> }
+) => void;
+
+const createSseRestFactory = () => {
+  function createSseRequestConfig<Response extends string>(
+    path: RestRequestConfig['path'],
+    config: RestSseFunction<RestMethod, Response>,
+    settings?: RestSettings
+  ): BaseRestRequestConfig<RestMethod> {
+    const originalHandler = config;
+
+    config = (params) => {
+      params.setHeader('connection', 'keep-alive');
+      params.setHeader('content-type', 'text/event-stream');
+      params.setHeader('cache-control', 'no-cache');
+
+      const client: RestSseClient<Response> = {
+        send(message: Response) {
+          const payload = `data: ${message}\n\n`;
+          params.response.write(new TextEncoder().encode(payload));
+        },
+
+        close() {
+          params.response.end();
+        }
+      };
+
+      originalHandler({ ...params, client });
+    };
+
+    return {
+      method: 'get',
+      path,
+      routes: [createConfigResolver(config, settings) as RestRouteConfig<RestMethod>]
+    };
+  }
+
+  return createSseRequestConfig;
+};
+
 export const rest = {
   delete: createRestFactory('delete'),
   get: createRestFactory('get'),
   options: createRestFactory('options'),
   patch: createRestFactory('patch'),
   post: createRestFactory('post'),
-  put: createRestFactory('put')
+  put: createRestFactory('put'),
+  sse: createSseRestFactory()
 };
