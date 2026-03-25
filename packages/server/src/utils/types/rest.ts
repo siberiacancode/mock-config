@@ -1,4 +1,4 @@
-import type { CookieOptions, Request, Response } from 'express';
+import type { CookieOptions, Response as ExpressResponse, Request } from 'express';
 
 import type { BodyPlainEntity, MappedEntity } from './entities';
 import type { Interceptors } from './interceptors';
@@ -29,10 +29,16 @@ export interface RestSettings {
 type RestCookieValue = string | undefined;
 type RestHeaderValue = number | string | string[] | undefined;
 
-export interface RestParams<Method extends RestMethod = RestMethod> {
+export interface RestParams<
+  Method extends RestMethod = RestMethod,
+  Query = Record<string, unknown>,
+  Body = Record<string, unknown>,
+  Params = Record<string, unknown>,
+  Response = any
+> {
   entities: RestEntitiesByEntityName<Method>;
-  request: Request;
-  response: Response;
+  request: Request<Params, Response, Body, Query>;
+  response: ExpressResponse;
   appendHeader: (field: string, value?: string | string[]) => void;
   attachment: (filename: string) => void;
   clearCookie: (name: string, options?: CookieOptions) => void;

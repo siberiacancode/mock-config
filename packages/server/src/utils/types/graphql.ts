@@ -1,4 +1,4 @@
-import type { CookieOptions, Request, Response } from 'express';
+import type { CookieOptions, Response as ExpressResponse, Request } from 'express';
 
 import type { MappedEntity, VariablesPlainEntity } from './entities';
 import type { Interceptors } from './interceptors';
@@ -26,10 +26,15 @@ export interface GraphQLSettings {
 type GraphQLCookieValue = string | undefined;
 type GraphQLHeaderValue = number | string | string[] | undefined;
 
-export interface GraphQLParams {
+export interface GraphQLParams<
+  Query = Record<string, unknown>,
+  Body = Record<string, unknown>,
+  Params = Record<string, unknown>,
+  Response = any
+> {
   entities: GraphQLEntitiesByEntityName;
-  request: Request;
-  response: Response;
+  request: Request<Params, Response, Body, Query>;
+  response: ExpressResponse;
   appendHeader: (field: string, value?: string | string[]) => void;
   attachment: (filename: string) => void;
   clearCookie: (name: string, options?: CookieOptions) => void;
@@ -44,9 +49,7 @@ export interface GraphQLParams {
   setStatusCode: (statusCode: number) => void;
 }
 
-export type GraphqlDataResponse =
-  | ((request: Request, params: GraphQLParams) => Data | Promise<Data>)
-  | Data;
+export type GraphqlDataResponse = ((params: GraphQLParams) => Data | Promise<Data>) | Data;
 
 export type GraphQLRouteConfig = (
   | {

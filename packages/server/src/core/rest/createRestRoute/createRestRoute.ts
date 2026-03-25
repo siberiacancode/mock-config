@@ -326,6 +326,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         response.set('Content-Disposition', `filename=${fileName}`);
         return response.send(data.file);
       }
+
       response.json(data);
     })
   );

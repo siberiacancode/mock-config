@@ -263,7 +263,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
 
       const resolvedData =
         typeof matchedRouteConfigData === 'function'
-          ? await matchedRouteConfigData(request, params)
+          ? await matchedRouteConfigData(params)
           : matchedRouteConfigData;
 
       if (matchedRouteConfig.config.settings?.status) {
