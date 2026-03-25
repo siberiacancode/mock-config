@@ -8,7 +8,6 @@ import type {
   EntityDescriptor,
   Entries,
   PlainObject,
-  ResponseInterceptorParams,
   RestDataResponse,
   RestEntitiesByEntityName,
   RestEntity,
@@ -225,63 +224,40 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
       let resolvedData = null;
 
       if (matchedRouteConfigDataDescriptor.data) {
-        const getRequestHeader: ResponseInterceptorParams['getRequestHeader'] = (field: string) =>
-          request.headers[field];
-        const getRequestHeaders: ResponseInterceptorParams['getRequestHeaders'] = () =>
-          request.headers;
-
-        const getResponseHeader: ResponseInterceptorParams['getResponseHeader'] = (field: string) =>
-          response.getHeader(field);
-        const getResponseHeaders: ResponseInterceptorParams['getResponseHeaders'] = () =>
-          response.getHeaders();
-
-        const setHeader = (field: string, value?: string | string[]) => {
-          response.set(field, value);
-        };
-        const appendHeader: ResponseInterceptorParams['appendHeader'] = (field, value) => {
-          response.append(field, value);
-        };
-
-        const setStatusCode: ResponseInterceptorParams['setStatusCode'] = (statusCode) => {
-          response.statusCode = statusCode;
-        };
-
-        const getCookie: ResponseInterceptorParams['getCookie'] = (name) => request.cookies[name];
-        const setCookie: ResponseInterceptorParams['setCookie'] = (name, value, options) => {
-          if (options) {
-            response.cookie(name, value, options);
-            return;
-          }
-          response.cookie(name, value);
-        };
-        const clearCookie: ResponseInterceptorParams['clearCookie'] = (name, options) => {
-          response.clearCookie(name, options);
-        };
-
-        const attachment: ResponseInterceptorParams['attachment'] = (filename) => {
-          response.attachment(filename);
-        };
-
-        const setDelay = async (delay: number) => {
-          await sleep(delay === Infinity ? 99999999 : delay);
-        };
-
         const params: RestParams = {
           request,
           response,
           entities: matchedRouteConfig.config.entities ?? {},
-          appendHeader,
-          attachment,
-          clearCookie,
-          getCookie,
-          getRequestHeader,
-          getRequestHeaders,
-          getResponseHeader,
-          getResponseHeaders,
-          setCookie,
-          setDelay,
-          setHeader,
-          setStatusCode
+          appendHeader: (field, value) => {
+            response.append(field, value);
+          },
+          attachment: (filename) => {
+            response.attachment(filename);
+          },
+          clearCookie: (name, options) => {
+            response.clearCookie(name, options);
+          },
+          getCookie: (name) => request.cookies[name],
+          getRequestHeader: (field) => request.headers[field],
+          getRequestHeaders: () => request.headers,
+          getResponseHeader: (field) => response.getHeader(field),
+          getResponseHeaders: () => response.getHeaders(),
+          setCookie: (name, value, options) => {
+            if (options) {
+              response.cookie(name, value, options);
+              return;
+            }
+            response.cookie(name, value);
+          },
+          setDelay: async (delay) => {
+            await sleep(delay === Infinity ? 99999999 : delay);
+          },
+          setHeader: (field, value) => {
+            response.set(field, value);
+          },
+          setStatusCode: (statusCode) => {
+            response.statusCode = statusCode;
+          }
         };
 
         resolvedData =

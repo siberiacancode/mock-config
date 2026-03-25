@@ -202,63 +202,41 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
       if ('data' in matchedRouteConfig.config) {
         matchedRouteConfigData = matchedRouteConfig.config.data;
       }
-      const appendHeader: GraphQLParams['appendHeader'] = (field, value) => {
-        response.append(field, value);
-      };
-      const attachment: GraphQLParams['attachment'] = (filename) => {
-        response.attachment(filename);
-      };
-      const clearCookie: GraphQLParams['clearCookie'] = (name, options) => {
-        response.clearCookie(name, options);
-      };
-      const getCookie: GraphQLParams['getCookie'] = (name) => {
-        return request.cookies[name];
-      };
-      const getRequestHeader: GraphQLParams['getRequestHeader'] = (field) => {
-        return request.headers[field];
-      };
-      const getRequestHeaders: GraphQLParams['getRequestHeaders'] = () => {
-        return request.headers;
-      };
-      const getResponseHeader: GraphQLParams['getResponseHeader'] = (field) => {
-        return response.getHeader(field);
-      };
-      const getResponseHeaders: GraphQLParams['getResponseHeaders'] = () => {
-        return response.getHeaders();
-      };
-      const setCookie: GraphQLParams['setCookie'] = (name, value, options) => {
-        if (options) {
-          response.cookie(name, value, options);
-          return;
-        }
-        response.cookie(name, value);
-      };
-      const setDelay: GraphQLParams['setDelay'] = async (delay) => {
-        await sleep(delay === Infinity ? 99999999 : delay);
-      };
-      const setHeader: GraphQLParams['setHeader'] = (field, value) => {
-        response.set(field, value);
-      };
-      const setStatusCode: GraphQLParams['setStatusCode'] = (statusCode) => {
-        response.statusCode = statusCode;
-      };
 
       const params: GraphQLParams = {
         request,
         response,
         entities: matchedRouteConfig.config.entities ?? {},
-        appendHeader,
-        attachment,
-        clearCookie,
-        getCookie,
-        getRequestHeader,
-        getRequestHeaders,
-        getResponseHeader,
-        getResponseHeaders,
-        setCookie,
-        setDelay,
-        setHeader,
-        setStatusCode
+        appendHeader: (field, value) => {
+          response.append(field, value);
+        },
+        attachment: (filename) => {
+          response.attachment(filename);
+        },
+        clearCookie: (name, options) => {
+          response.clearCookie(name, options);
+        },
+        getCookie: (name) => request.cookies[name],
+        getRequestHeader: (field) => request.headers[field],
+        getRequestHeaders: () => request.headers,
+        getResponseHeader: (field) => response.getHeader(field),
+        getResponseHeaders: () => response.getHeaders(),
+        setCookie: (name, value, options) => {
+          if (options) {
+            response.cookie(name, value, options);
+            return;
+          }
+          response.cookie(name, value);
+        },
+        setDelay: async (delay) => {
+          await sleep(delay === Infinity ? 99999999 : delay);
+        },
+        setHeader: (field, value) => {
+          response.set(field, value);
+        },
+        setStatusCode: (statusCode) => {
+          response.statusCode = statusCode;
+        }
       };
 
       const resolvedData =

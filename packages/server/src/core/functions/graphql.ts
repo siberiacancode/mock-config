@@ -70,11 +70,9 @@ const resolveConfigType = <Response, Query, Body, Params>(
 ) => {
   if (typeof config === 'function') return 'handler';
   if (!isPlainObject(config)) return 'inlineResponse';
-  if (isPlainObject(config)) {
-    if ('queue' in config) return 'queue';
-    if ('response' in config) return 'data';
-    if ('handler' in config) return 'handler';
-  }
+  if ('queue' in config) return 'queue';
+  if ('response' in config) return 'data';
+  if ('handler' in config) return 'handler';
   return 'inlineResponse';
 };
 

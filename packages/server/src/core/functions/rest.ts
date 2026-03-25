@@ -84,12 +84,10 @@ const resolveConfigType = <Method extends RestMethod, Response, Query, Body, Par
 ) => {
   if (typeof config === 'function') return 'handler';
   if (!isPlainObject(config)) return 'inlineResponse';
-  if (isPlainObject(config)) {
-    if ('queue' in config) return 'queue';
-    if ('file' in config) return 'file';
-    if ('response' in config) return 'data';
-    if ('handler' in config) return 'handler';
-  }
+  if ('queue' in config) return 'queue';
+  if ('file' in config) return 'file';
+  if ('response' in config) return 'data';
+  if ('handler' in config) return 'handler';
   return 'inlineResponse';
 };
 
@@ -159,8 +157,8 @@ const createConfigResolver = <Method extends RestMethod, Response, Query, Body, 
         }),
         entities: queueConfig.match ?? {},
         settings: {
-          polling: true,
-          ...settings
+          ...settings,
+          polling: true
         }
       };
     }
