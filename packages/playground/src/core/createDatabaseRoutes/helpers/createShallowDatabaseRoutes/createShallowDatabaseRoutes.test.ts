@@ -1,10 +1,9 @@
 import type { Express } from 'express';
 
-import { expect, describe, it, beforeEach } from 'vitest';
-
 import bodyParser from 'body-parser';
 import express from 'express';
 import request from 'supertest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import type { ShallowDatabase } from '@/shared/types';
 
@@ -14,8 +13,18 @@ import { createShallowDatabaseRoutes } from './createShallowDatabaseRoutes';
 describe('createShallowDatabaseRoutes', () => {
   const createShallowDatabase = () => ({
     users: [
-      { name: 'John Doe', age: 25, address: { city: 'Novosibirsk' }, hobbies: ['music', 'sport'] },
-      { name: 'Jane Smith', age: 30, address: { city: 'Tomsk' }, hobbies: ['sport', 'games'] }
+      {
+        name: 'John Doe',
+        age: 25,
+        address: { city: 'Novosibirsk' },
+        hobbies: ['music', 'sport']
+      },
+      {
+        name: 'Jane Smith',
+        age: 30,
+        address: { city: 'Tomsk' },
+        hobbies: ['sport', 'games']
+      }
     ],
     john: { name: 'John Doe', age: 25 },
     jane: { name: 'Jane Smith', age: 30 }
@@ -116,10 +125,16 @@ describe('createShallowDatabaseRoutes', () => {
 
       const patchResponse = await request(server).patch('/john').send(newJohnInfo);
       expect(patchResponse.statusCode).toBe(200);
-      expect(patchResponse.body).toStrictEqual({ ...shallowDatabase.john, ...newJohnInfo });
+      expect(patchResponse.body).toStrictEqual({
+        ...shallowDatabase.john,
+        ...newJohnInfo
+      });
 
       const getResponse = await request(server).get('/john');
-      expect(getResponse.body).toStrictEqual({ ...shallowDatabase.john, ...newJohnInfo });
+      expect(getResponse.body).toStrictEqual({
+        ...shallowDatabase.john,
+        ...newJohnInfo
+      });
     });
   });
 
@@ -179,7 +194,12 @@ describe('createShallowDatabaseRoutes', () => {
       const response = await request(server).get('/users?age_neq=25');
 
       expect(response.body).toStrictEqual([
-        { name: 'Jane Smith', age: 30, address: { city: 'Tomsk' }, hobbies: ['sport', 'games'] }
+        {
+          name: 'Jane Smith',
+          age: 30,
+          address: { city: 'Tomsk' },
+          hobbies: ['sport', 'games']
+        }
       ]);
     });
 
@@ -187,7 +207,12 @@ describe('createShallowDatabaseRoutes', () => {
       const response = await request(server).get('/users?age_gt=25');
 
       expect(response.body).toStrictEqual([
-        { name: 'Jane Smith', age: 30, address: { city: 'Tomsk' }, hobbies: ['sport', 'games'] }
+        {
+          name: 'Jane Smith',
+          age: 30,
+          address: { city: 'Tomsk' },
+          hobbies: ['sport', 'games']
+        }
       ]);
     });
 
@@ -220,7 +245,12 @@ describe('createShallowDatabaseRoutes', () => {
       const response = await request(server).get('/users?name_cn=Jane');
 
       expect(response.body).toStrictEqual([
-        { name: 'Jane Smith', age: 30, address: { city: 'Tomsk' }, hobbies: ['sport', 'games'] }
+        {
+          name: 'Jane Smith',
+          age: 30,
+          address: { city: 'Tomsk' },
+          hobbies: ['sport', 'games']
+        }
       ]);
     });
 
@@ -289,7 +319,12 @@ describe('createShallowDatabaseRoutes', () => {
           address: { city: 'Novosibirsk' },
           hobbies: ['music', 'sport']
         },
-        { name: 'Jane Smith', age: 30, address: { city: 'Tomsk' }, hobbies: ['sport', 'games'] }
+        {
+          name: 'Jane Smith',
+          age: 30,
+          address: { city: 'Tomsk' },
+          hobbies: ['sport', 'games']
+        }
       ]);
       expect(response.body._link).toEqual(
         expect.objectContaining({
@@ -308,7 +343,12 @@ describe('createShallowDatabaseRoutes', () => {
       const response = await request(server).get('/users?_page=1&_limit=1');
 
       expect(response.body.results).toStrictEqual([
-        { name: 'John Doe', age: 25, address: { city: 'Novosibirsk' }, hobbies: ['music', 'sport'] }
+        {
+          name: 'John Doe',
+          age: 25,
+          address: { city: 'Novosibirsk' },
+          hobbies: ['music', 'sport']
+        }
       ]);
       expect(response.body._link).toEqual(
         expect.objectContaining({
@@ -340,7 +380,12 @@ describe('createShallowDatabaseRoutes', () => {
       expect(firstLastLink).toContain('/users?_page=2&_limit=1>; rel="last"');
 
       expect(firstResponse.body.results).toStrictEqual([
-        { name: 'John Doe', age: 25, address: { city: 'Novosibirsk' }, hobbies: ['music', 'sport'] }
+        {
+          name: 'John Doe',
+          age: 25,
+          address: { city: 'Novosibirsk' },
+          hobbies: ['music', 'sport']
+        }
       ]);
       expect(firstResponse.body._link).toEqual(
         expect.objectContaining({
@@ -369,7 +414,12 @@ describe('createShallowDatabaseRoutes', () => {
       expect(secondLastLink).toContain('/users?_page=2&_limit=1>; rel="last"');
 
       expect(secondResponse.body.results).toStrictEqual([
-        { name: 'Jane Smith', age: 30, address: { city: 'Tomsk' }, hobbies: ['sport', 'games'] }
+        {
+          name: 'Jane Smith',
+          age: 30,
+          address: { city: 'Tomsk' },
+          hobbies: ['sport', 'games']
+        }
       ]);
       expect(secondResponse.body._link).toEqual(
         expect.objectContaining({
@@ -394,7 +444,12 @@ describe('createShallowDatabaseRoutes', () => {
           address: { city: 'Novosibirsk' },
           hobbies: ['music', 'sport']
         },
-        { name: 'Jane Smith', age: 30, address: { city: 'Tomsk' }, hobbies: ['sport', 'games'] }
+        {
+          name: 'Jane Smith',
+          age: 30,
+          address: { city: 'Tomsk' },
+          hobbies: ['sport', 'games']
+        }
       ]);
     });
   });
@@ -427,7 +482,12 @@ describe('createShallowDatabaseRoutes', () => {
     const server = createServer({
       users: [
         ...shallowDatabase.users,
-        { name: 'Will Smith', age: 27, address: { city: 'Moscow' }, hobbies: ['music'] }
+        {
+          name: 'Will Smith',
+          age: 27,
+          address: { city: 'Moscow' },
+          hobbies: ['music']
+        }
       ]
     });
 
@@ -441,8 +501,18 @@ describe('createShallowDatabaseRoutes', () => {
           address: { city: 'Novosibirsk' },
           hobbies: ['music', 'sport']
         },
-        { name: 'Will Smith', age: 27, address: { city: 'Moscow' }, hobbies: ['music'] },
-        { name: 'Jane Smith', age: 30, address: { city: 'Tomsk' }, hobbies: ['sport', 'games'] }
+        {
+          name: 'Will Smith',
+          age: 27,
+          address: { city: 'Moscow' },
+          hobbies: ['music']
+        },
+        {
+          name: 'Jane Smith',
+          age: 30,
+          address: { city: 'Tomsk' },
+          hobbies: ['sport', 'games']
+        }
       ]);
     });
 
@@ -450,9 +520,24 @@ describe('createShallowDatabaseRoutes', () => {
       const response = await request(server).get('/users?_sort=age&_order=desc');
 
       expect(response.body).toStrictEqual([
-        { name: 'Jane Smith', age: 30, address: { city: 'Tomsk' }, hobbies: ['sport', 'games'] },
-        { name: 'Will Smith', age: 27, address: { city: 'Moscow' }, hobbies: ['music'] },
-        { name: 'John Doe', age: 25, address: { city: 'Novosibirsk' }, hobbies: ['music', 'sport'] }
+        {
+          name: 'Jane Smith',
+          age: 30,
+          address: { city: 'Tomsk' },
+          hobbies: ['sport', 'games']
+        },
+        {
+          name: 'Will Smith',
+          age: 27,
+          address: { city: 'Moscow' },
+          hobbies: ['music']
+        },
+        {
+          name: 'John Doe',
+          age: 25,
+          address: { city: 'Novosibirsk' },
+          hobbies: ['music', 'sport']
+        }
       ]);
     });
 
@@ -462,9 +547,24 @@ describe('createShallowDatabaseRoutes', () => {
       );
 
       expect(response.body).toStrictEqual([
-        { name: 'Jane Smith', age: 30, address: { city: 'Tomsk' }, hobbies: ['sport', 'games'] },
-        { name: 'Will Smith', age: 27, address: { city: 'Moscow' }, hobbies: ['music'] },
-        { name: 'John Doe', age: 25, address: { city: 'Novosibirsk' }, hobbies: ['music', 'sport'] }
+        {
+          name: 'Jane Smith',
+          age: 30,
+          address: { city: 'Tomsk' },
+          hobbies: ['sport', 'games']
+        },
+        {
+          name: 'Will Smith',
+          age: 27,
+          address: { city: 'Moscow' },
+          hobbies: ['music']
+        },
+        {
+          name: 'John Doe',
+          age: 25,
+          address: { city: 'Novosibirsk' },
+          hobbies: ['music', 'sport']
+        }
       ]);
     });
 
@@ -472,14 +572,24 @@ describe('createShallowDatabaseRoutes', () => {
       const response = await request(server).get('/users?_sort=address.city&_order=desc');
 
       expect(response.body).toStrictEqual([
-        { name: 'Jane Smith', age: 30, address: { city: 'Tomsk' }, hobbies: ['sport', 'games'] },
+        {
+          name: 'Jane Smith',
+          age: 30,
+          address: { city: 'Tomsk' },
+          hobbies: ['sport', 'games']
+        },
         {
           name: 'John Doe',
           age: 25,
           address: { city: 'Novosibirsk' },
           hobbies: ['music', 'sport']
         },
-        { name: 'Will Smith', age: 27, address: { city: 'Moscow' }, hobbies: ['music'] }
+        {
+          name: 'Will Smith',
+          age: 27,
+          address: { city: 'Moscow' },
+          hobbies: ['music']
+        }
       ]);
     });
   });
@@ -506,7 +616,12 @@ describe('createShallowDatabaseRoutes', () => {
       const response = await request(server).get('/users?_q=Tomsk');
 
       expect(response.body).toStrictEqual([
-        { name: 'Jane Smith', age: 30, address: { city: 'Tomsk' }, hobbies: ['sport', 'games'] }
+        {
+          name: 'Jane Smith',
+          age: 30,
+          address: { city: 'Tomsk' },
+          hobbies: ['sport', 'games']
+        }
       ]);
     });
 
@@ -520,7 +635,12 @@ describe('createShallowDatabaseRoutes', () => {
           address: { city: 'Novosibirsk' },
           hobbies: ['music', 'sport']
         },
-        { name: 'Jane Smith', age: 30, address: { city: 'Tomsk' }, hobbies: ['sport', 'games'] }
+        {
+          name: 'Jane Smith',
+          age: 30,
+          address: { city: 'Tomsk' },
+          hobbies: ['sport', 'games']
+        }
       ]);
     });
   });

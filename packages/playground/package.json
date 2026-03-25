@@ -1,17 +1,18 @@
 {
   "name": "mock-config-playground",
+  "type": "module",
   "version": "1.0.0",
   "description": "JSON database playground server for mock-config",
-  "license": "MIT",
   "author": {
     "name": "SIBERIA CAN CODE",
     "url": "https://github.com/siberiacancode"
   },
+  "license": "MIT",
+  "homepage": "https://github.com/siberiacancode/mock-config",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/siberiacancode/mock-config-server.git"
   },
-  "homepage": "https://github.com/siberiacancode/mock-config",
   "bugs": {
     "url": "https://github.com/siberiacancode/mock-config/issues"
   },
@@ -81,6 +82,7 @@
     "@siberiacancode/vitest": "^2.4.1",
     "@types/body-parser": "^1.19.6",
     "@types/node": "^25.5.0",
+    "@types/supertest": "^6.0.2",
     "supertest": "^7.2.2",
     "tsdown": "^0.21.4",
     "typescript": "^5.9.3",

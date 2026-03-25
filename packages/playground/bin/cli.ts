@@ -1,5 +1,6 @@
 import color from 'ansi-colors';
 import fs from 'node:fs';
+import process from 'node:process';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
@@ -44,7 +45,6 @@ export const cli = () => {
     .alias('help', 'h')
     .parse() as unknown as PlaygroundServerConfig;
 
-  console.log(argv.data);
   if (!fs.existsSync(argv.data as string)) {
     console.error(`${color.red('Error')}: File ${argv.data} does not exist`);
     process.exit(1);

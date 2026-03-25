@@ -1,10 +1,10 @@
-import type { StorageIndex, Storage } from '@/shared/types';
+import type { Storage, StorageIndex } from '@/shared/types';
 
 import { isIndex } from '../../helpers';
 
-export class MemoryStorage<
-  Data extends Record<StorageIndex, any> = Record<StorageIndex, any>
-> implements Storage {
+export class MemoryStorage<Data extends Record<StorageIndex, any> = Record<StorageIndex, any>>
+  implements Storage
+{
   private readonly data: Data;
 
   public constructor(initialData: Data) {

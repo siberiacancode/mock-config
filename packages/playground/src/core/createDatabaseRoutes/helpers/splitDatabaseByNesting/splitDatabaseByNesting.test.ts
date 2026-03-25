@@ -1,6 +1,6 @@
-import { splitDatabaseByNesting } from './splitDatabaseByNesting';
+import { describe, expect, it } from 'vitest';
 
-import { expect, describe, it } from 'vitest';
+import { splitDatabaseByNesting } from './splitDatabaseByNesting';
 
 describe('splitDatabaseByNesting', () => {
   it('Should put in nested database only arrays of objects with unique id (string | number)', () => {

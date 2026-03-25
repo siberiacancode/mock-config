@@ -2,8 +2,8 @@ import color from 'ansi-colors';
 
 import type { PlaygroundServerConfig } from '@/utils/types';
 
-import { destroyerMiddleware } from '@/shared/middlewares';
 import { DEFAULT } from '@/shared/constants';
+import { destroyerMiddleware } from '@/shared/middlewares';
 
 import { createPlaygroundServer } from '../createPlaygroundServer/createPlaygroundServer';
 

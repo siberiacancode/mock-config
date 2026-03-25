@@ -53,11 +53,12 @@ npx mock-config-playground ./db.json --port 3000 --baseUrl /api
 Use `startPlaygroundServer` to listen immediately, or `createPlaygroundServer` to get an server app.
 
 ```typescript
+import type { PlaygroundServerConfig } from "mock-config-playground";
+
 import {
   createPlaygroundServer,
   startPlaygroundServer,
 } from "mock-config-playground";
-import type { PlaygroundServerConfig } from "mock-config-playground";
 
 const config: PlaygroundServerConfig = {
   port: 3000,

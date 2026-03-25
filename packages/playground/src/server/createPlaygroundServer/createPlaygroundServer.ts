@@ -5,6 +5,7 @@ import express from 'express';
 
 import type { PlaygroundServerConfig } from '@/utils/types';
 
+import { createDatabaseRoutes } from '@/core/createDatabaseRoutes';
 import {
   cookieParseMiddleware,
   corsMiddleware,
@@ -12,7 +13,6 @@ import {
   noCorsMiddleware,
   staticMiddleware
 } from '@/shared/middlewares';
-import { createDatabaseRoutes } from '@/core/createDatabaseRoutes';
 
 export const createPlaygroundServer = (
   playgroundServerConfig: Omit<PlaygroundServerConfig, 'port'>,

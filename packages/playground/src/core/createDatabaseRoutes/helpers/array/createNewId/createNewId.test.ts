@@ -1,6 +1,6 @@
-import { createNewId } from './createNewId';
+import { describe, expect, it } from 'vitest';
 
-import { expect, describe, it } from 'vitest';
+import { createNewId } from './createNewId';
 
 describe('createNewId', () => {
   it('Should increment max numeric id in array on 1', () => {

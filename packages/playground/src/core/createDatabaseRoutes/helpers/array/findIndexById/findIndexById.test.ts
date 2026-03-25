@@ -1,6 +1,6 @@
-import { findIndexById } from './findIndexById';
+import { describe, expect, it } from 'vitest';
 
-import { expect, describe, it } from 'vitest';
+import { findIndexById } from './findIndexById';
 
 describe('findIndexById', () => {
   const array = [{ id: 1 }, { id: 2 }];

@@ -1,6 +1,6 @@
-import type { Orm } from '@/shared/types';
+import { beforeEach, describe, expect, it } from 'vitest';
 
-import { expect, describe, it, beforeEach } from 'vitest';
+import type { Orm } from '@/shared/types';
 
 import { createStorage } from '../createStorage/createStorage';
 import { createOrm } from './createOrm';

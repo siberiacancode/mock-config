@@ -1,6 +1,6 @@
-import { isIndex } from './isIndex';
+import { describe, expect, it } from 'vitest';
 
-import { expect, describe, it } from 'vitest';
+import { isIndex } from './isIndex';
 
 describe('isIndex', () => {
   it('Should return true for positive integer value', () => {
