@@ -15,17 +15,20 @@ Create a `mock-server.config.ts` file with server configuration and export it as
   <Tab value='REST'>
 
 ```typescript
+import { MockServerConfig, rest } from 'mock-config-server';
+
 export default [
   {
     baseUrl: '/api'
   },
   {
     configs: [
-      {
-        path: '/user',
-        method: 'get',
-        routes: [{ data: { emoji: '🧊', name: 'Siberia can code' } }]
-      }
+      rest.get('user', {
+        response: {
+          emoji: '🧊',
+          name: 'Siberia can code'
+        }
+      })
     ]
   }
 ] satisfies MockServerConfig;
@@ -36,24 +39,17 @@ export default [
 <Tab value='GraphQL'>
 
 ```typescript
+import { MockServerConfig, graphql } from 'mock-config-server';
+
 export default [
   {
     baseUrl: '/graphql'
   },
   {
     configs: [
-      {
-        operationType: 'query',
-        operationName: 'GetUser',
-        routes: [
-          {
-            entities: {
-              headers: { 'name-header': 'Siberia_can_code' }
-            },
-            data: { emoji: '🧊', name: 'Siberia can code' }
-          }
-        ]
-      }
+      graphql.query('GetUser', {
+        response: { emoji: '🧊', name: 'Siberia can code' }
+      })
     ]
   }
 ] satisfies MockServerConfig;
@@ -91,7 +87,6 @@ const body = JSON.stringify({
 fetch('http://localhost:31299/graphql', {
   method: 'POST',
   headers: {
-    'name-header': 'Siberia_can_code',
     'Content-Type': 'application/json'
   },
   body
