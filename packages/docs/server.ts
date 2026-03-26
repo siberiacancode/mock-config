@@ -7,16 +7,11 @@ const OUT_DIR = 'out';
 
 const server = http.createServer((req, res) => {
   if (!req.url) {
-    req.url = '/';
+    req.url = '';
   }
 
   if (req.url.startsWith(BASE_PATH)) {
-    const stripped = req.url.slice(BASE_PATH.length);
-    req.url = stripped.length > 0 ? stripped : '/';
-  }
-
-  if (!req.url.startsWith('/')) {
-    req.url = `/${req.url}`;
+    req.url = req.url.slice(BASE_PATH.length);
   }
 
   return handler(req, res, {

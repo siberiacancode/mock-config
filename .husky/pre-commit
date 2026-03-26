@@ -1,1 +1,1 @@
-pnpm lint-staged --no-stash
+pnpm run -r lint-staged
