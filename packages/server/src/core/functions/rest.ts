@@ -25,17 +25,23 @@ type ReservedRestConfigKeys = {
 type InlineResponse<Response> =
   Response extends Record<string, unknown> ? Response & ReservedRestConfigKeys : Response;
 
-type RestFunction<Method extends RestMethod, Response, Query, Body, Params> = (
-  params: RestParams<Method, Query, Body, Params, Response>
-) => Promise<Response> | Response;
+type RestFunction<Method extends RestMethod, Options extends RestRequestInput> = (
+  params: RestParams<
+    Method,
+    Options['query'],
+    Options['body'],
+    Options['params'],
+    Options['response']
+  >
+) => Options['response'] | Promise<Options['response']>;
 
 interface RestResponseObject<Method extends RestMethod, Response> {
   match?: RestEntitiesByEntityName<Method>;
   response: Response;
 }
 
-interface RestHandlerObject<Method extends RestMethod, Response, Query, Body, Params> {
-  handler: RestFunction<Method, Response, Query, Body, Params>;
+interface RestHandlerObject<Method extends RestMethod, Options extends RestRequestInput> {
+  handler: RestFunction<Method, Options>;
   match?: RestEntitiesByEntityName<Method>;
 }
 
@@ -49,8 +55,8 @@ interface RestQueueResponseItem<Response> {
   time?: number;
 }
 
-interface RestQueueHandlerItem<Method extends RestMethod, Response, Query, Body, Params> {
-  handler: RestFunction<Method, Response, Query, Body, Params>;
+interface RestQueueHandlerItem<Method extends RestMethod, Options extends RestRequestInput> {
+  handler: RestFunction<Method, Options>;
   time?: number;
 }
 
@@ -59,28 +65,26 @@ interface RestQueueFileItem {
   time?: number;
 }
 
-interface RestQueueObject<Method extends RestMethod, Response, Query, Body, Params> {
+interface RestQueueObject<Method extends RestMethod, Options extends RestRequestInput> {
   match?: RestEntitiesByEntityName<Method>;
   queue: Array<
-    | RestQueueFileItem
-    | RestQueueHandlerItem<Method, Response, Query, Body, Params>
-    | RestQueueResponseItem<Response>
+    RestQueueFileItem | RestQueueHandlerItem<Method, Options> | RestQueueResponseItem<Response>
   >;
 }
 
-type RestObjectConfig<Method extends RestMethod, Response, Query, Body, Params> =
+type RestObjectConfig<Method extends RestMethod, Options extends RestRequestInput> =
   | RestFileObject<Method>
-  | RestHandlerObject<Method, Response, Query, Body, Params>
-  | RestQueueObject<Method, Response, Query, Body, Params>
+  | RestHandlerObject<Method, Options>
+  | RestQueueObject<Method, Options>
   | RestResponseObject<Method, Response>;
 
-type RestConfig<Method extends RestMethod, Response, Query, Body, Params> =
+type RestConfig<Method extends RestMethod, Options extends RestRequestInput> =
   | InlineResponse<Response>
-  | RestFunction<Method, Response, Query, Body, Params>
-  | RestObjectConfig<Method, Response, Query, Body, Params>;
+  | RestFunction<Method, Options>
+  | RestObjectConfig<Method, Options>;
 
-const resolveConfigType = <Method extends RestMethod, Response, Query, Body, Params>(
-  config: RestConfig<Method, Response, Query, Body, Params>
+const resolveConfigType = <Method extends RestMethod, Options extends RestRequestInput>(
+  config: RestConfig<Method, Options>
 ) => {
   if (typeof config === 'function') return 'handler';
   if (!isPlainObject(config)) return 'inlineResponse';
@@ -91,8 +95,8 @@ const resolveConfigType = <Method extends RestMethod, Response, Query, Body, Par
   return 'inlineResponse';
 };
 
-const createConfigResolver = <Method extends RestMethod, Response, Query, Body, Params>(
-  config: RestConfig<Method, Response, Query, Body, Params>,
+const createConfigResolver = <Method extends RestMethod, Options extends RestRequestInput>(
+  config: RestConfig<Method, Options>,
   settings?: RestSettings
 ) => {
   const type = resolveConfigType(config);
@@ -135,7 +139,7 @@ const createConfigResolver = <Method extends RestMethod, Response, Query, Body, 
     }
 
     case 'queue': {
-      const queueConfig = config as RestQueueObject<Method, Response, Query, Body, Params>;
+      const queueConfig = config as RestQueueObject<Method, Options>;
 
       return {
         queue: queueConfig.queue.map((item) => {
@@ -175,7 +179,7 @@ const createConfigResolver = <Method extends RestMethod, Response, Query, Body, 
         };
       }
 
-      const handlerConfig = config as RestHandlerObject<Method, Response, Query, Body, Params>;
+      const handlerConfig = config as RestHandlerObject<Method, Options>;
 
       return {
         data: handlerConfig.handler,
@@ -210,58 +214,46 @@ const createRestFactory = <Method extends RestMethod>(method: Method) => {
 
   function createRequestConfig<
     Request extends Partial<RestRequestInput> = {},
-    Response = Request['response'],
-    Query = Request['query'],
-    Body = Request['body'],
-    Params = Request['params']
+    Options extends RestRequestInput = Request
   >(
     path: RestRequestConfig['path'],
-    config: RestHandlerObject<Method, Response, Query, Body, Params>,
+    config: RestHandlerObject<Method, Options>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method>;
 
   function createRequestConfig<
     Request extends Partial<RestRequestInput> = {},
-    Response = Request['response'],
-    Query = Request['query'],
-    Body = Request['body'],
-    Params = Request['params']
+    Options extends RestRequestInput = Request
   >(
     path: RestRequestConfig['path'],
-    config: RestFunction<Method, Response, Query, Body, Params>,
+    config: RestFunction<Method, Options>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method>;
 
   function createRequestConfig<
     Request extends Partial<RestRequestInput> = {},
-    Response = Request['response'],
-    Query = Request['query'],
-    Body = Request['body'],
-    Params = Request['params']
+    Options extends RestRequestInput = Request
   >(
     path: RestRequestConfig['path'],
-    config: RestQueueObject<Method, Response, Query, Body, Params>,
+    config: RestQueueObject<Method, Options>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method>;
 
   function createRequestConfig<
     Request extends Partial<RestRequestInput> = {},
-    Response = Request['response']
+    Options extends RestRequestInput = Request
   >(
     path: RestRequestConfig['path'],
-    config: InlineResponse<Response>,
+    config: InlineResponse<Options['response']>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method>;
 
   function createRequestConfig<
     Request extends Partial<RestRequestInput> = {},
-    Response = Request['response'],
-    Query = Request['query'],
-    Body = Request['body'],
-    Params = Request['params']
+    Options extends RestRequestInput = Request
   >(
     path: RestRequestConfig['path'],
-    config: RestConfig<Method, Response, Query, Body, Params>,
+    config: RestConfig<Method, Options>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method> {
     return {
@@ -269,7 +261,7 @@ const createRestFactory = <Method extends RestMethod>(method: Method) => {
       path,
       routes: [
         createConfigResolver(
-          config as RestConfig<Method, Response, Query, Body, Params>,
+          config as RestConfig<Method, Options>,
           settings
         ) as RestRouteConfig<Method>
       ]

@@ -24,17 +24,17 @@ type ReservedGraphQLConfigKeys = {
 type InlineResponse<Response> =
   Response extends Record<string, unknown> ? Response & ReservedGraphQLConfigKeys : Response;
 
-type GraphQLFunction<Response, Query, Body, Params> = (
-  params: GraphQLParams<Query, Body, Params, Response>
-) => Promise<Response> | Response;
+type GraphQLFunction<Options extends GraphQLRequestInput> = (
+  params: GraphQLParams<Options['query'], Options['body'], Options['params'], Options['response']>
+) => Options['response'] | Promise<Options['response']>;
 
 interface GraphQLResponseObject<Response> {
   match?: GraphQLEntitiesByEntityName;
   response: Response;
 }
 
-interface GraphQLHandlerObject<Response, Query, Body, Params> {
-  handler: GraphQLFunction<Response, Query, Body, Params>;
+interface GraphQLHandlerObject<Options extends GraphQLRequestInput> {
+  handler: GraphQLFunction<Options>;
   match?: GraphQLEntitiesByEntityName;
 }
 
@@ -43,31 +43,27 @@ interface GraphQLQueueResponseItem<Response> {
   time?: number;
 }
 
-interface GraphQLQueueHandlerItem<Response, Query, Body, Params> {
-  handler: GraphQLFunction<Response, Query, Body, Params>;
+interface GraphQLQueueHandlerItem<Options extends GraphQLRequestInput> {
+  handler: GraphQLFunction<Options>;
   time?: number;
 }
 
-interface GraphQLQueueObject<Response, Query, Body, Params> {
+interface GraphQLQueueObject<Options extends GraphQLRequestInput> {
   match?: GraphQLEntitiesByEntityName;
-  queue: Array<
-    GraphQLQueueHandlerItem<Response, Query, Body, Params> | GraphQLQueueResponseItem<Response>
-  >;
+  queue: Array<GraphQLQueueHandlerItem<Options> | GraphQLQueueResponseItem<Options['response']>>;
 }
 
-type GraphQLObjectConfig<Response, Query, Body, Params> =
-  | GraphQLHandlerObject<Response, Query, Body, Params>
-  | GraphQLQueueObject<Response, Query, Body, Params>
-  | GraphQLResponseObject<Response>;
+type GraphQLObjectConfig<Options extends GraphQLRequestInput> =
+  | GraphQLHandlerObject<Options>
+  | GraphQLQueueObject<Options>
+  | GraphQLResponseObject<Options['response']>;
 
-type GraphQLConfig<Response, Query, Body, Params> =
-  | GraphQLFunction<Response, Query, Body, Params>
-  | GraphQLObjectConfig<Response, Query, Body, Params>
-  | InlineResponse<Response>;
+type GraphQLConfig<Options extends GraphQLRequestInput> =
+  | GraphQLFunction<Options>
+  | GraphQLObjectConfig<Options>
+  | InlineResponse<Options['response']>;
 
-const resolveConfigType = <Response, Query, Body, Params>(
-  config: GraphQLConfig<Response, Query, Body, Params>
-) => {
+const resolveConfigType = <Options extends GraphQLRequestInput>(config: GraphQLConfig<Options>) => {
   if (typeof config === 'function') return 'handler';
   if (!isPlainObject(config)) return 'inlineResponse';
   if ('queue' in config) return 'queue';
@@ -76,8 +72,8 @@ const resolveConfigType = <Response, Query, Body, Params>(
   return 'inlineResponse';
 };
 
-const createConfigResolver = <Response, Query, Body, Params>(
-  config: GraphQLConfig<Response, Query, Body, Params>,
+const createConfigResolver = <Options extends GraphQLRequestInput>(
+  config: GraphQLConfig<Options>,
   settings?: GraphQLSettings
 ) => {
   const type = resolveConfigType(config);
@@ -85,7 +81,7 @@ const createConfigResolver = <Response, Query, Body, Params>(
   switch (type) {
     case 'inlineResponse':
       return {
-        data: config as Response,
+        data: config as Options['response'],
         entities: {},
         settings: {
           polling: false,
@@ -94,7 +90,7 @@ const createConfigResolver = <Response, Query, Body, Params>(
       };
 
     case 'data': {
-      const dataConfig = config as GraphQLResponseObject<Response>;
+      const dataConfig = config as GraphQLResponseObject<Options['response']>;
 
       return {
         data: dataConfig.response,
@@ -107,7 +103,7 @@ const createConfigResolver = <Response, Query, Body, Params>(
     }
 
     case 'queue': {
-      const queueConfig = config as GraphQLQueueObject<Response, Query, Body, Params>;
+      const queueConfig = config as GraphQLQueueObject<Options>;
 
       return {
         queue: queueConfig.queue.map((item) => {
@@ -143,7 +139,7 @@ const createConfigResolver = <Response, Query, Body, Params>(
         };
       }
 
-      const handlerConfig = config as GraphQLHandlerObject<Response, Query, Body, Params>;
+      const handlerConfig = config as GraphQLHandlerObject<Options>;
 
       return {
         data: handlerConfig.handler,
@@ -181,62 +177,50 @@ const createGraphQLFactory = <Mode extends GraphQLFactoryMode>(mode: Mode) => {
 
   function createRequestConfig<
     Request extends Partial<GraphQLRequestInput> = {},
-    Response = Request['response'],
-    Query = Request['query'],
-    Body = Request['body'],
-    Params = Request['params']
+    Options extends GraphQLRequestInput = Request
   >(
     identifier: GraphQLIdentifier<Mode>,
-    config: GraphQLHandlerObject<Response, Query, Body, Params>,
+    config: GraphQLHandlerObject<Options>,
     settings?: GraphQLSettings,
     operationType?: GraphQLOperationTypeArg<Mode>
   ): GraphQLRequestConfig;
 
   function createRequestConfig<
     Request extends Partial<GraphQLRequestInput> = {},
-    Response = Request['response'],
-    Query = Request['query'],
-    Body = Request['body'],
-    Params = Request['params']
+    Options extends GraphQLRequestInput = Request
   >(
     identifier: GraphQLIdentifier<Mode>,
-    config: GraphQLFunction<Response, Query, Body, Params>,
+    config: GraphQLFunction<Options>,
     settings?: GraphQLSettings,
     operationType?: GraphQLOperationTypeArg<Mode>
   ): GraphQLRequestConfig;
 
   function createRequestConfig<
     Request extends Partial<GraphQLRequestInput> = {},
-    Response = Request['response'],
-    Query = Request['query'],
-    Body = Request['body'],
-    Params = Request['params']
+    Options extends GraphQLRequestInput = Request
   >(
     identifier: GraphQLIdentifier<Mode>,
-    config: GraphQLQueueObject<Response, Query, Body, Params>,
+    config: GraphQLQueueObject<Options>,
     settings?: GraphQLSettings,
     operationType?: GraphQLOperationTypeArg<Mode>
   ): GraphQLRequestConfig;
 
   function createRequestConfig<
     Request extends Partial<GraphQLRequestInput> = {},
-    Response = Request['response']
+    Options extends GraphQLRequestInput = Request
   >(
     identifier: GraphQLIdentifier<Mode>,
-    config: InlineResponse<Response>,
+    config: InlineResponse<Options['response']>,
     settings?: GraphQLSettings,
     operationType?: GraphQLOperationTypeArg<Mode>
   ): GraphQLRequestConfig;
 
   function createRequestConfig<
     Request extends Partial<GraphQLRequestInput> = {},
-    Response = Request['response'],
-    Query = Request['query'],
-    Body = Request['body'],
-    Params = Request['params']
+    Options extends GraphQLRequestInput = Request
   >(
     identifier: GraphQLIdentifier<Mode>,
-    config: GraphQLConfig<Response, Query, Body, Params>,
+    config: GraphQLConfig<Options>,
     settings?: GraphQLSettings,
     operationType?: GraphQLOperationTypeArg<Mode>
   ): GraphQLRequestConfig {
@@ -245,10 +229,7 @@ const createGraphQLFactory = <Mode extends GraphQLFactoryMode>(mode: Mode) => {
         query: identifier as string,
         operationType: (operationType ?? 'query') as GraphQLOperationType,
         routes: [
-          createConfigResolver(
-            config as GraphQLConfig<Response, Query, Body, Params>,
-            settings
-          ) as GraphQLRouteConfig
+          createConfigResolver(config as GraphQLConfig<Options>, settings) as GraphQLRouteConfig
         ]
       };
     }
@@ -257,10 +238,7 @@ const createGraphQLFactory = <Mode extends GraphQLFactoryMode>(mode: Mode) => {
       operationName: identifier as GraphQLOperationName,
       operationType: mode,
       routes: [
-        createConfigResolver(
-          config as GraphQLConfig<Response, Query, Body, Params>,
-          settings
-        ) as GraphQLRouteConfig
+        createConfigResolver(config as GraphQLConfig<Options>, settings) as GraphQLRouteConfig
       ]
     };
   }
