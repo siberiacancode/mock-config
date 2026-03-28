@@ -50,38 +50,22 @@ interface RestFileObject<Method extends RestMethod> {
   match?: RestEntitiesByEntityName<Method>;
 }
 
-interface RestQueueResponseItem<Response> {
-  response: Response;
-  time?: number;
-}
-
-interface RestQueueHandlerItem<Method extends RestMethod, Options extends RestRequestInput> {
-  handler: RestFunction<Method, Options>;
-  time?: number;
-}
-
-interface RestQueueFileItem {
-  file: RestFileResponse;
-  time?: number;
-}
-
 interface RestQueueObject<Method extends RestMethod, Options extends RestRequestInput> {
   match?: RestEntitiesByEntityName<Method>;
   queue: Array<
-    RestQueueFileItem | RestQueueHandlerItem<Method, Options> | RestQueueResponseItem<Response>
+    | { file: RestFileResponse; time?: number }
+    | { handler: RestFunction<Method, Options>; time?: number }
+    | { response: Options['response']; time?: number }
   >;
 }
 
-type RestObjectConfig<Method extends RestMethod, Options extends RestRequestInput> =
+type RestConfig<Method extends RestMethod, Options extends RestRequestInput> =
+  | InlineResponse<Response>
   | RestFileObject<Method>
+  | RestFunction<Method, Options>
   | RestHandlerObject<Method, Options>
   | RestQueueObject<Method, Options>
   | RestResponseObject<Method, Response>;
-
-type RestConfig<Method extends RestMethod, Options extends RestRequestInput> =
-  | InlineResponse<Response>
-  | RestFunction<Method, Options>
-  | RestObjectConfig<Method, Options>;
 
 const resolveConfigType = <Method extends RestMethod, Options extends RestRequestInput>(
   config: RestConfig<Method, Options>

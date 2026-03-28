@@ -38,29 +38,19 @@ interface GraphQLHandlerObject<Options extends GraphQLRequestInput> {
   match?: GraphQLEntitiesByEntityName;
 }
 
-interface GraphQLQueueResponseItem<Response> {
-  response: Response;
-  time?: number;
-}
-
-interface GraphQLQueueHandlerItem<Options extends GraphQLRequestInput> {
-  handler: GraphQLFunction<Options>;
-  time?: number;
-}
-
 interface GraphQLQueueObject<Options extends GraphQLRequestInput> {
   match?: GraphQLEntitiesByEntityName;
-  queue: Array<GraphQLQueueHandlerItem<Options> | GraphQLQueueResponseItem<Options['response']>>;
+  queue: Array<
+    | { handler: GraphQLFunction<Options>; time?: number }
+    | { response: Options['response']; time?: number }
+  >;
 }
-
-type GraphQLObjectConfig<Options extends GraphQLRequestInput> =
-  | GraphQLHandlerObject<Options>
-  | GraphQLQueueObject<Options>
-  | GraphQLResponseObject<Options['response']>;
 
 type GraphQLConfig<Options extends GraphQLRequestInput> =
   | GraphQLFunction<Options>
-  | GraphQLObjectConfig<Options>
+  | GraphQLHandlerObject<Options>
+  | GraphQLQueueObject<Options>
+  | GraphQLResponseObject<Options['response']>
   | InlineResponse<Options['response']>;
 
 const resolveConfigType = <Options extends GraphQLRequestInput>(config: GraphQLConfig<Options>) => {
