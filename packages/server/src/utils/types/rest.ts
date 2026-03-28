@@ -77,10 +77,6 @@ export type RestRouteConfig<Method extends RestMethod> = (
       settings?: RestSettings & { polling?: false };
       data: RestDataResponse<Method>;
     }
-  | {
-      settings?: RestSettings & { polling?: false };
-      file: RestFileResponse;
-    }
 ) & {
   entities?: RestEntitiesByEntityName<Method>;
   interceptors?: Interceptors<'rest'>;

@@ -376,13 +376,13 @@ describe('createRestRoutes: content', () => {
     fs.rmSync(tmpDirPath, { recursive: true, force: true });
   });
 
-  it('should call response interceptor with Buffer as the first argument property when return a file', async () => {
+  it('Should call response interceptor with Buffer as first argument when returning a file', async () => {
     const tmpDirPath = createTmpDir();
     const pathToFile = path.join(tmpDirPath, './data.json') as `${string}.json`;
     const dataInFile = JSON.stringify({ standName: 'The World' });
     fs.writeFileSync(pathToFile, dataInFile);
 
-    const routeInterceptor = vi.fn(() => 'Some random data');
+    const routeInterceptor = vi.fn((data) => data);
 
     const server = createServer({
       rest: {
@@ -404,16 +404,18 @@ describe('createRestRoutes: content', () => {
     await request(server).get('/users');
 
     const routeInterceptorCallArgs = routeInterceptor.mock.calls[0] as any as [any, ...any[]];
-    expect(routeInterceptorCallArgs[0].file).toStrictEqual(Buffer.from(dataInFile));
+    expect(routeInterceptorCallArgs[0]).toStrictEqual(Buffer.from(dataInFile));
+
+    fs.rmSync(tmpDirPath, { recursive: true, force: true });
   });
 
-  it('Should send a new file if interceptor return different path', async () => {
+  it('Should allow interceptor to replace sent file content manually', async () => {
     const tmpDirPath = createTmpDir();
 
-    const pathToFirstFile = path.join(tmpDirPath, './firstFile.json');
+    const pathToFirstFile = path.join(tmpDirPath, './firstFile.json') as `${string}.json`;
     fs.writeFileSync(pathToFirstFile, JSON.stringify({ standName: 'Star Platinum' }));
 
-    const pathToSecondFile = path.join(tmpDirPath, './secondFile.json');
+    const pathToSecondFile = path.join(tmpDirPath, './secondFile.json') as `${string}.json`;
     fs.writeFileSync(pathToSecondFile, JSON.stringify({ standName: 'The World' }));
 
     const server = createServer({
@@ -426,7 +428,10 @@ describe('createRestRoutes: content', () => {
               {
                 file: pathToFirstFile,
                 interceptors: {
-                  response: ({ file }) => ({ path: pathToSecondFile, file })
+                  response: (_, { setHeader }) => {
+                    setHeader('Content-Disposition', 'filename=secondFile.json');
+                    return fs.readFileSync(pathToSecondFile);
+                  }
                 }
               }
             ]
@@ -438,19 +443,17 @@ describe('createRestRoutes: content', () => {
     const response = await request(server).get('/users');
     expect(response.statusCode).toBe(200);
     expect(response.headers['content-type']).toBe('application/json; charset=utf-8');
-    expect(response.headers['content-disposition']).toMatch(/filename=(\S*secondFile.json)/);
+    expect(response.headers['content-disposition']).toBe('filename=secondFile.json');
     expect(response.body).toStrictEqual({ standName: 'The World' });
 
     fs.rmSync(tmpDirPath, { recursive: true, force: true });
   });
 
-  it('Should send a 404 if interceptor return file descriptor with invalid path', async () => {
+  it('Should return 404 and skip response interceptors for invalid file path', async () => {
     const tmpDirPath = createTmpDir();
 
-    const existedFilePath = path.join(tmpDirPath, './existedFile.json');
-    fs.writeFileSync(existedFilePath, JSON.stringify({ some: 'data' }));
-
-    const notExistedFilePath = path.join(tmpDirPath, './notExistedFile.json');
+    const invalidFilePath = path.join(tmpDirPath, './notExistedFile.json') as `${string}.json`;
+    const routeInterceptor = vi.fn();
 
     const server = createServer({
       rest: {
@@ -460,9 +463,9 @@ describe('createRestRoutes: content', () => {
             method: 'get',
             routes: [
               {
-                file: existedFilePath,
+                file: invalidFilePath,
                 interceptors: {
-                  response: ({ file }) => ({ path: notExistedFilePath, file })
+                  response: routeInterceptor
                 }
               }
             ]
@@ -474,40 +477,7 @@ describe('createRestRoutes: content', () => {
     const response = await request(server).get('/users');
 
     expect(response.statusCode).toBe(404);
-    expect(response.headers['content-type']).toContain('text/html; charset=utf-8');
-
-    fs.rmSync(tmpDirPath, { recursive: true, force: true });
-  });
-
-  it('Should send a file descriptor "as is" if interceptor return invalid one', async () => {
-    const tmpDirPath = createTmpDir();
-    const pathToFile = path.join(tmpDirPath, './data.json');
-    fs.writeFileSync(pathToFile, 'Star Platinum', 'utf-8');
-
-    const server = createServer({
-      rest: {
-        configs: [
-          {
-            path: '/users',
-            method: 'get',
-            routes: [
-              {
-                file: pathToFile,
-                interceptors: {
-                  response: ({ path }) => ({ path, file: 'file' })
-                }
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const response = await request(server).get('/users');
-
-    expect(response.statusCode).toBe(200);
-    expect(response.headers['content-type']).toBe('application/json; charset=utf-8');
-    expect(response.body).toStrictEqual({ path: pathToFile, file: 'file' });
+    expect(routeInterceptor).not.toBeCalled();
 
     fs.rmSync(tmpDirPath, { recursive: true, force: true });
   });

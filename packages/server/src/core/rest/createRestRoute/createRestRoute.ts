@@ -1,8 +1,6 @@
 import type { Express } from 'express';
 
 import { flatten } from 'flat';
-import fs from 'node:fs';
-import path from 'node:path';
 
 import type {
   EntityDescriptor,
@@ -11,7 +9,6 @@ import type {
   RestDataResponse,
   RestEntitiesByEntityName,
   RestEntity,
-  RestFileResponse,
   RestParams,
   RestRequestArtifact,
   TopLevelPlainEntityArray,
@@ -24,8 +21,6 @@ import {
   callResponseInterceptors,
   convertToEntityDescriptor,
   isEntityDescriptor,
-  isFileDescriptor,
-  isFilePathValid,
   resolveEntityValues,
   sleep,
   urlJoin
@@ -153,10 +148,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         });
       }
 
-      const matchedRouteConfigDataDescriptor = {} as {
-        data?: RestDataResponse;
-        file?: RestFileResponse;
-      };
+      let matchedRouteConfigData: RestDataResponse | undefined;
 
       if (matchedRouteConfig.config.settings?.polling && 'queue' in matchedRouteConfig.config) {
         if (!matchedRouteConfig.config.queue.length) return next();
@@ -196,20 +188,12 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         }
 
         if ('data' in queueItem) {
-          matchedRouteConfigDataDescriptor.data = queueItem.data;
-        }
-        if ('file' in queueItem) {
-          if (!isFilePathValid(queueItem.file)) return next();
-          matchedRouteConfigDataDescriptor.file = queueItem.file;
+          matchedRouteConfigData = queueItem.data;
         }
       }
 
       if ('data' in matchedRouteConfig.config) {
-        matchedRouteConfigDataDescriptor.data = matchedRouteConfig.config.data;
-      }
-      if ('file' in matchedRouteConfig.config) {
-        if (!isFilePathValid(matchedRouteConfig.config.file)) return next();
-        matchedRouteConfigDataDescriptor.file = matchedRouteConfig.config.file;
+        matchedRouteConfigData = matchedRouteConfig.config.data;
       }
 
       if (matchedRouteConfig.config.settings?.status) {
@@ -221,56 +205,49 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
       // this code should place before response interceptors for giving opportunity to rewrite 'Cache-Control' header
       if (request.method === 'GET') response.set('Cache-control', 'no-cache');
 
-      let resolvedData = null;
-
-      if (matchedRouteConfigDataDescriptor.data) {
-        const params: RestParams = {
-          request,
-          response,
-          entities: matchedRouteConfig.config.entities ?? {},
-          appendHeader: (field, value) => {
-            response.append(field, value);
-          },
-          attachment: (filename) => {
-            response.attachment(filename);
-          },
-          clearCookie: (name, options) => {
-            response.clearCookie(name, options);
-          },
-          getCookie: (name) => request.cookies[name],
-          getRequestHeader: (field) => request.headers[field],
-          getRequestHeaders: () => request.headers,
-          getResponseHeader: (field) => response.getHeader(field),
-          getResponseHeaders: () => response.getHeaders(),
-          setCookie: (name, value, options) => {
-            if (options) {
-              response.cookie(name, value, options);
-              return;
-            }
-            response.cookie(name, value);
-          },
-          setDelay: async (delay) => {
-            await sleep(delay === Infinity ? 99999999 : delay);
-          },
-          setHeader: (field, value) => {
-            response.set(field, value);
-          },
-          setStatusCode: (statusCode) => {
-            response.statusCode = statusCode;
+      const params: RestParams = {
+        request,
+        response,
+        entities: matchedRouteConfig.config.entities ?? {},
+        appendHeader: (field, value) => {
+          response.append(field, value);
+        },
+        attachment: (filename) => {
+          response.attachment(filename);
+        },
+        clearCookie: (name, options) => {
+          response.clearCookie(name, options);
+        },
+        getCookie: (name) => request.cookies[name],
+        getRequestHeader: (field) => request.headers[field],
+        getRequestHeaders: () => request.headers,
+        getResponseHeader: (field) => response.getHeader(field),
+        getResponseHeaders: () => response.getHeaders(),
+        setCookie: (name, value, options) => {
+          if (options) {
+            response.cookie(name, value, options);
+            return;
           }
-        };
+          response.cookie(name, value);
+        },
+        setDelay: async (delay) => {
+          await sleep(delay === Infinity ? 99999999 : delay);
+        },
+        setHeader: (field, value) => {
+          response.set(field, value);
+        },
+        setStatusCode: (statusCode) => {
+          response.statusCode = statusCode;
+        }
+      };
 
-        resolvedData =
-          typeof matchedRouteConfigDataDescriptor.data === 'function'
-            ? await matchedRouteConfigDataDescriptor.data(params)
-            : matchedRouteConfigDataDescriptor.data;
-      }
-      if (matchedRouteConfigDataDescriptor.file) {
-        const buffer = fs.readFileSync(path.resolve(matchedRouteConfigDataDescriptor.file));
-        resolvedData = {
-          path: matchedRouteConfigDataDescriptor.file,
-          file: buffer
-        };
+      const resolvedData =
+        typeof matchedRouteConfigData === 'function'
+          ? await matchedRouteConfigData(params)
+          : matchedRouteConfigData;
+
+      if (response.headersSent) {
+        return;
       }
 
       const data = await callResponseInterceptors({
@@ -289,26 +266,17 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         await sleep(matchedRouteConfig.config.settings.delay);
       }
 
-      if (isFileDescriptor(data)) {
-        const isFilePathChanged = matchedRouteConfigDataDescriptor.file !== data.path;
-        if (isFilePathChanged) {
-          if (!isFilePathValid(data.path)) return next();
-          data.file = fs.readFileSync(path.resolve(data.path));
-        }
-        // ✅ important: replace backslashes because windows can use them in file path
-        const fileName = data.path.replaceAll('\\', '/').split('/').at(-1)!;
-        const fileExtension = fileName.split('.').at(-1)!;
-        response.type(fileExtension);
-        response.set('Content-Disposition', `filename=${fileName}`);
-        return response.send(data.file);
-      }
-
       if (
+        response.headersSent ||
         response.getHeader('content-type')?.toString().toLowerCase().includes('text/event-stream')
       ) {
         return;
       }
 
-      response.json(data);
+      if (response.getHeader('content-type')) {
+        return response.send(data);
+      }
+
+      return response.json(data);
     })
   );
