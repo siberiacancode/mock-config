@@ -2,10 +2,10 @@ import type {
   EntitiesDescriptor,
   EntityDescriptor,
   EntityFunctionDescriptorValue,
-  MappedEntity,
-  MappedEntityValue,
-  PlainEntityObjectiveValue,
-  PlainEntityPrimitiveValue
+  MappedEntity
+  // MappedEntityValue,
+  // PlainEntityObjectiveValue,
+  // PlainEntityPrimitiveValue
 } from '@/utils/types';
 
 import { checkModeSymbol } from '@/utils/constants';
@@ -22,20 +22,14 @@ export function notExists(): EntityDescriptor<'notExists'> {
   };
 }
 
-type PrimitiveOrNestedObjectOrArray =
-  | MappedEntityValue
-  | PlainEntityObjectiveValue
-  | PlainEntityPrimitiveValue;
+// type PrimitiveOrNestedObjectOrArray =
+//   | MappedEntityValue
+//   | PlainEntityObjectiveValue
+//   | PlainEntityPrimitiveValue;
 
-export function equals<Value extends PrimitiveOrNestedObjectOrArray>(
-  value: Value,
-  oneOf?: false
-): EntityDescriptor<'equals', Value>;
-export function equals<Value extends PrimitiveOrNestedObjectOrArray>(
-  value: Value[],
-  oneOf: true
-): EntityDescriptor<'equals', Value>;
-export function equals<Value>(value: Value, oneOf?: boolean): EntityDescriptor<'equals', Value> {
+export function equals<Value>(value: Value, oneOf?: false): EntityDescriptor<'equals', Value>;
+export function equals<Value>(value: Value[], oneOf: true): EntityDescriptor<'equals', Value>;
+export function equals<Value>(value: Value, oneOf = false): EntityDescriptor<'equals', Value> {
   return {
     [checkModeSymbol]: 'equals',
     value,
@@ -43,14 +37,8 @@ export function equals<Value>(value: Value, oneOf?: boolean): EntityDescriptor<'
   } as EntityDescriptor<'equals', Value>;
 }
 
-export function notEquals<Value extends PrimitiveOrNestedObjectOrArray>(
-  value: Value,
-  oneOf?: false
-): EntityDescriptor<'notEquals', Value>;
-export function notEquals<Value extends PrimitiveOrNestedObjectOrArray>(
-  value: Value[],
-  oneOf: true
-): EntityDescriptor<'notEquals', Value>;
+export function notEquals<Value>(value: Value, oneOf?: false): EntityDescriptor<'notEquals', Value>;
+export function notEquals<Value>(value: Value[], oneOf: true): EntityDescriptor<'notEquals', Value>;
 export function notEquals<Value>(
   value: Value,
   oneOf?: boolean
@@ -62,14 +50,8 @@ export function notEquals<Value>(
   } as EntityDescriptor<'notEquals', Value>;
 }
 
-export function includes<Value extends PrimitiveOrNestedObjectOrArray>(
-  value: Value,
-  oneOf?: false
-): EntityDescriptor<'includes', Value>;
-export function includes<Value extends PrimitiveOrNestedObjectOrArray>(
-  value: Value[],
-  oneOf: true
-): EntityDescriptor<'includes', Value>;
+export function includes<Value>(value: Value, oneOf?: false): EntityDescriptor<'includes', Value>;
+export function includes<Value>(value: Value[], oneOf: true): EntityDescriptor<'includes', Value>;
 export function includes<Value>(
   value: Value,
   oneOf?: boolean
@@ -81,11 +63,11 @@ export function includes<Value>(
   } as EntityDescriptor<'includes', Value>;
 }
 
-export function notIncludes<Value extends PrimitiveOrNestedObjectOrArray>(
+export function notIncludes<Value>(
   value: Value,
   oneOf?: false
 ): EntityDescriptor<'notIncludes', Value>;
-export function notIncludes<Value extends PrimitiveOrNestedObjectOrArray>(
+export function notIncludes<Value>(
   value: Value[],
   oneOf: true
 ): EntityDescriptor<'notIncludes', Value>;
@@ -100,11 +82,11 @@ export function notIncludes<Value>(
   } as EntityDescriptor<'notIncludes', Value>;
 }
 
-export function startsWith<Value extends PrimitiveOrNestedObjectOrArray>(
+export function startsWith<Value>(
   value: Value,
   oneOf?: false
 ): EntityDescriptor<'startsWith', Value>;
-export function startsWith<Value extends PrimitiveOrNestedObjectOrArray>(
+export function startsWith<Value>(
   value: Value[],
   oneOf: true
 ): EntityDescriptor<'startsWith', Value>;
@@ -119,11 +101,11 @@ export function startsWith<Value>(
   } as EntityDescriptor<'startsWith', Value>;
 }
 
-export function notStartsWith<Value extends PrimitiveOrNestedObjectOrArray>(
+export function notStartsWith<Value>(
   value: Value,
   oneOf?: false
 ): EntityDescriptor<'notStartsWith', Value>;
-export function notStartsWith<Value extends PrimitiveOrNestedObjectOrArray>(
+export function notStartsWith<Value>(
   value: Value[],
   oneOf: true
 ): EntityDescriptor<'notStartsWith', Value>;
@@ -138,14 +120,8 @@ export function notStartsWith<Value>(
   } as EntityDescriptor<'notStartsWith', Value>;
 }
 
-export function endsWith<Value extends PrimitiveOrNestedObjectOrArray>(
-  value: Value,
-  oneOf?: false
-): EntityDescriptor<'endsWith', Value>;
-export function endsWith<Value extends PrimitiveOrNestedObjectOrArray>(
-  value: Value[],
-  oneOf: true
-): EntityDescriptor<'endsWith', Value>;
+export function endsWith<Value>(value: Value, oneOf?: false): EntityDescriptor<'endsWith', Value>;
+export function endsWith<Value>(value: Value[], oneOf: true): EntityDescriptor<'endsWith', Value>;
 export function endsWith<Value>(
   value: Value,
   oneOf?: boolean
@@ -157,11 +133,11 @@ export function endsWith<Value>(
   } as EntityDescriptor<'endsWith', Value>;
 }
 
-export function notEndsWith<Value extends PrimitiveOrNestedObjectOrArray>(
+export function notEndsWith<Value>(
   value: Value,
   oneOf?: false
 ): EntityDescriptor<'notEndsWith', Value>;
-export function notEndsWith<Value extends PrimitiveOrNestedObjectOrArray>(
+export function notEndsWith<Value>(
   value: Value[],
   oneOf: true
 ): EntityDescriptor<'notEndsWith', Value>;
