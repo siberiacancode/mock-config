@@ -24,6 +24,7 @@ import {
   asyncHandler,
   callRequestInterceptor,
   callResponseInterceptors,
+  convertToEntitiesDescriptor,
   convertToEntityDescriptor,
   isEntityDescriptor,
   isFileDescriptor,
@@ -61,6 +62,7 @@ export const createRestRoutes = ({
           const entityEntries = Object.entries(entities) as Entries<
             Required<RestEntitiesByEntityName>
           >;
+          console.log('entities=', entities);
           return entityEntries.every(([entityName, entityDescriptorOrValue]) => {
             // ✅ important:
             // check whole body as plain value strictly if descriptor used for body
@@ -101,11 +103,18 @@ export const createRestRoutes = ({
             const actualEntity = flatten<PlainObject, PlainObject>(
               entityName === 'queries' ? request.query : request[entityName]
             );
+            console.log('entityDescriptorOrValue=', entityDescriptorOrValue);
+            const entitiesDescriptor = convertToEntitiesDescriptor(entityDescriptorOrValue);
+            console.log('entitiesDescriptor=', entitiesDescriptor);
+            const checkMode = entitiesDescriptor[checkModeSymbol];
+            console.log('checkMode=', checkMode);
 
-            const entityValueEntries = Object.entries(entityDescriptorOrValue) as NonSymbolEntries<
+            const entityValueEntries = Object.entries(entitiesDescriptor.value) as NonSymbolEntries<
               Entries<Exclude<RestEntity, TopLevelPlainEntityArray | TopLevelPlainEntityDescriptor>>
             >;
-            return entityValueEntries.every(
+            console.log('entityValueEntries=', entityValueEntries);
+
+            return entityValueEntries[checkMode](
               ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
                 const entityPropertyDescriptor = convertToEntityDescriptor(
                   entityPropertyDescriptorOrValue
@@ -120,18 +129,24 @@ export const createRestRoutes = ({
                   entityPropertyDescriptor[checkModeSymbol] === 'exists' ||
                   entityPropertyDescriptor[checkModeSymbol] === 'notExists'
                 ) {
-                  return resolveEntityValues({
+                  const result = resolveEntityValues({
                     actualValue: actualPropertyValue,
                     [checkModeSymbol]: entityPropertyDescriptor[checkModeSymbol]
                   });
+                  console.log(`RESULT FOR ${entityPropertyKey}=${result}`);
+
+                  return result;
                 }
 
-                return resolveEntityValues({
+                const result = resolveEntityValues({
                   actualValue: actualPropertyValue,
                   descriptorValue: entityPropertyDescriptor.value,
                   [checkModeSymbol]: entityPropertyDescriptor[checkModeSymbol],
                   oneOf: entityPropertyDescriptor.oneOf ?? false
                 });
+                console.log(`RESULT FOR ${entityPropertyKey}=${result}`);
+
+                return result;
               }
             );
           });

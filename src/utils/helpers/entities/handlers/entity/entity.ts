@@ -1,212 +1,227 @@
 import type {
-  CalculateByDescriptorValueCheckMode,
-  CheckActualValueCheckMode,
-  CheckMode,
-  CompareWithDescriptorAnyValueCheckMode,
-  CompareWithDescriptorStringValueCheckMode,
-  CompareWithDescriptorValueCheckMode,
+  EntitiesDescriptor,
+  EntityDescriptor,
   EntityFunctionDescriptorValue,
-  MappedEntityDescriptor,
+  MappedEntity,
   MappedEntityValue,
   PlainEntityObjectiveValue,
-  PlainEntityPrimitiveValue,
-  PropertyLevelPlainEntityDescriptor,
-  TopLevelPlainEntityDescriptor
+  PlainEntityPrimitiveValue
 } from '@/utils/types';
 
 import { checkModeSymbol } from '@/utils/constants';
 
-function mappedEntity(
-  checkMode: CheckActualValueCheckMode
-): MappedEntityDescriptor<CheckActualValueCheckMode>;
-
-function mappedEntity(
-  checkMode: CompareWithDescriptorValueCheckMode,
-  value: MappedEntityValue,
-  oneOf?: false
-): MappedEntityDescriptor<CompareWithDescriptorValueCheckMode>;
-
-function mappedEntity(
-  checkMode: CompareWithDescriptorValueCheckMode,
-  value: MappedEntityValue[],
-  oneOf: true
-): MappedEntityDescriptor<CompareWithDescriptorValueCheckMode>;
-
-function mappedEntity(
-  checkMode: Extract<CalculateByDescriptorValueCheckMode, 'regExp'>,
-  value: RegExp,
-  oneOf?: false
-): MappedEntityDescriptor<Extract<CalculateByDescriptorValueCheckMode, 'regExp'>>;
-
-function mappedEntity(
-  checkMode: Extract<CalculateByDescriptorValueCheckMode, 'regExp'>,
-  value: RegExp[],
-  oneOf: true
-): MappedEntityDescriptor<Extract<CalculateByDescriptorValueCheckMode, 'regExp'>>;
-
-function mappedEntity(
-  checkMode: Extract<CalculateByDescriptorValueCheckMode, 'function'>,
-  value: EntityFunctionDescriptorValue<MappedEntityValue>,
-  oneOf?: false
-): MappedEntityDescriptor<Extract<CalculateByDescriptorValueCheckMode, 'function'>>;
-
-function mappedEntity(
-  checkMode: Extract<CalculateByDescriptorValueCheckMode, 'function'>,
-  value: EntityFunctionDescriptorValue<MappedEntityValue>[],
-  oneOf: true
-): MappedEntityDescriptor<Extract<CalculateByDescriptorValueCheckMode, 'function'>>;
-
-function mappedEntity(
-  checkMode: CheckMode,
-  value?:
-    | EntityFunctionDescriptorValue<MappedEntityValue>
-    | EntityFunctionDescriptorValue<MappedEntityValue>[]
-    | MappedEntityValue
-    | MappedEntityValue[]
-    | RegExp
-    | RegExp[],
-  oneOf?: boolean
-) {
-  if (checkMode === 'exists' || checkMode === 'notExists') {
-    return { [checkModeSymbol]: checkMode };
-  }
-
+export function exists(): EntityDescriptor<'exists'> {
   return {
-    [checkModeSymbol]: checkMode,
-    value,
-    oneOf
+    [checkModeSymbol]: 'exists'
   };
 }
 
-export const header = mappedEntity;
-export const param = mappedEntity;
-export const query = mappedEntity;
-export const cookie = mappedEntity;
-
-function topLevelPlainEntity(
-  checkMode: CheckActualValueCheckMode
-): TopLevelPlainEntityDescriptor<CheckActualValueCheckMode>;
-
-function topLevelPlainEntity(
-  checkMode: CompareWithDescriptorAnyValueCheckMode,
-  value: PlainEntityObjectiveValue,
-  oneOf?: false
-): TopLevelPlainEntityDescriptor<CompareWithDescriptorAnyValueCheckMode>;
-
-function topLevelPlainEntity(
-  checkMode: CompareWithDescriptorAnyValueCheckMode,
-  value: PlainEntityObjectiveValue[],
-  oneOf: true
-): TopLevelPlainEntityDescriptor<CompareWithDescriptorAnyValueCheckMode>;
-
-function topLevelPlainEntity(
-  checkMode: Extract<CalculateByDescriptorValueCheckMode, 'function'>,
-  value: EntityFunctionDescriptorValue<PlainEntityObjectiveValue>,
-  oneOf?: false
-): TopLevelPlainEntityDescriptor<Extract<CalculateByDescriptorValueCheckMode, 'function'>>;
-
-function topLevelPlainEntity(
-  checkMode: Extract<CalculateByDescriptorValueCheckMode, 'function'>,
-  value: EntityFunctionDescriptorValue<PlainEntityObjectiveValue>[],
-  oneOf: true
-): TopLevelPlainEntityDescriptor<Extract<CalculateByDescriptorValueCheckMode, 'function'>>;
-
-function topLevelPlainEntity(
-  checkMode: CheckMode,
-  value?:
-    | EntityFunctionDescriptorValue<PlainEntityObjectiveValue>
-    | EntityFunctionDescriptorValue<PlainEntityObjectiveValue>[]
-    | PlainEntityObjectiveValue
-    | PlainEntityObjectiveValue[],
-  oneOf?: boolean
-) {
-  if (checkMode === 'exists' || checkMode === 'notExists') {
-    return { [checkModeSymbol]: checkMode };
-  }
+export function notExists(): EntityDescriptor<'notExists'> {
   return {
-    [checkModeSymbol]: checkMode,
-    value,
-    oneOf
+    [checkModeSymbol]: 'notExists'
   };
 }
 
-export const body = topLevelPlainEntity;
-export const variables = topLevelPlainEntity;
+type PrimitiveOrNestedObjectOrArray =
+  | MappedEntityValue
+  | PlainEntityObjectiveValue
+  | PlainEntityPrimitiveValue;
 
-function propertyLevelPlainEntity(
-  checkMode: CheckActualValueCheckMode
-): PropertyLevelPlainEntityDescriptor<CheckActualValueCheckMode>;
-
-function propertyLevelPlainEntity(
-  checkMode: CompareWithDescriptorAnyValueCheckMode,
-  value: PlainEntityObjectiveValue | PlainEntityPrimitiveValue,
+export function equals<Value extends PrimitiveOrNestedObjectOrArray>(
+  value: Value,
   oneOf?: false
-): PropertyLevelPlainEntityDescriptor<CompareWithDescriptorAnyValueCheckMode>;
-
-function propertyLevelPlainEntity(
-  checkMode: CompareWithDescriptorAnyValueCheckMode,
-  value: (PlainEntityObjectiveValue | PlainEntityPrimitiveValue)[],
+): EntityDescriptor<'equals', Value>;
+export function equals<Value extends PrimitiveOrNestedObjectOrArray>(
+  value: Value[],
   oneOf: true
-): PropertyLevelPlainEntityDescriptor<CompareWithDescriptorAnyValueCheckMode>;
-
-function propertyLevelPlainEntity(
-  checkMode: CompareWithDescriptorStringValueCheckMode,
-  value: PlainEntityPrimitiveValue,
-  oneOf?: false
-): PropertyLevelPlainEntityDescriptor<CompareWithDescriptorStringValueCheckMode>;
-
-function propertyLevelPlainEntity(
-  checkMode: CompareWithDescriptorStringValueCheckMode,
-  value: PlainEntityPrimitiveValue[],
-  oneOf: true
-): PropertyLevelPlainEntityDescriptor<CompareWithDescriptorStringValueCheckMode>;
-
-function propertyLevelPlainEntity(
-  checkMode: Extract<CalculateByDescriptorValueCheckMode, 'regExp'>,
-  value: RegExp,
-  oneOf?: false
-): PropertyLevelPlainEntityDescriptor<Extract<CalculateByDescriptorValueCheckMode, 'regExp'>>;
-
-function propertyLevelPlainEntity(
-  checkMode: Extract<CalculateByDescriptorValueCheckMode, 'regExp'>,
-  value: RegExp[],
-  oneOf: true
-): PropertyLevelPlainEntityDescriptor<Extract<CalculateByDescriptorValueCheckMode, 'regExp'>>;
-
-function propertyLevelPlainEntity(
-  checkMode: Extract<CalculateByDescriptorValueCheckMode, 'function'>,
-  value: EntityFunctionDescriptorValue<PlainEntityObjectiveValue | PlainEntityPrimitiveValue>,
-  oneOf?: false
-): PropertyLevelPlainEntityDescriptor<Extract<CalculateByDescriptorValueCheckMode, 'function'>>;
-
-function propertyLevelPlainEntity(
-  checkMode: Extract<CalculateByDescriptorValueCheckMode, 'function'>,
-  value: EntityFunctionDescriptorValue<PlainEntityObjectiveValue | PlainEntityPrimitiveValue>[],
-  oneOf: true
-): PropertyLevelPlainEntityDescriptor<Extract<CalculateByDescriptorValueCheckMode, 'function'>>;
-
-function propertyLevelPlainEntity(
-  checkMode: CheckMode,
-  value?:
-    | (PlainEntityObjectiveValue | PlainEntityPrimitiveValue)[]
-    | EntityFunctionDescriptorValue<PlainEntityObjectiveValue | PlainEntityPrimitiveValue>
-    | EntityFunctionDescriptorValue<PlainEntityObjectiveValue | PlainEntityPrimitiveValue>[]
-    | PlainEntityObjectiveValue
-    | PlainEntityPrimitiveValue
-    | PlainEntityPrimitiveValue[]
-    | RegExp
-    | RegExp[],
-  oneOf?: boolean
-) {
-  if (checkMode === 'exists' || checkMode === 'notExists') {
-    return { [checkModeSymbol]: checkMode };
-  }
+): EntityDescriptor<'equals', Value>;
+export function equals<Value>(value: Value, oneOf?: boolean): EntityDescriptor<'equals', Value> {
   return {
-    [checkModeSymbol]: checkMode,
+    [checkModeSymbol]: 'equals',
     value,
     oneOf
+  } as EntityDescriptor<'equals', Value>;
+}
+
+export function notEquals<Value extends PrimitiveOrNestedObjectOrArray>(
+  value: Value,
+  oneOf?: false
+): EntityDescriptor<'notEquals', Value>;
+export function notEquals<Value extends PrimitiveOrNestedObjectOrArray>(
+  value: Value[],
+  oneOf: true
+): EntityDescriptor<'notEquals', Value>;
+export function notEquals<Value>(
+  value: Value,
+  oneOf?: boolean
+): EntityDescriptor<'notEquals', Value> {
+  return {
+    [checkModeSymbol]: 'notEquals',
+    value,
+    oneOf
+  } as EntityDescriptor<'notEquals', Value>;
+}
+
+export function includes<Value extends PrimitiveOrNestedObjectOrArray>(
+  value: Value,
+  oneOf?: false
+): EntityDescriptor<'includes', Value>;
+export function includes<Value extends PrimitiveOrNestedObjectOrArray>(
+  value: Value[],
+  oneOf: true
+): EntityDescriptor<'includes', Value>;
+export function includes<Value>(
+  value: Value,
+  oneOf?: boolean
+): EntityDescriptor<'includes', Value> {
+  return {
+    [checkModeSymbol]: 'includes',
+    value,
+    oneOf
+  } as EntityDescriptor<'includes', Value>;
+}
+
+export function notIncludes<Value extends PrimitiveOrNestedObjectOrArray>(
+  value: Value,
+  oneOf?: false
+): EntityDescriptor<'notIncludes', Value>;
+export function notIncludes<Value extends PrimitiveOrNestedObjectOrArray>(
+  value: Value[],
+  oneOf: true
+): EntityDescriptor<'notIncludes', Value>;
+export function notIncludes<Value>(
+  value: Value,
+  oneOf?: boolean
+): EntityDescriptor<'notIncludes', Value> {
+  return {
+    [checkModeSymbol]: 'notIncludes',
+    value,
+    oneOf
+  } as EntityDescriptor<'notIncludes', Value>;
+}
+
+export function startsWith<Value extends PrimitiveOrNestedObjectOrArray>(
+  value: Value,
+  oneOf?: false
+): EntityDescriptor<'startsWith', Value>;
+export function startsWith<Value extends PrimitiveOrNestedObjectOrArray>(
+  value: Value[],
+  oneOf: true
+): EntityDescriptor<'startsWith', Value>;
+export function startsWith<Value>(
+  value: Value,
+  oneOf?: boolean
+): EntityDescriptor<'startsWith', Value> {
+  return {
+    [checkModeSymbol]: 'startsWith',
+    value,
+    oneOf
+  } as EntityDescriptor<'startsWith', Value>;
+}
+
+export function notStartsWith<Value extends PrimitiveOrNestedObjectOrArray>(
+  value: Value,
+  oneOf?: false
+): EntityDescriptor<'notStartsWith', Value>;
+export function notStartsWith<Value extends PrimitiveOrNestedObjectOrArray>(
+  value: Value[],
+  oneOf: true
+): EntityDescriptor<'notStartsWith', Value>;
+export function notStartsWith<Value>(
+  value: Value,
+  oneOf?: boolean
+): EntityDescriptor<'notStartsWith', Value> {
+  return {
+    [checkModeSymbol]: 'notStartsWith',
+    value,
+    oneOf
+  } as EntityDescriptor<'notStartsWith', Value>;
+}
+
+export function endsWith<Value extends PrimitiveOrNestedObjectOrArray>(
+  value: Value,
+  oneOf?: false
+): EntityDescriptor<'endsWith', Value>;
+export function endsWith<Value extends PrimitiveOrNestedObjectOrArray>(
+  value: Value[],
+  oneOf: true
+): EntityDescriptor<'endsWith', Value>;
+export function endsWith<Value>(
+  value: Value,
+  oneOf?: boolean
+): EntityDescriptor<'endsWith', Value> {
+  return {
+    [checkModeSymbol]: 'endsWith',
+    value,
+    oneOf
+  } as EntityDescriptor<'endsWith', Value>;
+}
+
+export function notEndsWith<Value extends PrimitiveOrNestedObjectOrArray>(
+  value: Value,
+  oneOf?: false
+): EntityDescriptor<'notEndsWith', Value>;
+export function notEndsWith<Value extends PrimitiveOrNestedObjectOrArray>(
+  value: Value[],
+  oneOf: true
+): EntityDescriptor<'notEndsWith', Value>;
+export function notEndsWith<Value>(
+  value: Value,
+  oneOf?: boolean
+): EntityDescriptor<'notEndsWith', Value> {
+  return {
+    [checkModeSymbol]: 'notEndsWith',
+    value,
+    oneOf
+  } as EntityDescriptor<'notEndsWith', Value>;
+}
+
+export function regExp<Value extends RegExp>(
+  value: Value,
+  oneOf?: false
+): EntityDescriptor<'regExp', Value>;
+export function regExp<Value extends RegExp>(
+  value: Value[],
+  oneOf: true
+): EntityDescriptor<'regExp', Value>;
+export function regExp<Value>(value: Value, oneOf?: boolean): EntityDescriptor<'regExp', Value> {
+  return {
+    [checkModeSymbol]: 'regExp',
+    value,
+    oneOf
+  } as EntityDescriptor<'regExp', Value>;
+}
+
+export function fn<Value extends EntityFunctionDescriptorValue<Value>>(
+  value: Value,
+  oneOf?: false
+): EntityDescriptor<'function', Value>;
+export function fn<Value extends EntityFunctionDescriptorValue<Value>>(
+  value: Value[],
+  oneOf: true
+): EntityDescriptor<'function', Value>;
+export function fn<Value>(value: Value, oneOf?: boolean): EntityDescriptor<'function', Value> {
+  return {
+    [checkModeSymbol]: 'function',
+    value,
+    oneOf
+  } as EntityDescriptor<'function', Value>;
+}
+
+export function every<Value extends MappedEntity>(
+  value: Value
+): EntitiesDescriptor<'every', MappedEntity> {
+  return {
+    [checkModeSymbol]: 'every',
+    value
   };
 }
 
-export const bodyProperty = propertyLevelPlainEntity;
-export const variablesProperty = propertyLevelPlainEntity;
+export function some<Value extends MappedEntity>(
+  value: Value
+): EntitiesDescriptor<'some', MappedEntity> {
+  return {
+    [checkModeSymbol]: 'some',
+    value
+  };
+}

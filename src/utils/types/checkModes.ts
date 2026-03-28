@@ -32,6 +32,16 @@ export type EntityDescriptor<
       | { [checkModeSymbol]: Check; value: Value; oneOf?: false }
       | { [checkModeSymbol]: Check; value: Value[]; oneOf: true };
 
+export type EntitiesCheckMode = 'every' | 'some';
+
+export interface EntitiesDescriptor<
+  Check extends EntitiesCheckMode = EntitiesCheckMode,
+  Value = any
+> {
+  [checkModeSymbol]: Check;
+  value: Value;
+}
+
 export type CheckFunction = <ActualValue = any, DescriptorValue = any>(
   checkMode: CheckMode,
   actualValue: ActualValue,

@@ -7,6 +7,8 @@ import type {
   CompareWithDescriptorAnyValueCheckMode,
   CompareWithDescriptorStringValueCheckMode,
   CompareWithDescriptorValueCheckMode,
+  EntitiesCheckMode,
+  EntitiesDescriptor,
   EntityDescriptor
 } from './checkModes';
 import type { NestedObjectOrArray } from './utils';
@@ -81,6 +83,16 @@ export type MappedEntityDescriptor<Check extends CheckMode = CheckMode> = Check 
         : never;
 
 export type MappedEntity = Record<string, MappedEntityDescriptor | MappedEntityValue>;
+
+export type MappedEntitiesDescriptor<Check extends EntitiesCheckMode = EntitiesCheckMode> =
+  Check extends 'every'
+    ? EntitiesDescriptor<Check, MappedEntity>
+    : Check extends 'some'
+      ? EntitiesDescriptor<Check, MappedEntity>
+      : never;
+
+// TODO: rename this and other object entity to entities
+export type MappedEntities = MappedEntitiesDescriptor | MappedEntity;
 
 /* ----- Entity handlers ----- */
 
