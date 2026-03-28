@@ -155,60 +155,42 @@ type GraphQLOperationTypeArg<Mode extends GraphQLFactoryMode> = Mode extends 'ra
   : never;
 
 const createGraphQLFactory = <Mode extends GraphQLFactoryMode>(mode: Mode) => {
-  function createRequestConfig<
-    Request extends Partial<GraphQLRequestInput> = {},
-    Response = Request['response']
-  >(
+  function createRequestConfig<Options extends GraphQLRequestInput = Partial<GraphQLRequestInput>>(
     identifier: GraphQLIdentifier<Mode>,
-    config: GraphQLResponseObject<Response>,
+    config: GraphQLResponseObject<Options['response']>,
     settings?: GraphQLSettings,
     operationType?: GraphQLOperationTypeArg<Mode>
   ): GraphQLRequestConfig;
 
-  function createRequestConfig<
-    Request extends Partial<GraphQLRequestInput> = {},
-    Options extends GraphQLRequestInput = Request
-  >(
+  function createRequestConfig<Options extends GraphQLRequestInput = Partial<GraphQLRequestInput>>(
     identifier: GraphQLIdentifier<Mode>,
     config: GraphQLHandlerObject<Options>,
     settings?: GraphQLSettings,
     operationType?: GraphQLOperationTypeArg<Mode>
   ): GraphQLRequestConfig;
 
-  function createRequestConfig<
-    Request extends Partial<GraphQLRequestInput> = {},
-    Options extends GraphQLRequestInput = Request
-  >(
+  function createRequestConfig<Options extends GraphQLRequestInput = Partial<GraphQLRequestInput>>(
     identifier: GraphQLIdentifier<Mode>,
     config: GraphQLFunction<Options>,
     settings?: GraphQLSettings,
     operationType?: GraphQLOperationTypeArg<Mode>
   ): GraphQLRequestConfig;
 
-  function createRequestConfig<
-    Request extends Partial<GraphQLRequestInput> = {},
-    Options extends GraphQLRequestInput = Request
-  >(
+  function createRequestConfig<Options extends GraphQLRequestInput = Partial<GraphQLRequestInput>>(
     identifier: GraphQLIdentifier<Mode>,
     config: GraphQLQueueObject<Options>,
     settings?: GraphQLSettings,
     operationType?: GraphQLOperationTypeArg<Mode>
   ): GraphQLRequestConfig;
 
-  function createRequestConfig<
-    Request extends Partial<GraphQLRequestInput> = {},
-    Options extends GraphQLRequestInput = Request
-  >(
+  function createRequestConfig<Options extends GraphQLRequestInput = Partial<GraphQLRequestInput>>(
     identifier: GraphQLIdentifier<Mode>,
     config: InlineResponse<Options['response']>,
     settings?: GraphQLSettings,
     operationType?: GraphQLOperationTypeArg<Mode>
   ): GraphQLRequestConfig;
 
-  function createRequestConfig<
-    Request extends Partial<GraphQLRequestInput> = {},
-    Options extends GraphQLRequestInput = Request
-  >(
+  function createRequestConfig<Options extends GraphQLRequestInput = Partial<GraphQLRequestInput>>(
     identifier: GraphQLIdentifier<Mode>,
     config: GraphQLConfig<Options>,
     settings?: GraphQLSettings,

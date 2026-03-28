@@ -181,12 +181,9 @@ const createConfigResolver = <Method extends RestMethod, Options extends RestReq
 };
 
 const createRestFactory = <Method extends RestMethod>(method: Method) => {
-  function createRequestConfig<
-    Request extends Partial<RestRequestInput> = {},
-    Response = Request['response']
-  >(
+  function createRequestConfig<Options extends RestRequestInput = Partial<RestRequestInput>>(
     path: RestRequestConfig['path'],
-    config: RestResponseObject<Method, Response>,
+    config: RestResponseObject<Method, Options['response']>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method>;
 
@@ -196,46 +193,31 @@ const createRestFactory = <Method extends RestMethod>(method: Method) => {
     settings?: RestSettings
   ): BaseRestRequestConfig<Method>;
 
-  function createRequestConfig<
-    Request extends Partial<RestRequestInput> = {},
-    Options extends RestRequestInput = Request
-  >(
+  function createRequestConfig<Options extends RestRequestInput = Partial<RestRequestInput>>(
     path: RestRequestConfig['path'],
     config: RestHandlerObject<Method, Options>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method>;
 
-  function createRequestConfig<
-    Request extends Partial<RestRequestInput> = {},
-    Options extends RestRequestInput = Request
-  >(
+  function createRequestConfig<Options extends RestRequestInput = Partial<RestRequestInput>>(
     path: RestRequestConfig['path'],
     config: RestFunction<Method, Options>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method>;
 
-  function createRequestConfig<
-    Request extends Partial<RestRequestInput> = {},
-    Options extends RestRequestInput = Request
-  >(
+  function createRequestConfig<Options extends RestRequestInput = Partial<RestRequestInput>>(
     path: RestRequestConfig['path'],
     config: RestQueueObject<Method, Options>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method>;
 
-  function createRequestConfig<
-    Request extends Partial<RestRequestInput> = {},
-    Options extends RestRequestInput = Request
-  >(
+  function createRequestConfig<Options extends RestRequestInput = Partial<RestRequestInput>>(
     path: RestRequestConfig['path'],
     config: InlineResponse<Options['response']>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method>;
 
-  function createRequestConfig<
-    Request extends Partial<RestRequestInput> = {},
-    Options extends RestRequestInput = Request
-  >(
+  function createRequestConfig<Options extends RestRequestInput = Partial<RestRequestInput>>(
     path: RestRequestConfig['path'],
     config: RestConfig<Method, Options>,
     settings?: RestSettings
