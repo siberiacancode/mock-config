@@ -190,12 +190,7 @@ const createRestFactory = <Method extends RestMethod>(method: Method) => {
     return {
       method,
       path,
-      routes: [
-        createConfigResolver(
-          config as RestConfig<Method, Options>,
-          settings
-        ) as RestRouteConfig<Method>
-      ]
+      routes: [createConfigResolver(config, settings) as RestRouteConfig<Method>]
     };
   }
 

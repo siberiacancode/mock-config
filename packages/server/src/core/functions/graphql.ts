@@ -181,9 +181,7 @@ const createGraphQLFactory = <Mode extends GraphQLFactoryMode>(mode: Mode) => {
     return {
       operationName: identifier as GraphQLOperationName,
       operationType: mode,
-      routes: [
-        createConfigResolver(config as GraphQLConfig<Options>, settings) as GraphQLRouteConfig
-      ]
+      routes: [createConfigResolver(config, settings) as GraphQLRouteConfig]
     };
   }
 
