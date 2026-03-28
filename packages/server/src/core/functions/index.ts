@@ -1,3 +1,3 @@
-export * from './graphql';
+export * from './graphql/graphql';
 export * from './mock';
-export * from './rest';
+export * from './rest/rest';

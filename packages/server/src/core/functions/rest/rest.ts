@@ -20,7 +20,7 @@ type ReservedRestConfigKeys = {
   [K in 'file' | 'handler' | 'match' | 'queue' | 'response']?: never;
 };
 
-type InlineResponse<Response> =
+type RestInlineResponse<Response> =
   Response extends Record<string, unknown> ? Response & ReservedRestConfigKeys : Response;
 
 type RestFunction<Method extends RestMethod, Options extends RestRequestInput> = (
@@ -58,10 +58,10 @@ interface RestQueueObject<Method extends RestMethod, Options extends RestRequest
 }
 
 type RestConfig<Method extends RestMethod, Options extends RestRequestInput> =
-  | InlineResponse<Response>
   | RestFileObject<Method>
   | RestFunction<Method, Options>
   | RestHandlerObject<Method, Options>
+  | RestInlineResponse<Response>
   | RestQueueObject<Method, Options>
   | RestResponseObject<Method, Response>;
 
@@ -178,7 +178,7 @@ const createRestFactory = <Method extends RestMethod>(method: Method) => {
 
   function createRequestConfig<Options extends RestRequestInput = Partial<RestRequestInput>>(
     path: RestRequestConfig['path'],
-    config: InlineResponse<Options['response']>,
+    config: RestInlineResponse<Options['response']>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method>;
 
