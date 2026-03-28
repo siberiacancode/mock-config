@@ -8,8 +8,6 @@ import type {
   GraphQLSettings
 } from '@/utils/types';
 
-import { isPlainObject } from '@/utils/helpers';
-
 interface GraphQLRequestInput {
   body?: unknown;
   params?: unknown;
@@ -54,95 +52,69 @@ type GraphQLConfig<Options extends GraphQLRequestInput> =
   | InlineResponse<Options['response']>;
 
 const resolveConfigType = <Options extends GraphQLRequestInput>(config: GraphQLConfig<Options>) => {
-  if (typeof config === 'function') return 'handler';
-  if (!isPlainObject(config)) return 'inlineResponse';
-  if ('queue' in config) return 'queue';
-  if ('response' in config) return 'data';
-  if ('handler' in config) return 'handler';
-  return 'inlineResponse';
+  if (typeof config === 'function') return { type: 'inlineHandler' as const, config };
+  if (typeof config !== 'object' || config === null)
+    return { type: 'inlineResponse' as const, config };
+  if ('queue' in config) return { type: 'queue' as const, config };
+  if ('response' in config) return { type: 'data' as const, config };
+  if ('handler' in config) return { type: 'handlerObj' as const, config };
+  return { type: 'inlineResponse' as const, config };
 };
 
 const createConfigResolver = <Options extends GraphQLRequestInput>(
   config: GraphQLConfig<Options>,
   settings?: GraphQLSettings
 ) => {
-  const type = resolveConfigType(config);
+  const resolvedConfig = resolveConfigType(config);
 
-  switch (type) {
+  switch (resolvedConfig.type) {
     case 'inlineResponse':
       return {
-        data: config as Options['response'],
+        data: resolvedConfig.config,
         entities: {},
-        settings: {
-          polling: false,
-          ...settings
-        }
+        settings: { ...settings, polling: false }
       };
 
     case 'data': {
-      const dataConfig = config as GraphQLResponseObject<Options['response']>;
-
       return {
-        data: dataConfig.response,
-        entities: dataConfig.match ?? {},
-        settings: {
-          polling: false,
-          ...settings
-        }
+        data: resolvedConfig.config.response,
+        entities: resolvedConfig.config.match ?? {},
+        settings: { ...settings, polling: false }
       };
     }
 
     case 'queue': {
-      const queueConfig = config as GraphQLQueueObject<Options>;
-
       return {
-        queue: queueConfig.queue.map((item) => {
+        queue: resolvedConfig.config.queue.map((item) => {
           if ('handler' in item) {
-            return {
-              data: item.handler,
-              ...(typeof item.time === 'number' ? { time: item.time } : {})
-            };
+            return { data: item.handler, time: item.time };
           }
 
-          return {
-            data: item.response,
-            ...(typeof item.time === 'number' ? { time: item.time } : {})
-          };
+          return { data: item.response, time: item.time };
         }),
-        entities: queueConfig.match ?? {},
-        settings: {
-          polling: true,
-          ...settings
-        }
+        entities: resolvedConfig.config.match ?? {},
+        settings: { ...settings, polling: true }
       };
     }
 
-    case 'handler': {
-      if (typeof config === 'function') {
-        return {
-          data: config,
-          entities: {},
-          settings: {
-            polling: false,
-            ...settings
-          }
-        };
-      }
-
-      const handlerConfig = config as GraphQLHandlerObject<Options>;
-
+    case 'inlineHandler':
       return {
-        data: handlerConfig.handler,
-        entities: handlerConfig.match ?? {},
-        settings: {
-          polling: false,
-          ...settings
-        }
+        data: resolvedConfig.config,
+        entities: {},
+        settings: { ...settings, polling: false }
+      };
+
+    case 'handlerObj': {
+      return {
+        data: resolvedConfig.config.handler,
+        entities: resolvedConfig.config.match ?? {},
+        settings: { ...settings, polling: false }
       };
     }
 
-    default:
-      throw new Error(`Unexpected route config kind: ${type}`);
+    default: {
+      throw new Error(`Unexpected route config kind: ${JSON.stringify(config, null, 2)}`);
+    }
   }
 };
 
