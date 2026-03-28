@@ -101,7 +101,7 @@ const config: FlatMockServerConfig = [
               // body: equals('123', false), // ⛔️️ must be object or array
               // body: equals('123', true), // ⛔️️ must be array
               // body: equals([{ a: 123 }, { b: 'abc' }], true) // 💀 Type { a: number; b?: undefined; } is not assignable
-              // body: equals(['123', 111, true], false), // ⛔️️ must not be array
+              // body: equals(['123', 111, true], false) // ✅
               body: equals([{ a: 123 }]) // ✅
             },
             data: [{ id: 1 }, { id: 2 }]
