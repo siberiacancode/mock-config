@@ -1,9 +1,9 @@
-import type { FlatMockServerConfig } from 'mock-config-server';
+import type { MockServerConfig } from 'mock-config-server';
 
 import { createUserMutation, getUserQuery, getUsersQuery } from './mock-requests/graphql';
 import { getUserRequest, getUsersRequest, postUserRequest } from './mock-requests/rest';
 
-const mockServerConfig: FlatMockServerConfig = [
+const mockServerConfig: MockServerConfig = [
   {
     port: 31299,
     baseUrl: '/'

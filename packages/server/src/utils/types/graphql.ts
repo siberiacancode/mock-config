@@ -1,7 +1,8 @@
-import type { Request } from 'express';
+import type { CookieOptions, Response as ExpressResponse, Request } from 'express';
 
 import type { MappedEntity, VariablesPlainEntity } from './entities';
 import type { Interceptors } from './interceptors';
+import type { BaseUrl } from './server';
 import type { Data } from './values';
 
 export type GraphQLEntityName = 'cookies' | 'headers' | 'query' | 'variables';
@@ -16,15 +17,39 @@ export type GraphQLEntitiesByEntityName = {
   [EntityName in GraphQLEntityName]?: GraphQLEntity<EntityName>;
 };
 
-interface GraphQLSettings {
+export interface GraphQLSettings {
   readonly delay?: number;
   readonly polling?: boolean;
   readonly status?: number;
 }
 
-export type GraphqlDataResponse =
-  | ((request: Request, entities: GraphQLEntitiesByEntityName) => Data | Promise<Data>)
-  | Data;
+type GraphQLCookieValue = string | undefined;
+type GraphQLHeaderValue = number | string | string[] | undefined;
+
+export interface GraphQLParams<
+  Query = Record<string, unknown>,
+  Body = Record<string, unknown>,
+  Params = Record<string, unknown>,
+  Response = any
+> {
+  entities: GraphQLEntitiesByEntityName;
+  request: Request<Params, Response, Body, Query>;
+  response: ExpressResponse;
+  appendHeader: (field: string, value?: string | string[]) => void;
+  attachment: (filename: string) => void;
+  clearCookie: (name: string, options?: CookieOptions) => void;
+  getCookie: (name: string) => GraphQLCookieValue;
+  getRequestHeader: (field: string) => GraphQLHeaderValue;
+  getRequestHeaders: () => Record<string, GraphQLHeaderValue>;
+  getResponseHeader: (field: string) => GraphQLHeaderValue;
+  getResponseHeaders: () => Record<string, GraphQLHeaderValue>;
+  setCookie: (name: string, value: string, options?: CookieOptions) => void;
+  setDelay: (delay: number) => Promise<void>;
+  setHeader: (field: string, value?: string | string[]) => void;
+  setStatusCode: (statusCode: number) => void;
+}
+
+export type GraphqlDataResponse = ((params: GraphQLParams) => Data | Promise<Data>) | Data;
 
 export type GraphQLRouteConfig = (
   | {
@@ -38,7 +63,10 @@ export type GraphQLRouteConfig = (
       settings?: GraphQLSettings & { polling?: false };
       data: GraphqlDataResponse;
     }
-) & { entities?: GraphQLEntitiesByEntityName; interceptors?: Interceptors<'graphql'> };
+) & {
+  entities?: GraphQLEntitiesByEntityName;
+  interceptors?: Interceptors<'graphql'>;
+};
 
 interface BaseGraphQLRequestConfig {
   interceptors?: Interceptors<'graphql'>;
@@ -55,3 +83,21 @@ interface QueryGraphQLRequestConfig extends BaseGraphQLRequestConfig {
 }
 
 export type GraphQLRequestConfig = OperationNameGraphQLRequestConfig | QueryGraphQLRequestConfig;
+
+export interface GraphQLRequestArtifact {
+  baseUrl: BaseUrl;
+  componentRequestInterceptor?: Interceptors<'graphql'>['request'];
+  componentResponseInterceptor?: Interceptors<'graphql'>['response'];
+  config: GraphQLRouteConfig;
+  key: string;
+  operationName?: GraphQLOperationName;
+  operationType: GraphQLOperationType;
+  query?: string;
+  requestRequestInterceptor?: Interceptors<'graphql'>['request'];
+  requestResponseInterceptor?: Interceptors<'graphql'>['response'];
+  routeRequestInterceptor?: Interceptors<'graphql'>['request'];
+  routeResponseInterceptor?: Interceptors<'graphql'>['response'];
+  serverRequestInterceptor?: Interceptors<'graphql'>['request'];
+  serverResponseInterceptor?: Interceptors<'graphql'>['response'];
+  weight: number;
+}

@@ -7,39 +7,44 @@ import { corsSchema } from './corsSchema/corsSchema';
 import { databaseConfigSchema } from './databaseConfigSchema/databaseConfigSchema';
 import { getMostSpecificPathFromError } from './getMostSpecificPathFromError';
 import { getValidationMessageFromPath } from './getValidationMessageFromPath';
-import { graphqlConfigSchema } from './graphqlConfigSchema/graphqlConfigSchema';
+import { graphqlRequestConfigSchema } from './graphqlConfigSchema/graphqlConfigSchema';
 import { interceptorsSchema } from './interceptorsSchema/interceptorsSchema';
 import { portSchema } from './portSchema/portSchema';
-import { restConfigSchema } from './restConfigSchema/restConfigSchema';
+import { restRequestConfigSchema } from './restConfigSchema/restConfigSchema';
 import { staticPathSchema } from './staticPathSchema/staticPathSchema';
 import { plainObjectSchema } from './utils';
 
 export const validateMockServerConfig = (mockServerConfig: PlainObject) => {
-  if (
-    !mockServerConfig.rest &&
-    !mockServerConfig.graphql &&
-    !mockServerConfig.database &&
-    !mockServerConfig.staticPath
-  ) {
+  if (!mockServerConfig.length) {
     throw new Error(
-      'Configuration should contain at least one of these configs: rest | graphql | database | staticPath; see our doc (https://github.com/siberiacancode/mock-config-server) for more information'
+      'Config should contain at least one element; see our doc (https://github.com/siberiacancode/mock-config-server) for more information'
     );
   }
 
-  const mockServerConfigSchema = z.strictObject({
+  const mockServerSettingsSchema = z.strictObject({
     baseUrl: baseUrlSchema.optional(),
     port: portSchema.optional(),
     staticPath: staticPathSchema.optional(),
     interceptors: plainObjectSchema(interceptorsSchema).optional(),
     cors: corsSchema.optional(),
-    rest: restConfigSchema.optional(),
-    graphql: graphqlConfigSchema.optional(),
     database: databaseConfigSchema.optional()
   });
 
-  const validationResult = mockServerConfigSchema.safeParse(mockServerConfig);
-  if (!validationResult.success) {
-    const path = getMostSpecificPathFromError(validationResult.error);
+  const mockServerComponentSchema = z.strictObject({
+    name: z.string().optional(),
+    baseUrl: baseUrlSchema.optional(),
+    interceptors: plainObjectSchema(interceptorsSchema).optional(),
+    configs: z.array(z.union([restRequestConfigSchema, graphqlRequestConfigSchema]))
+  });
+
+  const mockServerConfigSchema = z
+    .tuple([plainObjectSchema(mockServerSettingsSchema).or(mockServerComponentSchema)])
+    .rest(mockServerComponentSchema);
+
+  const validationMockServerConfigSchemaResult = mockServerConfigSchema.safeParse(mockServerConfig);
+
+  if (!validationMockServerConfigSchemaResult.success) {
+    const path = getMostSpecificPathFromError(validationMockServerConfigSchemaResult.error);
     const validationMessage = getValidationMessageFromPath(path);
 
     throw new Error(

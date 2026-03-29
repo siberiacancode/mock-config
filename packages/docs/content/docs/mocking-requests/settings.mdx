@@ -78,33 +78,6 @@ const mockServerConfig: MockServerConfig = [
 
 You can read more here: [CORS](cors).
 
-- `database?: DatabaseConfig`  
-  With `mock-config-server` you can create your own mock database with all CRUD operations
-  - `data`: `Object | string` initial data for database
-  - `routes?`: `Object | string` map of custom routes for database
-
-```typescript
-import type { MockServerConfig } from 'mock-config-server';
-
-const mockServerConfig: MockServerConfig = [
-  {
-    database: {
-      data: {
-        users: [{ id: 1, name: 'Alex' }],
-        settings: [{ id: 1, theme: 'dark' }]
-      },
-      routes: {
-        '/*/my-users': '/users',
-        '/*/my-settings': '/settings'
-      }
-    }
-  },
-  ...
-];
-```
-
-You can read more here: [Database & ORM](database-orm).
-
 - `interceptors?: Interceptors`. Global interceptors for request/response transformations.
 
 ```typescript
