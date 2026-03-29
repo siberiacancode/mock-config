@@ -1,8 +1,5 @@
 import bodyParser from 'body-parser';
 import express from 'express';
-import { Buffer } from 'node:buffer';
-import fs from 'node:fs';
-import path from 'node:path';
 import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -15,7 +12,6 @@ import type {
 } from '@/utils/types';
 
 import { urlJoin } from '@/utils/helpers';
-import { createTmpDir } from '@/utils/helpers/tests';
 
 import { createRestRoute } from './createRestRoute';
 import { calculateRestRouteConfigWeight } from './helpers';
@@ -306,181 +302,6 @@ describe('createRestRoutes: content', () => {
     const response = await request(server).get('/users');
     expect(response.statusCode).toBe(404);
   });
-
-  it('Should correctly resolve data from a file', async () => {
-    const tmpDirPath = createTmpDir();
-    const pathToFile = path.join(tmpDirPath, './data.json') as `${string}.json`;
-    fs.writeFileSync(pathToFile, JSON.stringify({ standName: 'The World' }));
-
-    const server = createServer({
-      rest: {
-        configs: [
-          {
-            path: '/users',
-            method: 'get',
-            routes: [
-              {
-                file: pathToFile
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const response = await request(server).get('/users');
-
-    expect(response.statusCode).toBe(200);
-    expect(response.headers['content-type']).toBe('application/json; charset=utf-8');
-    expect(response.headers['content-disposition']).toMatch(/filename=(\S*data.json)/);
-    expect(response.body).toStrictEqual({ standName: 'The World' });
-
-    fs.rmSync(tmpDirPath, { recursive: true, force: true });
-  });
-
-  it('Should return 404 for invalid file paths', async () => {
-    const tmpDirPath = createTmpDir();
-    const pathToNonExistedFile = path.join(tmpDirPath, './data.json') as `${string}.json`;
-
-    const server = createServer({
-      rest: {
-        configs: [
-          {
-            path: '/users',
-            method: 'get',
-            routes: [
-              {
-                file: tmpDirPath
-              }
-            ]
-          },
-          {
-            path: '/settings',
-            method: 'get',
-            routes: [
-              {
-                file: pathToNonExistedFile
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const tmpDirResponse = await request(server).get('/users');
-    expect(tmpDirResponse.status).toBe(404);
-
-    const nonExistedFileResponse = await request(server).get('/settings');
-    expect(nonExistedFileResponse.status).toBe(404);
-
-    fs.rmSync(tmpDirPath, { recursive: true, force: true });
-  });
-
-  it('Should call response interceptor with Buffer as first argument when returning a file', async () => {
-    const tmpDirPath = createTmpDir();
-    const pathToFile = path.join(tmpDirPath, './data.json') as `${string}.json`;
-    const dataInFile = JSON.stringify({ standName: 'The World' });
-    fs.writeFileSync(pathToFile, dataInFile);
-
-    const routeInterceptor = vi.fn((data) => data);
-
-    const server = createServer({
-      rest: {
-        configs: [
-          {
-            path: '/users',
-            method: 'get',
-            routes: [
-              {
-                file: pathToFile,
-                interceptors: { response: routeInterceptor }
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    await request(server).get('/users');
-
-    const routeInterceptorCallArgs = routeInterceptor.mock.calls[0] as any as [any, ...any[]];
-    expect(routeInterceptorCallArgs[0]).toStrictEqual(Buffer.from(dataInFile));
-
-    fs.rmSync(tmpDirPath, { recursive: true, force: true });
-  });
-
-  it('Should allow interceptor to replace sent file content manually', async () => {
-    const tmpDirPath = createTmpDir();
-
-    const pathToFirstFile = path.join(tmpDirPath, './firstFile.json') as `${string}.json`;
-    fs.writeFileSync(pathToFirstFile, JSON.stringify({ standName: 'Star Platinum' }));
-
-    const pathToSecondFile = path.join(tmpDirPath, './secondFile.json') as `${string}.json`;
-    fs.writeFileSync(pathToSecondFile, JSON.stringify({ standName: 'The World' }));
-
-    const server = createServer({
-      rest: {
-        configs: [
-          {
-            path: '/users',
-            method: 'get',
-            routes: [
-              {
-                file: pathToFirstFile,
-                interceptors: {
-                  response: (_, { setHeader }) => {
-                    setHeader('Content-Disposition', 'filename=secondFile.json');
-                    return fs.readFileSync(pathToSecondFile);
-                  }
-                }
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const response = await request(server).get('/users');
-    expect(response.statusCode).toBe(200);
-    expect(response.headers['content-type']).toBe('application/json; charset=utf-8');
-    expect(response.headers['content-disposition']).toBe('filename=secondFile.json');
-    expect(response.body).toStrictEqual({ standName: 'The World' });
-
-    fs.rmSync(tmpDirPath, { recursive: true, force: true });
-  });
-
-  it('Should return 404 and skip response interceptors for invalid file path', async () => {
-    const tmpDirPath = createTmpDir();
-
-    const invalidFilePath = path.join(tmpDirPath, './notExistedFile.json') as `${string}.json`;
-    const routeInterceptor = vi.fn();
-
-    const server = createServer({
-      rest: {
-        configs: [
-          {
-            path: '/users',
-            method: 'get',
-            routes: [
-              {
-                file: invalidFilePath,
-                interceptors: {
-                  response: routeInterceptor
-                }
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const response = await request(server).get('/users');
-
-    expect(response.statusCode).toBe(404);
-    expect(routeInterceptor).not.toBeCalled();
-
-    fs.rmSync(tmpDirPath, { recursive: true, force: true });
-  });
 });
 
 describe('createRestRoutes: settings', () => {
@@ -569,53 +390,6 @@ describe('createRestRoutes: settings', () => {
     const thirdResponse = await request(server).get('/users');
     expect(thirdResponse.statusCode).toBe(200);
     expect(thirdResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
-  });
-
-  it('Should correctly process the request with file polling setting', async () => {
-    const tmpDirPath = createTmpDir();
-
-    const pathToFirstUser = path.join(tmpDirPath, './firstUser.json');
-    fs.writeFileSync(pathToFirstUser, JSON.stringify({ name: 'John', surname: 'Doe' }));
-
-    const pathToSecondUser = path.join(tmpDirPath, './secondUser.json');
-    fs.writeFileSync(pathToSecondUser, JSON.stringify({ name: 'John', surname: 'Smith' }));
-
-    const server = createServer({
-      rest: {
-        configs: [
-          {
-            path: '/users',
-            method: 'get',
-            routes: [
-              {
-                settings: { polling: true },
-                queue: [{ file: pathToFirstUser }, { file: pathToSecondUser }]
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const firstResponse = await request(server).get('/users');
-    expect(firstResponse.statusCode).toBe(200);
-    expect(firstResponse.headers['content-disposition']).toBe('filename=firstUser.json');
-    expect(firstResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
-
-    const secondResponse = await request(server).get('/users');
-    expect(secondResponse.statusCode).toBe(200);
-    expect(secondResponse.headers['content-disposition']).toBe('filename=secondUser.json');
-    expect(secondResponse.body).toStrictEqual({
-      name: 'John',
-      surname: 'Smith'
-    });
-
-    const thirdResponse = await request(server).get('/users');
-    expect(thirdResponse.statusCode).toBe(200);
-    expect(thirdResponse.headers['content-disposition']).toBe('filename=firstUser.json');
-    expect(thirdResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
-
-    fs.rmSync(tmpDirPath, { recursive: true, force: true });
   });
 });
 

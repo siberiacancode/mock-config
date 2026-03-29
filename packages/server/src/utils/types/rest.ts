@@ -62,16 +62,10 @@ export type RestFileResponse = string;
 export type RestRouteConfig<Method extends RestMethod> = (
   | {
       settings: RestSettings & { polling: true };
-      queue: Array<
-        | {
-            time?: number;
-            data: RestDataResponse<Method>;
-          }
-        | {
-            time?: number;
-            file: RestFileResponse;
-          }
-      >;
+      queue: Array<{
+        time?: number;
+        data: RestDataResponse<Method>;
+      }>;
     }
   | {
       settings?: RestSettings & { polling?: false };
