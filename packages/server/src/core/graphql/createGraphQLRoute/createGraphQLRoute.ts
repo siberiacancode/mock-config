@@ -7,6 +7,7 @@ import type {
   Entries,
   GraphQLEntitiesByEntityName,
   GraphQLEntity,
+  GraphQLParams,
   GraphQLRequestArtifact,
   PlainObject,
   TopLevelPlainEntityDescriptor
@@ -202,9 +203,45 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
         matchedRouteConfigData = matchedRouteConfig.config.data;
       }
 
+      const params: GraphQLParams = {
+        request,
+        response,
+        entities: matchedRouteConfig.config.entities ?? {},
+        appendHeader: (field, value) => {
+          response.append(field, value);
+        },
+        attachment: (filename) => {
+          response.attachment(filename);
+        },
+        clearCookie: (name, options) => {
+          response.clearCookie(name, options);
+        },
+        getCookie: (name) => request.cookies[name],
+        getRequestHeader: (field) => request.headers[field],
+        getRequestHeaders: () => request.headers,
+        getResponseHeader: (field) => response.getHeader(field),
+        getResponseHeaders: () => response.getHeaders(),
+        setCookie: (name, value, options) => {
+          if (options) {
+            response.cookie(name, value, options);
+            return;
+          }
+          response.cookie(name, value);
+        },
+        setDelay: async (delay) => {
+          await sleep(delay === Infinity ? 99999999 : delay);
+        },
+        setHeader: (field, value) => {
+          response.set(field, value);
+        },
+        setStatusCode: (statusCode) => {
+          response.statusCode = statusCode;
+        }
+      };
+
       const resolvedData =
         typeof matchedRouteConfigData === 'function'
-          ? await matchedRouteConfigData(request, matchedRouteConfig.config.entities ?? {})
+          ? await matchedRouteConfigData(params)
           : matchedRouteConfigData;
 
       if (matchedRouteConfig.config.settings?.status) {

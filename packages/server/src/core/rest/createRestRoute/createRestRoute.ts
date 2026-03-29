@@ -12,6 +12,7 @@ import type {
   RestEntitiesByEntityName,
   RestEntity,
   RestFileResponse,
+  RestParams,
   RestRequestArtifact,
   TopLevelPlainEntityArray,
   TopLevelPlainEntityDescriptor
@@ -223,12 +224,45 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
       let resolvedData = null;
 
       if (matchedRouteConfigDataDescriptor.data) {
+        const params: RestParams = {
+          request,
+          response,
+          entities: matchedRouteConfig.config.entities ?? {},
+          appendHeader: (field, value) => {
+            response.append(field, value);
+          },
+          attachment: (filename) => {
+            response.attachment(filename);
+          },
+          clearCookie: (name, options) => {
+            response.clearCookie(name, options);
+          },
+          getCookie: (name) => request.cookies[name],
+          getRequestHeader: (field) => request.headers[field],
+          getRequestHeaders: () => request.headers,
+          getResponseHeader: (field) => response.getHeader(field),
+          getResponseHeaders: () => response.getHeaders(),
+          setCookie: (name, value, options) => {
+            if (options) {
+              response.cookie(name, value, options);
+              return;
+            }
+            response.cookie(name, value);
+          },
+          setDelay: async (delay) => {
+            await sleep(delay === Infinity ? 99999999 : delay);
+          },
+          setHeader: (field, value) => {
+            response.set(field, value);
+          },
+          setStatusCode: (statusCode) => {
+            response.statusCode = statusCode;
+          }
+        };
+
         resolvedData =
           typeof matchedRouteConfigDataDescriptor.data === 'function'
-            ? await matchedRouteConfigDataDescriptor.data(
-                request,
-                matchedRouteConfig.config.entities ?? {}
-              )
+            ? await matchedRouteConfigDataDescriptor.data(params)
             : matchedRouteConfigDataDescriptor.data;
       }
       if (matchedRouteConfigDataDescriptor.file) {
@@ -268,6 +302,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         response.set('Content-Disposition', `filename=${fileName}`);
         return response.send(data.file);
       }
+
       response.json(data);
     })
   );

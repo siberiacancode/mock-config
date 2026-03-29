@@ -15,7 +15,9 @@ import { findIndexById } from './helpers';
 
 describe('createDatabaseRoutes', () => {
   const createServer = (
-    mockServerConfig: Pick<BaseServerConfig, 'baseUrl'> & { database: DatabaseConfig }
+    mockServerConfig: Pick<BaseServerConfig, 'baseUrl'> & {
+      database: DatabaseConfig;
+    }
   ) => {
     const server = express();
     const routerBase = express.Router();
@@ -68,7 +70,9 @@ describe('createDatabaseRoutes', () => {
       const pathToRoutes = path.join(tmpDirPath, './routes.json') as `${string}.json`;
       fs.writeFileSync(pathToRoutes, JSON.stringify(routes));
 
-      server = createServer({ database: { data: pathToData, routes: pathToRoutes } });
+      server = createServer({
+        database: { data: pathToData, routes: pathToRoutes }
+      });
     });
 
     afterAll(() => {

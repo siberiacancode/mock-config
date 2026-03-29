@@ -179,9 +179,9 @@ describe('createRestRoutes: content', () => {
                     key1: 'value1'
                   }
                 },
-                data: ({ url }, { query }) => ({
-                  url,
-                  query
+                data: ({ request, entities }) => ({
+                  url: request.url,
+                  query: entities.query
                 })
               }
             ]
@@ -218,9 +218,9 @@ describe('createRestRoutes: content', () => {
                 },
                 queue: [
                   {
-                    data: ({ url }, { query }) => ({
-                      url,
-                      query
+                    data: ({ request, entities }) => ({
+                      url: request.url,
+                      query: entities.query
                     })
                   }
                 ]
