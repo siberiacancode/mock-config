@@ -11,8 +11,7 @@ describe('rest', () => {
       path: '/users',
       routes: [
         {
-          data: 'value',
-          settings: { polling: false }
+          data: 'value'
         }
       ]
     });
@@ -38,8 +37,7 @@ describe('rest', () => {
             headers: {
               key: 'value'
             }
-          },
-          settings: { polling: false }
+          }
         }
       ]
     });
@@ -65,8 +63,7 @@ describe('rest', () => {
             headers: {
               key: 'value'
             }
-          },
-          settings: { polling: false }
+          }
         }
       ]
     });
@@ -81,8 +78,7 @@ describe('rest', () => {
       path: '/users',
       routes: [
         {
-          data: handler,
-          settings: { polling: false }
+          data: handler
         }
       ]
     });
@@ -109,14 +105,13 @@ describe('rest', () => {
             headers: {
               key: 'value'
             }
-          },
-          settings: { polling: false }
+          }
         }
       ]
     });
   });
 
-  it('Should build config for queue object and normalize queue items', () => {
+  it('Should build config for queue object as data handler', async () => {
     const queueHandler = vi.fn();
     const result = rest.get('/users', {
       match: {
@@ -136,17 +131,12 @@ describe('rest', () => {
       path: '/users',
       routes: [
         {
-          queue: [
-            { data: queueHandler, time: 100 },
-            { data: { ok: 'response' }, time: 200 },
-            { data: expect.any(Function), time: 300 }
-          ],
+          data: expect.any(Function),
           entities: {
             headers: {
               key: 'value'
             }
-          },
-          settings: { polling: true }
+          }
         }
       ]
     });
@@ -163,8 +153,7 @@ describe('rest', () => {
         path: '/users',
         routes: [
           {
-            data: { ok: true },
-            settings: { polling: false }
+            data: { ok: true }
           }
         ]
       });
@@ -172,11 +161,7 @@ describe('rest', () => {
   });
 
   it('Should keep provided settings for request', () => {
-    const result = rest.get(
-      '/users',
-      { response: { ok: true } },
-      { delay: 150, polling: false, status: 200 }
-    );
+    const result = rest.get('/users', { response: { ok: true } }, { delay: 150, status: 200 });
 
     expect(result).toStrictEqual({
       method: 'get',
@@ -185,7 +170,7 @@ describe('rest', () => {
         {
           data: { ok: true },
           entities: undefined,
-          settings: { delay: 150, polling: false, status: 200 }
+          settings: { delay: 150, status: 200 }
         }
       ]
     });
@@ -211,8 +196,7 @@ describe('rest', () => {
       path: '/users/:id',
       routes: [
         {
-          data: expect.any(Function),
-          settings: { polling: false }
+          data: expect.any(Function)
         }
       ]
     });

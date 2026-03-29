@@ -6,10 +6,11 @@ import type {
   RestMethod,
   RestParams,
   RestRequestConfig,
+  RestRouteConfig,
   RestSettings
 } from '@/utils/types';
 
-import { createFileHandler } from './helpers';
+import { createFileHandler, createQueueHandler } from './helpers';
 
 interface RestRequestInput {
   body?: unknown;
@@ -88,21 +89,22 @@ const resolveConfigType = <Method extends RestMethod, Options extends RestReques
 const createConfigResolver = <Method extends RestMethod, Options extends RestRequestInput>(
   config: RestConfig<Method, Options>,
   settings?: RestSettings
-) => {
+): RestRouteConfig<Method> => {
   const resolvedConfig = resolveConfigType(config);
+  const settingsConfig = settings ? { settings } : {};
 
   switch (resolvedConfig.type) {
     case 'inlineResponse':
       return {
         data: resolvedConfig.config,
-        settings: { ...settings, polling: false as const }
+        ...settingsConfig
       };
 
     case 'data': {
       return {
         data: resolvedConfig.config.response,
         entities: resolvedConfig.config.match,
-        settings: { ...settings, polling: false as const }
+        ...settingsConfig
       };
     }
 
@@ -110,42 +112,44 @@ const createConfigResolver = <Method extends RestMethod, Options extends RestReq
       return {
         data: createFileHandler<Method>(resolvedConfig.config.file),
         entities: resolvedConfig.config.match,
-        settings: { ...settings, polling: false as const }
+        ...settingsConfig
       };
     }
 
     case 'queue': {
+      const normalizedQueue = resolvedConfig.config.queue.map((item) => {
+        if ('handler' in item) {
+          return { data: item.handler, time: item.time };
+        }
+
+        if ('response' in item) {
+          return { data: item.response, time: item.time };
+        }
+
+        return {
+          data: createFileHandler<Method>(item.file),
+          time: item.time
+        };
+      });
+
       return {
-        queue: resolvedConfig.config.queue.map((item) => {
-          if ('handler' in item) {
-            return { data: item.handler, time: item.time };
-          }
-
-          if ('response' in item) {
-            return { data: item.response, time: item.time };
-          }
-
-          return {
-            data: createFileHandler<Method>(item.file),
-            time: item.time
-          };
-        }),
+        data: createQueueHandler(normalizedQueue),
         entities: resolvedConfig.config.match,
-        settings: { ...settings, polling: true as const }
+        ...settingsConfig
       };
     }
 
     case 'inlineHandler':
       return {
         data: resolvedConfig.config,
-        settings: { ...settings, polling: false as const }
+        ...settingsConfig
       };
 
     case 'handler': {
       return {
         data: resolvedConfig.config.handler,
         entities: resolvedConfig.config.match,
-        settings: { ...settings, polling: false as const }
+        ...settingsConfig
       };
     }
 
