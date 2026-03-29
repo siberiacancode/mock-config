@@ -1,0 +1,193 @@
+---
+title: Interceptors
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+## Interceptors{'<'}Api{'>'}
+
+<TypeTable
+  type={{
+    request: {
+      description: 'The request interceptor',
+      type: (
+        <span>
+          (params:{' '}
+          <a href='#RequestInterceptorParams' className='underline'>
+            RequestInterceptorParams{'<'}Api{'>'}
+          </a>
+          ) {'=>'} void | Promise{'<void>'}
+        </span>
+      ),
+      parameters: [
+        {
+          name: 'params',
+          description: 'The parameters of the request interceptor',
+          type: 'RequestInterceptorParams<Api>'
+        }
+      ]
+    },
+    response: {
+      description: 'The response interceptor',
+      type: (
+        <span>
+          (params:{' '}
+          <a href='#ResponseInterceptorParams' className='underline'>
+            ResponseInterceptorParams{'<'}Api{'>'}
+          </a>
+          , data: any) {'=>'} void | Promise{'<void>'}
+        </span>
+      ),
+      parameters: [
+        {
+          name: 'params',
+          description: 'The parameters of the response interceptor'
+        },
+        {
+          name: 'data',
+          description: 'Mock data of request'
+        }
+      ]
+    }
+  }}
+/>
+
+<a id='RequestInterceptorParams'></a>
+## RequestInterceptorParams{'<'}Api{'>'}
+
+<TypeTable
+  type={{
+    orm: {
+      description: 'ORM instance for database access',
+      type: 'Orm<Database>',
+      typeDescriptionLink: './Database#Orm',
+      required: true
+    },
+    request: {
+      description: 'Request object',
+      type: 'Request',
+      typeDescriptionLink: 'https://expressjs.com/en/5x/api.html#req',
+      required: true
+    },
+    getCookie: {
+      description: 'Get cookie value by name',
+      type: '(name: string) => InterceptorCookieValue',
+      required: true
+    },
+    getHeader: {
+      description: 'Get header value by name',
+      type: '(field: string) => InterceptorHeaderValue',
+      required: true
+    },
+    getHeaders: {
+      description: 'Get all headers',
+      type: '() => Record<string, InterceptorHeaderValue>',
+      required: true
+    },
+    log: {
+      description: 'Log request data',
+      type: "(logger?: Logger<'request', Api>) => Partial<LoggerTokens>",
+      typeDescriptionLink: './Logger',
+      required: true
+    },
+    setDelay: {
+      description: 'Set an artificial request delay (ms)',
+      type: '(delay: number) => Promise<void>',
+      required: true
+    }
+  }}
+/>
+
+<a id='ResponseInterceptorParams'></a>
+## ResponseInterceptorParams{'<'}Api{'>'}
+
+<TypeTable
+  type={{
+    orm: {
+      description: 'ORM instance for database access',
+      type: 'Orm<Database>',
+      typeDescriptionLink: './Database#Orm',
+      required: true
+    },
+    request: {
+      description: 'Incoming request object',
+      type: 'Request',
+      typeDescriptionLink: 'https://expressjs.com/en/5x/api.html#req',
+      required: true
+    },
+    response: {
+      description: 'Response object',
+      type: 'Response',
+      typeDescriptionLink: 'https://expressjs.com/en/5x/api.html#res',
+      required: true
+    },
+    appendHeader: {
+      description: 'Append a header to the response',
+      type: '(field: string, value?: string | string[]) => void',
+      required: true
+    },
+    attachment: {
+      description: 'Set response as an attachment with the given filename',
+      type: '(filename: string) => void',
+      required: true
+    },
+    clearCookie: {
+      description: 'Clear a cookie by name',
+      type: '(name: string, options?: CookieOptions) => void',
+      required: true
+    },
+    getCookie: {
+      description: 'Get cookie value by name',
+      type: '(name: string) => InterceptorCookieValue',
+      required: true
+    },
+    getRequestHeader: {
+      description: 'Get header value by name from the request',
+      type: '(field: string) => InterceptorHeaderValue',
+      required: true
+    },
+    getRequestHeaders: {
+      description: 'Get all headers from the request',
+      type: '() => Record<string, InterceptorHeaderValue>',
+      required: true
+    },
+    getResponseHeader: {
+      description: 'Get header value by name from the response',
+      type: '(field: string) => InterceptorHeaderValue',
+      required: true
+    },
+    getResponseHeaders: {
+      description: 'Get all headers from the response',
+      type: '() => Record<string, InterceptorHeaderValue>',
+      required: true
+    },
+    log: {
+      description: 'Log response data',
+      type: "(logger?: Logger<'response', Api>) => Partial<LoggerTokens>",
+      typeDescriptionLink: './Logger',
+      required: true
+    },
+    setCookie: {
+      description: 'Set a cookie on the response',
+      type: '(name: string, value: string, options?: CookieOptions) => void',
+      required: true
+
+    },
+    setDelay: {
+      description: 'Set an artificial response delay (ms)',
+      type: '(delay: number) => Promise<void>',
+      required: true
+    },
+    setHeader: {
+      description: 'Set or replace a response header',
+      type: '(field: string, value?: string | string[]) => void',
+      required: true
+    },
+    setStatusCode: {
+      description: 'Set the response status code',
+      type: '(statusCode: number) => void',
+      required: true
+    }
+
+}}
+/>
