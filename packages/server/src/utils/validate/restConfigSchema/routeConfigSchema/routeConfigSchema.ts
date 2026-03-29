@@ -40,16 +40,6 @@ const dataRouteConfigSchema = (method: RestMethod) =>
     })
     .merge(baseRouteConfigSchema(method));
 
-const fileRouteConfigSchema = (method: RestMethod) =>
-  z
-    .strictObject({
-      settings: plainObjectSchema(
-        settingsSchema.extend({ polling: z.literal(false).optional() })
-      ).optional(),
-      file: z.string()
-    })
-    .merge(baseRouteConfigSchema(method));
-
 const queueRouteConfigSchema = (method: RestMethod) =>
   z
     .strictObject({
@@ -65,11 +55,6 @@ export const routeConfigSchema = (method: RestMethod) =>
         (value) => isPlainObject(value) && isOnlyRequestedDataResolvingPropertyExists(value, 'data')
       )
       .pipe(dataRouteConfigSchema(method)),
-    z
-      .custom(
-        (value) => isPlainObject(value) && isOnlyRequestedDataResolvingPropertyExists(value, 'file')
-      )
-      .pipe(fileRouteConfigSchema(method)),
     z
       .custom(
         (value) =>
