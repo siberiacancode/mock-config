@@ -8,9 +8,9 @@ import { APP_PATH } from '@/shared/constants';
 import { isIndex } from '../../helpers';
 import { FileWriter } from './FileWriter';
 
-export class FileStorage<Data extends Record<StorageIndex, any> = Record<StorageIndex, any>>
-  implements Storage
-{
+export class FileStorage<
+  Data extends Record<StorageIndex, any> = Record<StorageIndex, any>
+> implements Storage {
   private readonly fileWriter: FileWriter;
 
   private readonly data: Data;
