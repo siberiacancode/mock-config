@@ -9,6 +9,4 @@ export * from './portSchema/portSchema';
 export * from './restConfigSchema/restConfigSchema';
 export * from './staticPathSchema/staticPathSchema';
 export * from './utils';
-export * from './validateApiMockServerConfig';
-export * from './validateFlatMockServerConfig';
 export * from './validateMockServerConfig';

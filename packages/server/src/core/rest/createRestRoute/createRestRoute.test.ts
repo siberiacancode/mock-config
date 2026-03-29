@@ -6,36 +6,63 @@ import path from 'node:path';
 import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { MockServerConfig, RestConfig, RestMethod } from '@/utils/types';
+import type {
+  BaseServerConfig,
+  BaseUrl,
+  RestConfig,
+  RestMethod,
+  RestRequestArtifact
+} from '@/utils/types';
 
 import { urlJoin } from '@/utils/helpers';
 import { createTmpDir } from '@/utils/helpers/tests';
 
-import { createRestRoutes } from './createRestRoutes';
+import { createRestRoute } from './createRestRoute';
+import { calculateRestRouteConfigWeight } from './helpers';
 
 const createServer = (
-  mockServerConfig: Pick<MockServerConfig, 'baseUrl' | 'interceptors'> & {
+  mockServerConfig: Pick<BaseServerConfig, 'baseUrl' | 'interceptors'> & {
     rest: RestConfig;
   }
 ) => {
   const { baseUrl, rest, interceptors } = mockServerConfig;
   const server = express();
-  const routerBase = express.Router();
-  const routerWithRoutes = createRestRoutes({
-    router: routerBase,
-    restConfig: rest,
-    serverResponseInterceptor: interceptors?.response
-  });
 
   server.use((request, _, next) => {
     request.context = { orm: {} };
     next();
   });
 
-  const restBaseUrl = urlJoin(baseUrl ?? '/', rest?.baseUrl ?? '/');
-
   server.use(bodyParser.json());
-  server.use(restBaseUrl, routerWithRoutes);
+
+  createRestRoute({
+    server,
+    restRequestArtifacts: rest.configs
+      .reduce((acc, config) => {
+        config.routes.forEach((route) => {
+          acc.push({
+            key: `${baseUrl}${rest.baseUrl}/${config.method}/${config.path}`,
+            baseUrl: urlJoin(baseUrl ?? '/', rest?.baseUrl ?? '/') as BaseUrl,
+            method: config.method,
+            path: config.path,
+            config: route,
+            weight: calculateRestRouteConfigWeight(route),
+            serverResponseInterceptor: interceptors?.response,
+            serverRequestInterceptor: interceptors?.request,
+            requestResponseInterceptor: config.interceptors?.response,
+            requestRequestInterceptor: config.interceptors?.request,
+            componentResponseInterceptor: undefined,
+            componentRequestInterceptor: undefined,
+            routeResponseInterceptor: route.interceptors?.response,
+            routeRequestInterceptor: route.interceptors?.request
+          });
+        });
+
+        return acc;
+      }, [] as RestRequestArtifact[])
+      .toSorted((first, second) => second.weight - first.weight)
+  });
+
   return server;
 };
 
@@ -152,9 +179,9 @@ describe('createRestRoutes: content', () => {
                     key1: 'value1'
                   }
                 },
-                data: ({ url }, { query }) => ({
-                  url,
-                  query
+                data: ({ request, entities }) => ({
+                  url: request.url,
+                  query: entities.query
                 })
               }
             ]
@@ -191,9 +218,9 @@ describe('createRestRoutes: content', () => {
                 },
                 queue: [
                   {
-                    data: ({ url }, { query }) => ({
-                      url,
-                      query
+                    data: ({ request, entities }) => ({
+                      url: request.url,
+                      query: entities.query
                     })
                   }
                 ]
@@ -564,7 +591,10 @@ describe('createRestRoutes: settings', () => {
 
     const secondResponse = await request(server).get('/users');
     expect(secondResponse.statusCode).toBe(200);
-    expect(secondResponse.body).toStrictEqual({ name: 'John', surname: 'Smith' });
+    expect(secondResponse.body).toStrictEqual({
+      name: 'John',
+      surname: 'Smith'
+    });
 
     const thirdResponse = await request(server).get('/users');
     expect(thirdResponse.statusCode).toBe(200);
@@ -605,7 +635,10 @@ describe('createRestRoutes: settings', () => {
     const secondResponse = await request(server).get('/users');
     expect(secondResponse.statusCode).toBe(200);
     expect(secondResponse.headers['content-disposition']).toBe('filename=secondUser.json');
-    expect(secondResponse.body).toStrictEqual({ name: 'John', surname: 'Smith' });
+    expect(secondResponse.body).toStrictEqual({
+      name: 'John',
+      surname: 'Smith'
+    });
 
     const thirdResponse = await request(server).get('/users');
     expect(thirdResponse.statusCode).toBe(200);
@@ -733,12 +766,20 @@ describe('createRestRoutes: entities', () => {
       .set('Content-Type', 'application/json')
       .send([{ key1: 'value1', key2: { nestedKey1: 'nestedValue1' } }]);
     expect(successResponse.statusCode).toBe(200);
-    expect(successResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(successResponse.body).toStrictEqual({
+      name: 'John',
+      surname: 'Doe'
+    });
 
     const failedResponse = await request(server)
       .post('/users')
       .set('Content-Type', 'application/json')
-      .send([{ key1: 'value1', key2: { nestedKey1: 'nestedValue1', nestedKey2: 'nestedValue2' } }]);
+      .send([
+        {
+          key1: 'value1',
+          key2: { nestedKey1: 'nestedValue1', nestedKey2: 'nestedValue2' }
+        }
+      ]);
     expect(failedResponse.statusCode).toBe(404);
   });
 
@@ -773,12 +814,18 @@ describe('createRestRoutes: entities', () => {
       .set('Content-Type', 'application/json')
       .send({ key1: 'value1', key2: { nestedKey1: 'nestedValue1' } });
     expect(successResponse.statusCode).toBe(200);
-    expect(successResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(successResponse.body).toStrictEqual({
+      name: 'John',
+      surname: 'Doe'
+    });
 
     const failedResponse = await request(server)
       .post('/users')
       .set('Content-Type', 'application/json')
-      .send({ key1: 'value1', key2: { nestedKey1: 'nestedValue1', nestedKey2: 'nestedValue2' } });
+      .send({
+        key1: 'value1',
+        key2: { nestedKey1: 'nestedValue1', nestedKey2: 'nestedValue2' }
+      });
     expect(failedResponse.statusCode).toBe(404);
   });
 
@@ -811,7 +858,10 @@ describe('createRestRoutes: entities', () => {
     const response = await request(server)
       .post('/users')
       .set('Content-Type', 'application/json')
-      .send({ key1: { nestedKey1: 'nestedValue1' }, key2: { nestedKey2: 'nestedValue2' } });
+      .send({
+        key1: { nestedKey1: 'nestedValue1' },
+        key2: { nestedKey2: 'nestedValue2' }
+      });
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toStrictEqual({ name: 'John', surname: 'Doe' });
@@ -883,6 +933,52 @@ describe('createRestRoutes: entities', () => {
 });
 
 describe('createRestRoutes: interceptors', () => {
+  it('Should prioritize the most specific route across different request configs', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users/:id',
+            method: 'get',
+            routes: [
+              {
+                entities: {
+                  headers: {
+                    key1: 'value1'
+                  }
+                },
+                data: { source: 'parameterized' }
+              }
+            ]
+          },
+          {
+            path: '/users/123',
+            method: 'get',
+            routes: [
+              {
+                entities: {
+                  headers: {
+                    key1: 'value1',
+                    key2: 'value2'
+                  }
+                },
+                data: { source: 'static' }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users/123').set({
+      key1: 'value1',
+      key2: 'value2'
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toStrictEqual({ source: 'static' });
+  });
+
   it('Should call request interceptors in order: request -> route', async () => {
     const routeInterceptor = vi.fn();
     const requestInterceptor = vi.fn();
@@ -937,19 +1033,19 @@ describe('createRestRoutes: interceptors', () => {
     );
 
     // ✅ important:
-    // request interceptor called when path and method is matched even if server return 404
+    // request interceptor called when path and method is matched
     await request(server)
       .post('/users')
       .set('Content-Type', 'application/json')
       .send({ key3: 'value3', key4: 'value4' });
-    expect(requestInterceptor).toBeCalledTimes(2);
+    expect(requestInterceptor).toBeCalledTimes(1);
     expect(routeInterceptor).toBeCalledTimes(1);
 
     await request(server)
       .post('/settings')
       .set('Content-Type', 'application/json')
       .send({ key1: 'value1', key2: 'value2' });
-    expect(requestInterceptor).toBeCalledTimes(2);
+    expect(requestInterceptor).toBeCalledTimes(1);
     expect(routeInterceptor).toBeCalledTimes(1);
   });
 });

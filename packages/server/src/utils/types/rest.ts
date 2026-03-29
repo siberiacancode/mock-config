@@ -1,7 +1,8 @@
-import type { Request } from 'express';
+import type { CookieOptions, Response as ExpressResponse, Request } from 'express';
 
 import type { BodyPlainEntity, MappedEntity } from './entities';
 import type { Interceptors } from './interceptors';
+import type { BaseUrl } from './server';
 import type { Data } from './values';
 
 export type RestMethod = 'delete' | 'get' | 'options' | 'patch' | 'post' | 'put';
@@ -19,14 +20,41 @@ export type RestEntitiesByEntityName<Method extends RestMethod = RestMethod> = {
   [EntityName in RestEntityNamesByMethod[Method]]?: RestEntity<EntityName>;
 };
 
-interface RestSettings {
+export interface RestSettings {
   readonly delay?: number;
   readonly polling?: boolean;
   readonly status?: number;
 }
 
+type RestCookieValue = string | undefined;
+type RestHeaderValue = number | string | string[] | undefined;
+
+export interface RestParams<
+  Method extends RestMethod = RestMethod,
+  Query = Record<string, unknown>,
+  Body = Record<string, unknown>,
+  Params = Record<string, unknown>,
+  Response = any
+> {
+  entities: RestEntitiesByEntityName<Method>;
+  request: Request<Params, Response, Body, Query>;
+  response: ExpressResponse;
+  appendHeader: (field: string, value?: string | string[]) => void;
+  attachment: (filename: string) => void;
+  clearCookie: (name: string, options?: CookieOptions) => void;
+  getCookie: (name: string) => RestCookieValue;
+  getRequestHeader: (field: string) => RestHeaderValue;
+  getRequestHeaders: () => Record<string, RestHeaderValue>;
+  getResponseHeader: (field: string) => RestHeaderValue;
+  getResponseHeaders: () => Record<string, RestHeaderValue>;
+  setCookie: (name: string, value: string, options?: CookieOptions) => void;
+  setDelay: (delay: number) => Promise<void>;
+  setHeader: (field: string, value?: string | string[]) => void;
+  setStatusCode: (statusCode: number) => void;
+}
+
 export type RestDataResponse<Method extends RestMethod = RestMethod> =
-  | ((request: Request, entities: RestEntitiesByEntityName<Method>) => Data | Promise<Data>)
+  | ((params: RestParams<Method>) => Data | Promise<Data>)
   | Data;
 
 export type RestFileResponse = string;
@@ -53,11 +81,14 @@ export type RestRouteConfig<Method extends RestMethod> = (
       settings?: RestSettings & { polling?: false };
       file: RestFileResponse;
     }
-) & { entities?: RestEntitiesByEntityName<Method>; interceptors?: Interceptors<'rest'> };
+) & {
+  entities?: RestEntitiesByEntityName<Method>;
+  interceptors?: Interceptors<'rest'>;
+};
 
 export type RestPathString = `/${string}`;
 
-interface BaseRestRequestConfig<Method extends RestMethod> {
+export interface BaseRestRequestConfig<Method extends RestMethod> {
   interceptors?: Interceptors<'rest'>;
   method: Method;
   path: RegExp | RestPathString;
@@ -77,3 +108,20 @@ export type RestRequestConfig =
   | RestPatchRequestConfig
   | RestPostRequestConfig
   | RestPutRequestConfig;
+
+export interface RestRequestArtifact {
+  baseUrl: BaseUrl;
+  componentRequestInterceptor?: Interceptors<'rest'>['request'];
+  componentResponseInterceptor?: Interceptors<'rest'>['response'];
+  config: RestRouteConfig<RestMethod>;
+  key: string;
+  method: RestMethod;
+  path: RegExp | RestPathString;
+  requestRequestInterceptor?: Interceptors<'rest'>['request'];
+  requestResponseInterceptor?: Interceptors<'rest'>['response'];
+  routeRequestInterceptor?: Interceptors<'rest'>['request'];
+  routeResponseInterceptor?: Interceptors<'rest'>['response'];
+  serverRequestInterceptor?: Interceptors<'rest'>['request'];
+  serverResponseInterceptor?: Interceptors<'rest'>['response'];
+  weight: number;
+}

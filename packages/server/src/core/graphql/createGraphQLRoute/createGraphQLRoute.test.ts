@@ -3,39 +3,69 @@ import express from 'express';
 import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { GraphqlConfig, GraphQLOperationType, MockServerConfig } from '@/utils/types';
+import type {
+  BaseServerConfig,
+  BaseUrl,
+  GraphqlConfig,
+  GraphQLOperationType,
+  GraphQLRequestArtifact
+} from '@/utils/types';
 
 import { urlJoin } from '@/utils/helpers';
 
-import { createGraphQLRoutes } from './createGraphQLRoutes';
+import { createGraphQLRoute } from './createGraphQLRoute';
+import { calculateGraphQLRouteConfigWeight } from './helpers';
 
 const createServer = (
-  mockServerConfig: Pick<MockServerConfig, 'baseUrl' | 'interceptors'> & {
+  mockServerConfig: Pick<BaseServerConfig, 'baseUrl' | 'interceptors'> & {
     graphql: GraphqlConfig;
   }
 ) => {
   const { baseUrl, graphql, interceptors } = mockServerConfig;
   const server = express();
-  const routerBase = express.Router();
-  const routerWithRoutes = createGraphQLRoutes({
-    router: routerBase,
-    graphqlConfig: graphql,
-    serverResponseInterceptor: interceptors?.response
-  });
 
   server.use((request, _, next) => {
     request.context = { orm: {} };
     next();
   });
 
-  const graphqlBaseUrl = urlJoin(baseUrl ?? '/', graphql?.baseUrl ?? '/');
-
   server.use(bodyParser.json());
-  server.use(graphqlBaseUrl, routerWithRoutes);
+
+  createGraphQLRoute({
+    server,
+    graphQLRequestArtifacts: graphql.configs
+      .reduce((acc, config) => {
+        config.routes.forEach((route) => {
+          acc.push({
+            key: `${baseUrl}${graphql.baseUrl}/${config.operationType}/${
+              'operationName' in config ? config.operationName : config.query
+            }`,
+            baseUrl: urlJoin(baseUrl ?? '/', graphql?.baseUrl ?? '/') as BaseUrl,
+            operationType: config.operationType,
+            operationName: 'operationName' in config ? config.operationName : undefined,
+            query: 'query' in config ? config.query : undefined,
+            config: route,
+            weight: calculateGraphQLRouteConfigWeight(route),
+            serverResponseInterceptor: interceptors?.response,
+            serverRequestInterceptor: interceptors?.request,
+            requestResponseInterceptor: config.interceptors?.response,
+            requestRequestInterceptor: config.interceptors?.request,
+            componentResponseInterceptor: undefined,
+            componentRequestInterceptor: undefined,
+            routeResponseInterceptor: route.interceptors?.response,
+            routeRequestInterceptor: route.interceptors?.request
+          });
+        });
+
+        return acc;
+      }, [] as GraphQLRequestArtifact[])
+      .toSorted((first, second) => second.weight - first.weight)
+  });
+
   return server;
 };
 
-describe('createGraphQLRoutes: routing', () => {
+describe('createGraphQLRoute: routing', () => {
   it('Should match config with operationName', async () => {
     const server = createServer({
       graphql: {
@@ -87,25 +117,37 @@ describe('createGraphQLRoutes: routing', () => {
       .post('/')
       .send({ query: 'query GetUsers { users { name } }' });
     expect(firstPostResponse.statusCode).toBe(200);
-    expect(firstPostResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(firstPostResponse.body).toStrictEqual({
+      name: 'John',
+      surname: 'Doe'
+    });
 
     const firstGetResponse = await request(server).get('/').query({
       query: 'query GetUsers { users { name } }'
     });
     expect(firstGetResponse.statusCode).toBe(200);
-    expect(firstGetResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(firstGetResponse.body).toStrictEqual({
+      name: 'John',
+      surname: 'Doe'
+    });
 
     const secondPostResponse = await request(server)
       .post('/')
       .send({ query: 'query GetAnotherUsers { users { name } }' });
     expect(secondPostResponse.statusCode).toBe(200);
-    expect(secondPostResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(secondPostResponse.body).toStrictEqual({
+      name: 'John',
+      surname: 'Doe'
+    });
 
     const secondGetResponse = await request(server).get('/').query({
       query: 'query GetAnotherUsers { users { name } }'
     });
     expect(secondGetResponse.statusCode).toBe(200);
-    expect(secondGetResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(secondGetResponse.body).toStrictEqual({
+      name: 'John',
+      surname: 'Doe'
+    });
   });
 
   it('Should match config with query independent of spaces and new lines', async () => {
@@ -271,7 +313,74 @@ describe('createGraphQLRoutes: routing', () => {
   });
 });
 
-describe('createGraphQLRoutes: content', () => {
+describe('createGraphQLRoute: content', () => {
+  it('Should prioritize the most specific route across different request configs', async () => {
+    const server = createServer({
+      graphql: {
+        configs: [
+          {
+            operationName: 'GetUsers',
+            operationType: 'query',
+            routes: [
+              {
+                entities: {
+                  headers: {
+                    key1: 'value1'
+                  }
+                },
+                data: { source: 'less-specific' }
+              }
+            ]
+          },
+          {
+            operationName: 'GetUsers',
+            operationType: 'query',
+            routes: [
+              {
+                entities: {
+                  headers: {
+                    key1: 'value1',
+                    key2: 'value2'
+                  }
+                },
+                data: { source: 'more-specific' }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server)
+      .post('/')
+      .set({ key1: 'value1', key2: 'value2' })
+      .send({ query: 'query GetUsers { users { name } }' });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toStrictEqual({ source: 'more-specific' });
+  });
+
+  it('Should skip requests with unsupported method', async () => {
+    const server = createServer({
+      graphql: {
+        configs: [
+          {
+            operationName: 'GetUsers',
+            operationType: 'query',
+            routes: [{ data: { name: 'John', surname: 'Doe' } }]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server)
+      .put('/')
+      .set('Content-Type', 'application/json')
+      .send({ query: 'query GetUsers { users { name } }' });
+
+    expect(response.statusCode).toBe(404);
+  });
+
   it('Should correctly use data function', async () => {
     const server = createServer({
       graphql: {
@@ -286,9 +395,9 @@ describe('createGraphQLRoutes: content', () => {
                     key1: 'value1'
                   }
                 },
-                data: ({ url }, { query }) => ({
-                  url,
-                  query
+                data: ({ request, entities }) => ({
+                  url: request.url,
+                  query: entities.query
                 })
               }
             ]
@@ -328,9 +437,9 @@ describe('createGraphQLRoutes: content', () => {
                 },
                 queue: [
                   {
-                    data: ({ url }, { query }) => ({
-                      url,
-                      query
+                    data: ({ request, entities }) => ({
+                      url: request.url,
+                      query: entities.query
                     })
                   }
                 ]
@@ -428,7 +537,7 @@ describe('createGraphQLRoutes: content', () => {
   });
 });
 
-describe('createGraphQLRoutes: settings', () => {
+describe('createGraphQLRoute: settings', () => {
   it('Should correctly delay response based on delay setting', async () => {
     const delay = 1000;
     const server = createServer({
@@ -525,7 +634,7 @@ describe('createGraphQLRoutes: settings', () => {
   });
 });
 
-describe('createGraphQLRoutes: entities', () => {
+describe('createGraphQLRoute: entities', () => {
   it('Should match route configuration when actual entities include specified properties', async () => {
     const server = createServer({
       graphql: {
@@ -672,7 +781,10 @@ describe('createGraphQLRoutes: entities', () => {
         }
       });
     expect(successPostResponse.statusCode).toBe(200);
-    expect(successPostResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(successPostResponse.body).toStrictEqual({
+      name: 'John',
+      surname: 'Doe'
+    });
 
     const failedPostResponse = await request(server)
       .post('/')
@@ -694,7 +806,10 @@ describe('createGraphQLRoutes: entities', () => {
         variables: '{ "key1": "value1", "key2": { "nestedKey1": "nestedValue1" } }'
       });
     expect(successGetResponse.statusCode).toBe(200);
-    expect(successGetResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(successGetResponse.body).toStrictEqual({
+      name: 'John',
+      surname: 'Doe'
+    });
 
     const failedGetResponse = await request(server)
       .get('/')
@@ -801,7 +916,7 @@ describe('createGraphQLRoutes: entities', () => {
   });
 });
 
-describe('createGraphQLRoutes: interceptors', () => {
+describe('createGraphQLRoute: interceptors', () => {
   it('Should call request interceptors in order: request -> route', async () => {
     const routeInterceptor = vi.fn();
     const requestInterceptor = vi.fn();
@@ -855,12 +970,12 @@ describe('createGraphQLRoutes: interceptors', () => {
     );
 
     // ✅ important:
-    // request interceptor called when operation type and operation name is matched even if server return 404
+    // request interceptor called when operation type and operation name is matched
     await request(server).get('/').set('Content-Type', 'application/json').query({
       query: 'query GetUsers { users { name } }',
       variables: '{ "key3": "value3", "key4": "value4" }'
     });
-    expect(requestInterceptor).toBeCalledTimes(2);
+    expect(requestInterceptor).toBeCalledTimes(1);
     expect(routeInterceptor).toBeCalledTimes(1);
 
     await request(server)
@@ -870,7 +985,7 @@ describe('createGraphQLRoutes: interceptors', () => {
         query: 'mutation CreateUser($name: String!) { createUser(name: $name) { name } }',
         variables: { name: 'John' }
       });
-    expect(requestInterceptor).toBeCalledTimes(2);
+    expect(requestInterceptor).toBeCalledTimes(1);
     expect(routeInterceptor).toBeCalledTimes(1);
   });
 });

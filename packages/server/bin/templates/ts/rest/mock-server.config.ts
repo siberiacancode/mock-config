@@ -1,8 +1,8 @@
-import type { FlatMockServerConfig } from 'mock-config-server';
+import type { MockServerConfig } from 'mock-config-server';
 
 import { getUserRequest, getUsersRequest, postUserRequest } from './mock-requests';
 
-const mockServerConfig: FlatMockServerConfig = [
+const mockServerConfig: MockServerConfig = [
   {
     port: 31299,
     baseUrl: '/'
