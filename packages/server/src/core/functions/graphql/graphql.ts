@@ -19,7 +19,7 @@ type ReservedGraphQLConfigKeys = {
   [K in 'handler' | 'match' | 'queue' | 'response']?: never;
 };
 
-type InlineResponse<Response> =
+type GraphQLInlineResponse<Response> =
   Response extends Record<string, unknown> ? Response & ReservedGraphQLConfigKeys : Response;
 
 type GraphQLFunction<Options extends GraphQLRequestInput> = (
@@ -47,9 +47,9 @@ interface GraphQLQueueObject<Options extends GraphQLRequestInput> {
 type GraphQLConfig<Options extends GraphQLRequestInput> =
   | GraphQLFunction<Options>
   | GraphQLHandlerObject<Options>
+  | GraphQLInlineResponse<Options['response']>
   | GraphQLQueueObject<Options>
-  | GraphQLResponseObject<Options['response']>
-  | InlineResponse<Options['response']>;
+  | GraphQLResponseObject<Options['response']>;
 
 const resolveConfigType = <Options extends GraphQLRequestInput>(config: GraphQLConfig<Options>) => {
   if (typeof config === 'function') return { type: 'inlineHandler' as const, config };
@@ -157,7 +157,7 @@ const createGraphQLFactory = <Mode extends GraphQLFactoryMode>(mode: Mode) => {
 
   function createRequestConfig<Options extends GraphQLRequestInput = Partial<GraphQLRequestInput>>(
     identifier: GraphQLIdentifier<Mode>,
-    config: InlineResponse<Options['response']>,
+    config: GraphQLInlineResponse<Options['response']>,
     settings?: GraphQLSettings,
     operationType?: GraphQLOperationTypeArg<Mode>
   ): GraphQLRequestConfig;
@@ -181,9 +181,7 @@ const createGraphQLFactory = <Mode extends GraphQLFactoryMode>(mode: Mode) => {
     return {
       operationName: identifier as GraphQLOperationName,
       operationType: mode,
-      routes: [
-        createConfigResolver(config as GraphQLConfig<Options>, settings) as GraphQLRouteConfig
-      ]
+      routes: [createConfigResolver(config, settings) as GraphQLRouteConfig]
     };
   }
 
