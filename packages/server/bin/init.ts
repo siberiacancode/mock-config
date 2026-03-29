@@ -1,13 +1,13 @@
 import color from 'ansi-colors';
 import prompts from 'prompts';
 
-import type { MockServerConfigArgv } from '@/utils/types';
+import type { MockServerCliArgv } from '@/utils/types';
 
 import { baseUrlSchema, portSchema, staticPathSchema } from '@/utils/validate';
 
 import { createTemplate } from './helpers';
 
-export const init = async (argv: MockServerConfigArgv) => {
+export const init = async (argv: MockServerCliArgv) => {
   try {
     const response = await prompts(
       [

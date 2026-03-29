@@ -1,10 +1,10 @@
 import type { Express } from 'express';
 
 import type {
+  DatabaseConfig,
   GraphQLEntity,
   GraphQLOperationName,
-  GraphQLOperationType,
-  MockServerConfig
+  GraphQLOperationType
 } from '@/utils/types';
 
 import { createOrm, createStorage } from '@/core/database';
@@ -25,10 +25,7 @@ declare global {
   }
 }
 
-export const contextMiddleware = (
-  server: Express,
-  { database }: Pick<MockServerConfig, 'database'>
-) => {
+export const contextMiddleware = (server: Express, { database }: { database?: DatabaseConfig }) => {
   let requestId = 0;
   const context: Express['request']['context'] = { orm: {} };
 

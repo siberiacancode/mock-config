@@ -1,0 +1,40 @@
+---
+title: MockServerComponent
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+<TypeTable
+  type={{
+    baseUrl: {
+      description: 'The base URL of the concrete component',
+      type: '`/${string}`'
+    },
+    configs: {
+      description: 'The configuration of the component',
+      type: (
+        <span>
+          Array{'<'}
+          <a className='underline' href='GraphQL#GraphQLRequestConfig'>
+            GraphQLRequestConfig
+          </a>{' '}
+          |{' '}
+          <a className='underline' href='Rest#RestRequestConfig'>
+            RestRequestConfig
+          </a>
+          {'>'}
+        </span>
+      ),
+      required: true
+    },
+    name: {
+      description: 'The name of the component',
+      type: 'string'
+    },
+    interceptors: {
+      description: 'Interceptors applied to all requests in this component',
+      type: 'Interceptors',
+      typeDescriptionLink: './Interceptors'
+    }
+  }}
+/>

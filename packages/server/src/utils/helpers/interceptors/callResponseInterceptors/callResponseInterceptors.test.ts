@@ -19,7 +19,7 @@ describe('callResponseInterceptors: order of calls', () => {
     const response = {} as Response;
     const routeInterceptor = vi.fn((data) => `${data}routeInterceptor;`);
     const requestInterceptor = vi.fn((data) => `${data}requestInterceptor;`);
-    const apiInterceptor = vi.fn((data) => `${data}apiInterceptor;`);
+    const componentInterceptor = vi.fn((data) => `${data}componentInterceptor;`);
     const serverInterceptor = vi.fn((data) => `${data}serverInterceptor`);
 
     expect(
@@ -31,7 +31,7 @@ describe('callResponseInterceptors: order of calls', () => {
     ).toBe('');
     expect(routeInterceptor).toBeCalledTimes(0);
     expect(requestInterceptor).toBeCalledTimes(0);
-    expect(apiInterceptor).toBeCalledTimes(0);
+    expect(componentInterceptor).toBeCalledTimes(0);
     expect(serverInterceptor).toBeCalledTimes(0);
 
     expect(
@@ -41,24 +41,24 @@ describe('callResponseInterceptors: order of calls', () => {
         response,
         interceptors: {
           routeInterceptor,
-          apiInterceptor,
+          componentInterceptor,
           requestInterceptor,
           serverInterceptor
         }
       })
-    ).toBe('routeInterceptor;requestInterceptor;apiInterceptor;serverInterceptor');
+    ).toBe('routeInterceptor;requestInterceptor;componentInterceptor;serverInterceptor');
     expect(routeInterceptor).toBeCalledTimes(1);
     expect(requestInterceptor).toBeCalledTimes(1);
-    expect(apiInterceptor).toBeCalledTimes(1);
+    expect(componentInterceptor).toBeCalledTimes(1);
     expect(serverInterceptor).toBeCalledTimes(1);
 
     expect(routeInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
       requestInterceptor.mock.invocationCallOrder[0]
     );
     expect(requestInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
-      apiInterceptor.mock.invocationCallOrder[0]
+      componentInterceptor.mock.invocationCallOrder[0]
     );
-    expect(apiInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
+    expect(componentInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
       serverInterceptor.mock.invocationCallOrder[0]
     );
   });
@@ -260,7 +260,9 @@ describe('callResponseInterceptors: params functions', () => {
         routeInterceptor: setCookieWithOptionsRouteInterceptor
       }
     });
-    expect(response.cookie).toHaveBeenCalledWith('name', 'value', { path: '/your/path' });
+    expect(response.cookie).toHaveBeenCalledWith('name', 'value', {
+      path: '/your/path'
+    });
     expect(response.cookie).toBeCalledTimes(1);
   });
 
@@ -281,7 +283,9 @@ describe('callResponseInterceptors: params functions', () => {
         routeInterceptor: clearCookieRouteInterceptor
       }
     });
-    expect(response.clearCookie).toHaveBeenCalledWith('name', { path: '/your/path' });
+    expect(response.clearCookie).toHaveBeenCalledWith('name', {
+      path: '/your/path'
+    });
     expect(response.clearCookie).toHaveBeenCalledTimes(1);
   });
 

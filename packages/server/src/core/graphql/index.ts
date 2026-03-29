@@ -1,1 +1,1 @@
-export * from './createGraphQLRoutes/createGraphQLRoutes';
+export * from './createGraphQLRoute/createGraphQLRoute';

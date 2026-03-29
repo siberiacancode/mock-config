@@ -1,0 +1,130 @@
+---
+title: Logger
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+## Logger{'<'}Type, Api{'>'}
+
+<TypeTable
+  type={{
+    options: {
+      description: 'What to include in log output',
+      type: 'LoggerOptions<Type, Api>',
+      typeDescriptionLink: '#LoggerOptions'
+    },
+    rewrite: {
+      description: 'Modify filtered tokens before printing',
+      type: (
+        <span>
+          (tokens: Partial{'<'}
+          <a href='#LoggerTokens' className='underline'>
+            LoggerTokens{'<'}Type, Api{'>'}
+          </a>
+          {'>'}) {'=>'} void
+        </span>
+      )
+    }
+  }}
+/>
+
+<a id='LoggerOptions'></a>
+## LoggerOptions
+
+`LoggerOptions<Type, Api>` is an object where:
+
+- key is any [available logger token](#available-logger-tokens)
+- value is `boolean` for scalar tokens
+- value is `boolean | Record<string, boolean>` for object-like tokens (`headers`, `cookies`, `query`, `params`, `body`, `variables`, `data`)
+
+<a id='LoggerTokens'></a>
+## LoggerTokens
+
+`LoggerTokens<Type, Api>` is an object where keys are [available logger tokens](#available-logger-tokens) for the selected `Type` (`request` | `response`) and `Api` (`rest` | `graphql`), and values are token payloads.
+
+<a id='available-logger-tokens'></a>
+## Available Logger Tokens
+
+<TypeTable
+  type={{
+    type: {
+      type: "'request' | 'response'",
+      description: 'Type of log (`request` or `response`)'
+    },
+    id: {
+      type: 'number',
+      description: 'Unique request id to match request and response logs'
+    },
+    timestamp: {
+      type: 'number',
+      description: 'UNIX timestamp in milliseconds'
+    },
+    method: {
+      type: 'RestMethod',
+      typeDescriptionLink: './Rest#RestMethod',
+      description: 'HTTP method'
+    },
+    url: {
+      type: 'string',
+      description: 'Requested URL'
+    },
+    headers: {
+      type: 'Headers',
+      description: 'Headers object'
+    },
+    cookies: {
+      type: 'Cookies',
+      description: 'Cookies object'
+    },
+    query: {
+      type: 'Query',
+      description: 'Query object'
+    },
+    params: {
+      type: 'Params',
+      description: 'Params object'
+    },
+    body: {
+      type: 'any',
+      description: 'Request body'
+    },
+    graphQLOperationName: {
+      type: (
+        <span>
+          <a href='./GraphQL#GraphQLOperationName' className='underline'>
+            GraphQLOperationName
+          </a>{' '}
+          | null
+        </span>
+      ),
+      description: 'GraphQL operation name (`null` for non-GraphQL requests)'
+    },
+    graphQLOperationType: {
+      type: (
+        <span>
+          <a href='./GraphQL#GraphQLOperationType' className='underline'>
+            GraphQLOperationType
+          </a>{' '}
+          | null
+        </span>
+      ),
+      description: 'GraphQL operation type'
+    },
+    graphQLQuery: {
+      type: 'string | null',
+      description: 'GraphQL query (`null` for non-GraphQL requests)'
+    },
+    variables: {
+      type: 'PlainObject | null',
+      description: 'GraphQL variables (`null` for non-GraphQL requests or if not passed)'
+    },
+    data: {
+      type: 'any',
+      description: 'Response data returned to client (response only)'
+    },
+    statusCode: {
+      type: 'number',
+      description: 'Response status code (response only)'
+    }
+  }}
+/>

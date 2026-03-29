@@ -1,7 +1,7 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
-import type { MockServerConfigArgv } from '../src';
+import type { MockServerCliArgv } from '../src';
 
 import { build } from './build';
 import { init } from './init';
@@ -28,7 +28,7 @@ export const cli = () => {
   const processArgv = hideBin(process.argv);
 
   if (processArgv.includes('init')) {
-    const argv = yargs(processArgv).options(initOptions).parse() as MockServerConfigArgv;
+    const argv = yargs(processArgv).options(initOptions).parse() as MockServerCliArgv;
 
     return init(argv);
   }
@@ -53,7 +53,7 @@ export const cli = () => {
     .alias('version', 'v')
     .help()
     .alias('help', 'h')
-    .parse() as MockServerConfigArgv;
+    .parse() as MockServerCliArgv;
 
   build(argv);
 };
