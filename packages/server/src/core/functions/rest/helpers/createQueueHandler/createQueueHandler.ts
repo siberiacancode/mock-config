@@ -2,7 +2,7 @@ import type { RestDataResponse, RestMethod } from '@/utils/types';
 
 export const createQueueHandler = <Method extends RestMethod>(
   normalizedQueue: { data: RestDataResponse<Method>; time?: number }[]
-): RestDataResponse<Method> => {
+): Extract<RestDataResponse<Method>, (...args: any[]) => any> => {
   let queueIndex = 0;
   let timeoutInProgress = false;
 

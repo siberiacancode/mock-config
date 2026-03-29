@@ -6,7 +6,9 @@ import type { RestDataResponse, RestFileResponse, RestMethod } from '@/utils/typ
 import { isFilePathValid } from '@/utils/helpers';
 
 export const createFileHandler =
-  <Method extends RestMethod>(filePath: RestFileResponse): RestDataResponse<Method> =>
+  <Method extends RestMethod>(
+    filePath: RestFileResponse
+  ): Extract<RestDataResponse<Method>, (...args: any[]) => any> =>
   ({ response, setHeader, setStatusCode }) => {
     if (!isFilePathValid(filePath)) {
       // TODO: what should we do?
