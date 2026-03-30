@@ -13,21 +13,21 @@ import { getGraphQLInput, parseQuery } from '@/utils/helpers';
 declare global {
   namespace Express {
     export interface Request {
-      id: number;
-      timestamp: number;
       graphQL: {
         operationType: GraphQLOperationType;
         operationName?: GraphQLOperationName;
         query: string;
         variables?: GraphQLEntity<'variables'>;
       } | null;
+      id: number;
+      timestamp: number;
     }
   }
 }
 
 export const contextMiddleware = (server: Express, { database }: { database?: DatabaseConfig }) => {
   let requestId = 0;
-  const context: Express['request']['context'] = { orm: {} };
+  const context: Express['request']['context'] = { orm: {}, socket: null };
 
   if (database) {
     const storage = createStorage(database.data);

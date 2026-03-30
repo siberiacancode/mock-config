@@ -1,10 +1,12 @@
 import type { Request } from 'express';
+import type { WebSocket } from 'ws';
 import type { Arguments } from 'yargs';
 
 import type { Database, Orm } from './database';
 import type { GraphQLRequestConfig } from './graphql';
 import type { Interceptors } from './interceptors';
 import type { RestMethod, RestRequestConfig } from './rest';
+import type { WsRequestConfig } from './ws';
 
 interface StaticPathObject {
   path: `/${string}`;
@@ -64,6 +66,7 @@ declare global {
     interface Request {
       context: {
         orm: Orm<Database>;
+        socket?: WebSocket | null;
       };
     }
   }
@@ -71,7 +74,7 @@ declare global {
 
 export interface MockServerComponent {
   baseUrl?: BaseUrl;
-  configs: Array<GraphQLRequestConfig | RestRequestConfig>;
+  configs: Array<GraphQLRequestConfig | RestRequestConfig | WsRequestConfig>;
   interceptors?: Interceptors;
   name?: string;
 }

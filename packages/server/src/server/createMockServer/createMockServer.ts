@@ -10,7 +10,8 @@ import type {
   GraphQLRequestArtifact,
   MockServerComponent,
   MockServerConfig,
-  RestRequestArtifact
+  RestRequestArtifact,
+  WsRequestArtifact
 } from '@/utils/types';
 
 import { createDatabaseRoutes } from '@/core/database';
@@ -28,6 +29,8 @@ import { validateMockServerConfig } from '@/utils/validate';
 
 import { calculateGraphQLRouteConfigWeight } from '../../core/graphql/createGraphQLRoute/helpers';
 import { calculateRestRouteConfigWeight } from '../../core/rest/createRestRoute/helpers';
+import { createWsRoute } from '../../core/ws/createWsRoute/createWsRoute';
+import { calculateWsRouteConfigWeight } from '../../core/ws/createWsRoute/helpers';
 
 export const createMockServer = (
   mockServerConfig: MockServerConfig,
@@ -83,69 +86,89 @@ export const createMockServer = (
     ? mockServerComponents
     : (mockServerConfig as MockServerComponent[]);
 
-  const { restRequestsArtifacts, graphQLRequestsArtifacts } = components.reduce(
-    (acc, component) => {
-      component.configs.forEach((config) => {
-        const isRest = 'method' in config;
-        if (isRest) {
-          config.routes.forEach((route) => {
-            acc.restRequestsArtifacts.push({
-              key: `${serverBaseUrl}${component.baseUrl}/${config.method}/${config.path}`,
-              baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '/') as BaseUrl,
-              method: config.method,
-              path: config.path,
-              config: route,
-              weight: calculateRestRouteConfigWeight(route),
-              serverResponseInterceptor: interceptors?.response,
-              serverRequestInterceptor: interceptors?.request,
-              requestResponseInterceptor: config.interceptors?.response,
-              requestRequestInterceptor: config.interceptors?.request,
-              componentResponseInterceptor: component.interceptors?.response,
-              componentRequestInterceptor: component.interceptors?.request,
-              routeResponseInterceptor: route.interceptors?.response,
-              routeRequestInterceptor: route.interceptors?.request
+  const { restRequestsArtifacts, graphQLRequestsArtifacts, wsRequestsArtifacts } =
+    components.reduce(
+      (acc, component) => {
+        component.configs.forEach((config) => {
+          const isRest = 'method' in config;
+          if (isRest) {
+            config.routes.forEach((route) => {
+              acc.restRequestsArtifacts.push({
+                key: `${serverBaseUrl}${component.baseUrl}/${config.method}/${config.path}`,
+                baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '/') as BaseUrl,
+                method: config.method,
+                path: config.path,
+                config: route,
+                weight: calculateRestRouteConfigWeight(route),
+                serverResponseInterceptor: interceptors?.response,
+                serverRequestInterceptor: interceptors?.request,
+                requestResponseInterceptor: config.interceptors?.response,
+                requestRequestInterceptor: config.interceptors?.request,
+                componentResponseInterceptor: component.interceptors?.response,
+                componentRequestInterceptor: component.interceptors?.request,
+                routeResponseInterceptor: route.interceptors?.response,
+                routeRequestInterceptor: route.interceptors?.request
+              });
             });
-          });
-        }
+          }
 
-        const isGraphql = 'operationType' in config;
-        if (isGraphql) {
-          config.routes.forEach((route) => {
-            acc.graphQLRequestsArtifacts.push({
-              key: `${serverBaseUrl}${component.baseUrl}/${config.operationType}/${
-                'operationName' in config ? config.operationName : config.query
-              }`,
-              baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '/') as BaseUrl,
-              operationType: config.operationType,
-              operationName: 'operationName' in config ? config.operationName : undefined,
-              query: 'query' in config ? config.query : undefined,
-              config: route,
-              weight: calculateGraphQLRouteConfigWeight(route),
-              serverResponseInterceptor: interceptors?.response,
-              serverRequestInterceptor: interceptors?.request,
-              requestResponseInterceptor: config.interceptors?.response,
-              requestRequestInterceptor: config.interceptors?.request,
-              componentResponseInterceptor: component.interceptors?.response,
-              componentRequestInterceptor: component.interceptors?.request,
-              routeResponseInterceptor: route.interceptors?.response,
-              routeRequestInterceptor: route.interceptors?.request
+          const isGraphql = 'operationType' in config;
+          if (isGraphql) {
+            config.routes.forEach((route) => {
+              acc.graphQLRequestsArtifacts.push({
+                key: `${serverBaseUrl}${component.baseUrl}/${config.operationType}/${
+                  'operationName' in config ? config.operationName : config.query
+                }`,
+                baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '/') as BaseUrl,
+                operationType: config.operationType,
+                operationName: 'operationName' in config ? config.operationName : undefined,
+                query: 'query' in config ? config.query : undefined,
+                config: route,
+                weight: calculateGraphQLRouteConfigWeight(route),
+                serverResponseInterceptor: interceptors?.response,
+                serverRequestInterceptor: interceptors?.request,
+                requestResponseInterceptor: config.interceptors?.response,
+                requestRequestInterceptor: config.interceptors?.request,
+                componentResponseInterceptor: component.interceptors?.response,
+                componentRequestInterceptor: component.interceptors?.request,
+                routeResponseInterceptor: route.interceptors?.response,
+                routeRequestInterceptor: route.interceptors?.request
+              });
             });
-          });
-        }
-      });
+          }
 
-      return acc;
-    },
-    {
-      restRequestsArtifacts: [] as RestRequestArtifact[],
-      graphQLRequestsArtifacts: [] as GraphQLRequestArtifact[]
-    }
-  );
+          const isWs = 'event' in config;
+          if (isWs) {
+            config.routes.forEach((route) => {
+              acc.wsRequestsArtifacts.push({
+                key: `${serverBaseUrl}${component.baseUrl}/ws/${config.event}`,
+                baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '/') as BaseUrl,
+                event: config.event,
+                config: route,
+                weight: calculateWsRouteConfigWeight(route),
+                componentRequestInterceptor: component.interceptors?.request as any,
+                componentResponseInterceptor: component.interceptors?.response as any
+              });
+            });
+          }
+        });
+
+        return acc;
+      },
+      {
+        restRequestsArtifacts: [] as RestRequestArtifact[],
+        graphQLRequestsArtifacts: [] as GraphQLRequestArtifact[],
+        wsRequestsArtifacts: [] as WsRequestArtifact[]
+      }
+    );
 
   const sortedRestRequestsArtifacts = restRequestsArtifacts.toSorted(
     (first, second) => second.weight - first.weight
   );
   const sortedGraphQLRequestsArtifacts = graphQLRequestsArtifacts.toSorted(
+    (first, second) => second.weight - first.weight
+  );
+  const sortedWsRequestsArtifacts = wsRequestsArtifacts.toSorted(
     (first, second) => second.weight - first.weight
   );
 
@@ -160,6 +183,13 @@ export const createMockServer = (
     createGraphQLRoute({
       server,
       graphQLRequestArtifacts: sortedGraphQLRequestsArtifacts
+    });
+  }
+
+  if (sortedWsRequestsArtifacts.length) {
+    createWsRoute({
+      server,
+      wsRequestArtifacts: sortedWsRequestsArtifacts
     });
   }
 
