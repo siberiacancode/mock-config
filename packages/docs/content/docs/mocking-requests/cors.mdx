@@ -1,0 +1,138 @@
+---
+title: CORS
+description: Cross-Origin Resource Sharing settings for mock server
+---
+
+Using `cors` field you can emulate CORS behavior (headers, credentials) to mirror how a real backend would respond.
+For more details about CORS, [see](https://developer.mozilla.org/ru/docs/Web/HTTP/Guides/CORS).
+
+## Quick Example
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    cors: {
+      origin: ['http://localhost:3000', /\.example\.com$/],
+      methods: ['GET'],
+      allowedHeaders: ['accept'],
+      exposedHeaders: ['accept'],
+      maxAge: 3600,
+      credentials: true
+    }
+  },
+  ...
+];
+```
+
+## Parameters
+
+### origin
+
+Type: <code>((request: Request) => <a href='./references/Cors#CorsOrigin'>CorsOrigin</a> | Promise{'<'}<a href='./references/Cors#CorsOrigin'>CorsOrigin</a>{'>'}) | <a href='./references/Cors#CorsOrigin'>CorsOrigin</a></code>  
+Defines which origins are allowed to access the server. Use a string for a single origin, a RegExp for pattern matching, an array for multiple origins, or a function for dynamic rules.
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    cors: {
+      origin: ['https://example.com', /\.example\.com$/]
+    }
+  },
+  ...
+];
+```
+
+### methods
+
+Type: `Array<GET | POST | DELETE | PUT | PATCH | OPTIONS>`  
+Allowed HTTP methods. Defaults to `GET,OPTIONS,PUT,PATCH,POST,DELETE`. Include `OPTIONS` if you expect preflight requests.
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    cors: {
+      methods: ['GET', 'POST', 'OPTIONS']
+    }
+  },
+  ...
+];
+```
+
+### allowedHeaders
+
+Type: `string[]`  
+Allowed request headers. Default is `*`. List the headers your client actually sends.
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    cors: {
+      allowedHeaders: ['Content-Type', 'Authorization']
+    }
+  },
+  ...
+];
+```
+
+### exposedHeaders
+
+Type: `string[]`  
+Response headers exposed to browser JavaScript. Default is `*`. Use this when the frontend needs to read custom response headers.
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    cors: {
+      exposedHeaders: ['X-Request-Id']
+    }
+  },
+  ...
+];
+```
+
+### credentials
+
+Type: `boolean`  
+Whether to expose the response to frontend JavaScript when using credentials. Default is `true`. Enable when you use `credentials: "include"` on the client (cookies, auth).
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    cors: {
+      origin: 'https://app.example.com',
+      credentials: true
+    }
+  },
+  ...
+];
+```
+
+### maxAge
+
+Type: `number`  
+How long the preflight response can be cached (in seconds). Default is `3600`. Increasing `maxAge` reduces preflight requests.
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    cors: {
+      maxAge: 600
+    }
+  },
+  ...
+];
+```
