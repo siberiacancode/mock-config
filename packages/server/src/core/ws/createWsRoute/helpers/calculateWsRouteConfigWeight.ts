@@ -7,7 +7,18 @@ export const calculateWsRouteConfigWeight = (wsRouteConfig: WsRouteConfig) => {
   if (!entities) return 0;
 
   let routeConfigWeight = 0;
-  const { payload } = entities;
+  const { payload, meta } = entities;
+  if (meta) {
+    if (isPlainObject(meta) && meta.checkMode) {
+      if (meta.checkMode === 'exists' || meta.checkMode === 'notExists') {
+        routeConfigWeight += 1;
+      } else {
+        routeConfigWeight += isPlainObject(meta.value) ? Object.keys(meta.value).length : 1;
+      }
+    } else {
+      routeConfigWeight += isPlainObject(meta) ? Object.keys(meta).length : 1;
+    }
+  }
   if (payload) {
     if (isPlainObject(payload) && payload.checkMode) {
       if (payload.checkMode === 'exists' || payload.checkMode === 'notExists') {

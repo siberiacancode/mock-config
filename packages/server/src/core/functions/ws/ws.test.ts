@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { WS_MESSAGE_EVENT } from '@/utils/types';
+
 import { ws } from './ws';
 
 describe('ws', () => {
-  it('Should build config for inline response', () => {
+  it('Should build config for ws.event inline response', () => {
     const result = ws.event('user.created', { ok: true });
 
     expect(result).toStrictEqual({
@@ -16,66 +18,15 @@ describe('ws', () => {
     });
   });
 
-  it('Should build config for response object with match', () => {
-    const result = ws.event('user.created', {
-      response: { ok: true },
-      match: {
-        payload: {
-          room: 'users'
-        }
-      }
-    });
-
-    expect(result).toStrictEqual({
-      event: 'user.created',
-      routes: [
-        {
-          data: { ok: true },
-          entities: {
-            payload: {
-              room: 'users'
-            }
-          }
-        }
-      ]
-    });
-  });
-
-  it('Should build config for inline handler', () => {
+  it('Should build config for ws.message sugar handler', () => {
     const handler = vi.fn();
-    const result = ws.event('user.created', handler);
+    const result = ws.message(handler);
 
     expect(result).toStrictEqual({
-      event: 'user.created',
+      event: WS_MESSAGE_EVENT,
       routes: [
         {
           data: handler
-        }
-      ]
-    });
-  });
-
-  it('Should build config for handler object with match', () => {
-    const handler = vi.fn();
-    const result = ws.event('user.created', {
-      handler,
-      match: {
-        payload: {
-          room: 'users'
-        }
-      }
-    });
-
-    expect(result).toStrictEqual({
-      event: 'user.created',
-      routes: [
-        {
-          data: handler,
-          entities: {
-            payload: {
-              room: 'users'
-            }
-          }
         }
       ]
     });

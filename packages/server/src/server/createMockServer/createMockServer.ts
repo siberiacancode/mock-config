@@ -2,8 +2,9 @@ import type { Express } from 'express';
 
 import bodyParser from 'body-parser';
 import express from 'express';
-import { createGraphQLRoute } from 'src/core/graphql/createGraphQLRoute/createGraphQLRoute';
-import { createRestRoute } from 'src/core/rest/createRestRoute/createRestRoute';
+import { createGraphQLRoute } from 'src/core/graphql';
+import { createRestRoute } from 'src/core/rest';
+import { createWsRoute } from 'src/core/ws';
 
 import type {
   BaseUrl,
@@ -25,12 +26,17 @@ import {
   staticMiddleware
 } from '@/core/middlewares';
 import { urlJoin } from '@/utils/helpers';
+import { WS_MESSAGE_EVENT } from '@/utils/types';
 import { validateMockServerConfig } from '@/utils/validate';
 
 import { calculateGraphQLRouteConfigWeight } from '../../core/graphql/createGraphQLRoute/helpers';
 import { calculateRestRouteConfigWeight } from '../../core/rest/createRestRoute/helpers';
-import { createWsRoute } from '../../core/ws/createWsRoute/createWsRoute';
 import { calculateWsRouteConfigWeight } from '../../core/ws/createWsRoute/helpers';
+
+const getWsArtifactEventKey = (event: WsRequestArtifact['event']) => {
+  if (event === WS_MESSAGE_EVENT) return 'message';
+  return String(event);
+};
 
 export const createMockServer = (
   mockServerConfig: MockServerConfig,
@@ -95,7 +101,7 @@ export const createMockServer = (
             config.routes.forEach((route) => {
               acc.restRequestsArtifacts.push({
                 key: `${serverBaseUrl}${component.baseUrl}/${config.method}/${config.path}`,
-                baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '/') as BaseUrl,
+                baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
                 method: config.method,
                 path: config.path,
                 config: route,
@@ -119,7 +125,7 @@ export const createMockServer = (
                 key: `${serverBaseUrl}${component.baseUrl}/${config.operationType}/${
                   'operationName' in config ? config.operationName : config.query
                 }`,
-                baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '/') as BaseUrl,
+                baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
                 operationType: config.operationType,
                 operationName: 'operationName' in config ? config.operationName : undefined,
                 query: 'query' in config ? config.query : undefined,
@@ -141,8 +147,10 @@ export const createMockServer = (
           if (isWs) {
             config.routes.forEach((route) => {
               acc.wsRequestsArtifacts.push({
-                key: `${serverBaseUrl}${component.baseUrl}/ws/${config.event}`,
-                baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '/') as BaseUrl,
+                key: `${serverBaseUrl}${
+                  component.baseUrl
+                }/ws/${getWsArtifactEventKey(config.event)}`,
+                baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
                 event: config.event,
                 config: route,
                 weight: calculateWsRouteConfigWeight(route),

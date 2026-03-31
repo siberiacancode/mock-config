@@ -5,13 +5,17 @@ import type {
   WsRouteConfig
 } from '@/utils/types';
 
+import { WS_MESSAGE_EVENT } from '@/utils/types';
+
 interface WsRequestInput {
-  data?: unknown;
+  meta?: unknown;
+  payload?: unknown;
+  response?: unknown;
 }
 
 type WsFunction<Options extends WsRequestInput> = (
-  params: WsParams<Options['data']>
-) => Options['data'] | Promise<Options['data']>;
+  params: WsParams<Options['payload'], Options['meta']>
+) => Options['response'] | Promise<Options['response']>;
 
 interface WsResponseObject<Response> {
   match?: WsEntitiesByEntityName;
@@ -25,13 +29,17 @@ interface WsHandlerObject<Options extends WsRequestInput> {
 
 type WsInlineResponse<Response> = Response;
 
-type WsConfig<Options extends WsRequestInput> =
+type WsEventConfig<Options extends WsRequestInput> =
   | WsFunction<Options>
   | WsHandlerObject<Options>
-  | WsInlineResponse<Options['data']>
-  | WsResponseObject<Options['data']>;
+  | WsInlineResponse<Options['response']>
+  | WsResponseObject<Options['response']>;
 
-const resolveConfigType = <Options extends WsRequestInput>(config: WsConfig<Options>) => {
+type WsMessageFunction = <Payload = unknown, Meta = Record<string, unknown>>(
+  params: WsParams<Payload, Meta>
+) => Promise<void> | void;
+
+const resolveConfigType = <Options extends WsRequestInput>(config: WsEventConfig<Options>) => {
   if (typeof config === 'function') return { type: 'inlineHandler' as const, config };
   if (typeof config !== 'object' || config === null)
     return { type: 'inlineResponse' as const, config };
@@ -41,7 +49,7 @@ const resolveConfigType = <Options extends WsRequestInput>(config: WsConfig<Opti
 };
 
 const createConfigResolver = <Options extends WsRequestInput>(
-  config: WsConfig<Options>
+  config: WsEventConfig<Options>
 ): WsRouteConfig => {
   const resolvedConfig = resolveConfigType(config);
 
@@ -74,29 +82,25 @@ const createConfigResolver = <Options extends WsRequestInput>(
   }
 };
 
-function createEventConfig<Options extends WsRequestInput = Partial<WsRequestInput>>(
+function createWsEventRequestConfig<Options extends WsRequestInput = Partial<WsRequestInput>>(
   event: WsRequestConfig['event'],
-  config: WsResponseObject<Options['data']>
+  config: WsResponseObject<Options['response']>
 ): WsRequestConfig;
-
-function createEventConfig<Options extends WsRequestInput = Partial<WsRequestInput>>(
+function createWsEventRequestConfig<Options extends WsRequestInput = Partial<WsRequestInput>>(
   event: WsRequestConfig['event'],
   config: WsHandlerObject<Options>
 ): WsRequestConfig;
-
-function createEventConfig<Options extends WsRequestInput = Partial<WsRequestInput>>(
+function createWsEventRequestConfig<Options extends WsRequestInput = Partial<WsRequestInput>>(
   event: WsRequestConfig['event'],
   config: WsFunction<Options>
 ): WsRequestConfig;
-
-function createEventConfig<Options extends WsRequestInput = Partial<WsRequestInput>>(
+function createWsEventRequestConfig<Options extends WsRequestInput = Partial<WsRequestInput>>(
   event: WsRequestConfig['event'],
-  config: WsInlineResponse<Options['data']>
+  config: WsInlineResponse<Options['response']>
 ): WsRequestConfig;
-
-function createEventConfig<Options extends WsRequestInput = Partial<WsRequestInput>>(
+function createWsEventRequestConfig(
   event: WsRequestConfig['event'],
-  config: WsConfig<Options>
+  config: WsEventConfig<WsRequestInput>
 ): WsRequestConfig {
   return {
     event,
@@ -104,6 +108,18 @@ function createEventConfig<Options extends WsRequestInput = Partial<WsRequestInp
   };
 }
 
+function createWsMessageRequestConfig(handler: WsMessageFunction): WsRequestConfig {
+  return {
+    event: WS_MESSAGE_EVENT,
+    routes: [
+      {
+        data: handler
+      }
+    ]
+  };
+}
+
 export const ws = {
-  event: createEventConfig
+  event: createWsEventRequestConfig,
+  message: createWsMessageRequestConfig
 };

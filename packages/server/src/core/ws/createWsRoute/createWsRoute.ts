@@ -1,5 +1,4 @@
 import type { Express } from 'express';
-import type { IncomingMessage } from 'node:http';
 import type { RawData, WebSocket } from 'ws';
 
 import { flatten } from 'flat';
@@ -20,9 +19,12 @@ import type {
 import {
   convertToEntityDescriptor,
   isEntityDescriptor,
+  isPlainObject,
   resolveEntityValues,
   urlJoin
 } from '@/utils/helpers';
+import { sleep } from '@/utils/sleep';
+import { WS_MESSAGE_EVENT } from '@/utils/types';
 
 interface CreateWsRouteParams {
   server: Express;
@@ -32,27 +34,13 @@ interface CreateWsRouteParams {
 const parseMessage = (message: string) => {
   try {
     return JSON.parse(message) as {
-      data?: unknown;
-      event?: string;
+      event: string;
       meta?: Record<string, unknown>;
+      payload?: unknown;
     };
   } catch {
-    return null;
+    return message as string;
   }
-};
-
-const matchEvent = (artifactEvent: WsRequestArtifact['event'], event: string) =>
-  artifactEvent instanceof RegExp ? new RegExp(artifactEvent).test(event) : artifactEvent === event;
-
-const getBaseUrlFromRequest = (request: IncomingMessage) => {
-  const requestUrl = request.url ?? '/';
-  const [pathname] = requestUrl.split('?');
-  return pathname || '/';
-};
-
-const normalizePath = (path: string) => {
-  if (!path || path === '/') return '/';
-  return path.endsWith('/') ? path.slice(0, -1) : path;
 };
 
 const sendWsData = (socket: WebSocket, data: unknown) => {
@@ -65,17 +53,13 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
     noServer: true
   });
 
-  const wsBaseUrls = new Set(
-    wsRequestArtifacts.map((artifact) => normalizePath(urlJoin('/', artifact.baseUrl)))
-  );
+  const wsBaseUrls = new Set(wsRequestArtifacts.map((artifact) => urlJoin('/', artifact.baseUrl)));
 
   const originalListen = server.listen.bind(server);
   server.listen = ((...args: any[]) => {
     const httpServer = originalListen(...args);
     httpServer.on('upgrade', (request, socket, head) => {
-      const requestUrl = request.url ?? '/';
-      const [pathname] = requestUrl.split('?');
-      const shouldHandleUpgrade = wsBaseUrls.has(normalizePath(pathname || '/'));
+      const shouldHandleUpgrade = wsBaseUrls.has(urlJoin('/', request.url ?? '/'));
       if (!shouldHandleUpgrade) {
         socket.destroy();
         return;
@@ -88,47 +72,103 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
     return httpServer;
   }) as typeof server.listen;
 
-  wsServer.on('connection', (socket, request) => {
+  wsServer.on('connection', (socket) => {
     socket.on('message', async (raw: RawData) => {
-      const payload = parseMessage(raw.toString());
-      if (!payload?.event) return;
+      const wsMessagesRequestArtifacts = wsRequestArtifacts.filter(
+        (artifact) => artifact.event === WS_MESSAGE_EVENT
+      );
 
-      const connectionBaseUrl = getBaseUrlFromRequest(request);
-      const matchedRequestArtifacts = wsRequestArtifacts.filter((artifact) => {
-        const expectedBaseUrl = normalizePath(urlJoin('/', artifact.baseUrl));
-        if (expectedBaseUrl !== normalizePath(connectionBaseUrl)) return false;
-        return matchEvent(artifact.event, payload.event as string);
-      });
+      if (wsMessagesRequestArtifacts.length) {
+        let data = raw;
+        wsMessagesRequestArtifacts.forEach(async (artifact) => {
+          if (artifact.componentRequestInterceptor) {
+            await artifact.componentRequestInterceptor({
+              message: raw,
+              socket,
+              send: (data: unknown) => sendWsData(socket, data)
+            });
+          }
 
-      if (!matchedRequestArtifacts.length) return;
+          if (artifact.componentResponseInterceptor) {
+            data = artifact.componentResponseInterceptor(data, {
+              message: raw,
+              socket,
+              send: (data: unknown) => sendWsData(socket, data)
+            } as unknown as WsParams);
+          }
 
-      const matchedRouteConfig = matchedRequestArtifacts.find(({ config }) => {
-        if (!config.entities) return true;
-        const entityEntries = Object.entries(config.entities) as Entries<
+          if (typeof artifact.config.data === 'function') {
+            await artifact.config.data?.({
+              raw,
+              event: WS_MESSAGE_EVENT.toString(),
+              payload: {},
+              meta: {},
+              socket,
+              send: (data: unknown) => sendWsData(socket, data),
+              setDelay: async (delay) => {
+                await sleep(delay === Infinity ? 99999999 : delay);
+              }
+            });
+          }
+        });
+      }
+
+      const wsEventsRequestArtifacts = wsRequestArtifacts.filter(
+        (artifact) => artifact.event !== WS_MESSAGE_EVENT
+      );
+
+      const message = parseMessage(raw.toString());
+      if (!isPlainObject(message) || typeof message.event !== 'string') return;
+
+      const params: WsParams = {
+        raw,
+        event: message.event,
+        meta: message.meta ?? {},
+        payload: message.payload,
+        socket,
+        send: (data: unknown) => sendWsData(socket, data),
+        setDelay: async (delay) => {
+          await sleep(delay === Infinity ? 99999999 : delay);
+        }
+      };
+
+      const matchedEventArtifact = wsEventsRequestArtifacts.find((artifact) => {
+        const isEventMatched =
+          artifact.event instanceof RegExp
+            ? artifact.event.test(params.event)
+            : artifact.event === params.event;
+        if (!isEventMatched) return false;
+
+        if (!artifact.config.entities) return true;
+        const entityEntries = Object.entries(artifact.config.entities) as Entries<
           Required<WsEntitiesByEntityName>
         >;
 
         return entityEntries.every(([entityName, entityDescriptorOrValue]) => {
-          const actualEntity = payload.data;
+          const entityValues: Record<keyof WsEntitiesByEntityName, unknown> = {
+            meta: params.meta,
+            payload: params.payload
+          };
+          const actualEntity = entityValues[entityName];
 
-          if (entityName === 'payload' && isEntityDescriptor(entityDescriptorOrValue)) {
-            const dataDescriptor: EntityDescriptor = entityDescriptorOrValue;
-            if (dataDescriptor.checkMode === 'exists' || dataDescriptor.checkMode === 'notExists') {
+          if (isEntityDescriptor(entityDescriptorOrValue)) {
+            const descriptor: EntityDescriptor = entityDescriptorOrValue;
+            if (descriptor.checkMode === 'exists' || descriptor.checkMode === 'notExists') {
               return resolveEntityValues({
                 actualValue: actualEntity,
-                checkMode: dataDescriptor.checkMode
+                checkMode: descriptor.checkMode
               });
             }
 
             return resolveEntityValues({
               actualValue: actualEntity,
-              descriptorValue: dataDescriptor.value,
-              checkMode: dataDescriptor.checkMode,
-              oneOf: dataDescriptor.oneOf ?? false
+              descriptorValue: descriptor.value,
+              checkMode: descriptor.checkMode,
+              oneOf: descriptor.oneOf ?? false
             });
           }
 
-          if (entityName === 'payload' && Array.isArray(entityDescriptorOrValue)) {
+          if (Array.isArray(entityDescriptorOrValue)) {
             if (!Array.isArray(actualEntity)) return false;
 
             return resolveEntityValues({
@@ -150,8 +190,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
               const entityPropertyDescriptor = convertToEntityDescriptor(
                 entityPropertyDescriptorOrValue
               );
-              const actualPropertyKey = entityPropertyKey;
-              const actualPropertyValue = flattenedEntity[actualPropertyKey];
+              const actualPropertyValue = flattenedEntity[entityPropertyKey];
 
               if (
                 entityPropertyDescriptor.checkMode === 'exists' ||
@@ -173,32 +212,20 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           );
         });
       });
+      if (!matchedEventArtifact) return;
 
-      if (!matchedRouteConfig) return;
-
-      const params: WsParams = {
-        payload: payload.data,
-        event: payload.event,
-        socket,
-        send: (data) => sendWsData(socket, data)
-      };
-
-      if (matchedRouteConfig.componentRequestInterceptor) {
-        await matchedRouteConfig.componentRequestInterceptor(params);
+      if (matchedEventArtifact.componentRequestInterceptor) {
+        await matchedEventArtifact.componentRequestInterceptor(params);
       }
 
       const resolvedData =
-        typeof matchedRouteConfig.config.data === 'function'
-          ? await matchedRouteConfig.config.data(params)
-          : matchedRouteConfig.config.data;
+        typeof matchedEventArtifact.config.data === 'function'
+          ? await matchedEventArtifact.config.data(params)
+          : matchedEventArtifact.config.data;
 
       let data = resolvedData;
-      if (matchedRouteConfig.componentResponseInterceptor) {
-        data = matchedRouteConfig.componentResponseInterceptor(data, {
-          payload: payload.data,
-          event: payload.event,
-          socket
-        });
+      if (matchedEventArtifact.componentResponseInterceptor) {
+        data = matchedEventArtifact.componentResponseInterceptor(data, params);
       }
 
       sendWsData(socket, data);

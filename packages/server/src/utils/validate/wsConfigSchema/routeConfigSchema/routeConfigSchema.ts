@@ -7,6 +7,7 @@ import { bodyPlainEntitySchema, plainObjectSchema } from '../../utils';
 const baseRouteConfigSchema = z.strictObject({
   entities: plainObjectSchema(
     z.strictObject({
+      meta: bodyPlainEntitySchema.optional(),
       payload: bodyPlainEntitySchema.optional()
     })
   ).optional()
