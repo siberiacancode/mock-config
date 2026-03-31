@@ -1,14 +1,14 @@
 import type { CookieOptions, Response as ExpressResponse, Request } from 'express';
 
-import type { MappedEntity, VariablesPlainEntity } from './entities';
+import type { MappedEntities, VariablesPlainEntity } from './entities';
 import type { Interceptors } from './interceptors';
 import type { BaseUrl } from './server';
 import type { Data } from './values';
 
-export type GraphQLEntityName = 'cookies' | 'headers' | 'query' | 'variables';
+export type GraphQLEntityName = 'cookies' | 'headers' | 'queries' | 'variables';
 
 export type GraphQLEntity<EntityName extends GraphQLEntityName = GraphQLEntityName> =
-  EntityName extends 'variables' ? VariablesPlainEntity : MappedEntity;
+  EntityName extends 'variables' ? VariablesPlainEntity : MappedEntities;
 
 export type GraphQLOperationType = 'mutation' | 'query';
 export type GraphQLOperationName = string | RegExp;

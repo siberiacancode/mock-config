@@ -6,7 +6,7 @@ import path from 'node:path';
 
 import type {
   EntityDescriptor,
-  Entries,
+  Entries, NonSymbolEntries,
   PlainObject,
   RestDataResponse,
   RestEntitiesByEntityName,
@@ -22,6 +22,7 @@ import {
   asyncHandler,
   callRequestInterceptor,
   callResponseInterceptors,
+  convertToEntitiesDescriptor,
   convertToEntityDescriptor,
   isEntityDescriptor,
   isFileDescriptor,
@@ -30,6 +31,7 @@ import {
   sleep,
   urlJoin
 } from '@/utils/helpers';
+import {checkModeSymbol} from '@/utils/constants';
 
 interface CreateRestRoutesParams {
   restRequestArtifacts: RestRequestArtifact[];
@@ -67,17 +69,17 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
             entityName === 'body' && isEntityDescriptor(entityDescriptorOrValue);
           if (isEntityBodyByTopLevelDescriptor) {
             const bodyDescriptor: EntityDescriptor = entityDescriptorOrValue;
-            if (bodyDescriptor.checkMode === 'exists' || bodyDescriptor.checkMode === 'notExists') {
+            if (bodyDescriptor[checkModeSymbol] === 'exists' || bodyDescriptor[checkModeSymbol] === 'notExists') {
               return resolveEntityValues({
                 actualValue: request.body,
-                checkMode: bodyDescriptor.checkMode
+                [checkModeSymbol]: bodyDescriptor[checkModeSymbol]
               });
             }
 
             return resolveEntityValues({
               actualValue: request.body,
               descriptorValue: bodyDescriptor.value,
-              checkMode: bodyDescriptor.checkMode,
+              [checkModeSymbol]: bodyDescriptor[checkModeSymbol],
               oneOf: bodyDescriptor.oneOf ?? false
             });
           }
@@ -90,15 +92,23 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
             return resolveEntityValues({
               actualValue: request.body,
               descriptorValue: entityDescriptorOrValue,
-              checkMode: 'equals'
+              [checkModeSymbol]: 'equals'
             });
           }
 
-          const actualEntity = flatten<PlainObject, PlainObject>(request[entityName]);
-          const entityValueEntries = Object.entries(entityDescriptorOrValue) as Entries<
-            Exclude<RestEntity, TopLevelPlainEntityArray | TopLevelPlainEntityDescriptor>
+          const actualEntity = flatten<PlainObject, PlainObject>(
+            entityName === 'queries' ? request.query : request[entityName]
+          );
+          console.log('entityDescriptorOrValue=', entityDescriptorOrValue);
+          const entitiesDescriptor = convertToEntitiesDescriptor(entityDescriptorOrValue);
+          console.log('entitiesDescriptor=', entitiesDescriptor);
+          const checkMode = entitiesDescriptor[checkModeSymbol];
+          console.log('checkMode=', checkMode);
+
+          const entityValueEntries = Object.entries(entitiesDescriptor.value) as NonSymbolEntries<
+            Entries<Exclude<RestEntity, TopLevelPlainEntityArray | TopLevelPlainEntityDescriptor>>
           >;
-          return entityValueEntries.every(
+          return entityValueEntries[checkMode](
             ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
               const entityPropertyDescriptor = convertToEntityDescriptor(
                 entityPropertyDescriptorOrValue
@@ -110,19 +120,19 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
               const actualPropertyValue = actualEntity[actualPropertyKey];
 
               if (
-                entityPropertyDescriptor.checkMode === 'exists' ||
-                entityPropertyDescriptor.checkMode === 'notExists'
+                entityPropertyDescriptor[checkModeSymbol] === 'exists' ||
+                entityPropertyDescriptor[checkModeSymbol] === 'notExists'
               ) {
                 return resolveEntityValues({
                   actualValue: actualPropertyValue,
-                  checkMode: entityPropertyDescriptor.checkMode
+                  [checkModeSymbol]: entityPropertyDescriptor[checkModeSymbol]
                 });
               }
 
               return resolveEntityValues({
                 actualValue: actualPropertyValue,
                 descriptorValue: entityPropertyDescriptor.value,
-                checkMode: entityPropertyDescriptor.checkMode,
+                [checkModeSymbol]: entityPropertyDescriptor[checkModeSymbol],
                 oneOf: entityPropertyDescriptor.oneOf ?? false
               });
             }

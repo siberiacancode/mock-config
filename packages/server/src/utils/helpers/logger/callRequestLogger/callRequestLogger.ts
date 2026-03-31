@@ -30,7 +30,7 @@ export const callRequestLogger = ({ logger, request }: CallRequestLoggerParams) 
     variables: request.graphQL?.variables ?? null,
     headers: request.headers,
     cookies: request.cookies,
-    query: request.query,
+    queries: request.query,
     params: request.params,
     body: request.body
   };

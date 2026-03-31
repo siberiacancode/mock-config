@@ -24,7 +24,8 @@
     "format": "pnpm -r run format",
     "pretty": "pnpm -r run pretty",
     "unit-test": "pnpm -r run unit-test",
-    "prepare": "husky"
+    "prepare": "husky",
+    "remove-node-modules": "find . -name 'node_modules' -type d -prune -print -exec rm -rf '{}' +"
   },
   "devDependencies": {
     "@siberiacancode/eslint": "^2.16.12",

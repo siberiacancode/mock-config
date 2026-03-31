@@ -1,3 +1,5 @@
+import type { checkModeSymbol } from '@/utils/constants';
+
 import type {
   CheckActualValueCheckMode,
   CheckFunction,
@@ -5,14 +7,16 @@ import type {
   CompareWithDescriptorAnyValueCheckMode,
   CompareWithDescriptorStringValueCheckMode,
   CompareWithDescriptorValueCheckMode,
+  EntitiesCheckMode,
+  EntitiesDescriptor,
   EntityDescriptor
 } from './checkModes';
 import type { NestedObjectOrArray } from './utils';
 
 /* ----- Plain entity ----- */
 
-type PlainEntityPrimitiveValue = boolean | number | string | null;
-type PlainEntityObjectiveValue = NestedObjectOrArray<PlainEntityPrimitiveValue>;
+export type PlainEntityPrimitiveValue = boolean | number | string | null;
+export type PlainEntityObjectiveValue = NestedObjectOrArray<PlainEntityPrimitiveValue>;
 
 export type EntityFunctionDescriptorValue<ActualValue> = (
   actualValue: ActualValue,
@@ -28,12 +32,12 @@ export type TopLevelPlainEntityDescriptor<Check extends CheckMode = CheckMode> =
         ? EntityDescriptor<Check>
         : never;
 
-type PropertyLevelPlainEntityDescriptor<Check extends CheckMode = CheckMode> =
+export type PropertyLevelPlainEntityDescriptor<Check extends CheckMode = CheckMode> =
   Check extends 'function'
     ? EntityDescriptor<
-        Check,
-        EntityFunctionDescriptorValue<PlainEntityObjectiveValue | PlainEntityPrimitiveValue>
-      >
+      Check,
+      EntityFunctionDescriptorValue<PlainEntityObjectiveValue | PlainEntityPrimitiveValue>
+    >
     : Check extends 'regExp'
       ? EntityDescriptor<Check, RegExp>
       : Check extends CompareWithDescriptorAnyValueCheckMode
@@ -44,7 +48,7 @@ type PropertyLevelPlainEntityDescriptor<Check extends CheckMode = CheckMode> =
             ? EntityDescriptor<Check>
             : never;
 
-type NonCheckMode<T extends object> = T & { checkMode?: never };
+type NonCheckMode<T extends object> = T & { checkMode?: never; [checkModeSymbol]?: never };
 
 type TopLevelPlainEntityRecord = NonCheckMode<
   Record<
@@ -66,9 +70,9 @@ export type VariablesPlainEntity = TopLevelPlainEntityDescriptor | TopLevelPlain
 
 /* ----- Mapped entity ----- */
 
-type MappedEntityValue = boolean | number | string;
+export type MappedEntityValue = boolean | number | string;
 
-type MappedEntityDescriptor<Check extends CheckMode = CheckMode> = Check extends 'function'
+export type MappedEntityDescriptor<Check extends CheckMode = CheckMode> = Check extends 'function'
   ? EntityDescriptor<Check, EntityFunctionDescriptorValue<MappedEntityValue>>
   : Check extends 'regExp'
     ? EntityDescriptor<Check, RegExp>
@@ -79,3 +83,17 @@ type MappedEntityDescriptor<Check extends CheckMode = CheckMode> = Check extends
         : never;
 
 export type MappedEntity = Record<string, MappedEntityDescriptor | MappedEntityValue>;
+
+export type MappedEntitiesDescriptor<Check extends EntitiesCheckMode = EntitiesCheckMode> =
+  Check extends 'every'
+    ? EntitiesDescriptor<Check, MappedEntity>
+    : Check extends 'some'
+      ? EntitiesDescriptor<Check, MappedEntity>
+      : never;
+
+// TODO: rename this and other object entity to entities
+export type MappedEntities = MappedEntitiesDescriptor | MappedEntity;
+
+/* ----- Entity handlers ----- */
+
+export type NonSymbolEntries<T> = [string, T[keyof T]][];

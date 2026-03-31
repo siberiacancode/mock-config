@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { isEntityDescriptor } from './isEntityDescriptor';
+import {checkModeSymbol} from '@/utils/constants';
 
 describe('isEntityDescriptor', () => {
   it('Should correctly define descriptor', () => {
@@ -11,7 +12,7 @@ describe('isEntityDescriptor', () => {
     expect(isEntityDescriptor('string')).toEqual(false);
     expect(isEntityDescriptor([])).toEqual(false);
     expect(isEntityDescriptor({ key: 'value' })).toEqual(false);
-    expect(isEntityDescriptor({ checkMode: 'exists' })).toEqual(true);
-    expect(isEntityDescriptor({ checkMode: 'equals', value: 'string' })).toEqual(true);
+    expect(isEntityDescriptor({ [checkModeSymbol]: 'exists' })).toEqual(true);
+    expect(isEntityDescriptor({ [checkModeSymbol]: 'equals', value: 'string' })).toEqual(true);
   });
 });

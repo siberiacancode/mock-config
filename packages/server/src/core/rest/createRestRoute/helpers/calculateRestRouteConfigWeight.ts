@@ -1,23 +1,24 @@
 import type { RestMethod, RestRouteConfig } from '@/utils/types';
 
 import { isPlainObject } from '@/utils/helpers';
+import {checkModeSymbol} from '@/utils/constants';
 
 export const calculateRestRouteConfigWeight = (restRouteConfig: RestRouteConfig<RestMethod>) => {
   const { entities } = restRouteConfig;
   if (!entities) return 0;
 
   let routeConfigWeight = 0;
-  const { headers, cookies, query, params, body } = entities;
+  const { headers, cookies, queries, params, body } = entities;
 
   if (headers) routeConfigWeight += Object.keys(headers).length;
   if (cookies) routeConfigWeight += Object.keys(cookies).length;
-  if (query) routeConfigWeight += Object.keys(query).length;
+  if (queries) routeConfigWeight += Object.keys(queries).length;
   if (params) routeConfigWeight += Object.keys(params).length;
   if (body) {
-    if (isPlainObject(body) && body.checkMode) {
+    if (isPlainObject(body) && body[checkModeSymbol]) {
       // ✅ important:
       // check that actual value check modes does not have `value` for compare
-      if (body.checkMode === 'exists' || body.checkMode === 'notExists') {
+      if (body[checkModeSymbol] === 'exists' || body[checkModeSymbol] === 'notExists') {
         routeConfigWeight += 1;
         return routeConfigWeight;
       }

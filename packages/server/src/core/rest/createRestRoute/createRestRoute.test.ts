@@ -19,6 +19,7 @@ import { createTmpDir } from '@/utils/helpers/tests';
 
 import { createRestRoute } from './createRestRoute';
 import { calculateRestRouteConfigWeight } from './helpers';
+import {checkModeSymbol} from '@/utils/constants';
 
 const createServer = (
   mockServerConfig: Pick<BaseServerConfig, 'baseUrl' | 'interceptors'> & {
@@ -175,13 +176,13 @@ describe('createRestRoutes: content', () => {
             routes: [
               {
                 entities: {
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
                 data: ({ request, entities }) => ({
                   url: request.url,
-                  query: entities.query
+                  query: entities.queries
                 })
               }
             ]
@@ -195,7 +196,7 @@ describe('createRestRoutes: content', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({
       url: '/users?key1=value1',
-      query: {
+      queries: {
         key1: 'value1'
       }
     });
@@ -212,7 +213,7 @@ describe('createRestRoutes: content', () => {
               {
                 settings: { polling: true },
                 entities: {
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
@@ -220,7 +221,7 @@ describe('createRestRoutes: content', () => {
                   {
                     data: ({ request, entities }) => ({
                       url: request.url,
-                      query: entities.query
+                      query: entities.queries
                     })
                   }
                 ]
@@ -236,7 +237,7 @@ describe('createRestRoutes: content', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({
       url: '/users?key1=value1',
-      query: {
+      queries: {
         key1: 'value1'
       }
     });
@@ -664,7 +665,7 @@ describe('createRestRoutes: entities', () => {
                     key1: 'value1',
                     key2: 'value2'
                   },
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
@@ -699,7 +700,7 @@ describe('createRestRoutes: entities', () => {
                     key1: 'value1',
                     key2: 'value2'
                   },
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
@@ -711,7 +712,7 @@ describe('createRestRoutes: entities', () => {
                     key1: 'value1',
                     key2: 'value2'
                   },
-                  query: {
+                  queries: {
                     key1: 'value1',
                     key2: 'value2'
                   }
@@ -744,7 +745,7 @@ describe('createRestRoutes: entities', () => {
               {
                 entities: {
                   body: {
-                    checkMode: 'equals',
+                    [checkModeSymbol]: 'equals',
                     value: [
                       {
                         key1: 'value1',
@@ -794,7 +795,7 @@ describe('createRestRoutes: entities', () => {
               {
                 entities: {
                   body: {
-                    checkMode: 'equals',
+                    [checkModeSymbol]: 'equals',
                     value: {
                       key1: 'value1',
                       key2: { nestedKey1: 'nestedValue1' }
@@ -842,7 +843,7 @@ describe('createRestRoutes: entities', () => {
                   body: {
                     'key1.nestedKey1': 'nestedValue1',
                     'key2.nestedKey2': {
-                      checkMode: 'equals',
+                      [checkModeSymbol]: 'equals',
                       value: 'nestedValue2'
                     }
                   }
@@ -910,7 +911,7 @@ describe('createRestRoutes: entities', () => {
               {
                 entities: {
                   body: {
-                    checkMode: 'equals',
+                    [checkModeSymbol]: 'equals',
                     value: {}
                   }
                 },

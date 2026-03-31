@@ -11,7 +11,7 @@ const baseRequestConfigSchema = (method: RestMethod) =>
   z.strictObject({
     path: z.union([stringForwardSlashSchema, z.instanceof(RegExp)]),
     method: z.literal(method),
-    routes: z.array(routeConfigSchema(method)),
+    routes: z.array(routeConfigSchema()),
     interceptors: plainObjectSchema(interceptorsSchema).optional()
   });
 

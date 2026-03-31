@@ -12,13 +12,14 @@ import {
 import { extendedDiscriminatedUnion } from '../extendedDiscriminatedUnion/extendedDiscriminatedUnion';
 import { nestedObjectOrArraySchema } from '../nestedObjectOrArraySchema/nestedObjectOrArraySchema';
 import { plainObjectSchema } from '../plainObjectSchema/plainObjectSchema';
+import {checkModeSymbol} from '@/utils/constants';
 
 /* ----- Plain entity schema ----- */
 
 const plainEntityPrimitiveValueSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 const plainEntityObjectiveValueSchema = nestedObjectOrArraySchema(plainEntityPrimitiveValueSchema);
 
-const topLevelPlainEntityDescriptorSchema = extendedDiscriminatedUnion('checkMode', [
+const topLevelPlainEntityDescriptorSchema = extendedDiscriminatedUnion(checkModeSymbol, [
   entityDescriptorSchema(checkActualValueCheckModeSchema),
   entityDescriptorSchema(z.literal('function'), z.function()),
   entityDescriptorSchema(
@@ -27,7 +28,7 @@ const topLevelPlainEntityDescriptorSchema = extendedDiscriminatedUnion('checkMod
   )
 ]);
 
-const propertyLevelPlainEntityDescriptorSchema = extendedDiscriminatedUnion('checkMode', [
+const propertyLevelPlainEntityDescriptorSchema = extendedDiscriminatedUnion(checkModeSymbol, [
   entityDescriptorSchema(checkActualValueCheckModeSchema),
   entityDescriptorSchema(z.literal('function'), z.function()),
   entityDescriptorSchema(z.literal('regExp'), z.instanceof(RegExp)),
@@ -85,7 +86,7 @@ export const variablesPlainEntitySchema = z.union([
 
 const mappedEntityValueSchema = z.union([z.string(), z.number(), z.boolean()]);
 
-const mappedEntityDescriptorSchema = extendedDiscriminatedUnion('checkMode', [
+const mappedEntityDescriptorSchema = extendedDiscriminatedUnion(checkModeSymbol, [
   entityDescriptorSchema(checkActualValueCheckModeSchema),
   entityDescriptorSchema(z.literal('function'), z.function()),
   entityDescriptorSchema(z.literal('regExp'), z.instanceof(RegExp)),

@@ -5,21 +5,38 @@ import { isPlainObject } from '@/utils/helpers';
 import { getMostSpecificPathFromError } from '../../getMostSpecificPathFromError';
 
 type ExtendedDiscriminatedUnionVariant<
-  Discriminator extends string,
+  Discriminator extends string | symbol,
   Option extends z.ZodObject<{ [Key in Discriminator]: z.ZodTypeAny }> = z.ZodObject<{
     [Key in Discriminator]: z.ZodTypeAny;
   }>
 > = Option | z.ZodDiscriminatedUnion<string, [Option, ...Option[]]>;
 
-export const extendedDiscriminatedUnion = <Discriminator extends string>(
+export const extendedDiscriminatedUnion = <Discriminator extends string | symbol>(
   discriminator: Discriminator,
   variants: [
     ExtendedDiscriminatedUnionVariant<Discriminator>,
     ...ExtendedDiscriminatedUnionVariant<Discriminator>[]
   ]
-) =>
-  z
-    .custom((value) => isPlainObject(value) && discriminator in value)
+) => {
+  // console.log(`extendedDiscriminatedUnion for discriminator=${String(discriminator)}`);
+  return z
+    .custom((value) => {
+      // console.log('\n\ncheck value=', value);
+      if (!isPlainObject(value)) {
+        // console.log('value is !isPlainObject');
+        return false;
+      }
+      if (typeof discriminator === 'string') {
+        // console.log('discriminator is string');
+        return discriminator in value;
+      }
+      // console.log(
+      //   `discriminator(${String(discriminator)}) is symbol, value(${JSON.stringify(value)}), symbols=${Object.getOwnPropertySymbols(value).map((sym) => String(sym))},`,
+      //   'value symbols includes discriminator=',
+      //   Object.getOwnPropertySymbols(value).includes(discriminator)
+      // );
+      return Object.getOwnPropertySymbols(value).includes(discriminator);
+    })
     .superRefine((value, context) => {
       const variantWithMatchedDiscriminator = variants.find((variant) => {
         const isVariantOption = variant instanceof z.ZodDiscriminatedUnion;
@@ -28,21 +45,21 @@ export const extendedDiscriminatedUnion = <Discriminator extends string>(
             (option) =>
               option
                 .strip()
-                .pick({ [discriminator]: true } as any)
+                .pick({[discriminator]: true} as any)
                 .safeParse(value).success
           );
         }
 
         return variant
           .strip()
-          .pick({ [discriminator]: true } as any)
+          .pick({[discriminator]: true} as any)
           .safeParse(value).success;
       });
 
       if (!variantWithMatchedDiscriminator) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
-          path: [discriminator],
+          path: [typeof discriminator === 'symbol' ? 'checkModeSymbol' : discriminator],
           fatal: true
         });
         return z.NEVER;
@@ -59,3 +76,6 @@ export const extendedDiscriminatedUnion = <Discriminator extends string>(
         return z.NEVER;
       }
     });
+}
+
+
