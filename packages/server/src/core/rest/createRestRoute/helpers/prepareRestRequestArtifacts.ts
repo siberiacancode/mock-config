@@ -47,29 +47,28 @@ interface MatchRestRequestArtifactsParams {
   };
 }
 
+export const generatePathRegex = (path: string) =>
+  new RegExp(
+    `^${path
+      .split('/')
+      .map((part) =>
+        part.startsWith(':') ? '([^/]+)' : part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      )
+      .join('/')}$`
+  );
+
 export const matchRestRequestArtifacts = ({ artifacts, meta }: MatchRestRequestArtifactsParams) =>
   artifacts.filter((artifact) => {
+    if (!meta.path.startsWith(artifact.baseUrl)) return false;
+
     if (artifact.method !== meta.method) return false;
 
     if (artifact.path instanceof RegExp) {
-      return artifact.path.test(meta.path);
+      const path = meta.path.slice(artifact.baseUrl.length);
+      if (!path) return false;
+      console.log(path, artifact.path.test(path));
+      return artifact.path.test(path);
     }
 
-    const artifactPath = urlJoin(artifact.baseUrl, artifact.path);
-
-    const hasPathParams = /:[^/]+/.test(artifactPath);
-    if (!hasPathParams) {
-      return artifactPath === meta.path;
-    }
-
-    const regexSource = artifactPath
-      .split('/')
-      .map((pathPart) => {
-        if (!pathPart.startsWith(':')) return pathPart.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        return '([^/]+)';
-      })
-      .join('/');
-
-    const regex = new RegExp(`^${regexSource}$`);
-    return regex.test(meta.path);
+    return generatePathRegex(urlJoin(artifact.baseUrl, artifact.path)).test(meta.path);
   });

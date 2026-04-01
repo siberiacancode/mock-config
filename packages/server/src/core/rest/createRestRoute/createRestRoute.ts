@@ -27,15 +27,33 @@ import {
   isFileDescriptor,
   isFilePathValid,
   resolveEntityValues,
-  sleep
+  sleep,
+  urlJoin
 } from '@/utils/helpers';
 
-import { matchRestRequestArtifacts } from './helpers';
+import { generatePathRegex, matchRestRequestArtifacts } from './helpers';
 
 interface CreateRestRoutesParams {
   restRequestArtifacts: RestRequestArtifact[];
   server: Express;
 }
+
+const extractPathParams = (artifact: RestRequestArtifact, path: string) => {
+  if (artifact.path instanceof RegExp) return {};
+
+  const fullPath = urlJoin(artifact.baseUrl, artifact.path);
+  const keys = fullPath.match(/:[^/]+/g)?.map((key) => key.slice(1)) ?? [];
+
+  if (!keys.length) return {};
+
+  const match = path.match(generatePathRegex(fullPath));
+  if (!match) return {};
+
+  return keys.reduce<Record<string, string>>((acc, key, index) => {
+    acc[key] = decodeURIComponent(match[index + 1]);
+    return acc;
+  }, {});
+};
 
 export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRoutesParams) =>
   server.use(
@@ -53,7 +71,10 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
 
       if (!matchedRequestArtifacts.length) return next();
 
-      const matchedRouteConfig = matchedRequestArtifacts.find(({ config }) => {
+      const matchedRouteConfig = matchedRequestArtifacts.find((artifact) => {
+        request.params = extractPathParams(artifact, request.path);
+        const { config } = artifact;
+
         if (!config.entities) return true;
 
         const entityEntries = Object.entries(config.entities) as Entries<

@@ -18,7 +18,7 @@ export const matchGraphQLRequestArtifacts = ({
   meta
 }: MatchGraphQLRequestArtifactsParams) =>
   artifacts.filter((artifact) => {
-    if (artifact.baseUrl !== meta.path) return false;
+    if (!meta.path.startsWith(artifact.baseUrl)) return false;
 
     if (artifact.operationType !== meta.operationType) return false;
 
