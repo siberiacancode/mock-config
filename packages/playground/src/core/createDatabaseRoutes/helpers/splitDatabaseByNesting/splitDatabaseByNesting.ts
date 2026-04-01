@@ -3,7 +3,7 @@ import type {
   NestedDatabase,
   NestedDatabaseId,
   ShallowDatabase
-} from '@/shared/types';
+} from '@/utils/types';
 
 import { isPlainObject } from '@/shared/helpers';
 

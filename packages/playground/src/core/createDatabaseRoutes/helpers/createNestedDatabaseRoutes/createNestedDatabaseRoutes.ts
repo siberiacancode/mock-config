@@ -1,7 +1,7 @@
-import type { IRouter } from 'express';
 import type { ParsedUrlQuery } from 'node:querystring';
 
-import type { NestedDatabase } from '@/shared/types';
+import type { HttpRouter } from 'mock-config-http';
+import type { NestedDatabase } from '@/utils/types';
 
 import type { MemoryStorage } from '../../storages';
 
@@ -9,7 +9,7 @@ import { createNewId, findIndexById } from '../array';
 import { embed, filter, pagination, search, sort } from '../functions';
 
 export const createNestedDatabaseRoutes = (
-  router: IRouter,
+  router: HttpRouter,
   database: NestedDatabase,
   storage: MemoryStorage<NestedDatabase>
 ) => {

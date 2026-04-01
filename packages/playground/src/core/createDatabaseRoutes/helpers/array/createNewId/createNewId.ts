@@ -1,4 +1,4 @@
-import type { NestedDatabaseId } from '@/shared/types';
+import type { NestedDatabaseId } from '@/utils/types';
 
 export const createNewId = (array: { id: NestedDatabaseId }[]) => {
   let maxId = -1;

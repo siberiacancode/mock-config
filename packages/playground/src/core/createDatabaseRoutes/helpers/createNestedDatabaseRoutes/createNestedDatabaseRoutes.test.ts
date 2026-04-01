@@ -1,11 +1,8 @@
-import type { Express } from 'express';
-
-import bodyParser from 'body-parser';
-import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import type { NestedDatabase } from '@/shared/types';
+import { createNodeApp, createNodeRouter } from 'mock-config-http';
+import type { NestedDatabase } from '@/utils/types';
 
 import { MemoryStorage } from '../../storages';
 import { createNestedDatabaseRoutes } from './createNestedDatabaseRoutes';
@@ -45,8 +42,8 @@ describe('CreateNestedDatabaseRoutes', () => {
   });
 
   const createServer = (nestedDatabase: NestedDatabase) => {
-    const server = express();
-    const routerBase = express.Router();
+    const server = createNodeApp();
+    const routerBase = createNodeRouter();
     const storage = new MemoryStorage(nestedDatabase);
 
     const routerWithNestedDatabaseRoutes = createNestedDatabaseRoutes(
@@ -55,11 +52,9 @@ describe('CreateNestedDatabaseRoutes', () => {
       storage
     );
 
-    server.use(bodyParser.json());
-    server.use(bodyParser.text());
     server.use('/', routerWithNestedDatabaseRoutes);
 
-    return server;
+    return server.handle;
   };
 
   describe('createNestedDatabaseRoutes: GET method for collection', () => {
@@ -81,7 +76,7 @@ describe('CreateNestedDatabaseRoutes', () => {
 
   describe('createNestedDatabaseRoutes: POST method for collection', () => {
     let nestedDatabase: ReturnType<typeof createNestedDatabase>;
-    let server: Express;
+    let server: ReturnType<typeof createServer>;
     beforeEach(() => {
       nestedDatabase = createNestedDatabase();
       server = createServer(nestedDatabase);
@@ -131,7 +126,7 @@ describe('CreateNestedDatabaseRoutes', () => {
 
   describe('createNestedDatabaseRoutes: PUT method for item', () => {
     let nestedDatabase: ReturnType<typeof createNestedDatabase>;
-    let server: Express;
+    let server: ReturnType<typeof createServer>;
     beforeEach(() => {
       nestedDatabase = createNestedDatabase();
       server = createServer(nestedDatabase);
@@ -152,7 +147,7 @@ describe('CreateNestedDatabaseRoutes', () => {
 
   describe('createNestedDatabaseRoutes: PATCH method for item', () => {
     let nestedDatabase: ReturnType<typeof createNestedDatabase>;
-    let server: Express;
+    let server: ReturnType<typeof createServer>;
     beforeEach(() => {
       nestedDatabase = createNestedDatabase();
       server = createServer(nestedDatabase);
@@ -179,7 +174,7 @@ describe('CreateNestedDatabaseRoutes', () => {
 
   describe('createNestedDatabase: DELETE method for item', () => {
     let nestedDatabase: ReturnType<typeof createNestedDatabase>;
-    let server: Express;
+    let server: ReturnType<typeof createServer>;
     beforeEach(() => {
       nestedDatabase = createNestedDatabase();
       server = createServer(nestedDatabase);

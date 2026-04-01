@@ -1,4 +1,4 @@
-import type { Storage, StorageIndex } from '@/shared/types';
+import type { Storage, StorageIndex } from '@/utils/types';
 
 import { isIndex } from '../../helpers';
 

@@ -1,6 +1,6 @@
-import type { IRouter } from 'express';
+import type { HttpRouter } from 'mock-config-http';
 
-import type { DatabaseConfig, NestedDatabase, ShallowDatabase } from '@/shared/types';
+import type { DatabaseConfig, NestedDatabase, ShallowDatabase } from '@/utils/types';
 
 import { createStorage } from '../createStorage/createStorage';
 import {
@@ -14,7 +14,7 @@ import { FileStorage, MemoryStorage } from './storages';
 const isVariableJsonFile = (variable: unknown): variable is `${string}.json` =>
   typeof variable === 'string' && variable.endsWith('.json');
 
-export const createDatabaseRoutes = (router: IRouter, { data, routes }: DatabaseConfig) => {
+export const createDatabaseRoutes = (router: HttpRouter, { data, routes }: DatabaseConfig) => {
   if (routes) {
     const storage = createStorage(routes);
     createRewrittenDatabaseRoutes(router, storage.read());

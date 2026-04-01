@@ -1,14 +1,14 @@
-import type { IRouter } from 'express';
 import type { ParsedUrlQuery } from 'node:querystring';
 
-import type { ShallowDatabase } from '@/shared/types';
+import type { HttpRouter } from 'mock-config-http';
+import type { ShallowDatabase } from '@/utils/types';
 
 import type { MemoryStorage } from '../../storages';
 
 import { filter, pagination, search, sort } from '../functions';
 
 export const createShallowDatabaseRoutes = (
-  router: IRouter,
+  router: HttpRouter,
   database: ShallowDatabase,
   storage: MemoryStorage<ShallowDatabase>
 ) => {

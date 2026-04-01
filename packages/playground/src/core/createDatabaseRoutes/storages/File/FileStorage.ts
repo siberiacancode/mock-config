@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import type { Storage, StorageIndex } from '@/shared/types';
+import type { Storage, StorageIndex } from '@/utils/types';
 
 import { APP_PATH } from '@/shared/constants';
 

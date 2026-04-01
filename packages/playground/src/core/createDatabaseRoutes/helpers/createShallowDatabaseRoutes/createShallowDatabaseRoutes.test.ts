@@ -1,11 +1,8 @@
-import type { Express } from 'express';
-
-import bodyParser from 'body-parser';
-import express from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import type { ShallowDatabase } from '@/shared/types';
+import { createNodeApp, createNodeRouter } from 'mock-config-http';
+import type { ShallowDatabase } from '@/utils/types';
 
 import { MemoryStorage } from '../../storages';
 import { createShallowDatabaseRoutes } from './createShallowDatabaseRoutes';
@@ -31,8 +28,8 @@ describe('createShallowDatabaseRoutes', () => {
   });
 
   const createServer = (shallowDatabase: ShallowDatabase) => {
-    const server = express();
-    const routerBase = express.Router();
+    const server = createNodeApp();
+    const routerBase = createNodeRouter();
     const storage = new MemoryStorage(shallowDatabase);
 
     const routerWithRoutesForShallowDatabase = createShallowDatabaseRoutes(
@@ -41,11 +38,9 @@ describe('createShallowDatabaseRoutes', () => {
       storage
     );
 
-    server.use(bodyParser.json());
-    server.use(bodyParser.text());
     server.use('/', routerWithRoutesForShallowDatabase);
 
-    return server;
+    return server.handle;
   };
 
   describe('createShallowDatabaseRoutes: GET method', () => {
@@ -68,7 +63,7 @@ describe('createShallowDatabaseRoutes', () => {
 
   describe('createShallowDatabaseRoutes: POST method', () => {
     let shallowDatabase: ReturnType<typeof createShallowDatabase>;
-    let server: Express;
+    let server: ReturnType<typeof createServer>;
     beforeEach(() => {
       shallowDatabase = createShallowDatabase();
       server = createServer(shallowDatabase);
@@ -94,7 +89,7 @@ describe('createShallowDatabaseRoutes', () => {
 
   describe('createShallowDatabaseRoutes: PUT method', () => {
     let shallowDatabase: ReturnType<typeof createShallowDatabase>;
-    let server: Express;
+    let server: ReturnType<typeof createServer>;
     beforeEach(() => {
       shallowDatabase = createShallowDatabase();
       server = createServer(shallowDatabase);
@@ -114,7 +109,7 @@ describe('createShallowDatabaseRoutes', () => {
 
   describe('createShallowDatabaseRoutes: PATCH method', () => {
     let shallowDatabase: ReturnType<typeof createShallowDatabase>;
-    let server: Express;
+    let server: ReturnType<typeof createServer>;
     beforeEach(() => {
       shallowDatabase = createShallowDatabase();
       server = createServer(shallowDatabase);

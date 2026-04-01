@@ -1,6 +1,6 @@
 import type { Arguments } from 'yargs';
 
-import type { BaseUrl, Cors, Port, StaticPath } from '@/shared/types';
+import type { BaseUrl, Cors, Port, StaticPath } from './core';
 
 export interface PlaygroundServerConfig {
   baseUrl?: BaseUrl;
@@ -17,3 +17,5 @@ export type PlaygroundServerArgv = Arguments<{
   port?: number;
   staticPath?: string;
 }>;
+
+export * from './core';

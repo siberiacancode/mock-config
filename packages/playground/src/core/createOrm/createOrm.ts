@@ -1,6 +1,6 @@
 import { flatten } from 'flat';
 
-import type { Database, NestedOrm, Orm, ShallowOrm, Storage } from '@/shared/types';
+import type { Database, NestedOrm, Orm, ShallowOrm, Storage } from '@/utils/types';
 
 import {
   createNewId,

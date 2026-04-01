@@ -1,12 +1,10 @@
-import type { Express } from 'express';
-
-import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import type { DatabaseConfig, MockServerConfig } from '@/shared/types';
+import { createNodeApp, createNodeRouter } from 'mock-config-http';
+import type { BaseUrl, DatabaseConfig } from '@/utils/types';
 
 import { createTmpDir } from '@/shared/tests';
 
@@ -14,15 +12,13 @@ import { createDatabaseRoutes } from './createDatabaseRoutes';
 import { findIndexById } from './helpers';
 
 describe('createDatabaseRoutes', () => {
-  const createServer = (
-    mockServerConfig: Pick<MockServerConfig, 'baseUrl'> & { database: DatabaseConfig }
-  ) => {
-    const server = express();
-    const routerBase = express.Router();
+  const createServer = (mockServerConfig: { baseUrl?: BaseUrl; database: DatabaseConfig }) => {
+    const server = createNodeApp();
+    const routerBase = createNodeRouter();
     const routesWithDatabaseRoutes = createDatabaseRoutes(routerBase, mockServerConfig.database);
 
     server.use(mockServerConfig.baseUrl ?? '/', routesWithDatabaseRoutes);
-    return server;
+    return server.handle;
   };
 
   describe('createDatabaseRoutes: routes and data successfully works when passing them by object', () => {
@@ -57,7 +53,7 @@ describe('createDatabaseRoutes', () => {
     const routes = { '/api/profile': '/profile' } as const;
 
     let tmpDirPath: string;
-    let server: Express;
+    let server: ReturnType<typeof createServer>;
 
     beforeAll(() => {
       tmpDirPath = createTmpDir();
