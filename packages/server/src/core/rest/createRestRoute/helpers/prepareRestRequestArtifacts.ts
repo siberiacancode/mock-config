@@ -64,9 +64,9 @@ export const matchRestRequestArtifacts = ({ artifacts, meta }: MatchRestRequestA
     if (artifact.method !== meta.method) return false;
 
     if (artifact.path instanceof RegExp) {
+      if (artifact.baseUrl === '/') return artifact.path.test(meta.path);
       const path = meta.path.slice(artifact.baseUrl.length);
       if (!path) return false;
-      console.log(path, artifact.path.test(path));
       return artifact.path.test(path);
     }
 
