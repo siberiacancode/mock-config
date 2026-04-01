@@ -1,7 +1,7 @@
 import type { GraphQLRequestArtifact } from '@/utils/types';
 
 export const prepareGraphQLRequestArtifacts = (requestArtifacts: GraphQLRequestArtifact[]) =>
-  requestArtifacts.sort((first, second) => second.weight - first.weight);
+  requestArtifacts.toSorted((first, second) => second.weight - first.weight);
 
 interface MatchGraphQLRequestArtifactsParams {
   artifacts: GraphQLRequestArtifact[];

@@ -4,7 +4,7 @@ import { urlJoin } from '@/utils/helpers';
 
 export const prepareRestRequestArtifacts = (requestArtifacts: RestRequestArtifact[]) => {
   const sortedByPathRequestArtifacts = requestArtifacts
-    .sort(({ path: firstPath }, { path: secondPath }) => {
+    .toSorted(({ path: firstPath }, { path: secondPath }) => {
       // ✅ important:
       // do not compare RegExp paths and non-parameterized paths
       if (firstPath instanceof RegExp || secondPath instanceof RegExp) return 0;
@@ -34,7 +34,7 @@ export const prepareRestRequestArtifacts = (requestArtifacts: RestRequestArtifac
       }
       return 0;
     })
-    .sort((first, second) => second.weight - first.weight);
+    .toSorted((first, second) => second.weight - first.weight);
 
   return sortedByPathRequestArtifacts;
 };

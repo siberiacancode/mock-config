@@ -1,2 +1,2 @@
-export * from "./calculateRestRouteConfigWeight";
-export * from "./prepareRestRequestArtifacts";
+export * from './calculateRestRouteConfigWeight';
+export * from './prepareRestRequestArtifacts';

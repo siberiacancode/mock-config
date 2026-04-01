@@ -1,34 +1,19 @@
-import type {
-  CookieOptions,
-  Response as ExpressResponse,
-  Request,
-} from "express";
+import type { CookieOptions, Response as ExpressResponse, Request } from 'express';
 
-import type { BodyPlainEntity, MappedEntity } from "./entities";
-import type { Interceptors } from "./interceptors";
-import type { BaseUrl } from "./server";
-import type { Data } from "./values";
+import type { BodyPlainEntity, MappedEntity } from './entities';
+import type { Interceptors } from './interceptors';
+import type { BaseUrl } from './server';
+import type { Data } from './values';
 
-export type RestMethod =
-  | "delete"
-  | "get"
-  | "options"
-  | "patch"
-  | "post"
-  | "put";
-export type RestEntityName =
-  | "body"
-  | "cookies"
-  | "headers"
-  | "params"
-  | "query";
+export type RestMethod = 'delete' | 'get' | 'options' | 'patch' | 'post' | 'put';
+export type RestEntityName = 'body' | 'cookies' | 'headers' | 'params' | 'query';
 
 export type RestEntity<EntityName extends RestEntityName = RestEntityName> =
-  EntityName extends "body" ? BodyPlainEntity : MappedEntity;
+  EntityName extends 'body' ? BodyPlainEntity : MappedEntity;
 
 export type RestEntityNamesByMethod = {
-  [key in RestMethod]: key extends "delete" | "get" | "options"
-    ? Exclude<RestEntityName, "body">
+  [key in RestMethod]: key extends 'delete' | 'get' | 'options'
+    ? Exclude<RestEntityName, 'body'>
     : RestEntityName;
 };
 export type RestEntitiesByEntityName<Method extends RestMethod = RestMethod> = {
@@ -98,24 +83,24 @@ export type RestRouteConfig<Method extends RestMethod> = (
     }
 ) & {
   entities?: RestEntitiesByEntityName<Method>;
-  interceptors?: Interceptors<"rest">;
+  interceptors?: Interceptors<'rest'>;
 };
 
 export type RestPathString = `/${string}`;
 
 export interface BaseRestRequestConfig<Method extends RestMethod> {
-  interceptors?: Interceptors<"rest">;
+  interceptors?: Interceptors<'rest'>;
   method: Method;
   path: RegExp | RestPathString;
   routes: RestRouteConfig<Method>[];
 }
 
-type RestGetRequestConfig = BaseRestRequestConfig<"get">;
-type RestPostRequestConfig = BaseRestRequestConfig<"post">;
-type RestPutRequestConfig = BaseRestRequestConfig<"put">;
-type RestDeleteRequestConfig = BaseRestRequestConfig<"delete">;
-type RestPatchRequestConfig = BaseRestRequestConfig<"patch">;
-type RestOptionsRequestConfig = BaseRestRequestConfig<"options">;
+type RestGetRequestConfig = BaseRestRequestConfig<'get'>;
+type RestPostRequestConfig = BaseRestRequestConfig<'post'>;
+type RestPutRequestConfig = BaseRestRequestConfig<'put'>;
+type RestDeleteRequestConfig = BaseRestRequestConfig<'delete'>;
+type RestPatchRequestConfig = BaseRestRequestConfig<'patch'>;
+type RestOptionsRequestConfig = BaseRestRequestConfig<'options'>;
 export type RestRequestConfig =
   | RestDeleteRequestConfig
   | RestGetRequestConfig
@@ -126,16 +111,16 @@ export type RestRequestConfig =
 
 export interface RestRequestArtifact {
   baseUrl: BaseUrl;
-  componentRequestInterceptor?: Interceptors<"rest">["request"];
-  componentResponseInterceptor?: Interceptors<"rest">["response"];
+  componentRequestInterceptor?: Interceptors<'rest'>['request'];
+  componentResponseInterceptor?: Interceptors<'rest'>['response'];
   config: RestRouteConfig<RestMethod>;
   method: RestMethod;
   path: RegExp | RestPathString;
-  requestRequestInterceptor?: Interceptors<"rest">["request"];
-  requestResponseInterceptor?: Interceptors<"rest">["response"];
-  routeRequestInterceptor?: Interceptors<"rest">["request"];
-  routeResponseInterceptor?: Interceptors<"rest">["response"];
-  serverRequestInterceptor?: Interceptors<"rest">["request"];
-  serverResponseInterceptor?: Interceptors<"rest">["response"];
+  requestRequestInterceptor?: Interceptors<'rest'>['request'];
+  requestResponseInterceptor?: Interceptors<'rest'>['response'];
+  routeRequestInterceptor?: Interceptors<'rest'>['request'];
+  routeResponseInterceptor?: Interceptors<'rest'>['response'];
+  serverRequestInterceptor?: Interceptors<'rest'>['request'];
+  serverResponseInterceptor?: Interceptors<'rest'>['response'];
   weight: number;
 }

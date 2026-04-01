@@ -13,14 +13,14 @@ import { getGraphQLInput, parseQuery } from '@/utils/helpers';
 declare global {
   namespace Express {
     export interface Request {
-      id: number;
-      timestamp: number;
       graphQL: {
         operationType: GraphQLOperationType;
         operationName?: GraphQLOperationName;
         query: string;
         variables?: GraphQLEntity<'variables'>;
       } | null;
+      id: number;
+      timestamp: number;
     }
   }
 }
