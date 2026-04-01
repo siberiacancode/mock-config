@@ -13,6 +13,7 @@ const createParams = () =>
       send: vi.fn(),
       type: vi.fn()
     },
+    next: vi.fn(() => null),
     setHeader: vi.fn(),
     setStatusCode: vi.fn()
   }) as any;
@@ -35,8 +36,9 @@ describe('createFileHandler', () => {
 
     const result = fileHandler(params);
 
-    expect(params.setStatusCode).toHaveBeenCalledWith(404);
-    expect(params.response.send).toHaveBeenCalledWith('Not Found');
+    expect(params.next).toHaveBeenCalledTimes(1);
+    expect(params.setStatusCode).not.toHaveBeenCalled();
+    expect(params.response.send).not.toHaveBeenCalled();
     expect(params.response.type).not.toHaveBeenCalled();
     expect(params.setHeader).not.toHaveBeenCalled();
     expect(result).toBeNull();

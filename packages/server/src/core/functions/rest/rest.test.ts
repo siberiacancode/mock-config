@@ -11,7 +11,8 @@ describe('rest', () => {
       path: '/users',
       routes: [
         {
-          data: 'value'
+          data: 'value',
+          settings: {}
         }
       ]
     });
@@ -37,7 +38,8 @@ describe('rest', () => {
             headers: {
               key: 'value'
             }
-          }
+          },
+          settings: {}
         }
       ]
     });
@@ -63,7 +65,8 @@ describe('rest', () => {
             headers: {
               key: 'value'
             }
-          }
+          },
+          settings: {}
         }
       ]
     });
@@ -78,7 +81,8 @@ describe('rest', () => {
       path: '/users',
       routes: [
         {
-          data: handler
+          data: handler,
+          settings: {}
         }
       ]
     });
@@ -105,7 +109,8 @@ describe('rest', () => {
             headers: {
               key: 'value'
             }
-          }
+          },
+          settings: {}
         }
       ]
     });
@@ -136,7 +141,8 @@ describe('rest', () => {
             headers: {
               key: 'value'
             }
-          }
+          },
+          settings: {}
         }
       ]
     });
@@ -153,7 +159,8 @@ describe('rest', () => {
         path: '/users',
         routes: [
           {
-            data: { ok: true }
+            data: { ok: true },
+            settings: {}
           }
         ]
       });
@@ -196,7 +203,8 @@ describe('rest', () => {
       path: '/users/:id',
       routes: [
         {
-          data: expect.any(Function)
+          data: expect.any(Function),
+          settings: {}
         }
       ]
     });

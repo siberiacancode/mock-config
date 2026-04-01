@@ -7,7 +7,8 @@ const createParams = () =>
     response: {
       send: vi.fn()
     },
-    setStatusCode: vi.fn()
+    setStatusCode: vi.fn(),
+    next: vi.fn(() => null)
   }) as any;
 
 describe('createQueueHandler', () => {
@@ -21,8 +22,9 @@ describe('createQueueHandler', () => {
 
     const result = await queueHandler(params);
 
-    expect(params.setStatusCode).toHaveBeenCalledWith(404);
-    expect(params.response.send).toHaveBeenCalledWith('Not Found');
+    expect(params.next).toHaveBeenCalledTimes(1);
+    expect(params.setStatusCode).not.toHaveBeenCalled();
+    expect(params.response.send).not.toHaveBeenCalled();
     expect(result).toBeNull();
   });
 
