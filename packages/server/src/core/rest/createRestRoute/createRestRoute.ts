@@ -1,8 +1,8 @@
-import type { Express } from 'express';
+import type { Express } from "express";
 
-import { flatten } from 'flat';
-import fs from 'node:fs';
-import path from 'node:path';
+import { flatten } from "flat";
+import fs from "node:fs";
+import path from "node:path";
 
 import type {
   EntityDescriptor,
@@ -15,8 +15,8 @@ import type {
   RestParams,
   RestRequestArtifact,
   TopLevelPlainEntityArray,
-  TopLevelPlainEntityDescriptor
-} from '@/utils/types';
+  TopLevelPlainEntityDescriptor,
+} from "@/utils/types";
 
 import {
   asyncHandler,
@@ -28,128 +28,156 @@ import {
   isFilePathValid,
   resolveEntityValues,
   sleep,
-  urlJoin
-} from '@/utils/helpers';
+} from "@/utils/helpers";
+import { matchRestRequestArtifacts } from "./helpers";
 
 interface CreateRestRoutesParams {
   restRequestArtifacts: RestRequestArtifact[];
   server: Express;
 }
 
-export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRoutesParams) =>
+export const createRestRoute = ({
+  server,
+  restRequestArtifacts,
+}: CreateRestRoutesParams) =>
   server.use(
     asyncHandler(async (request, response, next) => {
       const requestMethod = request.method.toLowerCase();
+      const previousParams = { ...request.params };
 
-      const matchedRequestArtifacts = restRequestArtifacts.filter((restRequestArtifact) => {
-        const isMethodMatched = restRequestArtifact.method === requestMethod;
-        if (!isMethodMatched) return false;
-
-        if (restRequestArtifact.path instanceof RegExp) {
-          return restRequestArtifact.path.test(request.path);
-        }
-
-        return request.path === urlJoin(restRequestArtifact.baseUrl, restRequestArtifact.path);
+      const matchedRequestArtifacts = matchRestRequestArtifacts({
+        requestArtifacts: restRequestArtifacts,
+        requestMethod,
+        requestPath: request.path,
       });
 
       if (!matchedRequestArtifacts.length) return next();
 
-      const matchedRouteConfig = matchedRequestArtifacts.find(({ config }) => {
-        if (!config.entities) return true;
+      const matchedRouteConfigWithParams = matchedRequestArtifacts.find(
+        ({ artifact, pathParams }) => {
+          request.params = { ...previousParams, ...pathParams };
 
-        const entityEntries = Object.entries(config.entities) as Entries<
-          Required<RestEntitiesByEntityName>
-        >;
-        return entityEntries.every(([entityName, entityDescriptorOrValue]) => {
-          // ✅ important:
-          // check whole body as plain value strictly if descriptor used for body
-          const isEntityBodyByTopLevelDescriptor =
-            entityName === 'body' && isEntityDescriptor(entityDescriptorOrValue);
-          if (isEntityBodyByTopLevelDescriptor) {
-            const bodyDescriptor: EntityDescriptor = entityDescriptorOrValue;
-            if (bodyDescriptor.checkMode === 'exists' || bodyDescriptor.checkMode === 'notExists') {
-              return resolveEntityValues({
-                actualValue: request.body,
-                checkMode: bodyDescriptor.checkMode
-              });
-            }
+          if (!artifact.config.entities) return true;
 
-            return resolveEntityValues({
-              actualValue: request.body,
-              descriptorValue: bodyDescriptor.value,
-              checkMode: bodyDescriptor.checkMode,
-              oneOf: bodyDescriptor.oneOf ?? false
-            });
-          }
+          const entityEntries = Object.entries(
+            artifact.config.entities
+          ) as Entries<Required<RestEntitiesByEntityName>>;
+          return entityEntries.every(
+            ([entityName, entityDescriptorOrValue]) => {
+              // ✅ important:
+              // check whole body as plain value strictly if descriptor used for body
+              const isEntityBodyByTopLevelDescriptor =
+                entityName === "body" &&
+                isEntityDescriptor(entityDescriptorOrValue);
+              if (isEntityBodyByTopLevelDescriptor) {
+                const bodyDescriptor: EntityDescriptor =
+                  entityDescriptorOrValue;
+                if (
+                  bodyDescriptor.checkMode === "exists" ||
+                  bodyDescriptor.checkMode === "notExists"
+                ) {
+                  return resolveEntityValues({
+                    actualValue: request.body,
+                    checkMode: bodyDescriptor.checkMode,
+                  });
+                }
 
-          const isEntityBodyByTopLevelArray =
-            entityName === 'body' && Array.isArray(entityDescriptorOrValue);
-          if (isEntityBodyByTopLevelArray) {
-            if (!Array.isArray(request.body)) return false;
-
-            return resolveEntityValues({
-              actualValue: request.body,
-              descriptorValue: entityDescriptorOrValue,
-              checkMode: 'equals'
-            });
-          }
-
-          const actualEntity = flatten<PlainObject, PlainObject>(request[entityName]);
-          const entityValueEntries = Object.entries(entityDescriptorOrValue) as Entries<
-            Exclude<RestEntity, TopLevelPlainEntityArray | TopLevelPlainEntityDescriptor>
-          >;
-          return entityValueEntries.every(
-            ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
-              const entityPropertyDescriptor = convertToEntityDescriptor(
-                entityPropertyDescriptorOrValue
-              );
-
-              // ✅ important: transform header keys to lower case because browsers send headers in lowercase
-              const actualPropertyKey =
-                entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
-              const actualPropertyValue = actualEntity[actualPropertyKey];
-
-              if (
-                entityPropertyDescriptor.checkMode === 'exists' ||
-                entityPropertyDescriptor.checkMode === 'notExists'
-              ) {
                 return resolveEntityValues({
-                  actualValue: actualPropertyValue,
-                  checkMode: entityPropertyDescriptor.checkMode
+                  actualValue: request.body,
+                  descriptorValue: bodyDescriptor.value,
+                  checkMode: bodyDescriptor.checkMode,
+                  oneOf: bodyDescriptor.oneOf ?? false,
                 });
               }
 
-              return resolveEntityValues({
-                actualValue: actualPropertyValue,
-                descriptorValue: entityPropertyDescriptor.value,
-                checkMode: entityPropertyDescriptor.checkMode,
-                oneOf: entityPropertyDescriptor.oneOf ?? false
-              });
+              const isEntityBodyByTopLevelArray =
+                entityName === "body" && Array.isArray(entityDescriptorOrValue);
+              if (isEntityBodyByTopLevelArray) {
+                if (!Array.isArray(request.body)) return false;
+
+                return resolveEntityValues({
+                  actualValue: request.body,
+                  descriptorValue: entityDescriptorOrValue,
+                  checkMode: "equals",
+                });
+              }
+
+              const actualEntity = flatten<PlainObject, PlainObject>(
+                request[entityName]
+              );
+              const entityValueEntries = Object.entries(
+                entityDescriptorOrValue
+              ) as Entries<
+                Exclude<
+                  RestEntity,
+                  TopLevelPlainEntityArray | TopLevelPlainEntityDescriptor
+                >
+              >;
+              return entityValueEntries.every(
+                ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
+                  const entityPropertyDescriptor = convertToEntityDescriptor(
+                    entityPropertyDescriptorOrValue
+                  );
+
+                  // ✅ important: transform header keys to lower case because browsers send headers in lowercase
+                  const actualPropertyKey =
+                    entityName === "headers"
+                      ? entityPropertyKey.toLowerCase()
+                      : entityPropertyKey;
+                  const actualPropertyValue = actualEntity[actualPropertyKey];
+
+                  if (
+                    entityPropertyDescriptor.checkMode === "exists" ||
+                    entityPropertyDescriptor.checkMode === "notExists"
+                  ) {
+                    return resolveEntityValues({
+                      actualValue: actualPropertyValue,
+                      checkMode: entityPropertyDescriptor.checkMode,
+                    });
+                  }
+
+                  return resolveEntityValues({
+                    actualValue: actualPropertyValue,
+                    descriptorValue: entityPropertyDescriptor.value,
+                    checkMode: entityPropertyDescriptor.checkMode,
+                    oneOf: entityPropertyDescriptor.oneOf ?? false,
+                  });
+                }
+              );
             }
           );
-        });
-      });
+        }
+      );
 
-      if (!matchedRouteConfig) return next();
+      if (!matchedRouteConfigWithParams) {
+        request.params = previousParams;
+        return next();
+      }
+
+      request.params = {
+        ...previousParams,
+        ...matchedRouteConfigWithParams.pathParams,
+      };
+      const matchedRouteConfig = matchedRouteConfigWithParams.artifact;
 
       if (matchedRouteConfig.componentRequestInterceptor) {
         await callRequestInterceptor({
           request,
-          interceptor: matchedRouteConfig.componentRequestInterceptor
+          interceptor: matchedRouteConfig.componentRequestInterceptor,
         });
       }
 
       if (matchedRouteConfig.requestRequestInterceptor) {
         await callRequestInterceptor({
           request,
-          interceptor: matchedRouteConfig.requestRequestInterceptor
+          interceptor: matchedRouteConfig.requestRequestInterceptor,
         });
       }
 
       if (matchedRouteConfig.routeRequestInterceptor) {
         await callRequestInterceptor({
           request,
-          interceptor: matchedRouteConfig.routeRequestInterceptor
+          interceptor: matchedRouteConfig.routeRequestInterceptor,
         });
       }
 
@@ -158,7 +186,10 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         file?: RestFileResponse;
       };
 
-      if (matchedRouteConfig.config.settings?.polling && 'queue' in matchedRouteConfig.config) {
+      if (
+        matchedRouteConfig.config.settings?.polling &&
+        "queue" in matchedRouteConfig.config
+      ) {
         if (!matchedRouteConfig.config.queue.length) return next();
 
         const shallowMatchedRouteConfig =
@@ -172,7 +203,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
 
         const updateIndex = () => {
           if (
-            'queue' in matchedRouteConfig.config &&
+            "queue" in matchedRouteConfig.config &&
             matchedRouteConfig.config.queue.length - 1 === index
           ) {
             index = 0;
@@ -195,19 +226,19 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
           updateIndex();
         }
 
-        if ('data' in queueItem) {
+        if ("data" in queueItem) {
           matchedRouteConfigDataDescriptor.data = queueItem.data;
         }
-        if ('file' in queueItem) {
+        if ("file" in queueItem) {
           if (!isFilePathValid(queueItem.file)) return next();
           matchedRouteConfigDataDescriptor.file = queueItem.file;
         }
       }
 
-      if ('data' in matchedRouteConfig.config) {
+      if ("data" in matchedRouteConfig.config) {
         matchedRouteConfigDataDescriptor.data = matchedRouteConfig.config.data;
       }
-      if ('file' in matchedRouteConfig.config) {
+      if ("file" in matchedRouteConfig.config) {
         if (!isFilePathValid(matchedRouteConfig.config.file)) return next();
         matchedRouteConfigDataDescriptor.file = matchedRouteConfig.config.file;
       }
@@ -219,7 +250,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
       // ✅ important:
       // set 'Cache-Control' header for explicit browsers response revalidate: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
       // this code should place before response interceptors for giving opportunity to rewrite 'Cache-Control' header
-      if (request.method === 'GET') response.set('Cache-control', 'no-cache');
+      if (request.method === "GET") response.set("Cache-control", "no-cache");
 
       let resolvedData = null;
 
@@ -257,19 +288,21 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
           },
           setStatusCode: (statusCode) => {
             response.statusCode = statusCode;
-          }
+          },
         };
 
         resolvedData =
-          typeof matchedRouteConfigDataDescriptor.data === 'function'
+          typeof matchedRouteConfigDataDescriptor.data === "function"
             ? await matchedRouteConfigDataDescriptor.data(params)
             : matchedRouteConfigDataDescriptor.data;
       }
       if (matchedRouteConfigDataDescriptor.file) {
-        const buffer = fs.readFileSync(path.resolve(matchedRouteConfigDataDescriptor.file));
+        const buffer = fs.readFileSync(
+          path.resolve(matchedRouteConfigDataDescriptor.file)
+        );
         resolvedData = {
           path: matchedRouteConfigDataDescriptor.file,
-          file: buffer
+          file: buffer,
         };
       }
 
@@ -281,8 +314,8 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
           routeInterceptor: matchedRouteConfig.routeResponseInterceptor,
           requestInterceptor: matchedRouteConfig.requestResponseInterceptor,
           componentInterceptor: matchedRouteConfig.componentResponseInterceptor,
-          serverInterceptor: matchedRouteConfig.serverResponseInterceptor
-        }
+          serverInterceptor: matchedRouteConfig.serverResponseInterceptor,
+        },
       });
 
       if (matchedRouteConfig.config.settings?.delay) {
@@ -290,16 +323,17 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
       }
 
       if (isFileDescriptor(data)) {
-        const isFilePathChanged = matchedRouteConfigDataDescriptor.file !== data.path;
+        const isFilePathChanged =
+          matchedRouteConfigDataDescriptor.file !== data.path;
         if (isFilePathChanged) {
           if (!isFilePathValid(data.path)) return next();
           data.file = fs.readFileSync(path.resolve(data.path));
         }
         // ✅ important: replace backslashes because windows can use them in file path
-        const fileName = data.path.replaceAll('\\', '/').split('/').at(-1)!;
-        const fileExtension = fileName.split('.').at(-1)!;
+        const fileName = data.path.replaceAll("\\", "/").split("/").at(-1)!;
+        const fileExtension = fileName.split(".").at(-1)!;
         response.type(fileExtension);
-        response.set('Content-Disposition', `filename=${fileName}`);
+        response.set("Content-Disposition", `filename=${fileName}`);
         return response.send(data.file);
       }
 

@@ -1,23 +1,26 @@
-import bodyParser from 'body-parser';
-import express from 'express';
-import request from 'supertest';
-import { describe, expect, it, vi } from 'vitest';
+import bodyParser from "body-parser";
+import express from "express";
+import request from "supertest";
+import { describe, expect, it, vi } from "vitest";
 
 import type {
   BaseServerConfig,
   BaseUrl,
   GraphqlConfig,
   GraphQLOperationType,
-  GraphQLRequestArtifact
-} from '@/utils/types';
+  GraphQLRequestArtifact,
+} from "@/utils/types";
 
-import { urlJoin } from '@/utils/helpers';
+import { urlJoin } from "@/utils/helpers";
 
-import { createGraphQLRoute } from './createGraphQLRoute';
-import { calculateGraphQLRouteConfigWeight } from './helpers';
+import { createGraphQLRoute } from "./createGraphQLRoute";
+import {
+  calculateGraphQLRouteConfigWeight,
+  prepareGraphQLRequestArtifacts,
+} from "./helpers";
 
 const createServer = (
-  mockServerConfig: Pick<BaseServerConfig, 'baseUrl' | 'interceptors'> & {
+  mockServerConfig: Pick<BaseServerConfig, "baseUrl" | "interceptors"> & {
     graphql: GraphqlConfig;
   }
 ) => {
@@ -33,17 +36,18 @@ const createServer = (
 
   createGraphQLRoute({
     server,
-    graphQLRequestArtifacts: graphql.configs
-      .reduce((acc, config) => {
+    graphQLRequestArtifacts: prepareGraphQLRequestArtifacts(
+      graphql.configs.reduce((acc, config) => {
         config.routes.forEach((route) => {
           acc.push({
-            key: `${baseUrl}${graphql.baseUrl}/${config.operationType}/${
-              'operationName' in config ? config.operationName : config.query
-            }`,
-            baseUrl: urlJoin(baseUrl ?? '/', graphql?.baseUrl ?? '/') as BaseUrl,
+            baseUrl: urlJoin(
+              baseUrl ?? "/",
+              graphql?.baseUrl ?? "/"
+            ) as BaseUrl,
             operationType: config.operationType,
-            operationName: 'operationName' in config ? config.operationName : undefined,
-            query: 'query' in config ? config.query : undefined,
+            operationName:
+              "operationName" in config ? config.operationName : undefined,
+            query: "query" in config ? config.query : undefined,
             config: route,
             weight: calculateGraphQLRouteConfigWeight(route),
             serverResponseInterceptor: interceptors?.response,
@@ -53,871 +57,884 @@ const createServer = (
             componentResponseInterceptor: undefined,
             componentRequestInterceptor: undefined,
             routeResponseInterceptor: route.interceptors?.response,
-            routeRequestInterceptor: route.interceptors?.request
+            routeRequestInterceptor: route.interceptors?.request,
           });
         });
 
         return acc;
       }, [] as GraphQLRequestArtifact[])
-      .toSorted((first, second) => second.weight - first.weight)
+    ),
   });
 
   return server;
 };
 
-describe('createGraphQLRoute: routing', () => {
-  it('Should match config with operationName', async () => {
+describe("createGraphQLRoute: routing", () => {
+  it("Should match config with operationName", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
-                data: { name: 'John', surname: 'Doe' }
-              }
-            ]
-          }
-        ]
-      }
+                data: { name: "John", surname: "Doe" },
+              },
+            ],
+          },
+        ],
+      },
     });
 
     const postResponse = await request(server)
-      .post('/')
-      .send({ query: 'query GetUsers { users { name } }' });
+      .post("/")
+      .send({ query: "query GetUsers { users { name } }" });
     expect(postResponse.statusCode).toBe(200);
-    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(postResponse.body).toStrictEqual({ name: "John", surname: "Doe" });
 
-    const getResponse = await request(server).get('/').query({
-      query: 'query GetUsers { users { name } }'
+    const getResponse = await request(server).get("/").query({
+      query: "query GetUsers { users { name } }",
     });
     expect(getResponse.statusCode).toBe(200);
-    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(getResponse.body).toStrictEqual({ name: "John", surname: "Doe" });
   });
 
-  it('Should match config with operationName regExp', async () => {
+  it("Should match config with operationName regExp", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
             operationName: /^Get(.+?)sers$/g,
-            operationType: 'query',
+            operationType: "query",
             routes: [
               {
-                data: { name: 'John', surname: 'Doe' }
-              }
-            ]
-          }
-        ]
-      }
+                data: { name: "John", surname: "Doe" },
+              },
+            ],
+          },
+        ],
+      },
     });
 
     const firstPostResponse = await request(server)
-      .post('/')
-      .send({ query: 'query GetUsers { users { name } }' });
+      .post("/")
+      .send({ query: "query GetUsers { users { name } }" });
     expect(firstPostResponse.statusCode).toBe(200);
     expect(firstPostResponse.body).toStrictEqual({
-      name: 'John',
-      surname: 'Doe'
+      name: "John",
+      surname: "Doe",
     });
 
-    const firstGetResponse = await request(server).get('/').query({
-      query: 'query GetUsers { users { name } }'
+    const firstGetResponse = await request(server).get("/").query({
+      query: "query GetUsers { users { name } }",
     });
     expect(firstGetResponse.statusCode).toBe(200);
     expect(firstGetResponse.body).toStrictEqual({
-      name: 'John',
-      surname: 'Doe'
+      name: "John",
+      surname: "Doe",
     });
 
     const secondPostResponse = await request(server)
-      .post('/')
-      .send({ query: 'query GetAnotherUsers { users { name } }' });
+      .post("/")
+      .send({ query: "query GetAnotherUsers { users { name } }" });
     expect(secondPostResponse.statusCode).toBe(200);
     expect(secondPostResponse.body).toStrictEqual({
-      name: 'John',
-      surname: 'Doe'
+      name: "John",
+      surname: "Doe",
     });
 
-    const secondGetResponse = await request(server).get('/').query({
-      query: 'query GetAnotherUsers { users { name } }'
+    const secondGetResponse = await request(server).get("/").query({
+      query: "query GetAnotherUsers { users { name } }",
     });
     expect(secondGetResponse.statusCode).toBe(200);
     expect(secondGetResponse.body).toStrictEqual({
-      name: 'John',
-      surname: 'Doe'
+      name: "John",
+      surname: "Doe",
     });
   });
 
-  it('Should match config with query independent of spaces and new lines', async () => {
+  it("Should match config with query independent of spaces and new lines", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            query: 'query { User { name } }',
-            operationType: 'query',
+            query: "query { User { name } }",
+            operationType: "query",
             routes: [
               {
-                data: { name: 'John', surname: 'Doe' }
-              }
-            ]
-          }
-        ]
-      }
+                data: { name: "John", surname: "Doe" },
+              },
+            ],
+          },
+        ],
+      },
     });
 
     const postResponse = await request(server)
-      .post('/')
-      .send({ query: 'query {\n User {\n  name\n  }\n}\n' });
+      .post("/")
+      .send({ query: "query {\n User {\n  name\n  }\n}\n" });
     expect(postResponse.statusCode).toBe(200);
-    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(postResponse.body).toStrictEqual({ name: "John", surname: "Doe" });
 
-    const getResponse = await request(server).get('/').query({
-      query: 'query {\n User {\n  name\n  }\n}\n'
+    const getResponse = await request(server).get("/").query({
+      query: "query {\n User {\n  name\n  }\n}\n",
     });
     expect(getResponse.statusCode).toBe(200);
-    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(getResponse.body).toStrictEqual({ name: "John", surname: "Doe" });
   });
 
-  it('Should return 400 and description text for invalid query', async () => {
+  it("Should return 400 and description text for invalid query", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 entities: {
                   headers: {
-                    key1: 'value1',
-                    key2: 'value2'
+                    key1: "value1",
+                    key2: "value2",
                   },
                   query: {
-                    key1: 'value1'
-                  }
+                    key1: "value1",
+                  },
                 },
-                data: { name: 'John', surname: 'Doe' }
-              }
-            ]
-          }
-        ]
-      }
+                data: { name: "John", surname: "Doe" },
+              },
+            ],
+          },
+        ],
+      },
     });
 
-    const postResponse = await request(server).post('/').send({ query: 'invalid query' });
+    const postResponse = await request(server)
+      .post("/")
+      .send({ query: "invalid query" });
 
     expect(postResponse.statusCode).toBe(400);
     expect(postResponse.body).toStrictEqual({
-      message: 'Query is invalid, you must use a valid GraphQL query'
+      message: "Query is invalid, you must use a valid GraphQL query",
     });
 
-    const getResponse = await request(server).get('/').query({
-      query: 'invalid query'
+    const getResponse = await request(server).get("/").query({
+      query: "invalid query",
     });
 
     expect(postResponse.statusCode).toBe(400);
     expect(getResponse.body).toStrictEqual({
-      message: 'Query is invalid, you must use a valid GraphQL query'
+      message: "Query is invalid, you must use a valid GraphQL query",
     });
   });
 
-  it('Should return 404 for no matched request configs', async () => {
+  it("Should return 404 for no matched request configs", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 entities: {
                   headers: {
-                    key1: 'value1'
-                  }
+                    key1: "value1",
+                  },
                 },
-                data: { name: 'John', surname: 'Doe' }
-              }
-            ]
-          }
-        ]
-      }
+                data: { name: "John", surname: "Doe" },
+              },
+            ],
+          },
+        ],
+      },
     });
 
     const postResponse = await request(server)
-      .post('/')
-      .send({ query: 'query GetUsers { users { name } }' })
-      .set({ key2: 'value2' });
+      .post("/")
+      .send({ query: "query GetUsers { users { name } }" })
+      .set({ key2: "value2" });
 
     expect(postResponse.statusCode).toBe(404);
 
-    const getResponse = await request(server).get('/').set({ key2: 'value2' }).query({
-      query: 'query GetUsers { users { name } }'
-    });
+    const getResponse = await request(server)
+      .get("/")
+      .set({ key2: "value2" })
+      .query({
+        query: "query GetUsers { users { name } }",
+      });
 
     expect(getResponse.statusCode).toBe(404);
   });
 
-  it('Should have response Cache-Control header value equals to no-cache', async () => {
+  it("Should have response Cache-Control header value equals to no-cache", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
-            routes: [{ data: { name: 'John', surname: 'Doe' } }]
-          }
-        ]
-      }
+            operationName: "GetUsers",
+            operationType: "query",
+            routes: [{ data: { name: "John", surname: "Doe" } }],
+          },
+        ],
+      },
     });
 
     const postResponse = await request(server)
-      .post('/')
-      .send({ query: 'query GetUsers { users { name } }' });
-    expect(postResponse.headers['cache-control']).toBe('no-cache');
+      .post("/")
+      .send({ query: "query GetUsers { users { name } }" });
+    expect(postResponse.headers["cache-control"]).toBe("no-cache");
 
     const getResponse = await request(server)
-      .get('/')
-      .query({ query: 'query GetUsers { users { name } }' });
-    expect(getResponse.headers['cache-control']).toBe('no-cache');
+      .get("/")
+      .query({ query: "query GetUsers { users { name } }" });
+    expect(getResponse.headers["cache-control"]).toBe("no-cache");
   });
 
-  const operationTypesWithoutCacheControlHeader: Exclude<GraphQLOperationType, 'query'>[] = [
-    'mutation'
-  ];
-  operationTypesWithoutCacheControlHeader.forEach((operationTypeWithoutCacheControlHeader) => {
-    it(`Should do not have Cache-Control header if operation type is ${operationTypeWithoutCacheControlHeader}`, async () => {
-      const server = createServer({
-        graphql: {
-          configs: [
-            {
-              operationName: 'GetUsers',
-              operationType: operationTypeWithoutCacheControlHeader,
-              routes: [{ data: { name: 'John', surname: 'Doe' } }]
-            }
-          ]
-        }
+  const operationTypesWithoutCacheControlHeader: Exclude<
+    GraphQLOperationType,
+    "query"
+  >[] = ["mutation"];
+  operationTypesWithoutCacheControlHeader.forEach(
+    (operationTypeWithoutCacheControlHeader) => {
+      it(`Should do not have Cache-Control header if operation type is ${operationTypeWithoutCacheControlHeader}`, async () => {
+        const server = createServer({
+          graphql: {
+            configs: [
+              {
+                operationName: "GetUsers",
+                operationType: operationTypeWithoutCacheControlHeader,
+                routes: [{ data: { name: "John", surname: "Doe" } }],
+              },
+            ],
+          },
+        });
+
+        const postResponse = await request(server)
+          .post("/")
+          .send({ query: "query GetUsers { users { name } }" });
+        expect(postResponse.headers["cache-control"]).toBe(undefined);
+
+        const getResponse = await request(server)
+          .get("/")
+          .query({ query: "query GetUsers { users { name } }" });
+        expect(getResponse.headers["cache-control"]).toBe(undefined);
       });
-
-      const postResponse = await request(server)
-        .post('/')
-        .send({ query: 'query GetUsers { users { name } }' });
-      expect(postResponse.headers['cache-control']).toBe(undefined);
-
-      const getResponse = await request(server)
-        .get('/')
-        .query({ query: 'query GetUsers { users { name } }' });
-      expect(getResponse.headers['cache-control']).toBe(undefined);
-    });
-  });
+    }
+  );
 });
 
-describe('createGraphQLRoute: content', () => {
-  it('Should prioritize the most specific route across different request configs', async () => {
+describe("createGraphQLRoute: content", () => {
+  it("Should prioritize the most specific route across different request configs", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 entities: {
                   headers: {
-                    key1: 'value1'
-                  }
+                    key1: "value1",
+                  },
                 },
-                data: { source: 'less-specific' }
-              }
-            ]
+                data: { source: "less-specific" },
+              },
+            ],
           },
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 entities: {
                   headers: {
-                    key1: 'value1',
-                    key2: 'value2'
-                  }
+                    key1: "value1",
+                    key2: "value2",
+                  },
                 },
-                data: { source: 'more-specific' }
-              }
-            ]
-          }
-        ]
-      }
+                data: { source: "more-specific" },
+              },
+            ],
+          },
+        ],
+      },
     });
 
     const response = await request(server)
-      .post('/')
-      .set({ key1: 'value1', key2: 'value2' })
-      .send({ query: 'query GetUsers { users { name } }' });
+      .post("/")
+      .set({ key1: "value1", key2: "value2" })
+      .send({ query: "query GetUsers { users { name } }" });
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toStrictEqual({ source: 'more-specific' });
+    expect(response.body).toStrictEqual({ source: "more-specific" });
   });
 
-  it('Should skip requests with unsupported method', async () => {
+  it("Should skip requests with unsupported method", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
-            routes: [{ data: { name: 'John', surname: 'Doe' } }]
-          }
-        ]
-      }
+            operationName: "GetUsers",
+            operationType: "query",
+            routes: [{ data: { name: "John", surname: "Doe" } }],
+          },
+        ],
+      },
     });
 
     const response = await request(server)
-      .put('/')
-      .set('Content-Type', 'application/json')
-      .send({ query: 'query GetUsers { users { name } }' });
+      .put("/")
+      .set("Content-Type", "application/json")
+      .send({ query: "query GetUsers { users { name } }" });
 
     expect(response.statusCode).toBe(404);
   });
 
-  it('Should correctly use data function', async () => {
+  it("Should correctly use data function", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 entities: {
                   query: {
-                    key1: 'value1'
-                  }
+                    key1: "value1",
+                  },
                 },
                 data: ({ request, entities }) => ({
                   url: request.url,
-                  query: entities.query
-                })
-              }
-            ]
-          }
-        ]
-      }
+                  query: entities.query,
+                }),
+              },
+            ],
+          },
+        ],
+      },
     });
 
-    const response = await request(server).get('/').query({
-      query: 'query GetUsers { users { name } }',
-      key1: 'value1'
+    const response = await request(server).get("/").query({
+      query: "query GetUsers { users { name } }",
+      key1: "value1",
     });
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({
-      url: `/?query=${encodeURIComponent('query GetUsers { users { name } }')}&key1=value1`,
+      url: `/?query=${encodeURIComponent(
+        "query GetUsers { users { name } }"
+      )}&key1=value1`,
       query: {
-        key1: 'value1'
-      }
+        key1: "value1",
+      },
     });
   });
 
-  it('Should correctly use data function with polling enabled', async () => {
+  it("Should correctly use data function with polling enabled", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 settings: { polling: true },
                 entities: {
                   query: {
-                    key1: 'value1'
-                  }
+                    key1: "value1",
+                  },
                 },
                 queue: [
                   {
                     data: ({ request, entities }) => ({
                       url: request.url,
-                      query: entities.query
-                    })
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+                      query: entities.query,
+                    }),
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
     });
 
-    const response = await request(server).get('/').query({
-      query: 'query GetUsers { users { name } }',
-      key1: 'value1'
+    const response = await request(server).get("/").query({
+      query: "query GetUsers { users { name } }",
+      key1: "value1",
     });
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({
-      url: `/?query=${encodeURIComponent('query GetUsers { users { name } }')}&key1=value1`,
+      url: `/?query=${encodeURIComponent(
+        "query GetUsers { users { name } }"
+      )}&key1=value1`,
       query: {
-        key1: 'value1'
-      }
+        key1: "value1",
+      },
     });
   });
 
-  it('Should return the same polling data until the specified time interval elapses', async () => {
+  it("Should return the same polling data until the specified time interval elapses", async () => {
     vi.useFakeTimers();
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 settings: { polling: true },
                 queue: [
-                  { time: 2000, data: { name: 'John', surname: 'Doe' } },
-                  { data: { name: 'John', surname: 'Smith' } }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+                  { time: 2000, data: { name: "John", surname: "Doe" } },
+                  { data: { name: "John", surname: "Smith" } },
+                ],
+              },
+            ],
+          },
+        ],
+      },
     });
 
     const query = {
-      query: 'query GetUsers { users { name } }',
-      key1: 'value1'
+      query: "query GetUsers { users { name } }",
+      key1: "value1",
     };
 
-    const firstResponse = await request(server).get('/').query(query);
+    const firstResponse = await request(server).get("/").query(query);
     expect(firstResponse.statusCode).toBe(200);
-    expect(firstResponse.body).toEqual({ name: 'John', surname: 'Doe' });
+    expect(firstResponse.body).toEqual({ name: "John", surname: "Doe" });
 
     vi.advanceTimersByTime(1000);
 
-    const secondResponse = await request(server).get('/').query(query);
+    const secondResponse = await request(server).get("/").query(query);
     expect(secondResponse.statusCode).toBe(200);
-    expect(secondResponse.body).toEqual({ name: 'John', surname: 'Doe' });
+    expect(secondResponse.body).toEqual({ name: "John", surname: "Doe" });
 
     vi.advanceTimersByTime(1000);
 
-    const thirdResponse = await request(server).get('/').query(query);
+    const thirdResponse = await request(server).get("/").query(query);
     expect(thirdResponse.statusCode).toBe(200);
-    expect(thirdResponse.body).toEqual({ name: 'John', surname: 'Smith' });
+    expect(thirdResponse.body).toEqual({ name: "John", surname: "Smith" });
 
     vi.useRealTimers();
   });
 
-  it('Should return 404 when the polling queue is empty', async () => {
+  it("Should return 404 when the polling queue is empty", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 settings: { polling: true },
-                queue: []
-              }
-            ]
-          }
-        ]
-      }
+                queue: [],
+              },
+            ],
+          },
+        ],
+      },
     });
 
     const query = {
-      query: 'query GetUsers { users { name } }'
+      query: "query GetUsers { users { name } }",
     };
 
-    const response = await request(server).get('/').query(query);
+    const response = await request(server).get("/").query(query);
     expect(response.statusCode).toBe(404);
   });
 });
 
-describe('createGraphQLRoute: settings', () => {
-  it('Should correctly delay response based on delay setting', async () => {
+describe("createGraphQLRoute: settings", () => {
+  it("Should correctly delay response based on delay setting", async () => {
     const delay = 1000;
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 settings: { delay },
-                data: { name: 'John', surname: 'Doe' }
-              }
-            ]
-          }
-        ]
-      }
+                data: { name: "John", surname: "Doe" },
+              },
+            ],
+          },
+        ],
+      },
     });
 
     const query = {
-      query: 'query GetUsers { users { name } }'
+      query: "query GetUsers { users { name } }",
     };
     const startTime = performance.now();
-    const response = await request(server).get('/').query(query);
+    const response = await request(server).get("/").query(query);
     const endTime = performance.now();
 
     expect(endTime - startTime).toBeGreaterThanOrEqual(delay);
-    expect(response.body).toEqual({ name: 'John', surname: 'Doe' });
+    expect(response.body).toEqual({ name: "John", surname: "Doe" });
   });
 
-  it('Should correctly set status code of response based on status setting', async () => {
+  it("Should correctly set status code of response based on status setting", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 settings: { status: 500 },
-                data: { name: 'John', surname: 'Doe' }
-              }
-            ]
-          }
-        ]
-      }
+                data: { name: "John", surname: "Doe" },
+              },
+            ],
+          },
+        ],
+      },
     });
 
     const query = {
-      query: 'query GetUsers { users { name } }'
+      query: "query GetUsers { users { name } }",
     };
 
-    const response = await request(server).get('/').query(query);
+    const response = await request(server).get("/").query(query);
     expect(response.statusCode).toBe(500);
-    expect(response.body).toEqual({ name: 'John', surname: 'Doe' });
+    expect(response.body).toEqual({ name: "John", surname: "Doe" });
   });
 
-  it('Should cycle through queue data with polling setting', async () => {
+  it("Should cycle through queue data with polling setting", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 settings: { polling: true },
                 queue: [
-                  { data: { name: 'John', surname: 'Doe' } },
-                  { data: { name: 'John', surname: 'Smith' } }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+                  { data: { name: "John", surname: "Doe" } },
+                  { data: { name: "John", surname: "Smith" } },
+                ],
+              },
+            ],
+          },
+        ],
+      },
     });
 
     const query = {
-      query: 'query GetUsers { users { name } }'
+      query: "query GetUsers { users { name } }",
     };
 
-    const firstResponse = await request(server).get('/').query(query);
+    const firstResponse = await request(server).get("/").query(query);
     expect(firstResponse.statusCode).toBe(200);
-    expect(firstResponse.body).toEqual({ name: 'John', surname: 'Doe' });
+    expect(firstResponse.body).toEqual({ name: "John", surname: "Doe" });
 
-    const secondResponse = await request(server).get('/').query(query);
+    const secondResponse = await request(server).get("/").query(query);
     expect(secondResponse.statusCode).toBe(200);
-    expect(secondResponse.body).toEqual({ name: 'John', surname: 'Smith' });
+    expect(secondResponse.body).toEqual({ name: "John", surname: "Smith" });
 
-    const thirdResponse = await request(server).get('/').query(query);
+    const thirdResponse = await request(server).get("/").query(query);
     expect(thirdResponse.statusCode).toBe(200);
-    expect(thirdResponse.body).toEqual({ name: 'John', surname: 'Doe' });
+    expect(thirdResponse.body).toEqual({ name: "John", surname: "Doe" });
   });
 });
 
-describe('createGraphQLRoute: entities', () => {
-  it('Should match route configuration when actual entities include specified properties', async () => {
+describe("createGraphQLRoute: entities", () => {
+  it("Should match route configuration when actual entities include specified properties", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 entities: {
                   headers: {
-                    key1: 'value1',
-                    key2: 'value2'
+                    key1: "value1",
+                    key2: "value2",
                   },
                   query: {
-                    key1: 'value1'
-                  }
+                    key1: "value1",
+                  },
                 },
-                data: { name: 'John', surname: 'Doe' }
-              }
-            ]
-          }
-        ]
-      }
+                data: { name: "John", surname: "Doe" },
+              },
+            ],
+          },
+        ],
+      },
     });
 
     const postResponse = await request(server)
-      .post('/')
-      .send({ query: 'query GetUsers { users { name } }' })
-      .set({ key1: 'value1', key2: 'value2' })
-      .query({ key1: 'value1', key2: 'value2' });
+      .post("/")
+      .send({ query: "query GetUsers { users { name } }" })
+      .set({ key1: "value1", key2: "value2" })
+      .query({ key1: "value1", key2: "value2" });
 
     expect(postResponse.statusCode).toBe(200);
-    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(postResponse.body).toStrictEqual({ name: "John", surname: "Doe" });
 
     const getResponse = await request(server)
-      .get('/')
-      .set({ key1: 'value1', key2: 'value2' })
+      .get("/")
+      .set({ key1: "value1", key2: "value2" })
       .query({
-        query: 'query GetUsers { users { name } }',
-        key1: 'value1',
-        key2: 'value2'
+        query: "query GetUsers { users { name } }",
+        key1: "value1",
+        key2: "value2",
       });
 
     expect(getResponse.statusCode).toBe(200);
-    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(getResponse.body).toStrictEqual({ name: "John", surname: "Doe" });
   });
 
-  it('Should prioritize more specific route configuration when multiple matches exist', async () => {
+  it("Should prioritize more specific route configuration when multiple matches exist", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 entities: {
                   headers: {
-                    key1: 'value1',
-                    key2: 'value2'
+                    key1: "value1",
+                    key2: "value2",
                   },
                   query: {
-                    key1: 'value1'
-                  }
+                    key1: "value1",
+                  },
                 },
-                data: { name: 'John', surname: 'Doe' }
+                data: { name: "John", surname: "Doe" },
               },
               {
                 entities: {
                   headers: {
-                    key1: 'value1',
-                    key2: 'value2'
+                    key1: "value1",
+                    key2: "value2",
                   },
                   query: {
-                    key1: 'value1',
-                    key2: 'value2'
-                  }
+                    key1: "value1",
+                    key2: "value2",
+                  },
                 },
-                data: { name: 'John', surname: 'Smith' }
-              }
-            ]
-          }
-        ]
-      }
+                data: { name: "John", surname: "Smith" },
+              },
+            ],
+          },
+        ],
+      },
     });
 
     const postResponse = await request(server)
-      .post('/')
-      .send({ query: 'query GetUsers { users { name } }' })
-      .set({ key1: 'value1', key2: 'value2' })
-      .query({ key1: 'value1', key2: 'value2' });
+      .post("/")
+      .send({ query: "query GetUsers { users { name } }" })
+      .set({ key1: "value1", key2: "value2" })
+      .query({ key1: "value1", key2: "value2" });
 
     expect(postResponse.statusCode).toBe(200);
-    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Smith' });
+    expect(postResponse.body).toStrictEqual({ name: "John", surname: "Smith" });
 
     const getResponse = await request(server)
-      .get('/')
-      .set({ key1: 'value1', key2: 'value2' })
+      .get("/")
+      .set({ key1: "value1", key2: "value2" })
       .query({
-        query: 'query GetUsers { users { name } }',
-        key1: 'value1',
-        key2: 'value2'
+        query: "query GetUsers { users { name } }",
+        key1: "value1",
+        key2: "value2",
       });
 
     expect(getResponse.statusCode).toBe(200);
-    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Smith' });
+    expect(getResponse.body).toStrictEqual({ name: "John", surname: "Smith" });
   });
 
-  it('Should strictly compare variables if top level descriptor used', async () => {
+  it("Should strictly compare variables if top level descriptor used", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 entities: {
                   variables: {
-                    checkMode: 'equals',
+                    checkMode: "equals",
                     value: {
-                      key1: 'value1',
-                      key2: { nestedKey1: 'nestedValue1' }
-                    }
-                  }
+                      key1: "value1",
+                      key2: { nestedKey1: "nestedValue1" },
+                    },
+                  },
                 },
-                data: { name: 'John', surname: 'Doe' }
-              }
-            ]
-          }
-        ]
-      }
+                data: { name: "John", surname: "Doe" },
+              },
+            ],
+          },
+        ],
+      },
     });
 
     const successPostResponse = await request(server)
-      .post('/')
-      .set('Content-Type', 'application/json')
+      .post("/")
+      .set("Content-Type", "application/json")
       .send({
-        query: 'query GetUsers { users { name } }',
+        query: "query GetUsers { users { name } }",
         variables: {
-          key1: 'value1',
-          key2: { nestedKey1: 'nestedValue1' }
-        }
+          key1: "value1",
+          key2: { nestedKey1: "nestedValue1" },
+        },
       });
     expect(successPostResponse.statusCode).toBe(200);
     expect(successPostResponse.body).toStrictEqual({
-      name: 'John',
-      surname: 'Doe'
+      name: "John",
+      surname: "Doe",
     });
 
     const failedPostResponse = await request(server)
-      .post('/')
-      .set('Content-Type', 'application/json')
+      .post("/")
+      .set("Content-Type", "application/json")
       .send({
-        query: 'query GetUsers { users { name } }',
+        query: "query GetUsers { users { name } }",
         variables: {
-          key1: 'value1',
-          key2: { nestedKey1: 'nestedValue1', nestedKey2: 'nestedValue2' }
-        }
+          key1: "value1",
+          key2: { nestedKey1: "nestedValue1", nestedKey2: "nestedValue2" },
+        },
       });
     expect(failedPostResponse.statusCode).toBe(404);
 
     const successGetResponse = await request(server)
-      .get('/')
-      .set('Content-Type', 'application/json')
+      .get("/")
+      .set("Content-Type", "application/json")
       .query({
-        query: 'query GetUsers { users { name } }',
-        variables: '{ "key1": "value1", "key2": { "nestedKey1": "nestedValue1" } }'
+        query: "query GetUsers { users { name } }",
+        variables:
+          '{ "key1": "value1", "key2": { "nestedKey1": "nestedValue1" } }',
       });
     expect(successGetResponse.statusCode).toBe(200);
     expect(successGetResponse.body).toStrictEqual({
-      name: 'John',
-      surname: 'Doe'
+      name: "John",
+      surname: "Doe",
     });
 
     const failedGetResponse = await request(server)
-      .get('/')
-      .set('Content-Type', 'application/json')
+      .get("/")
+      .set("Content-Type", "application/json")
       .query({
-        query: 'query GetUsers { users { name } }',
+        query: "query GetUsers { users { name } }",
         variables:
-          '{ "key1": "value1", "key2": { "nestedKey1": "nestedValue1", "nestedKey2": "nestedValue2" } }'
+          '{ "key1": "value1", "key2": { "nestedKey1": "nestedValue1", "nestedKey2": "nestedValue2" } }',
       });
     expect(failedGetResponse.statusCode).toBe(404);
   });
 
-  it('Should correctly resolve flat object variables with nested key matching', async () => {
+  it("Should correctly resolve flat object variables with nested key matching", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 entities: {
                   variables: {
-                    'key1.nestedKey1': 'nestedValue1',
-                    'key2.nestedKey2': {
-                      checkMode: 'equals',
-                      value: 'nestedValue2'
-                    }
-                  }
+                    "key1.nestedKey1": "nestedValue1",
+                    "key2.nestedKey2": {
+                      checkMode: "equals",
+                      value: "nestedValue2",
+                    },
+                  },
                 },
-                data: { name: 'John', surname: 'Doe' }
-              }
-            ]
-          }
-        ]
-      }
+                data: { name: "John", surname: "Doe" },
+              },
+            ],
+          },
+        ],
+      },
     });
 
     const postResponse = await request(server)
-      .post('/')
-      .set('Content-Type', 'application/json')
+      .post("/")
+      .set("Content-Type", "application/json")
       .send({
-        query: 'query GetUsers { users { name } }',
+        query: "query GetUsers { users { name } }",
         variables: {
-          key1: { nestedKey1: 'nestedValue1' },
-          key2: { nestedKey2: 'nestedValue2' }
-        }
+          key1: { nestedKey1: "nestedValue1" },
+          key2: { nestedKey2: "nestedValue2" },
+        },
       });
 
     expect(postResponse.statusCode).toBe(200);
-    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(postResponse.body).toStrictEqual({ name: "John", surname: "Doe" });
 
     const getResponse = await request(server)
-      .get('/')
-      .set('Content-Type', 'application/json')
+      .get("/")
+      .set("Content-Type", "application/json")
       .query({
-        query: 'query GetUsers { users { name } }',
+        query: "query GetUsers { users { name } }",
         variables:
-          '{ "key1": { "nestedKey1": "nestedValue1" }, "key2": { "nestedKey2": "nestedValue2" } }'
+          '{ "key1": { "nestedKey1": "nestedValue1" }, "key2": { "nestedKey2": "nestedValue2" } }',
       });
 
     expect(getResponse.statusCode).toBe(200);
-    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(getResponse.body).toStrictEqual({ name: "John", surname: "Doe" });
   });
 
-  it('Should be case-insensitive for header keys', async () => {
+  it("Should be case-insensitive for header keys", async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 entities: {
                   headers: {
-                    lowercase: 'lowercase',
-                    UPPERCASE: 'UPPERCASE'
-                  }
+                    lowercase: "lowercase",
+                    UPPERCASE: "UPPERCASE",
+                  },
                 },
-                data: { name: 'John', surname: 'Doe' }
-              }
-            ]
-          }
-        ]
-      }
+                data: { name: "John", surname: "Doe" },
+              },
+            ],
+          },
+        ],
+      },
     });
 
     const postResponse = await request(server)
-      .post('/')
-      .send({ query: 'query GetUsers { users { name } }' })
-      .set({ LowerCase: 'lowercase', upperCase: 'UPPERCASE' });
+      .post("/")
+      .send({ query: "query GetUsers { users { name } }" })
+      .set({ LowerCase: "lowercase", upperCase: "UPPERCASE" });
 
     expect(postResponse.statusCode).toBe(200);
-    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(postResponse.body).toStrictEqual({ name: "John", surname: "Doe" });
 
     const getResponse = await request(server)
-      .get('/')
-      .set({ LowerCase: 'lowercase', upperCase: 'UPPERCASE' })
-      .query({ query: 'query GetUsers { users { name } }' });
+      .get("/")
+      .set({ LowerCase: "lowercase", upperCase: "UPPERCASE" })
+      .query({ query: "query GetUsers { users { name } }" });
 
     expect(getResponse.statusCode).toBe(200);
-    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(getResponse.body).toStrictEqual({ name: "John", surname: "Doe" });
   });
 });
 
-describe('createGraphQLRoute: interceptors', () => {
-  it('Should call request interceptors in order: request -> route', async () => {
+describe("createGraphQLRoute: interceptors", () => {
+  it("Should call request interceptors in order: request -> route", async () => {
     const routeInterceptor = vi.fn();
     const requestInterceptor = vi.fn();
 
@@ -925,44 +942,47 @@ describe('createGraphQLRoute: interceptors', () => {
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
-            operationType: 'query',
+            operationName: "GetUsers",
+            operationType: "query",
             routes: [
               {
                 entities: {
                   variables: {
-                    key1: 'value1',
-                    key2: 'value2'
-                  }
+                    key1: "value1",
+                    key2: "value2",
+                  },
                 },
-                data: { name: 'John', surname: 'Doe' },
-                interceptors: { request: routeInterceptor }
-              }
+                data: { name: "John", surname: "Doe" },
+                interceptors: { request: routeInterceptor },
+              },
             ],
-            interceptors: { request: requestInterceptor }
+            interceptors: { request: requestInterceptor },
           },
           {
-            operationName: 'CreateUser',
-            operationType: 'mutation',
+            operationName: "CreateUser",
+            operationType: "mutation",
             routes: [
               {
                 entities: {
                   variables: {
-                    name: 'John'
-                  }
+                    name: "John",
+                  },
                 },
-                data: { name: 'John', surname: 'Smith' }
-              }
-            ]
-          }
-        ]
-      }
+                data: { name: "John", surname: "Smith" },
+              },
+            ],
+          },
+        ],
+      },
     });
 
-    await request(server).get('/').set('Content-Type', 'application/json').query({
-      query: 'query GetUsers { users { name } }',
-      variables: '{ "key1": "value1", "key2": "value2" }'
-    });
+    await request(server)
+      .get("/")
+      .set("Content-Type", "application/json")
+      .query({
+        query: "query GetUsers { users { name } }",
+        variables: '{ "key1": "value1", "key2": "value2" }',
+      });
     expect(requestInterceptor).toBeCalledTimes(1);
     expect(routeInterceptor).toBeCalledTimes(1);
     expect(requestInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
@@ -971,19 +991,23 @@ describe('createGraphQLRoute: interceptors', () => {
 
     // ✅ important:
     // request interceptor called when operation type and operation name is matched
-    await request(server).get('/').set('Content-Type', 'application/json').query({
-      query: 'query GetUsers { users { name } }',
-      variables: '{ "key3": "value3", "key4": "value4" }'
-    });
+    await request(server)
+      .get("/")
+      .set("Content-Type", "application/json")
+      .query({
+        query: "query GetUsers { users { name } }",
+        variables: '{ "key3": "value3", "key4": "value4" }',
+      });
     expect(requestInterceptor).toBeCalledTimes(1);
     expect(routeInterceptor).toBeCalledTimes(1);
 
     await request(server)
-      .post('/')
-      .set('Content-Type', 'application/json')
+      .post("/")
+      .set("Content-Type", "application/json")
       .send({
-        query: 'mutation CreateUser($name: String!) { createUser(name: $name) { name } }',
-        variables: { name: 'John' }
+        query:
+          "mutation CreateUser($name: String!) { createUser(name: $name) { name } }",
+        variables: { name: "John" },
       });
     expect(requestInterceptor).toBeCalledTimes(1);
     expect(routeInterceptor).toBeCalledTimes(1);

@@ -1,17 +1,18 @@
-import type { Express } from 'express';
+import type { Express } from "express";
 
-import { flatten } from 'flat';
+import { flatten } from "flat";
 
 import type {
   EntityDescriptor,
   Entries,
   GraphQLEntitiesByEntityName,
   GraphQLEntity,
+  GraphQLOperationType,
   GraphQLParams,
   GraphQLRequestArtifact,
   PlainObject,
-  TopLevelPlainEntityDescriptor
-} from '@/utils/types';
+  TopLevelPlainEntityDescriptor,
+} from "@/utils/types";
 
 import {
   asyncHandler,
@@ -22,48 +23,42 @@ import {
   isEntityDescriptor,
   parseQuery,
   resolveEntityValues,
-  sleep
-} from '@/utils/helpers';
+  sleep,
+} from "@/utils/helpers";
+import { matchGraphQLRequestArtifacts } from "./helpers";
 
 interface CreateGraphQLRouteParams {
   graphQLRequestArtifacts: GraphQLRequestArtifact[];
   server: Express;
 }
 
-export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGraphQLRouteParams) =>
+export const createGraphQLRoute = ({
+  server,
+  graphQLRequestArtifacts,
+}: CreateGraphQLRouteParams) =>
   server.use(
     asyncHandler(async (request, response, next) => {
-      if (request.method !== 'GET' && request.method !== 'POST') return next();
+      if (request.method !== "GET" && request.method !== "POST") return next();
 
       const graphQLInput = getGraphQLInput(request);
       if (!graphQLInput.query) {
         return response.status(400).json({
-          message: 'Query is missing, you must pass a valid GraphQL query'
+          message: "Query is missing, you must pass a valid GraphQL query",
         });
       }
 
       const query = parseQuery(graphQLInput.query);
       if (!query) {
         return response.status(400).json({
-          message: 'Query is invalid, you must use a valid GraphQL query'
+          message: "Query is invalid, you must use a valid GraphQL query",
         });
       }
 
-      const matchedRequestArtifacts = graphQLRequestArtifacts.filter((artifact) => {
-        if (artifact.operationType !== query.operationType) return false;
-
-        if (artifact.query) {
-          return artifact.query.replace(/\s+/g, '') === graphQLInput.query?.replace(/\s+/g, '');
-        }
-
-        if (artifact.operationName) {
-          if (!query.operationName) return false;
-          return artifact.operationName instanceof RegExp
-            ? new RegExp(artifact.operationName).test(query.operationName)
-            : artifact.operationName === query.operationName;
-        }
-
-        return true;
+      const matchedRequestArtifacts = matchGraphQLRequestArtifacts({
+        requestArtifacts: graphQLRequestArtifacts,
+        graphQLQuery: graphQLInput.query,
+        operationType: query.operationType as GraphQLOperationType,
+        operationName: query.operationName,
       });
 
       if (!matchedRequestArtifacts.length) return next();
@@ -77,16 +72,18 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
 
         return entityEntries.every(([entityName, entityDescriptorOrValue]) => {
           const isEntityVariablesByTopLevelDescriptor =
-            entityName === 'variables' && isEntityDescriptor(entityDescriptorOrValue);
+            entityName === "variables" &&
+            isEntityDescriptor(entityDescriptorOrValue);
           if (isEntityVariablesByTopLevelDescriptor) {
-            const variablesDescriptor = entityDescriptorOrValue as EntityDescriptor;
+            const variablesDescriptor =
+              entityDescriptorOrValue as EntityDescriptor;
             if (
-              variablesDescriptor.checkMode === 'exists' ||
-              variablesDescriptor.checkMode === 'notExists'
+              variablesDescriptor.checkMode === "exists" ||
+              variablesDescriptor.checkMode === "notExists"
             ) {
               return resolveEntityValues({
                 actualValue: graphQLInput.variables,
-                checkMode: variablesDescriptor.checkMode
+                checkMode: variablesDescriptor.checkMode,
               });
             }
 
@@ -94,16 +91,18 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
               actualValue: graphQLInput.variables,
               descriptorValue: variablesDescriptor.value,
               checkMode: variablesDescriptor.checkMode,
-              oneOf: variablesDescriptor.oneOf ?? false
+              oneOf: variablesDescriptor.oneOf ?? false,
             });
           }
 
           const actualEntity = flatten<PlainObject, PlainObject>(
-            entityName === 'variables' ? graphQLInput.variables : request[entityName]
+            entityName === "variables"
+              ? graphQLInput.variables
+              : request[entityName]
           );
-          const entityValueEntries = Object.entries(entityDescriptorOrValue) as Entries<
-            Exclude<GraphQLEntity, TopLevelPlainEntityDescriptor>
-          >;
+          const entityValueEntries = Object.entries(
+            entityDescriptorOrValue
+          ) as Entries<Exclude<GraphQLEntity, TopLevelPlainEntityDescriptor>>;
 
           return entityValueEntries.every(
             ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
@@ -112,16 +111,18 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
               );
 
               const actualPropertyKey =
-                entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
+                entityName === "headers"
+                  ? entityPropertyKey.toLowerCase()
+                  : entityPropertyKey;
               const actualPropertyValue = actualEntity[actualPropertyKey];
 
               if (
-                entityPropertyDescriptor.checkMode === 'exists' ||
-                entityPropertyDescriptor.checkMode === 'notExists'
+                entityPropertyDescriptor.checkMode === "exists" ||
+                entityPropertyDescriptor.checkMode === "notExists"
               ) {
                 return resolveEntityValues({
                   actualValue: actualPropertyValue,
-                  checkMode: entityPropertyDescriptor.checkMode
+                  checkMode: entityPropertyDescriptor.checkMode,
                 });
               }
 
@@ -129,7 +130,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
                 actualValue: actualPropertyValue,
                 descriptorValue: entityPropertyDescriptor.value,
                 checkMode: entityPropertyDescriptor.checkMode,
-                oneOf: entityPropertyDescriptor.oneOf ?? false
+                oneOf: entityPropertyDescriptor.oneOf ?? false,
               });
             }
           );
@@ -141,26 +142,29 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
       if (matchedRouteConfig.componentRequestInterceptor) {
         await callRequestInterceptor({
           request,
-          interceptor: matchedRouteConfig.componentRequestInterceptor
+          interceptor: matchedRouteConfig.componentRequestInterceptor,
         });
       }
 
       if (matchedRouteConfig.requestRequestInterceptor) {
         await callRequestInterceptor({
           request,
-          interceptor: matchedRouteConfig.requestRequestInterceptor
+          interceptor: matchedRouteConfig.requestRequestInterceptor,
         });
       }
 
       if (matchedRouteConfig.routeRequestInterceptor) {
         await callRequestInterceptor({
           request,
-          interceptor: matchedRouteConfig.routeRequestInterceptor
+          interceptor: matchedRouteConfig.routeRequestInterceptor,
         });
       }
 
       let matchedRouteConfigData = null;
-      if (matchedRouteConfig.config.settings?.polling && 'queue' in matchedRouteConfig.config) {
+      if (
+        matchedRouteConfig.config.settings?.polling &&
+        "queue" in matchedRouteConfig.config
+      ) {
         if (!matchedRouteConfig.config.queue.length) return next();
 
         const shallowMatchedRouteConfig =
@@ -174,7 +178,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
 
         const updateIndex = () => {
           if (
-            'queue' in matchedRouteConfig.config &&
+            "queue" in matchedRouteConfig.config &&
             matchedRouteConfig.config.queue.length - 1 === index
           ) {
             index = 0;
@@ -199,7 +203,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
         matchedRouteConfigData = data;
       }
 
-      if ('data' in matchedRouteConfig.config) {
+      if ("data" in matchedRouteConfig.config) {
         matchedRouteConfigData = matchedRouteConfig.config.data;
       }
 
@@ -236,11 +240,11 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
         },
         setStatusCode: (statusCode) => {
           response.statusCode = statusCode;
-        }
+        },
       };
 
       const resolvedData =
-        typeof matchedRouteConfigData === 'function'
+        typeof matchedRouteConfigData === "function"
           ? await matchedRouteConfigData(params)
           : matchedRouteConfigData;
 
@@ -248,8 +252,8 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
         response.statusCode = matchedRouteConfig.config.settings.status;
       }
 
-      if (matchedRouteConfig.operationType === 'query') {
-        response.set('Cache-control', 'no-cache');
+      if (matchedRouteConfig.operationType === "query") {
+        response.set("Cache-control", "no-cache");
       }
 
       const data = await callResponseInterceptors({
@@ -260,8 +264,8 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
           routeInterceptor: matchedRouteConfig.routeResponseInterceptor,
           componentInterceptor: matchedRouteConfig.componentResponseInterceptor,
           requestInterceptor: matchedRouteConfig.requestResponseInterceptor,
-          serverInterceptor: matchedRouteConfig.serverResponseInterceptor
-        }
+          serverInterceptor: matchedRouteConfig.serverResponseInterceptor,
+        },
       });
 
       if (matchedRouteConfig.config.settings?.delay) {

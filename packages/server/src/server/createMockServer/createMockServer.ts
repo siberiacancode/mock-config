@@ -1,19 +1,19 @@
-import type { Express } from 'express';
+import type { Express } from "express";
 
-import bodyParser from 'body-parser';
-import express from 'express';
-import { createGraphQLRoute } from 'src/core/graphql/createGraphQLRoute/createGraphQLRoute';
-import { createRestRoute } from 'src/core/rest/createRestRoute/createRestRoute';
+import bodyParser from "body-parser";
+import express from "express";
+import { createGraphQLRoute } from "src/core/graphql/createGraphQLRoute/createGraphQLRoute";
+import { createRestRoute } from "src/core/rest/createRestRoute/createRestRoute";
 
 import type {
   BaseUrl,
   GraphQLRequestArtifact,
   MockServerComponent,
   MockServerConfig,
-  RestRequestArtifact
-} from '@/utils/types';
+  RestRequestArtifact,
+} from "@/utils/types";
 
-import { createDatabaseRoutes } from '@/core/database';
+import { createDatabaseRoutes } from "@/core/database";
 import {
   contextMiddleware,
   cookieParseMiddleware,
@@ -21,13 +21,19 @@ import {
   errorMiddleware,
   noCorsMiddleware,
   requestInterceptorMiddleware,
-  staticMiddleware
-} from '@/core/middlewares';
-import { urlJoin } from '@/utils/helpers';
-import { validateMockServerConfig } from '@/utils/validate';
+  staticMiddleware,
+} from "@/core/middlewares";
+import { urlJoin } from "@/utils/helpers";
+import { validateMockServerConfig } from "@/utils/validate";
 
-import { calculateGraphQLRouteConfigWeight } from '../../core/graphql/createGraphQLRoute/helpers';
-import { calculateRestRouteConfigWeight } from '../../core/rest/createRestRoute/helpers';
+import {
+  calculateGraphQLRouteConfigWeight,
+  prepareGraphQLRequestArtifacts,
+} from "../../core/graphql/createGraphQLRoute/helpers";
+import {
+  calculateRestRouteConfigWeight,
+  prepareRestRequestArtifacts,
+} from "../../core/rest/createRestRoute/helpers";
 
 export const createMockServer = (
   mockServerConfig: MockServerConfig,
@@ -36,19 +42,19 @@ export const createMockServer = (
   validateMockServerConfig(mockServerConfig);
   const [option, ...mockServerComponents] = mockServerConfig;
 
-  const mockServerSettings = !('configs' in option) ? option : undefined;
+  const mockServerSettings = !("configs" in option) ? option : undefined;
   const {
     cors,
     staticPath,
     interceptors,
-    baseUrl: serverBaseUrl = '/',
-    database
+    baseUrl: serverBaseUrl = "/",
+    database,
   } = mockServerSettings ?? {};
 
   server.use(bodyParser.urlencoded({ extended: false }));
 
-  server.use(bodyParser.json({ limit: '10mb' }));
-  server.set('json spaces', 2);
+  server.use(bodyParser.json({ limit: "10mb" }));
+  server.set("json spaces", 2);
 
   server.use(bodyParser.text());
 
@@ -60,7 +66,7 @@ export const createMockServer = (
   if (serverRequestInterceptor) {
     requestInterceptorMiddleware({
       server,
-      interceptor: serverRequestInterceptor
+      interceptor: serverRequestInterceptor,
     });
   }
 
@@ -75,7 +81,10 @@ export const createMockServer = (
   }
 
   if (database) {
-    const routerWithDatabaseRoutes = createDatabaseRoutes(express.Router(), database);
+    const routerWithDatabaseRoutes = createDatabaseRoutes(
+      express.Router(),
+      database
+    );
     server.use(serverBaseUrl, routerWithDatabaseRoutes);
   }
 
@@ -86,12 +95,14 @@ export const createMockServer = (
   const { restRequestsArtifacts, graphQLRequestsArtifacts } = components.reduce(
     (acc, component) => {
       component.configs.forEach((config) => {
-        const isRest = 'method' in config;
+        const isRest = "method" in config;
         if (isRest) {
           config.routes.forEach((route) => {
             acc.restRequestsArtifacts.push({
-              key: `${serverBaseUrl}${component.baseUrl}/${config.method}/${config.path}`,
-              baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '/') as BaseUrl,
+              baseUrl: urlJoin(
+                serverBaseUrl ?? "/",
+                component.baseUrl ?? "/"
+              ) as BaseUrl,
               method: config.method,
               path: config.path,
               config: route,
@@ -103,22 +114,23 @@ export const createMockServer = (
               componentResponseInterceptor: component.interceptors?.response,
               componentRequestInterceptor: component.interceptors?.request,
               routeResponseInterceptor: route.interceptors?.response,
-              routeRequestInterceptor: route.interceptors?.request
+              routeRequestInterceptor: route.interceptors?.request,
             });
           });
         }
 
-        const isGraphql = 'operationType' in config;
+        const isGraphql = "operationType" in config;
         if (isGraphql) {
           config.routes.forEach((route) => {
             acc.graphQLRequestsArtifacts.push({
-              key: `${serverBaseUrl}${component.baseUrl}/${config.operationType}/${
-                'operationName' in config ? config.operationName : config.query
-              }`,
-              baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '/') as BaseUrl,
+              baseUrl: urlJoin(
+                serverBaseUrl ?? "/",
+                component.baseUrl ?? "/"
+              ) as BaseUrl,
               operationType: config.operationType,
-              operationName: 'operationName' in config ? config.operationName : undefined,
-              query: 'query' in config ? config.query : undefined,
+              operationName:
+                "operationName" in config ? config.operationName : undefined,
+              query: "query" in config ? config.query : undefined,
               config: route,
               weight: calculateGraphQLRouteConfigWeight(route),
               serverResponseInterceptor: interceptors?.response,
@@ -128,7 +140,7 @@ export const createMockServer = (
               componentResponseInterceptor: component.interceptors?.response,
               componentRequestInterceptor: component.interceptors?.request,
               routeResponseInterceptor: route.interceptors?.response,
-              routeRequestInterceptor: route.interceptors?.request
+              routeRequestInterceptor: route.interceptors?.request,
             });
           });
         }
@@ -138,28 +150,28 @@ export const createMockServer = (
     },
     {
       restRequestsArtifacts: [] as RestRequestArtifact[],
-      graphQLRequestsArtifacts: [] as GraphQLRequestArtifact[]
+      graphQLRequestsArtifacts: [] as GraphQLRequestArtifact[],
     }
   );
 
-  const sortedRestRequestsArtifacts = restRequestsArtifacts.toSorted(
-    (first, second) => second.weight - first.weight
+  const preparedRestRequestArtifacts = prepareRestRequestArtifacts(
+    restRequestsArtifacts
   );
-  const sortedGraphQLRequestsArtifacts = graphQLRequestsArtifacts.toSorted(
-    (first, second) => second.weight - first.weight
+  const preparedGraphQLRequestArtifacts = prepareGraphQLRequestArtifacts(
+    graphQLRequestsArtifacts
   );
 
-  if (sortedRestRequestsArtifacts.length) {
+  if (preparedRestRequestArtifacts.length) {
     createRestRoute({
       server,
-      restRequestArtifacts: sortedRestRequestsArtifacts
+      restRequestArtifacts: preparedRestRequestArtifacts,
     });
   }
 
-  if (sortedGraphQLRequestsArtifacts.length) {
+  if (preparedGraphQLRequestArtifacts.length) {
     createGraphQLRoute({
       server,
-      graphQLRequestArtifacts: sortedGraphQLRequestsArtifacts
+      graphQLRequestArtifacts: preparedGraphQLRequestArtifacts,
     });
   }
 
