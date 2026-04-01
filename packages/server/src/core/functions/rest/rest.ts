@@ -88,23 +88,22 @@ const resolveConfigType = <Method extends RestMethod, Options extends RestReques
 
 const createConfigResolver = <Method extends RestMethod, Options extends RestRequestInput>(
   config: RestConfig<Method, Options>,
-  settings?: RestSettings
+  settings: RestSettings = {}
 ): RestRouteConfig<Method> => {
   const resolvedConfig = resolveConfigType(config);
-  const settingsConfig = settings ? { settings } : {};
 
   switch (resolvedConfig.type) {
     case 'inlineResponse':
       return {
         data: resolvedConfig.config,
-        ...settingsConfig
+        settings
       };
 
     case 'data': {
       return {
         data: resolvedConfig.config.response,
         entities: resolvedConfig.config.match,
-        ...settingsConfig
+        settings
       };
     }
 
@@ -112,7 +111,7 @@ const createConfigResolver = <Method extends RestMethod, Options extends RestReq
       return {
         data: createFileHandler<Method>(resolvedConfig.config.file),
         entities: resolvedConfig.config.match,
-        ...settingsConfig
+        settings
       };
     }
 
@@ -126,30 +125,34 @@ const createConfigResolver = <Method extends RestMethod, Options extends RestReq
           return { data: item.response, time: item.time };
         }
 
-        return {
-          data: createFileHandler<Method>(item.file),
-          time: item.time
-        };
+        if ('file' in item) {
+          return {
+            data: createFileHandler<Method>(item.file),
+            time: item.time
+          };
+        }
+
+        throw new Error(`Unexpected queue item kind: ${JSON.stringify(item, null, 2)}`);
       });
 
       return {
         data: createQueueHandler(normalizedQueue),
         entities: resolvedConfig.config.match,
-        ...settingsConfig
+        settings
       };
     }
 
     case 'inlineHandler':
       return {
         data: resolvedConfig.config,
-        ...settingsConfig
+        settings
       };
 
     case 'handler': {
       return {
         data: resolvedConfig.config.handler,
         entities: resolvedConfig.config.match,
-        ...settingsConfig
+        settings
       };
     }
 
@@ -222,9 +225,7 @@ const createSseRestFactory = () => {
     config: RestFunction<'get', RestRequestInput, { client: RestSseClient<Response> }>,
     settings?: RestSettings
   ): BaseRestRequestConfig<RestMethod> {
-    const originalHandler = config;
-
-    config = (params) => {
+    const wrapperHandler: RestFunction<'get', RestRequestInput> = (params) => {
       params.setHeader('connection', 'keep-alive');
       params.setHeader('content-type', 'text/event-stream');
       params.setHeader('cache-control', 'no-cache');
@@ -240,13 +241,13 @@ const createSseRestFactory = () => {
         }
       };
 
-      originalHandler({ ...params, client });
+      config({ ...params, client });
     };
 
     return {
       method: 'get',
       path,
-      routes: [createConfigResolver(config, settings)]
+      routes: [createConfigResolver(wrapperHandler, settings)]
     };
   }
 

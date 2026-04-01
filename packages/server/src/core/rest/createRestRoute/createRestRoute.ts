@@ -159,6 +159,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
       const params: RestParams = {
         request,
         response,
+        next,
         entities: matchedRouteConfig.config.entities ?? {},
         appendHeader: (field, value) => {
           response.append(field, value);

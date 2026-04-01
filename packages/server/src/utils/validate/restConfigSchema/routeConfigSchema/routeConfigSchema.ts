@@ -22,19 +22,13 @@ const entitiesByEntityNameSchema = (method: RestMethod) => {
   );
 };
 
-const baseRouteConfigSchema = (method: RestMethod) =>
+const dataRouteConfigSchema = (method: RestMethod) =>
   z.strictObject({
+    settings: plainObjectSchema(settingsSchema).optional(),
+    data: z.union([z.function(), z.any()]),
     entities: entitiesByEntityNameSchema(method).optional(),
     interceptors: plainObjectSchema(interceptorsSchema).optional()
   });
-
-const dataRouteConfigSchema = (method: RestMethod) =>
-  z
-    .strictObject({
-      settings: plainObjectSchema(settingsSchema).optional(),
-      data: z.union([z.function(), z.any()])
-    })
-    .merge(baseRouteConfigSchema(method));
 
 export const routeConfigSchema = (method: RestMethod) =>
   z.custom((value) => isPlainObject(value) && 'data' in value).pipe(dataRouteConfigSchema(method));

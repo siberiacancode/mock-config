@@ -1,8 +1,8 @@
-import type { RestDataResponse, RestMethod } from '@/utils/types';
+import type { RestDataResponse, RestDataResponseFunction, RestMethod } from '@/utils/types';
 
 export const createQueueHandler = <Method extends RestMethod>(
   normalizedQueue: { data: RestDataResponse<Method>; time?: number }[]
-): Extract<RestDataResponse<Method>, (...args: any[]) => any> => {
+): RestDataResponseFunction<Method> => {
   let queueIndex = 0;
   let timeoutInProgress = false;
 
@@ -12,9 +12,7 @@ export const createQueueHandler = <Method extends RestMethod>(
 
   return async (params) => {
     if (!normalizedQueue.length) {
-      params.setStatusCode(404);
-      params.response.send('Not Found');
-      return null;
+      return params.next();
     }
 
     const queueItem = normalizedQueue[queueIndex];

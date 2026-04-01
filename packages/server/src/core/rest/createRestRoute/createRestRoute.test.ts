@@ -177,7 +177,7 @@ describe('createRestRoutes: content', () => {
                 },
                 data: ({ request, entities }) => ({
                   url: request.url,
-                  query: entities.query
+                  query: entities.query as Record<string, string>
                 })
               }
             ]

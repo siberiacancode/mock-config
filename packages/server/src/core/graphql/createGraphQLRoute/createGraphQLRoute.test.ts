@@ -397,7 +397,7 @@ describe('createGraphQLRoute: content', () => {
                 },
                 data: ({ request, entities }) => ({
                   url: request.url,
-                  query: entities.query
+                  query: entities.query as Record<string, string>
                 })
               }
             ]
@@ -439,7 +439,7 @@ describe('createGraphQLRoute: content', () => {
                   {
                     data: ({ request, entities }) => ({
                       url: request.url,
-                      query: entities.query
+                      query: entities.query as Record<string, string>
                     })
                   }
                 ]
