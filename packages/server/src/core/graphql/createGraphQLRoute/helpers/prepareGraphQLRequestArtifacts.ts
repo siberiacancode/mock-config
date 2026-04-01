@@ -1,36 +1,38 @@
-import type { GraphQLRequestArtifact } from "@/utils/types";
+import type { GraphQLRequestArtifact } from '@/utils/types';
 
-export const prepareGraphQLRequestArtifacts = (
-  requestArtifacts: GraphQLRequestArtifact[]
-) => requestArtifacts.sort((first, second) => second.weight - first.weight);
+export const prepareGraphQLRequestArtifacts = (requestArtifacts: GraphQLRequestArtifact[]) =>
+  requestArtifacts.sort((first, second) => second.weight - first.weight);
+
+interface MatchGraphQLRequestArtifactsParams {
+  artifacts: GraphQLRequestArtifact[];
+  meta: {
+    path: string;
+    operationType: string;
+    query?: string;
+    operationName?: string;
+  };
+}
 
 export const matchGraphQLRequestArtifacts = ({
-  requestArtifacts,
-  graphQLQuery,
-  operationType,
-  operationName,
-}: {
-  requestArtifacts: GraphQLRequestArtifact[];
-  graphQLQuery?: string;
-  operationType: "query" | "mutation";
-  operationName?: string;
-}) =>
-  requestArtifacts.filter((artifact) => {
-    if (artifact.operationType !== operationType) return false;
+  artifacts,
+  meta
+}: MatchGraphQLRequestArtifactsParams) =>
+  artifacts.filter((artifact) => {
+    if (artifact.baseUrl !== meta.path) return false;
+
+    if (artifact.operationType !== meta.operationType) return false;
 
     if (artifact.query) {
-      return (
-        artifact.query.replace(/\s+/g, "") === graphQLQuery?.replace(/\s+/g, "")
-      );
+      return artifact.query.replace(/\s+/g, '') === meta.query?.replace(/\s+/g, '');
     }
 
     if (artifact.operationName) {
-      if (!operationName) return false;
+      if (!meta.operationName) return false;
 
       return artifact.operationName instanceof RegExp
-        ? new RegExp(artifact.operationName).test(operationName)
-        : artifact.operationName === operationName;
+        ? new RegExp(artifact.operationName).test(meta.operationName)
+        : artifact.operationName === meta.operationName;
     }
 
-    return true;
+    throw new Error('Unmatched graphql request');
   });
