@@ -246,6 +246,30 @@ describe('rest', () => {
     expect(end).toHaveBeenCalledTimes(1);
   });
 
+  it('Should send SSE payload with meta fields', async () => {
+    const result = rest.sse('/users/stream', ({ client }) => {
+      client.send('msg', {
+        id: 'id-1',
+        event: 'user.created',
+        retry: 1500
+      });
+      client.close();
+    });
+
+    const [route] = result.routes as [{ data: (params: any) => unknown }];
+    const routeData = route.data;
+    const setHeader = vi.fn();
+    const write = vi.fn();
+    const end = vi.fn();
+
+    await routeData({
+      setHeader,
+      response: { write, end }
+    });
+
+    expect(write).toHaveBeenCalledWith('id: id-1\nevent: user.created\nretry: 1500\ndata: msg\n\n');
+  });
+
   it('Should type handler params with all typed fields', () => {
     const result = rest.post<{
       query: { query: string };
