@@ -191,20 +191,68 @@ describe('rest', () => {
     });
   });
 
+  it('Should build config for SSE request', () => {
+    const result = rest.sse('/users/stream', () => undefined);
+
+    expect(result).toStrictEqual({
+      method: 'get',
+      path: '/users/stream',
+      routes: [
+        {
+          data: expect.any(Function),
+          settings: { polling: false }
+        }
+      ]
+    });
+  });
+
+  it('Should build config for stream request', () => {
+    const result = rest.stream('/users/stream', () => undefined);
+
+    expect(result).toStrictEqual({
+      method: 'post',
+      path: '/users/stream',
+      routes: [
+        {
+          data: expect.any(Function),
+          settings: { polling: false }
+        }
+      ]
+    });
+  });
+
+  it('Should send SSE payload and close stream client', async () => {
+    const result = rest.sse('/users/stream', ({ client }) => {
+      client.send('hello');
+      client.close();
+    });
+
+    const [route] = result.routes as [{ data: (params: any) => unknown }];
+    const routeData = route.data;
+    const setHeader = vi.fn();
+    const write = vi.fn();
+    const end = vi.fn();
+
+    await routeData({
+      setHeader,
+      response: { write, end }
+    });
+
+    expect(setHeader).toHaveBeenCalledTimes(3);
+    expect(setHeader).toHaveBeenNthCalledWith(1, 'connection', 'keep-alive');
+    expect(setHeader).toHaveBeenNthCalledWith(2, 'content-type', 'text/event-stream');
+    expect(setHeader).toHaveBeenNthCalledWith(3, 'cache-control', 'no-cache');
+    expect(write).toHaveBeenCalledWith('data: hello\n\n');
+    expect(end).toHaveBeenCalledTimes(1);
+  });
+
   it('Should type handler params with all typed fields', () => {
     const result = rest.post<{
       query: { query: string };
       body: { body: string };
       params: { params: string };
       response: { response: string };
-    }>('/users/:id', (params) => {
-      const query = params.request.query.query;
-      const body = params.request.body.body;
-      const path = params.request.params.params;
-      console.log(query, body, path);
-
-      return { response: 'value' };
-    });
+    }>('/users/:id', () => ({ response: 'value' }));
 
     expect(result).toStrictEqual({
       method: 'post',

@@ -212,15 +212,16 @@ interface RestSseClient<Response extends string> {
   send: (data: Response) => void;
 }
 
-const createSseRestFactory = () => {
-  function createSseRequestConfig<Response extends string>(
+const createSseRestFactory = <Method extends 'get' | 'post'>(method: Method) => {
+  function createSseRequestConfig<
+    Options extends RestRequestInput = Partial<RestRequestInput>,
+    Response extends string = string
+  >(
     path: RestRequestConfig['path'],
-    config: RestFunction<'get', RestRequestInput, { client: RestSseClient<Response> }>,
+    config: RestFunction<Method, Options, { client: RestSseClient<Response> }>,
     settings?: RestSettings
-  ): BaseRestRequestConfig<RestMethod> {
-    const originalHandler = config;
-
-    config = (params) => {
+  ): BaseRestRequestConfig<Method> {
+    const sseHandler: RestFunction<Method, Options> = (params) => {
       params.setHeader('connection', 'keep-alive');
       params.setHeader('content-type', 'text/event-stream');
       params.setHeader('cache-control', 'no-cache');
@@ -228,7 +229,7 @@ const createSseRestFactory = () => {
       const client: RestSseClient<Response> = {
         send(message) {
           const payload = `data: ${message}\n\n`;
-          params.response.write(new TextEncoder().encode(payload));
+          params.response.write(payload);
         },
 
         close() {
@@ -236,13 +237,13 @@ const createSseRestFactory = () => {
         }
       };
 
-      originalHandler({ ...params, client });
+      return config({ ...params, client });
     };
 
     return {
-      method: 'get',
+      method,
       path,
-      routes: [createConfigResolver(config, settings)]
+      routes: [createConfigResolver(sseHandler, settings)]
     };
   }
 
@@ -256,5 +257,6 @@ export const rest = {
   patch: createRestFactory('patch'),
   post: createRestFactory('post'),
   put: createRestFactory('put'),
-  sse: createSseRestFactory()
+  sse: createSseRestFactory('get'),
+  stream: createSseRestFactory('post')
 };
