@@ -1,11 +1,9 @@
-import type {
+import {
+  CheckFunction,
   EntitiesDescriptor,
   EntityDescriptor,
   EntityFunctionDescriptorValue,
   MappedEntity
-  // MappedEntityValue,
-  // PlainEntityObjectiveValue,
-  // PlainEntityPrimitiveValue
 } from '@/utils/types';
 
 import { checkModeSymbol } from '@/utils/constants';
@@ -21,11 +19,6 @@ export function notExists(): EntityDescriptor<'notExists'> {
     [checkModeSymbol]: 'notExists'
   };
 }
-
-// type PrimitiveOrNestedObjectOrArray =
-//   | MappedEntityValue
-//   | PlainEntityObjectiveValue
-//   | PlainEntityPrimitiveValue;
 
 export function equals<Value>(value: Value, oneOf?: false): EntityDescriptor<'equals', Value>;
 export function equals<Value>(value: Value[], oneOf: true): EntityDescriptor<'equals', Value>;
@@ -201,3 +194,14 @@ export function some<Value extends MappedEntity>(
     value
   };
 }
+
+export const oneOf = (descriptors: EntityDescriptor[]): EntityDescriptor<'function'> => ({
+  [checkModeSymbol]: 'function',
+  value: descriptors.map((descriptor) => (actualValue: any, checkFunction: CheckFunction) => {
+    if (descriptor[checkModeSymbol] === 'exists' || descriptor[checkModeSymbol] === 'notExists') {
+      return checkFunction(descriptor[checkModeSymbol], actualValue)
+    }
+    return checkFunction(descriptor[checkModeSymbol], actualValue, descriptor.value)
+  }),
+  oneOf: true
+})
