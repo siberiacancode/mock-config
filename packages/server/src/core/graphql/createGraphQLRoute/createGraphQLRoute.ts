@@ -16,7 +16,7 @@ import type {
 import {
   asyncHandler,
   callRequestInterceptor,
-  callResponseInterceptors,
+  callResponseInterceptors, convertToEntitiesDescriptor,
   convertToEntityDescriptor,
   getGraphQLInput,
   isEntityDescriptor,
@@ -106,11 +106,15 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
                 ? request.query
                 : request[entityName]
           );
+
+          const entitiesDescriptor = convertToEntitiesDescriptor(entityDescriptorOrValue);
+          const checkMode = entitiesDescriptor[checkModeSymbol];
+
           const entityValueEntries = Object.entries(entityDescriptorOrValue) as NonSymbolEntries<
             Entries<Exclude<GraphQLEntity, TopLevelPlainEntityDescriptor>>
           >;
 
-          return entityValueEntries.every(
+          return entityValueEntries[checkMode](
             ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
               const entityPropertyDescriptor = convertToEntityDescriptor(
                 entityPropertyDescriptorOrValue

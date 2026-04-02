@@ -99,11 +99,8 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
           const actualEntity = flatten<PlainObject, PlainObject>(
             entityName === 'queries' ? request.query : request[entityName]
           );
-          console.log('entityDescriptorOrValue=', entityDescriptorOrValue);
           const entitiesDescriptor = convertToEntitiesDescriptor(entityDescriptorOrValue);
-          console.log('entitiesDescriptor=', entitiesDescriptor);
           const checkMode = entitiesDescriptor[checkModeSymbol];
-          console.log('checkMode=', checkMode);
 
           const entityValueEntries = Object.entries(entitiesDescriptor.value) as NonSymbolEntries<
             Entries<Exclude<RestEntity, TopLevelPlainEntityArray | TopLevelPlainEntityDescriptor>>
