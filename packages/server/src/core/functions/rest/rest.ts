@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import type {
   BaseRestRequestConfig,
   Data,
@@ -209,8 +211,53 @@ const createRestFactory = <Method extends RestMethod>(method: Method) => {
 
 interface RestSseClient<Response extends string> {
   close: () => void;
-  send: (data: Response) => void;
+  send: (
+    data: Response,
+    meta?: {
+      event?: string;
+      id?: string;
+      retry?: number;
+    }
+  ) => void;
 }
+
+const sseMetaSchema = z
+  .strictObject({
+    event: z.string().optional(),
+    id: z.string().optional(),
+    retry: z.number().int().nonnegative().optional()
+  })
+  .optional();
+
+const normalizeSseFieldValue = (value: string) => value.replaceAll('\r', '').replaceAll('\n', '');
+
+const formatSsePayload = (data: string, meta?: { event?: string; id?: string; retry?: number }) => {
+  const parseMetaResult = sseMetaSchema.safeParse(meta);
+  if (!parseMetaResult.success) {
+    throw new Error(`Invalid SSE meta: ${parseMetaResult.error.issues[0]?.message}`);
+  }
+
+  const parsedMeta = parseMetaResult.data;
+  const lines: string[] = [];
+
+  if (parsedMeta?.id) {
+    lines.push(`id: ${normalizeSseFieldValue(parsedMeta.id)}`);
+  }
+
+  if (parsedMeta?.event) {
+    lines.push(`event: ${normalizeSseFieldValue(parsedMeta.event)}`);
+  }
+
+  if (parsedMeta?.retry) {
+    lines.push(`retry: ${parsedMeta.retry}`);
+  }
+
+  data.split(/\r\n|\r|\n/).forEach((line) => {
+    lines.push(`data: ${line}`);
+  });
+
+  return `${lines.join('\n')}\n\n`;
+};
 
 const createSseRestFactory = <Method extends 'get' | 'post'>(method: Method) => {
   function createSseRequestConfig<
@@ -227,8 +274,8 @@ const createSseRestFactory = <Method extends 'get' | 'post'>(method: Method) => 
       params.setHeader('cache-control', 'no-cache');
 
       const client: RestSseClient<Response> = {
-        send(message) {
-          const payload = `data: ${message}\n\n`;
+        send(message, meta) {
+          const payload = formatSsePayload(message, meta);
           params.response.write(payload);
         },
 
