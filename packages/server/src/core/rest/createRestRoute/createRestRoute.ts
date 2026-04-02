@@ -26,6 +26,7 @@ import {
   isEntityDescriptor,
   isFileDescriptor,
   isFilePathValid,
+  normalizeUrl,
   resolveEntityValues,
   sleep,
   urlJoin
@@ -65,7 +66,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         artifacts: restRequestArtifacts,
         meta: {
           method: requestMethod,
-          path: request.path
+          path: normalizeUrl(request.path)
         }
       });
 

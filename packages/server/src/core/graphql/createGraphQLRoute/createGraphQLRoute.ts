@@ -20,6 +20,7 @@ import {
   convertToEntityDescriptor,
   getGraphQLInput,
   isEntityDescriptor,
+  normalizeUrl,
   parseQuery,
   resolveEntityValues,
   sleep
@@ -46,7 +47,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
       const matchedRequestArtifacts = matchGraphQLRequestArtifacts({
         artifacts: graphQLRequestArtifacts,
         meta: {
-          path: request.path,
+          path: normalizeUrl(request.path),
           query: graphQLInput.query,
           operationType: query.operationType,
           operationName: query.operationName

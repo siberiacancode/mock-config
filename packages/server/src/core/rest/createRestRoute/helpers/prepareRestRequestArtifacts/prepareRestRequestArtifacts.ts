@@ -1,7 +1,5 @@
 import type { RestRequestArtifact } from '@/utils/types';
 
-import { urlJoin } from '@/utils/helpers';
-
 export const prepareRestRequestArtifacts = (requestArtifacts: RestRequestArtifact[]) => {
   const sortedByPathRequestArtifacts = requestArtifacts
     .toSorted(({ path: firstPath }, { path: secondPath }) => {
@@ -38,37 +36,3 @@ export const prepareRestRequestArtifacts = (requestArtifacts: RestRequestArtifac
 
   return sortedByPathRequestArtifacts;
 };
-
-interface MatchRestRequestArtifactsParams {
-  artifacts: RestRequestArtifact[];
-  meta: {
-    method: string;
-    path: string;
-  };
-}
-
-export const generatePathRegex = (path: string) =>
-  new RegExp(
-    `^${path
-      .split('/')
-      .map((part) =>
-        part.startsWith(':') ? '([^/]+)' : part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      )
-      .join('/')}$`
-  );
-
-export const matchRestRequestArtifacts = ({ artifacts, meta }: MatchRestRequestArtifactsParams) =>
-  artifacts.filter((artifact) => {
-    if (!meta.path.startsWith(artifact.baseUrl)) return false;
-
-    if (artifact.method !== meta.method) return false;
-
-    if (artifact.path instanceof RegExp) {
-      if (artifact.baseUrl === '/') return artifact.path.test(meta.path);
-      const path = meta.path.slice(artifact.baseUrl.length);
-      if (!path) return false;
-      return artifact.path.test(path);
-    }
-
-    return generatePathRegex(urlJoin(artifact.baseUrl, artifact.path)).test(meta.path);
-  });

@@ -1,7 +1,6 @@
 import type { GraphQLRequestArtifact } from '@/utils/types';
 
-export const prepareGraphQLRequestArtifacts = (requestArtifacts: GraphQLRequestArtifact[]) =>
-  requestArtifacts.toSorted((first, second) => second.weight - first.weight);
+import { normalizeUrl } from '@/utils/helpers';
 
 interface MatchGraphQLRequestArtifactsParams {
   artifacts: GraphQLRequestArtifact[];
@@ -18,7 +17,9 @@ export const matchGraphQLRequestArtifacts = ({
   meta
 }: MatchGraphQLRequestArtifactsParams) =>
   artifacts.filter((artifact) => {
-    if (meta.path !== artifact.baseUrl) return false;
+    if (normalizeUrl(meta.path) !== normalizeUrl(artifact.baseUrl)) {
+      return false;
+    }
 
     if (artifact.operationType !== meta.operationType) return false;
 

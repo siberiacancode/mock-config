@@ -1,2 +1,3 @@
-export * from './calculateGraphQLRouteConfigWeight';
-export * from './prepareGraphQLRequestArtifacts';
+export * from './calculateGraphQLRouteConfigWeight/calculateGraphQLRouteConfigWeight';
+export * from './matchGraphQLRequestArtifacts/matchGraphQLRequestArtifacts';
+export * from './prepareGraphQLRequestArtifacts/prepareGraphQLRequestArtifacts';
