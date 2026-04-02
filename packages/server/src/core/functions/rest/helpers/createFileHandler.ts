@@ -5,10 +5,9 @@ import type { RestDataResponse, RestFileResponse, RestMethod } from '@/utils/typ
 
 import { isFilePathValid } from '@/utils/helpers';
 
-export const createFileHandler = <Method extends RestMethod>(
-  filePath: RestFileResponse
-): RestDataResponse<Method> => {
-  return ({ response, setHeader, setStatusCode }) => {
+export const createFileHandler =
+  <Method extends RestMethod>(filePath: RestFileResponse): RestDataResponse<Method> =>
+  ({ response, setHeader, setStatusCode }) => {
     if (!isFilePathValid(filePath)) {
       // TODO: what should we do?
       setStatusCode(404);
@@ -21,8 +20,7 @@ export const createFileHandler = <Method extends RestMethod>(
     const fileExtension = fileName.split('.').at(-1)!;
 
     response.type(fileExtension);
-    setHeader('Content-Disposition', `filename=${fileName}`);
+    setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
 
     return buffer;
   };
-};

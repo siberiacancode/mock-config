@@ -33,7 +33,7 @@ export const formatSsePayload = (
     lines.push(`event: ${normalizeSseMetaValue(parsedMeta.event)}`);
   }
 
-  if (parsedMeta?.retry) {
+  if (parsedMeta?.retry != null) {
     lines.push(`retry: ${parsedMeta.retry}`);
   }
 
