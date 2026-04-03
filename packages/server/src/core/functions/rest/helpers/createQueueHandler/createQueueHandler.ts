@@ -1,21 +1,21 @@
 import type { RestDataResponse, RestDataResponseFunction, RestMethod } from '@/utils/types';
 
 export const createQueueHandler = <Method extends RestMethod>(
-  normalizedQueue: { data: RestDataResponse<Method>; time?: number }[]
+  queue: { data: RestDataResponse<Method>; time?: number }[]
 ): RestDataResponseFunction<Method> => {
   let queueIndex = 0;
   let timeoutInProgress = false;
 
   const updateQueueIndex = () => {
-    queueIndex = normalizedQueue.length - 1 === queueIndex ? 0 : queueIndex + 1;
+    queueIndex = queue.length - 1 === queueIndex ? 0 : queueIndex + 1;
   };
 
   return async (params) => {
-    if (!normalizedQueue.length) {
+    if (!queue.length) {
       return params.next();
     }
 
-    const queueItem = normalizedQueue[queueIndex];
+    const queueItem = queue[queueIndex];
     const { time } = queueItem;
 
     if (time && !timeoutInProgress) {
