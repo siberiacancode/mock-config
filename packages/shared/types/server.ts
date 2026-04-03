@@ -1,7 +1,6 @@
 import type { Request } from 'express';
 import type { Arguments } from 'yargs';
 
-import type { Database, Orm } from './database';
 import type {
   GraphQLEntity,
   GraphQLOperationName,
@@ -43,11 +42,6 @@ export interface GraphqlConfig {
   interceptors?: Interceptors<'graphql'>;
 }
 
-export interface DatabaseConfig {
-  data: `${string}.json` | Record<string, unknown>;
-  routes?: `${string}.json` | Record<`/${string}`, `/${string}`>;
-}
-
 export interface BaseMockServerConfig {
   baseUrl?: BaseUrl;
   cors?: Cors;
@@ -57,19 +51,16 @@ export interface BaseMockServerConfig {
 }
 
 export interface MockServerConfig extends BaseMockServerConfig {
-  database?: DatabaseConfig;
   graphql?: GraphqlConfig;
   rest?: RestConfig;
 }
 
 export interface RestMockServerConfig extends BaseMockServerConfig {
   configs?: RestRequestConfig[];
-  database?: DatabaseConfig;
 }
 
 export interface GraphQLMockServerConfig extends BaseMockServerConfig {
   configs?: GraphQLRequestConfig[];
-  database?: DatabaseConfig;
 }
 
 export type MockServerConfigArgv = Arguments<{
@@ -83,9 +74,6 @@ export type MockServerConfigArgv = Arguments<{
 declare global {
   namespace Express {
     interface Request {
-      context: {
-        orm: Orm<Database>;
-      };
       graphQL: {
         operationType: GraphQLOperationType;
         operationName?: GraphQLOperationName;
@@ -107,7 +95,6 @@ export interface FlatMockServerComponent {
 export interface FlatMockServerSettings {
   baseUrl?: BaseUrl;
   cors?: Cors;
-  database?: DatabaseConfig;
   interceptors?: Interceptors;
   port?: Port;
   staticPath?: StaticPath;

@@ -24,11 +24,6 @@ const createServer = (
   const { baseUrl, graphql, interceptors } = mockServerConfig;
   const server = express();
 
-  server.use((request, _, next) => {
-    request.context = { orm: {} };
-    next();
-  });
-
   server.use(bodyParser.json());
 
   createGraphQLRoute({

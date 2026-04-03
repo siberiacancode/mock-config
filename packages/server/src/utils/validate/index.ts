@@ -1,6 +1,5 @@
 export * from './baseUrlSchema/baseUrlSchema';
 export * from './corsSchema/corsSchema';
-export * from './databaseConfigSchema/databaseConfigSchema';
 export * from './getMostSpecificPathFromError';
 export * from './getValidationMessageFromPath';
 export * from './graphqlConfigSchema/graphqlConfigSchema';

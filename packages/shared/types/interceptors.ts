@@ -1,6 +1,5 @@
 import type { CookieOptions, Request, Response } from 'express';
 
-import type { Database, Orm } from './database';
 import type { Logger, LoggerTokens } from './logger';
 import type { ApiType } from './shared';
 
@@ -8,7 +7,6 @@ type InterceptorCookieValue = string | undefined;
 type InterceptorHeaderValue = number | string | string[] | undefined;
 
 export interface RequestInterceptorParams<Api extends ApiType = ApiType> {
-  orm: Orm<Database>;
   request: Request;
   getCookie: (name: string) => InterceptorCookieValue;
   getHeader: (field: string) => InterceptorHeaderValue;
@@ -22,7 +20,6 @@ export type RequestInterceptor<Api extends ApiType = ApiType> = (
 ) => Promise<void> | void;
 
 export interface ResponseInterceptorParams<Api extends ApiType = ApiType> {
-  orm: Orm<Database>;
   request: Request;
   response: Response;
   appendHeader: (field: string, value?: string | string[]) => void;

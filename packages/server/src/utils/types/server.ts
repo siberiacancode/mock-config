@@ -1,7 +1,6 @@
 import type { Request } from 'express';
 import type { Arguments } from 'yargs';
 
-import type { Database, Orm } from './database';
 import type { GraphQLRequestConfig } from './graphql';
 import type { Interceptors } from './interceptors';
 import type { RestMethod, RestRequestConfig } from './rest';
@@ -38,11 +37,6 @@ export interface GraphqlConfig {
   interceptors?: Interceptors<'graphql'>;
 }
 
-export interface DatabaseConfig {
-  data: `${string}.json` | Record<string, unknown>;
-  routes?: `${string}.json` | Record<`/${string}`, `/${string}`>;
-}
-
 export interface BaseServerConfig {
   baseUrl?: BaseUrl;
   cors?: Cors;
@@ -59,16 +53,6 @@ export type MockServerCliArgv = Arguments<{
   watch?: boolean;
 }>;
 
-declare global {
-  namespace Express {
-    interface Request {
-      context: {
-        orm: Orm<Database>;
-      };
-    }
-  }
-}
-
 export interface MockServerComponent {
   baseUrl?: BaseUrl;
   configs: Array<GraphQLRequestConfig | RestRequestConfig>;
@@ -79,7 +63,6 @@ export interface MockServerComponent {
 export interface MockServerSettings {
   baseUrl?: BaseUrl;
   cors?: Cors;
-  database?: DatabaseConfig;
   interceptors?: Interceptors;
   port?: Port;
   staticPath?: StaticPath;

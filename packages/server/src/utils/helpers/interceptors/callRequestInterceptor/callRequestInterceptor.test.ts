@@ -8,7 +8,6 @@ import { callRequestInterceptor } from './callRequestInterceptor';
 
 const createRequest = (value: object) =>
   ({
-    context: { orm: {} },
     ...value
   }) as Request;
 

@@ -26,8 +26,7 @@ export const callRequestInterceptor = async (params: CallRequestInterceptorParam
     getHeader,
     getHeaders,
     getCookie,
-    log,
-    orm: request.context.orm
+    log
   };
 
   await interceptor(requestInterceptorParams);

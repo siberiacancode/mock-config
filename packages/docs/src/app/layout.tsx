@@ -11,7 +11,7 @@ const inter = Inter({
 type AppLayoutProps = LayoutProps<'/'>;
 
 const Layout = ({ children }: AppLayoutProps) => (
-  <html className={inter.className} lang='en' suppressHydrationWarning>
+  <html suppressHydrationWarning className={inter.className} lang='en'>
     <body className='flex flex-col min-h-screen'>
       <RootProvider>{children}</RootProvider>
     </body>

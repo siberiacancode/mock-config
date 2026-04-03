@@ -11,7 +11,6 @@ import type {
   RestRequestArtifact
 } from '@/utils/types';
 
-import { createDatabaseRoutes } from '@/core/database';
 import {
   calculateGraphQLRouteConfigWeight,
   createGraphQLRoute,
@@ -42,13 +41,7 @@ export const createMockServer = (
   const [option, ...mockServerComponents] = mockServerConfig;
 
   const mockServerSettings = !('configs' in option) ? option : undefined;
-  const {
-    cors,
-    staticPath,
-    interceptors,
-    baseUrl: serverBaseUrl = '/',
-    database
-  } = mockServerSettings ?? {};
+  const { cors, staticPath, interceptors, baseUrl: serverBaseUrl = '/' } = mockServerSettings ?? {};
 
   server.use(bodyParser.urlencoded({ extended: false }));
 
@@ -57,7 +50,7 @@ export const createMockServer = (
 
   server.use(bodyParser.text());
 
-  contextMiddleware(server, { database });
+  contextMiddleware(server);
 
   cookieParseMiddleware(server);
 
@@ -77,11 +70,6 @@ export const createMockServer = (
 
   if (staticPath) {
     staticMiddleware(server, serverBaseUrl, staticPath);
-  }
-
-  if (database) {
-    const routerWithDatabaseRoutes = createDatabaseRoutes(express.Router(), database);
-    server.use(serverBaseUrl, routerWithDatabaseRoutes);
   }
 
   const components = mockServerSettings
