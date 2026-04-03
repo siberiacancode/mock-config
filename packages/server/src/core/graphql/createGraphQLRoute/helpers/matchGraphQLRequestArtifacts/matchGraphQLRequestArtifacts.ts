@@ -1,4 +1,4 @@
-import { parse, print, stripIgnoredCharacters } from 'graphql';
+import { stripIgnoredCharacters } from 'graphql';
 
 import type { GraphQLRequestArtifact } from '@/utils/types';
 
@@ -27,10 +27,7 @@ export const matchGraphQLRequestArtifacts = ({
 
     if (artifact.query) {
       if (!meta.query) return false;
-      return (
-        stripIgnoredCharacters(print(parse(artifact.query))) ===
-        stripIgnoredCharacters(print(parse(meta.query)))
-      );
+      return stripIgnoredCharacters(artifact.query) === stripIgnoredCharacters(meta.query);
     }
 
     if (artifact.operationName) {

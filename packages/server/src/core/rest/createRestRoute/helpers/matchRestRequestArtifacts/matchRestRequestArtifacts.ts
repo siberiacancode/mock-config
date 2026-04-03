@@ -28,7 +28,7 @@ export const matchRestRequestArtifacts = ({ artifacts, meta }: MatchRestRequestA
 
     if (artifact.path instanceof RegExp) {
       if (artifact.baseUrl === '/') return new RegExp(artifact.path).test(meta.path);
-      const tail = meta.path === artifact.baseUrl ? '' : meta.path.slice(artifact.baseUrl.length);
+      const tail = meta.path.slice(artifact.baseUrl.length);
       if (!tail) return false;
       return new RegExp(artifact.path).test(tail);
     }
