@@ -89,7 +89,6 @@ export interface GraphQLRequestArtifact {
   componentRequestInterceptor?: Interceptors<'graphql'>['request'];
   componentResponseInterceptor?: Interceptors<'graphql'>['response'];
   config: GraphQLRouteConfig;
-  key: string;
   operationName?: GraphQLOperationName;
   operationType: GraphQLOperationType;
   query?: string;

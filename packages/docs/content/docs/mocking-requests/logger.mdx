@@ -1,0 +1,212 @@
+---
+title: Logger
+description: Request and response logging
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+In `mock-config-server` you can log requests and responses using the `log` function inside interceptors. This helps you see what the client sends and what the server returns.
+
+## Quick Example
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    configs: [
+      {
+        path: '/posts',
+        method: 'get',
+        routes: [
+          {
+            interceptors: {
+              request: ({ log }) => {
+                log({
+                  options: {
+                    id: true,
+                    type: true,
+                    timestamp: true,
+                    method: true,
+                    url: true
+                  }
+                });
+              },
+              response: (data, { log }) => {
+                log({
+                  options: {
+                    type: true,
+                    statusCode: true,
+                    method: true,
+                    url: true
+                  },
+                  rewrite: ({ type, statusCode, method, url }) => {
+                    console.info(`${type} ${method}: ${url} => ${statusCode}`);
+                  }
+                });
+                return data;
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+```
+
+## How It Works
+
+`log` accepts following parameters:
+
+- `options`: which tokens to log
+- `rewrite` (optional): custom output formatter
+
+> By default, `timestamp` and `method` tokens are prettified.
+> Timestamp transforms from UNIX-timestamp number to `DD.MM.YYYY, HH:mm:ss,sss` string.
+> Method transforms from lower case to upper case.
+> If `rewrite` function is used, those tokens will remain unformatted. You can format them as you need.
+
+## Logger Tokens
+
+<TypeTable
+  type={{
+    type: {
+      type: "'request' | 'response'",
+      description: 'Type of log (`request` or `response`)'
+    },
+    id: {
+      type: 'number',
+      description: 'Unique request id to match request and response logs'
+    },
+    timestamp: {
+      type: 'number',
+      description: 'UNIX timestamp in milliseconds'
+    },
+    method: {
+      type: 'RestMethod',
+      typeDescriptionLink: './Rest#RestMethod',
+      description: 'HTTP method'
+    },
+    url: {
+      type: 'string',
+      description: 'Requested URL'
+    },
+    headers: {
+      type: 'Headers',
+      description: 'Headers object'
+    },
+    cookies: {
+      type: 'Cookies',
+      description: 'Cookies object'
+    },
+    query: {
+      type: 'Query',
+      description: 'Query object'
+    },
+    params: {
+      type: 'Params',
+      description: 'Params object'
+    },
+    body: {
+      type: 'any',
+      description: 'Request body'
+    },
+    graphQLOperationName: {
+      type: (
+        <span>
+          <a href='./GraphQL#GraphQLOperationName' className='underline'>
+            GraphQLOperationName
+          </a>{' '}
+          | null
+        </span>
+      ),
+      description: 'GraphQL operation name (`null` for non-GraphQL requests)'
+    },
+    graphQLOperationType: {
+      type: (
+        <span>
+          <a href='./GraphQL#GraphQLOperationType' className='underline'>
+            GraphQLOperationType
+          </a>{' '}
+          | null
+        </span>
+      ),
+      description: 'GraphQL operation type'
+    },
+    graphQLQuery: {
+      type: 'string | null',
+      description: 'GraphQL query (`null` for non-GraphQL requests)'
+    },
+    variables: {
+      type: 'PlainObject | null',
+      description: 'GraphQL variables (`null` for non-GraphQL requests or if not passed)'
+    },
+    data: {
+      type: 'any',
+      description: 'Response data returned to client (response only)'
+    },
+    statusCode: {
+      type: 'number',
+      description: 'Response status code (response only)'
+    }
+  }}
+/>
+
+## Whitelist And Blacklist
+
+For mapped entities (`headers`, `cookies`, `query`, `params`), you can pass `Record<string, boolean>` instead of `true/false` to control which fields are logged.
+
+- If at least one field is `true`, **whitelist** mode applies and only `true` fields are logged.
+- If all fields are `false`, **blacklist** mode applies and everything except `false` fields is logged.
+- Whitelist has priority if both `true` and `false` are present.
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+export const mockServerConfig: MockServerConfig = [
+  {
+    configs: [
+      {
+        path: '/posts',
+        method: 'get',
+        routes: [
+          {
+            interceptors: {
+              request: ({ log }) => {
+                log({
+                  // whitelist: only query1 and query2 will be logged
+                  options: {
+                    query: {
+                      query1: true,
+                      query2: true
+                    }
+                  }
+                });
+                log({
+                  // whitelist: only cookie1 and cookie2 will be logged
+                  options: {
+                    cookies: {
+                      cookie1: true,
+                      cookie2: true,
+                      cookie3: false
+                    }
+                  }
+                });
+                log({
+                  // blacklist: all headers will be logged except header1
+                  options: {
+                    headers: {
+                      header1: false
+                    }
+                  }
+                });
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+```
