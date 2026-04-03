@@ -12,7 +12,7 @@ describe('rest', () => {
       routes: [
         {
           data: 'value',
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
@@ -39,7 +39,7 @@ describe('rest', () => {
               key: 'value'
             }
           },
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
@@ -66,7 +66,7 @@ describe('rest', () => {
               key: 'value'
             }
           },
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
@@ -82,7 +82,7 @@ describe('rest', () => {
       routes: [
         {
           data: handler,
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
@@ -110,13 +110,13 @@ describe('rest', () => {
               key: 'value'
             }
           },
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
   });
 
-  it('Should build config for queue object and normalize queue items', () => {
+  it('Should build config for queue object as data handler', async () => {
     const queueHandler = vi.fn();
     const result = rest.get('/users', {
       match: {
@@ -136,17 +136,13 @@ describe('rest', () => {
       path: '/users',
       routes: [
         {
-          queue: [
-            { data: queueHandler, time: 100 },
-            { data: { ok: 'response' }, time: 200 },
-            { data: expect.any(Function), time: 300 }
-          ],
+          data: expect.any(Function),
           entities: {
             headers: {
               key: 'value'
             }
           },
-          settings: { polling: true }
+          settings: {}
         }
       ]
     });
@@ -164,7 +160,7 @@ describe('rest', () => {
         routes: [
           {
             data: { ok: true },
-            settings: { polling: false }
+            settings: {}
           }
         ]
       });
@@ -172,11 +168,7 @@ describe('rest', () => {
   });
 
   it('Should keep provided settings for request', () => {
-    const result = rest.get(
-      '/users',
-      { response: { ok: true } },
-      { delay: 150, polling: false, status: 200 }
-    );
+    const result = rest.get('/users', { response: { ok: true } }, { delay: 150, status: 200 });
 
     expect(result).toStrictEqual({
       method: 'get',
@@ -185,7 +177,7 @@ describe('rest', () => {
         {
           data: { ok: true },
           entities: undefined,
-          settings: { delay: 150, polling: false, status: 200 }
+          settings: { delay: 150, status: 200 }
         }
       ]
     });
@@ -200,7 +192,7 @@ describe('rest', () => {
       routes: [
         {
           data: expect.any(Function),
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
@@ -215,7 +207,7 @@ describe('rest', () => {
       routes: [
         {
           data: expect.any(Function),
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
@@ -284,7 +276,7 @@ describe('rest', () => {
       routes: [
         {
           data: expect.any(Function),
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });

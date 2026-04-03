@@ -22,7 +22,6 @@ export type RestEntitiesByEntityName<Method extends RestMethod = RestMethod> = {
 
 export interface RestSettings {
   readonly delay?: number;
-  readonly polling?: boolean;
   readonly status?: number;
 }
 
@@ -47,34 +46,28 @@ export interface RestParams<
   getRequestHeaders: () => Record<string, RestHeaderValue>;
   getResponseHeader: (field: string) => RestHeaderValue;
   getResponseHeaders: () => Record<string, RestHeaderValue>;
+  next: () => void;
   setCookie: (name: string, value: string, options?: CookieOptions) => void;
   setDelay: (delay: number) => Promise<void>;
   setHeader: (field: string, value?: string | string[]) => void;
   setStatusCode: (statusCode: number) => void;
 }
 
+export type RestDataResponseFunction<Method extends RestMethod = RestMethod> = (
+  params: RestParams<Method>
+) => Data | Promise<Data>;
 export type RestDataResponse<Method extends RestMethod = RestMethod> =
-  | ((params: RestParams<Method>) => Data | Promise<Data>)
-  | Data;
+  | Data
+  | RestDataResponseFunction<Method>;
 
 export type RestFileResponse = string;
 
-export type RestRouteConfig<Method extends RestMethod> = (
-  | {
-      settings: RestSettings & { polling: true };
-      queue: Array<{
-        time?: number;
-        data: RestDataResponse<Method>;
-      }>;
-    }
-  | {
-      settings?: RestSettings & { polling?: false };
-      data: RestDataResponse<Method>;
-    }
-) & {
+export interface RestRouteConfig<Method extends RestMethod> {
+  data: RestDataResponse<Method>;
   entities?: RestEntitiesByEntityName<Method>;
   interceptors?: Interceptors<'rest'>;
-};
+  settings?: RestSettings;
+}
 
 export type RestPathString = `/${string}`;
 

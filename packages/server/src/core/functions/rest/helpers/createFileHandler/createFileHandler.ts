@@ -1,18 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import type { RestDataResponse, RestFileResponse, RestMethod } from '@/utils/types';
+import type { RestDataResponseFunction, RestFileResponse, RestMethod } from '@/utils/types';
 
 import { isFilePathValid } from '@/utils/helpers';
 
 export const createFileHandler =
-  <Method extends RestMethod>(filePath: RestFileResponse): RestDataResponse<Method> =>
-  ({ response, setHeader, setStatusCode }) => {
+  <Method extends RestMethod>(filePath: RestFileResponse): RestDataResponseFunction<Method> =>
+  ({ response, setHeader, next }) => {
     if (!isFilePathValid(filePath)) {
-      // TODO: what should we do?
-      setStatusCode(404);
-      response.send('Not Found');
-      return null;
+      return next();
     }
 
     const buffer = fs.readFileSync(path.resolve(filePath));

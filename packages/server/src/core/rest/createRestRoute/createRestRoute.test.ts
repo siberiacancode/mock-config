@@ -129,7 +129,7 @@ describe('createRestRoutes: routing', () => {
     });
 
     const response = await request(server).get('/users');
-    expect(response.headers['cache-control']).toBe('no-cache');
+    expect(response.headers['cache-control']).toBe('no-store');
   });
 
   const methodsWithoutCacheControlHeader: Exclude<RestMethod, 'get'>[] = [
@@ -176,7 +176,7 @@ describe('createRestRoutes: content', () => {
                 },
                 data: ({ request, entities }) => ({
                   url: request.url,
-                  query: entities.query
+                  query: entities.query as Record<string, string>
                 })
               }
             ]
@@ -194,112 +194,6 @@ describe('createRestRoutes: content', () => {
         key1: 'value1'
       }
     });
-  });
-
-  it('Should correctly use data function with polling enabled', async () => {
-    const server = createServer({
-      rest: {
-        configs: [
-          {
-            path: '/users',
-            method: 'get',
-            routes: [
-              {
-                settings: { polling: true },
-                entities: {
-                  query: {
-                    key1: 'value1'
-                  }
-                },
-                queue: [
-                  {
-                    data: ({ request, entities }) => ({
-                      url: request.url,
-                      query: entities.query
-                    })
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const response = await request(server).get('/users').query({ key1: 'value1' });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.body).toEqual({
-      url: '/users?key1=value1',
-      query: {
-        key1: 'value1'
-      }
-    });
-  });
-
-  it('Should return the same polling data until the specified time interval elapses', async () => {
-    vi.useFakeTimers();
-    const server = createServer({
-      rest: {
-        configs: [
-          {
-            path: '/users',
-            method: 'get',
-            routes: [
-              {
-                settings: { polling: true },
-                queue: [
-                  { time: 2000, data: { name: 'John', surname: 'Doe' } },
-                  { data: { name: 'John', surname: 'Smith' } }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const query = { key1: 'value1' };
-
-    const firstResponse = await request(server).get('/users').query(query);
-    expect(firstResponse.statusCode).toBe(200);
-    expect(firstResponse.body).toEqual({ name: 'John', surname: 'Doe' });
-
-    vi.advanceTimersByTime(1000);
-
-    const secondResponse = await request(server).get('/users').query(query);
-    expect(secondResponse.statusCode).toBe(200);
-    expect(secondResponse.body).toEqual({ name: 'John', surname: 'Doe' });
-
-    vi.advanceTimersByTime(1000);
-
-    const thirdResponse = await request(server).get('/users').query(query);
-    expect(thirdResponse.statusCode).toBe(200);
-    expect(thirdResponse.body).toEqual({ name: 'John', surname: 'Smith' });
-
-    vi.useRealTimers();
-  });
-
-  it('Should return 404 when the polling queue is empty', async () => {
-    const server = createServer({
-      rest: {
-        configs: [
-          {
-            path: '/users',
-            method: 'get',
-            routes: [
-              {
-                settings: { polling: true },
-                queue: []
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const response = await request(server).get('/users');
-    expect(response.statusCode).toBe(404);
   });
 });
 
@@ -352,43 +246,6 @@ describe('createRestRoutes: settings', () => {
     const response = await request(server).get('/users');
     expect(response.statusCode).toBe(500);
     expect(response.body).toEqual({ name: 'John', surname: 'Doe' });
-  });
-
-  it('Should cycle through queue data with polling setting', async () => {
-    const server = createServer({
-      rest: {
-        configs: [
-          {
-            path: '/users',
-            method: 'get',
-            routes: [
-              {
-                settings: { polling: true },
-                queue: [
-                  { data: { name: 'John', surname: 'Doe' } },
-                  { data: { name: 'John', surname: 'Smith' } }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const firstResponse = await request(server).get('/users');
-    expect(firstResponse.statusCode).toBe(200);
-    expect(firstResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
-
-    const secondResponse = await request(server).get('/users');
-    expect(secondResponse.statusCode).toBe(200);
-    expect(secondResponse.body).toStrictEqual({
-      name: 'John',
-      surname: 'Smith'
-    });
-
-    const thirdResponse = await request(server).get('/users');
-    expect(thirdResponse.statusCode).toBe(200);
-    expect(thirdResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
   });
 });
 
