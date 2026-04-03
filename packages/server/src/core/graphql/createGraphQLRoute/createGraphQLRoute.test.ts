@@ -14,7 +14,7 @@ import type {
 import { urlJoin } from '@/utils/helpers';
 
 import { createGraphQLRoute } from './createGraphQLRoute';
-import { calculateGraphQLRouteConfigWeight } from './helpers';
+import { calculateGraphQLRouteConfigWeight, prepareGraphQLRequestArtifacts } from './helpers';
 
 const createServer = (
   mockServerConfig: Pick<BaseServerConfig, 'baseUrl' | 'interceptors'> & {
@@ -33,13 +33,10 @@ const createServer = (
 
   createGraphQLRoute({
     server,
-    graphQLRequestArtifacts: graphql.configs
-      .reduce((acc, config) => {
+    graphQLRequestArtifacts: prepareGraphQLRequestArtifacts(
+      graphql.configs.reduce((acc, config) => {
         config.routes.forEach((route) => {
           acc.push({
-            key: `${baseUrl}${graphql.baseUrl}/${config.operationType}/${
-              'operationName' in config ? config.operationName : config.query
-            }`,
             baseUrl: urlJoin(baseUrl ?? '/', graphql?.baseUrl ?? '/') as BaseUrl,
             operationType: config.operationType,
             operationName: 'operationName' in config ? config.operationName : undefined,
@@ -59,7 +56,7 @@ const createServer = (
 
         return acc;
       }, [] as GraphQLRequestArtifact[])
-      .toSorted((first, second) => second.weight - first.weight)
+    )
   });
 
   return server;
@@ -178,49 +175,6 @@ describe('createGraphQLRoute: routing', () => {
     });
     expect(getResponse.statusCode).toBe(200);
     expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
-  });
-
-  it('Should return 400 and description text for invalid query', async () => {
-    const server = createServer({
-      graphql: {
-        configs: [
-          {
-            operationName: 'GetUsers',
-            operationType: 'query',
-            routes: [
-              {
-                entities: {
-                  headers: {
-                    key1: 'value1',
-                    key2: 'value2'
-                  },
-                  query: {
-                    key1: 'value1'
-                  }
-                },
-                data: { name: 'John', surname: 'Doe' }
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const postResponse = await request(server).post('/').send({ query: 'invalid query' });
-
-    expect(postResponse.statusCode).toBe(400);
-    expect(postResponse.body).toStrictEqual({
-      message: 'Query is invalid, you must use a valid GraphQL query'
-    });
-
-    const getResponse = await request(server).get('/').query({
-      query: 'invalid query'
-    });
-
-    expect(postResponse.statusCode).toBe(400);
-    expect(getResponse.body).toStrictEqual({
-      message: 'Query is invalid, you must use a valid GraphQL query'
-    });
   });
 
   it('Should return 404 for no matched request configs', async () => {

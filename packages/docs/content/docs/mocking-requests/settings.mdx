@@ -1,0 +1,118 @@
+---
+title: Settings
+description: Global mock server settings
+---
+
+In global configuration you can optionally pass global mock server settings as the first array item. They enable you to configure features such as CORS, logging, base URL, and other options that apply to the entire server.
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+const mockServerConfig: MockServerConfig = [
+  {
+    baseUrl: '/api',
+    ...
+  }
+];
+
+export default mockServerConfig;
+```
+
+## Available settings
+
+- <code>{'baseUrl?: `${string}`'}</code>. Base URL prefix for all requests.
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+const mockServerConfig: MockServerConfig = [
+  {
+    baseUrl: '/api'
+  },
+  {
+    configs: [
+      {
+        path: '/user',
+        method: 'get',
+        routes: [{ data: { id: 1, name: 'Alex' } }]
+      }
+    ]
+  }
+];
+```
+
+In this configuration route `/user` will be available at `/api/user`.
+
+- `port?: number`. Port where the mock server runs.
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+const mockServerConfig: MockServerConfig = [
+  {
+    port: 4000
+  },
+  ...
+];
+```
+
+- `cors?: Cors`. CORS configuration for the server. You can configure `allowedHeaders`, `credentials`, `exposedHeaders`, `maxAge`, `methods` and `origin`.
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+const mockServerConfig: MockServerConfig = [
+  {
+    cors: {
+      origin: ['http://localhost:3000', /\.example\.com$/],
+      methods: ['GET', 'POST', 'PATCH'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      exposedHeaders: ['X-Request-Id'],
+      credentials: true,
+      maxAge: 600
+    }
+  },
+  ...
+];
+```
+
+You can read more here: [CORS](cors).
+
+- `interceptors?: Interceptors`. Global interceptors for request/response transformations.
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+const mockServerConfig: MockServerConfig = [
+  {
+    interceptors: {
+      response: (data, { setHeader }) => {
+        setHeader('x-mock-server', 'true');
+        return data;
+      }
+    }
+  },
+  ...
+];
+```
+
+All available interceptor types and their usage are described in the [Interceptors](./references/Interceptors) section.
+
+- `staticPath?: StaticPath`  
+  Static file serving configuration. Supports:
+  - a single path string: `"/path"`
+  - an object: `{ path: "/path", prefix: "/prefix" }`
+  - an array of strings/objects for multiple static sources.
+
+```typescript
+import type { MockServerConfig } from 'mock-config-server';
+
+const mockServerConfig: MockServerConfig = [
+  {
+    staticPath: ['/public', { path: '/assets', prefix: '/static' }]
+  },
+  ...
+];
+```
+
+You can read more here: [Static Files](static-files).

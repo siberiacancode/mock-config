@@ -10,7 +10,7 @@ import type {
   RestSettings
 } from '@/utils/types';
 
-import { createFileHandler, createQueueHandler } from './helpers';
+import { createFileHandler, createQueueHandler, formatSsePayload } from './helpers';
 
 interface RestRequestInput {
   body?: unknown;
@@ -216,24 +216,34 @@ const createRestFactory = <Method extends RestMethod>(method: Method) => {
 
 interface RestSseClient<Response extends string> {
   close: () => void;
-  send: (data: Response) => void;
+  send: (
+    data: Response,
+    meta?: {
+      event?: string;
+      id?: string;
+      retry?: number;
+    }
+  ) => void;
 }
 
-const createSseRestFactory = () => {
-  function createSseRequestConfig<Response extends string>(
+const createSseRestFactory = <Method extends 'get' | 'post'>(method: Method) => {
+  function createSseRequestConfig<
+    Options extends RestRequestInput = Partial<RestRequestInput>,
+    Response extends string = string
+  >(
     path: RestRequestConfig['path'],
-    config: RestFunction<'get', RestRequestInput, { client: RestSseClient<Response> }>,
+    config: RestFunction<Method, Options, { client: RestSseClient<Response> }>,
     settings?: RestSettings
-  ): BaseRestRequestConfig<RestMethod> {
-    const wrapperHandler: RestFunction<'get', RestRequestInput> = (params) => {
+  ): BaseRestRequestConfig<Method> {
+    const wrapperHandler: RestFunction<Method, Options> = (params) => {
       params.setHeader('connection', 'keep-alive');
       params.setHeader('content-type', 'text/event-stream');
       params.setHeader('cache-control', 'no-cache');
 
       const client: RestSseClient<Response> = {
-        send(message) {
-          const payload = `data: ${message}\n\n`;
-          params.response.write(new TextEncoder().encode(payload));
+        send(message, meta) {
+          const payload = formatSsePayload(message, meta);
+          params.response.write(payload);
         },
 
         close() {
@@ -241,11 +251,11 @@ const createSseRestFactory = () => {
         }
       };
 
-      config({ ...params, client });
+      return config({ ...params, client });
     };
 
     return {
-      method: 'get',
+      method,
       path,
       routes: [createConfigResolver(wrapperHandler, settings)]
     };
@@ -261,5 +271,6 @@ export const rest = {
   patch: createRestFactory('patch'),
   post: createRestFactory('post'),
   put: createRestFactory('put'),
-  sse: createSseRestFactory()
+  sse: createSseRestFactory('get'),
+  stream: createSseRestFactory('post')
 };

@@ -17,7 +17,7 @@ export const createFileHandler =
     const fileExtension = fileName.split('.').at(-1)!;
 
     response.type(fileExtension);
-    setHeader('Content-Disposition', `filename=${fileName}`);
+    setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
 
     return buffer;
   };

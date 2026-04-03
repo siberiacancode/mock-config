@@ -20,35 +20,56 @@ import {
   callResponseInterceptors,
   convertToEntityDescriptor,
   isEntityDescriptor,
+  normalizeUrl,
   resolveEntityValues,
   sleep,
   urlJoin
 } from '@/utils/helpers';
+
+import { generatePathRegex, matchRestRequestArtifacts } from './helpers';
 
 interface CreateRestRoutesParams {
   restRequestArtifacts: RestRequestArtifact[];
   server: Express;
 }
 
+const extractPathParams = (artifact: RestRequestArtifact, path: string) => {
+  if (artifact.path instanceof RegExp) return {};
+
+  const fullPath = urlJoin(artifact.baseUrl, artifact.path);
+  const keys = fullPath.match(/:[^/]+/g)?.map((key) => key.slice(1)) ?? [];
+
+  if (!keys.length) return {};
+
+  const match = path.match(generatePathRegex(fullPath));
+  if (!match) return {};
+
+  return keys.reduce<Record<string, string>>((acc, key, index) => {
+    acc[key] = decodeURIComponent(match[index + 1]);
+    return acc;
+  }, {});
+};
+
 export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRoutesParams) =>
   server.use(
     asyncHandler(async (request, response, next) => {
       const requestMethod = request.method.toLowerCase();
+      const previousParams = { ...request.params };
 
-      const matchedRequestArtifacts = restRequestArtifacts.filter((restRequestArtifact) => {
-        const isMethodMatched = restRequestArtifact.method === requestMethod;
-        if (!isMethodMatched) return false;
-
-        if (restRequestArtifact.path instanceof RegExp) {
-          return restRequestArtifact.path.test(request.path);
+      const matchedRequestArtifacts = matchRestRequestArtifacts({
+        artifacts: restRequestArtifacts,
+        meta: {
+          method: requestMethod,
+          path: normalizeUrl(request.path)
         }
-
-        return request.path === urlJoin(restRequestArtifact.baseUrl, restRequestArtifact.path);
       });
 
       if (!matchedRequestArtifacts.length) return next();
 
-      const matchedRouteConfig = matchedRequestArtifacts.find(({ config }) => {
+      const matchedRouteConfig = matchedRequestArtifacts.find((artifact) => {
+        request.params = extractPathParams(artifact, request.path);
+        const { config } = artifact;
+
         if (!config.entities) return true;
 
         const entityEntries = Object.entries(config.entities) as Entries<
@@ -124,7 +145,10 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         });
       });
 
-      if (!matchedRouteConfig) return next();
+      if (!matchedRouteConfig) {
+        request.params = previousParams;
+        return next();
+      }
 
       if (matchedRouteConfig.componentRequestInterceptor) {
         await callRequestInterceptor({
@@ -218,10 +242,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         await sleep(matchedRouteConfig.config.settings.delay);
       }
 
-      if (
-        response.headersSent ||
-        response.getHeader('content-type')?.toString().toLowerCase().includes('text/event-stream')
-      ) {
+      if (response.headersSent) {
         return;
       }
 
