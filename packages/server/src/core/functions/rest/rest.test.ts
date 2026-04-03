@@ -192,7 +192,7 @@ describe('rest', () => {
       routes: [
         {
           data: expect.any(Function),
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
@@ -207,7 +207,7 @@ describe('rest', () => {
       routes: [
         {
           data: expect.any(Function),
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });

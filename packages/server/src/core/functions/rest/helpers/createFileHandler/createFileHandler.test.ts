@@ -70,6 +70,9 @@ describe('createFileHandler', () => {
     fileHandler(params);
 
     expect(params.response.type).toHaveBeenCalledWith('txt');
-    expect(params.setHeader).toHaveBeenCalledWith('Content-Disposition', 'filename=document.txt');
+    expect(params.setHeader).toHaveBeenCalledWith(
+      'Content-Disposition',
+      'attachment; filename="document.txt"'
+    );
   });
 });
