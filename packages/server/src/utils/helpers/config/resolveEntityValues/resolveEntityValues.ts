@@ -14,7 +14,7 @@ import { isPlainObject } from '../../isPlainObject/isPlainObject';
 import { isPrimitive } from '../../isPrimitive/isPrimitive';
 
 const checkFunction: CheckFunction = (checkMode, actualValue, descriptorValue?) => {
-  const isActualValueUndefined = typeof actualValue === 'undefined';
+  const isActualValueUndefined = actualValue === undefined;
   if (checkMode === 'exists') return !isActualValueUndefined;
   if (checkMode === 'notExists') return isActualValueUndefined;
 

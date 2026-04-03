@@ -2,8 +2,6 @@ import type { Express } from 'express';
 
 import bodyParser from 'body-parser';
 import express from 'express';
-import { createGraphQLRoute } from 'src/core/graphql/createGraphQLRoute/createGraphQLRoute';
-import { createRestRoute } from 'src/core/rest/createRestRoute/createRestRoute';
 
 import type {
   BaseUrl,
@@ -15,6 +13,11 @@ import type {
 
 import { createDatabaseRoutes } from '@/core/database';
 import {
+  calculateGraphQLRouteConfigWeight,
+  createGraphQLRoute,
+  prepareGraphQLRequestArtifacts
+} from '@/core/graphql';
+import {
   contextMiddleware,
   cookieParseMiddleware,
   corsMiddleware,
@@ -23,11 +26,13 @@ import {
   requestInterceptorMiddleware,
   staticMiddleware
 } from '@/core/middlewares';
+import {
+  calculateRestRouteConfigWeight,
+  createRestRoute,
+  prepareRestRequestArtifacts
+} from '@/core/rest';
 import { urlJoin } from '@/utils/helpers';
 import { validateMockServerConfig } from '@/utils/validate';
-
-import { calculateGraphQLRouteConfigWeight } from '../../core/graphql/createGraphQLRoute/helpers';
-import { calculateRestRouteConfigWeight } from '../../core/rest/createRestRoute/helpers';
 
 export const createMockServer = (
   mockServerConfig: MockServerConfig,
@@ -90,8 +95,7 @@ export const createMockServer = (
         if (isRest) {
           config.routes.forEach((route) => {
             acc.restRequestsArtifacts.push({
-              key: `${serverBaseUrl}${component.baseUrl}/${config.method}/${config.path}`,
-              baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '/') as BaseUrl,
+              baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
               method: config.method,
               path: config.path,
               config: route,
@@ -112,10 +116,7 @@ export const createMockServer = (
         if (isGraphql) {
           config.routes.forEach((route) => {
             acc.graphQLRequestsArtifacts.push({
-              key: `${serverBaseUrl}${component.baseUrl}/${config.operationType}/${
-                'operationName' in config ? config.operationName : config.query
-              }`,
-              baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '/') as BaseUrl,
+              baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
               operationType: config.operationType,
               operationName: 'operationName' in config ? config.operationName : undefined,
               query: 'query' in config ? config.query : undefined,
@@ -142,24 +143,20 @@ export const createMockServer = (
     }
   );
 
-  const sortedRestRequestsArtifacts = restRequestsArtifacts.toSorted(
-    (first, second) => second.weight - first.weight
-  );
-  const sortedGraphQLRequestsArtifacts = graphQLRequestsArtifacts.toSorted(
-    (first, second) => second.weight - first.weight
-  );
+  const preparedRestRequestArtifacts = prepareRestRequestArtifacts(restRequestsArtifacts);
+  const preparedGraphQLRequestArtifacts = prepareGraphQLRequestArtifacts(graphQLRequestsArtifacts);
 
-  if (sortedRestRequestsArtifacts.length) {
+  if (preparedRestRequestArtifacts.length) {
     createRestRoute({
       server,
-      restRequestArtifacts: sortedRestRequestsArtifacts
+      restRequestArtifacts: preparedRestRequestArtifacts
     });
   }
 
-  if (sortedGraphQLRequestsArtifacts.length) {
+  if (preparedGraphQLRequestArtifacts.length) {
     createGraphQLRoute({
       server,
-      graphQLRequestArtifacts: sortedGraphQLRequestsArtifacts
+      graphQLRequestArtifacts: preparedGraphQLRequestArtifacts
     });
   }
 

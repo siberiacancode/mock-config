@@ -114,7 +114,6 @@ export interface RestRequestArtifact {
   componentRequestInterceptor?: Interceptors<'rest'>['request'];
   componentResponseInterceptor?: Interceptors<'rest'>['response'];
   config: RestRouteConfig<RestMethod>;
-  key: string;
   method: RestMethod;
   path: RegExp | RestPathString;
   requestRequestInterceptor?: Interceptors<'rest'>['request'];

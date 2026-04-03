@@ -18,7 +18,7 @@ import { urlJoin } from '@/utils/helpers';
 import { createTmpDir } from '@/utils/helpers/tests';
 
 import { createRestRoute } from './createRestRoute';
-import { calculateRestRouteConfigWeight } from './helpers';
+import { calculateRestRouteConfigWeight, prepareRestRequestArtifacts } from './helpers';
 
 const createServer = (
   mockServerConfig: Pick<BaseServerConfig, 'baseUrl' | 'interceptors'> & {
@@ -37,11 +37,10 @@ const createServer = (
 
   createRestRoute({
     server,
-    restRequestArtifacts: rest.configs
-      .reduce((acc, config) => {
+    restRequestArtifacts: prepareRestRequestArtifacts(
+      rest.configs.reduce((acc, config) => {
         config.routes.forEach((route) => {
           acc.push({
-            key: `${baseUrl}${rest.baseUrl}/${config.method}/${config.path}`,
             baseUrl: urlJoin(baseUrl ?? '/', rest?.baseUrl ?? '/') as BaseUrl,
             method: config.method,
             path: config.path,
@@ -60,7 +59,7 @@ const createServer = (
 
         return acc;
       }, [] as RestRequestArtifact[])
-      .toSorted((first, second) => second.weight - first.weight)
+    )
   });
 
   return server;

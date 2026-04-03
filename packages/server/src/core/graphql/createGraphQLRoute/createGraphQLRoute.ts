@@ -20,10 +20,13 @@ import {
   convertToEntityDescriptor,
   getGraphQLInput,
   isEntityDescriptor,
+  normalizeUrl,
   parseQuery,
   resolveEntityValues,
   sleep
 } from '@/utils/helpers';
+
+import { matchGraphQLRequestArtifacts } from './helpers';
 
 interface CreateGraphQLRouteParams {
   graphQLRequestArtifacts: GraphQLRequestArtifact[];
@@ -36,34 +39,19 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
       if (request.method !== 'GET' && request.method !== 'POST') return next();
 
       const graphQLInput = getGraphQLInput(request);
-      if (!graphQLInput.query) {
-        return response.status(400).json({
-          message: 'Query is missing, you must pass a valid GraphQL query'
-        });
-      }
+      if (!graphQLInput.query) return next();
 
       const query = parseQuery(graphQLInput.query);
-      if (!query) {
-        return response.status(400).json({
-          message: 'Query is invalid, you must use a valid GraphQL query'
-        });
-      }
+      if (!query) return next();
 
-      const matchedRequestArtifacts = graphQLRequestArtifacts.filter((artifact) => {
-        if (artifact.operationType !== query.operationType) return false;
-
-        if (artifact.query) {
-          return artifact.query.replace(/\s+/g, '') === graphQLInput.query?.replace(/\s+/g, '');
+      const matchedRequestArtifacts = matchGraphQLRequestArtifacts({
+        artifacts: graphQLRequestArtifacts,
+        meta: {
+          path: normalizeUrl(request.path),
+          query: graphQLInput.query,
+          operationType: query.operationType,
+          operationName: query.operationName
         }
-
-        if (artifact.operationName) {
-          if (!query.operationName) return false;
-          return artifact.operationName instanceof RegExp
-            ? new RegExp(artifact.operationName).test(query.operationName)
-            : artifact.operationName === query.operationName;
-        }
-
-        return true;
       });
 
       if (!matchedRequestArtifacts.length) return next();
