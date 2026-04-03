@@ -6,10 +6,11 @@ import type {
   RestMethod,
   RestParams,
   RestRequestConfig,
+  RestRouteConfig,
   RestSettings
 } from '@/utils/types';
 
-import { createFileHandler, formatSsePayload } from './helpers';
+import { createFileHandler, createQueueHandler, formatSsePayload } from './helpers';
 
 interface RestRequestInput {
   body?: unknown;
@@ -87,22 +88,22 @@ const resolveConfigType = <Method extends RestMethod, Options extends RestReques
 
 const createConfigResolver = <Method extends RestMethod, Options extends RestRequestInput>(
   config: RestConfig<Method, Options>,
-  settings?: RestSettings
-) => {
+  settings: RestSettings = {}
+): RestRouteConfig<Method> => {
   const resolvedConfig = resolveConfigType(config);
 
   switch (resolvedConfig.type) {
     case 'inlineResponse':
       return {
         data: resolvedConfig.config,
-        settings: { ...settings, polling: false as const }
+        settings
       };
 
     case 'data': {
       return {
         data: resolvedConfig.config.response,
         entities: resolvedConfig.config.match,
-        settings: { ...settings, polling: false as const }
+        settings
       };
     }
 
@@ -110,42 +111,48 @@ const createConfigResolver = <Method extends RestMethod, Options extends RestReq
       return {
         data: createFileHandler<Method>(resolvedConfig.config.file),
         entities: resolvedConfig.config.match,
-        settings: { ...settings, polling: false as const }
+        settings
       };
     }
 
     case 'queue': {
-      return {
-        queue: resolvedConfig.config.queue.map((item) => {
-          if ('handler' in item) {
-            return { data: item.handler, time: item.time };
-          }
+      const normalizedQueue = resolvedConfig.config.queue.map((item) => {
+        if ('handler' in item) {
+          return { data: item.handler, time: item.time };
+        }
 
-          if ('response' in item) {
-            return { data: item.response, time: item.time };
-          }
+        if ('response' in item) {
+          return { data: item.response, time: item.time };
+        }
 
+        if ('file' in item) {
           return {
             data: createFileHandler<Method>(item.file),
             time: item.time
           };
-        }),
+        }
+
+        throw new Error(`Unexpected queue item kind: ${JSON.stringify(item, null, 2)}`);
+      });
+
+      return {
+        data: createQueueHandler(normalizedQueue),
         entities: resolvedConfig.config.match,
-        settings: { ...settings, polling: true as const }
+        settings
       };
     }
 
     case 'inlineHandler':
       return {
         data: resolvedConfig.config,
-        settings: { ...settings, polling: false as const }
+        settings
       };
 
     case 'handler': {
       return {
         data: resolvedConfig.config.handler,
         entities: resolvedConfig.config.match,
-        settings: { ...settings, polling: false as const }
+        settings
       };
     }
 
@@ -228,7 +235,7 @@ const createSseRestFactory = <Method extends 'get' | 'post'>(method: Method) => 
     config: RestFunction<Method, Options, { client: RestSseClient<Response> }>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method> {
-    const sseHandler: RestFunction<Method, Options> = (params) => {
+    const wrapperHandler: RestFunction<Method, Options> = (params) => {
       params.setHeader('connection', 'keep-alive');
       params.setHeader('content-type', 'text/event-stream');
       params.setHeader('cache-control', 'no-cache');
@@ -250,7 +257,7 @@ const createSseRestFactory = <Method extends 'get' | 'post'>(method: Method) => 
     return {
       method,
       path,
-      routes: [createConfigResolver(sseHandler, settings)]
+      routes: [createConfigResolver(wrapperHandler, settings)]
     };
   }
 

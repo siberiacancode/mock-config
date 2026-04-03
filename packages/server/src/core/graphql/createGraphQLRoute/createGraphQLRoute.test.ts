@@ -346,7 +346,7 @@ describe('createGraphQLRoute: content', () => {
                 },
                 data: ({ request, entities }) => ({
                   url: request.url,
-                  query: entities.query
+                  query: entities.query as Record<string, string>
                 })
               }
             ]
@@ -367,122 +367,6 @@ describe('createGraphQLRoute: content', () => {
         key1: 'value1'
       }
     });
-  });
-
-  it('Should correctly use data function with polling enabled', async () => {
-    const server = createServer({
-      graphql: {
-        configs: [
-          {
-            operationName: 'GetUsers',
-            operationType: 'query',
-            routes: [
-              {
-                settings: { polling: true },
-                entities: {
-                  query: {
-                    key1: 'value1'
-                  }
-                },
-                queue: [
-                  {
-                    data: ({ request, entities }) => ({
-                      url: request.url,
-                      query: entities.query
-                    })
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const response = await request(server).get('/').query({
-      query: 'query GetUsers { users { name } }',
-      key1: 'value1'
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(response.body).toEqual({
-      url: `/?query=${encodeURIComponent('query GetUsers { users { name } }')}&key1=value1`,
-      query: {
-        key1: 'value1'
-      }
-    });
-  });
-
-  it('Should return the same polling data until the specified time interval elapses', async () => {
-    vi.useFakeTimers();
-    const server = createServer({
-      graphql: {
-        configs: [
-          {
-            operationName: 'GetUsers',
-            operationType: 'query',
-            routes: [
-              {
-                settings: { polling: true },
-                queue: [
-                  { time: 2000, data: { name: 'John', surname: 'Doe' } },
-                  { data: { name: 'John', surname: 'Smith' } }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const query = {
-      query: 'query GetUsers { users { name } }',
-      key1: 'value1'
-    };
-
-    const firstResponse = await request(server).get('/').query(query);
-    expect(firstResponse.statusCode).toBe(200);
-    expect(firstResponse.body).toEqual({ name: 'John', surname: 'Doe' });
-
-    vi.advanceTimersByTime(1000);
-
-    const secondResponse = await request(server).get('/').query(query);
-    expect(secondResponse.statusCode).toBe(200);
-    expect(secondResponse.body).toEqual({ name: 'John', surname: 'Doe' });
-
-    vi.advanceTimersByTime(1000);
-
-    const thirdResponse = await request(server).get('/').query(query);
-    expect(thirdResponse.statusCode).toBe(200);
-    expect(thirdResponse.body).toEqual({ name: 'John', surname: 'Smith' });
-
-    vi.useRealTimers();
-  });
-
-  it('Should return 404 when the polling queue is empty', async () => {
-    const server = createServer({
-      graphql: {
-        configs: [
-          {
-            operationName: 'GetUsers',
-            operationType: 'query',
-            routes: [
-              {
-                settings: { polling: true },
-                queue: []
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const query = {
-      query: 'query GetUsers { users { name } }'
-    };
-
-    const response = await request(server).get('/').query(query);
-    expect(response.statusCode).toBe(404);
   });
 });
 
@@ -542,44 +426,6 @@ describe('createGraphQLRoute: settings', () => {
     const response = await request(server).get('/').query(query);
     expect(response.statusCode).toBe(500);
     expect(response.body).toEqual({ name: 'John', surname: 'Doe' });
-  });
-
-  it('Should cycle through queue data with polling setting', async () => {
-    const server = createServer({
-      graphql: {
-        configs: [
-          {
-            operationName: 'GetUsers',
-            operationType: 'query',
-            routes: [
-              {
-                settings: { polling: true },
-                queue: [
-                  { data: { name: 'John', surname: 'Doe' } },
-                  { data: { name: 'John', surname: 'Smith' } }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const query = {
-      query: 'query GetUsers { users { name } }'
-    };
-
-    const firstResponse = await request(server).get('/').query(query);
-    expect(firstResponse.statusCode).toBe(200);
-    expect(firstResponse.body).toEqual({ name: 'John', surname: 'Doe' });
-
-    const secondResponse = await request(server).get('/').query(query);
-    expect(secondResponse.statusCode).toBe(200);
-    expect(secondResponse.body).toEqual({ name: 'John', surname: 'Smith' });
-
-    const thirdResponse = await request(server).get('/').query(query);
-    expect(thirdResponse.statusCode).toBe(200);
-    expect(thirdResponse.body).toEqual({ name: 'John', surname: 'Doe' });
   });
 });
 

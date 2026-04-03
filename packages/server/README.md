@@ -95,7 +95,7 @@ Every route must be configured to handle response content in one of three ways: 
   - `data?` `any` mock data of request
   - `queue?` `Array<{ time?: number; data: any}>` queue for polling with opportunity to set time for each response
   - `file?` `string` path to file for return in response
-  - `settings?` `Settings` settings for route (polling on/off, etc.)
+  - `settings?` `Settings` settings for route (status, delay)
   - `entities?` `Object<headers | cookies | query | params | body>` object that helps in data retrieval
   - `interceptors?` `Interceptors` functions to change request or response parameters, [read](#interceptors)
 - `interceptors?` `Interceptors` functions to change request or response parameters, [read](#interceptors)
@@ -536,7 +536,7 @@ export default flatMockServerConfig;
 
 #### Polling
 
-Routes support polling for data. To add polling for data, you must specify the `polling setting` and use `queue` property instead of `data` or `file`.
+Routes support polling for data. To add polling for data, use `queue` property instead of `data` or `file`.
 
 `queue` is an array containing `data` or `file` that should be returned in order.
 
@@ -555,7 +555,6 @@ const flatMockServerConfig = [
         method: 'get',
         routes: [
           {
-            settings: { polling: true },
             queue: [
               { data: { emoji: '🦁', name: 'Nursultan' } },
               { data: { emoji: '☄', name: 'Dmitriy' } },
@@ -586,7 +585,6 @@ const flatMockServerConfig = [
         method: 'get',
         routes: [
           {
-            settings: { polling: true },
             queue: [
               { time: 5000, data: { emoji: '🦁', name: 'Nursultan' } },
               { data: { emoji: '☄', name: 'Dmitriy' } }

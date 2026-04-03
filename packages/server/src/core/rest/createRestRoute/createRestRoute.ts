@@ -6,7 +6,6 @@ import type {
   EntityDescriptor,
   Entries,
   PlainObject,
-  RestDataResponse,
   RestEntitiesByEntityName,
   RestEntity,
   RestParams,
@@ -172,54 +171,6 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         });
       }
 
-      let matchedRouteConfigData: RestDataResponse | undefined;
-
-      if (matchedRouteConfig.config.settings?.polling && 'queue' in matchedRouteConfig.config) {
-        if (!matchedRouteConfig.config.queue.length) return next();
-
-        const shallowMatchedRouteConfig =
-          matchedRouteConfig as unknown as typeof matchedRouteConfig & {
-            __pollingIndex: number;
-            __timeoutInProgress: boolean;
-          };
-
-        let index = shallowMatchedRouteConfig.__pollingIndex ?? 0;
-        const { time } = matchedRouteConfig.config.queue[index];
-
-        const updateIndex = () => {
-          if (
-            'queue' in matchedRouteConfig.config &&
-            matchedRouteConfig.config.queue.length - 1 === index
-          ) {
-            index = 0;
-          } else {
-            index += 1;
-          }
-          shallowMatchedRouteConfig.__pollingIndex = index;
-        };
-        const queueItem = matchedRouteConfig.config.queue[index];
-
-        if (time && !shallowMatchedRouteConfig.__timeoutInProgress) {
-          shallowMatchedRouteConfig.__timeoutInProgress = true;
-          setTimeout(() => {
-            shallowMatchedRouteConfig.__timeoutInProgress = false;
-            updateIndex();
-          }, time);
-        }
-
-        if (!time && !shallowMatchedRouteConfig.__timeoutInProgress) {
-          updateIndex();
-        }
-
-        if ('data' in queueItem) {
-          matchedRouteConfigData = queueItem.data;
-        }
-      }
-
-      if ('data' in matchedRouteConfig.config) {
-        matchedRouteConfigData = matchedRouteConfig.config.data;
-      }
-
       if (matchedRouteConfig.config.settings?.status) {
         response.statusCode = matchedRouteConfig.config.settings.status;
       }
@@ -227,11 +178,12 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
       // ✅ important:
       // set 'Cache-Control' header for explicit browsers response revalidate: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
       // this code should place before response interceptors for giving opportunity to rewrite 'Cache-Control' header
-      if (request.method === 'GET') response.set('Cache-control', 'no-cache');
+      if (request.method === 'GET') response.set('Cache-control', 'no-store');
 
       const params: RestParams = {
         request,
         response,
+        next,
         entities: matchedRouteConfig.config.entities ?? {},
         appendHeader: (field, value) => {
           response.append(field, value);
@@ -266,9 +218,9 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
       };
 
       const resolvedData =
-        typeof matchedRouteConfigData === 'function'
-          ? await matchedRouteConfigData(params)
-          : matchedRouteConfigData;
+        typeof matchedRouteConfig.config.data === 'function'
+          ? await matchedRouteConfig.config.data(params)
+          : matchedRouteConfig.config.data;
 
       if (response.headersSent) {
         return;
