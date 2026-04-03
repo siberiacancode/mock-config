@@ -79,7 +79,7 @@ describe('matchRestRequestArtifacts', () => {
     const matched = matchRestRequestArtifacts({
       artifacts: [
         makeArtifact({
-          baseUrl: '/api/',
+          baseUrl: '/api',
           path: '/users/:id'
         })
       ],

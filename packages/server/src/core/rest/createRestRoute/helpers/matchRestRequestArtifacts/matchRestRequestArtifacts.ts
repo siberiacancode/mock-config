@@ -27,10 +27,10 @@ export const matchRestRequestArtifacts = ({ artifacts, meta }: MatchRestRequestA
     if (artifact.method !== meta.method) return false;
 
     if (artifact.path instanceof RegExp) {
-      if (artifact.baseUrl === '/') return artifact.path.test(meta.path);
+      if (artifact.baseUrl === '/') return new RegExp(artifact.path).test(meta.path);
       const tail = meta.path === artifact.baseUrl ? '' : meta.path.slice(artifact.baseUrl.length);
       if (!tail) return false;
-      return artifact.path.test(tail);
+      return new RegExp(artifact.path).test(tail);
     }
 
     return generatePathRegex(urlJoin(artifact.baseUrl, artifact.path)).test(meta.path);

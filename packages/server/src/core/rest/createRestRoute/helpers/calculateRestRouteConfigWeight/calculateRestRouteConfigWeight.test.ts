@@ -74,10 +74,10 @@ describe('calculateRestRouteConfigWeight', () => {
       calculateRestRouteConfigWeight({
         data: {},
         entities: {
-          body: { key: 'value' }
+          body: { a: 'value', b: 'value' }
         }
       })
-    ).toBe(1);
+    ).toBe(2);
   });
 
   it('Should add one for non-plain body array', () => {

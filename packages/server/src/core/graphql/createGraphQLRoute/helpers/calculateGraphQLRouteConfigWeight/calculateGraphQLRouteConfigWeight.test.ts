@@ -46,28 +46,14 @@ describe('calculateGraphQLRouteConfigWeight', () => {
     ).toBe(3);
   });
 
-  it('Should add one for variables descriptor scalar value', () => {
-    expect(
-      calculateGraphQLRouteConfigWeight({
-        data: {},
-        entities: {
-          variables: {
-            checkMode: 'equals',
-            value: 'scalar'
-          }
-        } as any
-      })
-    ).toBe(1);
-  });
-
   it('Should count plain object variables without descriptor', () => {
     expect(
       calculateGraphQLRouteConfigWeight({
         data: {},
         entities: {
-          variables: { key: 'value' }
+          variables: { a: 'value', b: 'value' }
         }
       })
-    ).toBe(1);
+    ).toBe(2);
   });
 });

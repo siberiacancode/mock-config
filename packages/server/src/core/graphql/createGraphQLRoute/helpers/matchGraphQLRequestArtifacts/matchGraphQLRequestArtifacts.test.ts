@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { BaseUrl, GraphQLRequestArtifact } from '@/utils/types';
 
@@ -38,13 +38,15 @@ describe('matchGraphQLRequestArtifacts', () => {
     expect(matched).toHaveLength(0);
   });
 
-  it('Should match query string ignoring whitespace', () => {
+  it('Should match equivalent queries with different insignificant whitespace', () => {
     const matched = matchGraphQLRequestArtifacts({
       artifacts: [makeArtifact({ query: 'query { User { name } }' })],
       meta: {
         path: '/',
         operationType: 'query',
-        query: 'query { User { name } }'
+        query: `query  {
+          User  {  name  }
+        }`
       }
     });
     expect(matched).toHaveLength(1);
@@ -121,6 +123,39 @@ describe('matchGraphQLRequestArtifacts', () => {
       }
     });
     expect(matched).toHaveLength(1);
+  });
+
+  it('Should match operation name regexp with case-insensitive flag', () => {
+    const matched = matchGraphQLRequestArtifacts({
+      artifacts: [makeArtifact({ operationName: /^getusers$/i })],
+      meta: {
+        path: '/',
+        operationType: 'query',
+        operationName: 'GetUsers'
+      }
+    });
+    expect(matched).toHaveLength(1);
+  });
+
+  it('Should skip artifact with neither query nor operationName', () => {
+    const warn = vi.spyOn(console, 'warn');
+    const artifact = makeArtifact({});
+
+    const matched = matchGraphQLRequestArtifacts({
+      artifacts: [artifact],
+      meta: {
+        path: '/',
+        operationType: 'query',
+        operationName: 'GetUsers'
+      }
+    });
+
+    expect(matched).toHaveLength(0);
+    expect(warn).toHaveBeenCalledWith(
+      `[mock-config] GraphQL artifact with no query or operationName was skipped: ${JSON.stringify(
+        artifact
+      )}`
+    );
   });
 
   it('Should fail operation name regexp when pattern does not match', () => {

@@ -32,6 +32,15 @@ describe('prepareRestRequestArtifacts', () => {
     expect(prepared[1].path).toBe('/users/:id');
   });
 
+  it('Should prefer more specific path over higher route weight', () => {
+    const prepared = prepareRestRequestArtifacts([
+      makeArtifact({ path: '/users/:id', weight: 100 }),
+      makeArtifact({ path: '/users/me', weight: 1 })
+    ]);
+    expect(prepared[0].path).toBe('/users/me');
+    expect(prepared[1].path).toBe('/users/:id');
+  });
+
   it('Should not reorder two non-parameterized paths', () => {
     const prepared = prepareRestRequestArtifacts([
       makeArtifact({ path: '/first' }),

@@ -1,3 +1,5 @@
+import { parse, print, stripIgnoredCharacters } from 'graphql';
+
 import type { GraphQLRequestArtifact } from '@/utils/types';
 
 import { normalizeUrl } from '@/utils/helpers';
@@ -25,7 +27,10 @@ export const matchGraphQLRequestArtifacts = ({
 
     if (artifact.query) {
       if (!meta.query) return false;
-      return artifact.query.replace(/\s+/g, '') === meta.query.replace(/\s+/g, '');
+      return (
+        stripIgnoredCharacters(print(parse(artifact.query))) ===
+        stripIgnoredCharacters(print(parse(meta.query)))
+      );
     }
 
     if (artifact.operationName) {
@@ -35,5 +40,10 @@ export const matchGraphQLRequestArtifacts = ({
         : artifact.operationName === meta.operationName;
     }
 
-    throw new Error('Unmatched graphql request');
+    console.warn(
+      `[mock-config] GraphQL artifact with no query or operationName was skipped: ${JSON.stringify(
+        artifact
+      )}`
+    );
+    return false;
   });

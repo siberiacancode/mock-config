@@ -2,6 +2,7 @@ import type { RestRequestArtifact } from '@/utils/types';
 
 export const prepareRestRequestArtifacts = (requestArtifacts: RestRequestArtifact[]) => {
   const sortedByPathRequestArtifacts = requestArtifacts
+    .toSorted((first, second) => second.weight - first.weight)
     .toSorted(({ path: firstPath }, { path: secondPath }) => {
       // ✅ important:
       // do not compare RegExp paths and non-parameterized paths
@@ -31,8 +32,6 @@ export const prepareRestRequestArtifacts = (requestArtifacts: RestRequestArtifac
         return +isFirstPathPartParameter - +isSecondPathPartParameter;
       }
       return 0;
-    })
-    .toSorted((first, second) => second.weight - first.weight);
-
+    });
   return sortedByPathRequestArtifacts;
 };
