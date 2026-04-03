@@ -1,6 +1,6 @@
 {
   "name": "mock-config-server",
-  "version": "4.0.3",
+  "version": "5.0.0-beta.0",
   "description": "Tool that easily and quickly imitates server operation, create full fake api in few steps",
   "author": {
     "name": "SIBERIA CAN CODE 🧊",
@@ -37,7 +37,7 @@
     "dist"
   ],
   "engines": {
-    "node": "^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0"
+    "node": "^16.0.0 || >=17.0.0"
   },
   "scripts": {
     "prepublishOnly": "git diff --exit-code",

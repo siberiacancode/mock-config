@@ -4,11 +4,7 @@ import { graphql } from './graphql';
 
 describe('graphql', () => {
   it('Should build config for inline response', () => {
-    const result = graphql.query(
-      'GetUsers',
-      { ok: true },
-      { delay: 25, polling: true, status: 201 }
-    );
+    const result = graphql.query('GetUsers', { ok: true }, { delay: 25, status: 201 });
 
     expect(result).toStrictEqual({
       operationName: 'GetUsers',
@@ -17,7 +13,7 @@ describe('graphql', () => {
         {
           data: { ok: true },
           entities: {},
-          settings: { delay: 25, polling: false, status: 201 }
+          settings: { delay: 25, status: 201 }
         }
       ]
     });
@@ -34,7 +30,7 @@ describe('graphql', () => {
         },
         response: { ok: true }
       },
-      { delay: 20, polling: true, status: 205 }
+      { delay: 20, status: 205 }
     );
 
     expect(result).toStrictEqual({
@@ -48,7 +44,7 @@ describe('graphql', () => {
               key: 'value'
             }
           },
-          settings: { delay: 20, polling: false, status: 205 }
+          settings: { delay: 20, status: 205 }
         }
       ]
     });
@@ -64,7 +60,7 @@ describe('graphql', () => {
         {
           data: { ok: true },
           entities: {},
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
@@ -72,10 +68,7 @@ describe('graphql', () => {
 
   it('Should build config for inline handler', () => {
     const handler = vi.fn().mockResolvedValue({ ok: true });
-    const result = graphql.query('GetUsers', handler, {
-      delay: 30,
-      polling: true
-    });
+    const result = graphql.query('GetUsers', handler, { delay: 30 });
 
     expect(result).toStrictEqual({
       operationName: 'GetUsers',
@@ -84,7 +77,7 @@ describe('graphql', () => {
         {
           data: handler,
           entities: {},
-          settings: { delay: 30, polling: false }
+          settings: { delay: 30 }
         }
       ]
     });
@@ -102,7 +95,7 @@ describe('graphql', () => {
           }
         }
       },
-      { delay: 40, polling: true, status: 206 }
+      { delay: 40, status: 206 }
     );
 
     expect(result).toStrictEqual({
@@ -116,13 +109,13 @@ describe('graphql', () => {
               key: 'value'
             }
           },
-          settings: { delay: 40, polling: false, status: 206 }
+          settings: { delay: 40, status: 206 }
         }
       ]
     });
   });
 
-  it('Should build config for queue object and normalize queue items', () => {
+  it('Should build config for queue object as data handler', () => {
     const queueHandler = vi.fn().mockResolvedValue({ ok: 'handler' });
     const result = graphql.query(
       'GetUsers',
@@ -137,7 +130,7 @@ describe('graphql', () => {
           { response: { ok: 'response' }, time: 200 }
         ]
       },
-      { delay: 50, polling: false, status: 207 }
+      { delay: 50, status: 207 }
     );
 
     expect(result).toStrictEqual({
@@ -145,16 +138,13 @@ describe('graphql', () => {
       operationType: 'query',
       routes: [
         {
-          queue: [
-            { data: queueHandler, time: 100 },
-            { data: { ok: 'response' }, time: 200 }
-          ],
+          data: expect.any(Function),
           entities: {
             headers: {
               key: 'value'
             }
           },
-          settings: { delay: 50, polling: true, status: 207 }
+          settings: { delay: 50, status: 207 }
         }
       ]
     });
@@ -170,7 +160,7 @@ describe('graphql', () => {
         {
           data: { ok: true },
           entities: {},
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
@@ -186,7 +176,7 @@ describe('graphql', () => {
         {
           data: { ok: true },
           entities: {},
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
@@ -207,7 +197,7 @@ describe('graphql', () => {
         {
           data: { ok: true },
           entities: {},
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
@@ -217,7 +207,7 @@ describe('graphql', () => {
     const result = graphql.query(
       'GetUsers',
       { response: { ok: true } },
-      { delay: 150, polling: false, status: 200 }
+      { delay: 150, status: 200 }
     );
 
     expect(result).toStrictEqual({
@@ -227,7 +217,7 @@ describe('graphql', () => {
         {
           data: { ok: true },
           entities: {},
-          settings: { delay: 150, polling: false, status: 200 }
+          settings: { delay: 150, status: 200 }
         }
       ]
     });
@@ -255,7 +245,7 @@ describe('graphql', () => {
         {
           data: expect.any(Function),
           entities: {},
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });

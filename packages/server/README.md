@@ -99,7 +99,7 @@ Every route must be configured to handle response content in one of three ways: 
   - `data?` `any` mock data of request
   - `queue?` `Array<{ time?: number; data: any}>` queue for polling with opportunity to set time for each response
   - `file?` `string` path to file for return in response
-  - `settings?` `Settings` settings for route (polling on/off, etc.)
+  - `settings?` `Settings` settings for route (status, delay)
   - `entities?` `Object<headers | cookies | query | params | body>` object that helps in data retrieval
   - `interceptors?` `Interceptors` functions to change request or response parameters, [read](#interceptors)
 - `interceptors?` `Interceptors` functions to change request or response parameters, [read](#interceptors)
@@ -498,15 +498,9 @@ export default flatMockServerConfig;
 
 > If the file path is absolute, then this path will be used as is. If the file path is relative, it will be appended to the current working directory.
 
-If the file exists, response interceptors will receive `file descriptor` as the `data` argument:
+If the file exists, response interceptors will receive file content `Buffer` as the `data` argument.
 
-`File descriptor` is an object with `path` and `file` fields that describe file location and file content.
-
-- `path` `string` path to the file. Same as `file` passed in route
-- `file` `Buffer` file content as binary buffer
-
-> Note to return file descriptor from interceptor. Server will send a buffer from `data.file` with corresponding `Content-Type` and `Content-Disposition` headers.
-> If you return invalid file descriptor, server will send it as json data.
+`Content-Type` and `Content-Disposition` headers are set before response interceptors are called.
 
 ```javascript
 /** @type {import('mock-config-server').FlatMockServerConfig} */
@@ -523,11 +517,14 @@ const flatMockServerConfig = [
           {
             file: "./settings.json",
             interceptors: {
-              response: (data) => {
-                const { file, path } = data;
-                const buffer = file; // some logic with buffer
-                fs.writeFileSync(path, buffer); // rewrite ./settings.json file on disk with new content
-                return { path, file: buffer };
+              response: (data, { setHeader, getResponseHeader }) => {
+                // Content-Type and Content-Disposition are available before response interceptor runs.
+                console.log("Content-Type:", getResponseHeader("Content-Type"));
+                console.log("Content-Disposition:", getResponseHeader("Content-Disposition"));
+
+                const buffer = data;
+                const updatedBuffer = Buffer.from(buffer.toString("utf-8").replace("name", "title"));
+                return updatedBuffer;
               },
             },
           },
@@ -540,13 +537,9 @@ const flatMockServerConfig = [
 export default flatMockServerConfig;
 ```
 
-> Any changes to the data will not affect the file on disk unless you manually rewrite it.
-
-> If you return a new `path` from interceptor, server will send file corresponding to this path or 404 error otherwise.
-
 #### Polling
 
-Routes support polling for data. To add polling for data, you must specify the `polling setting` and use `queue` property instead of `data` or `file`.
+Routes support polling for data. To add polling for data, use `queue` property instead of `data` or `file`.
 
 `queue` is an array containing `data` or `file` that should be returned in order.
 
@@ -565,7 +558,6 @@ const flatMockServerConfig = [
         method: "get",
         routes: [
           {
-            settings: { polling: true },
             queue: [
               { data: { emoji: "🦁", name: "Nursultan" } },
               { data: { emoji: "☄", name: "Dmitriy" } },
@@ -596,7 +588,6 @@ const flatMockServerConfig = [
         method: "get",
         routes: [
           {
-            settings: { polling: true },
             queue: [
               { time: 5000, data: { emoji: "🦁", name: "Nursultan" } },
               { data: { emoji: "☄", name: "Dmitriy" } },

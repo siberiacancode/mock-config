@@ -44,7 +44,6 @@ interface BaseWsRequestArtifact {
   baseUrl: BaseUrl;
   componentRequestInterceptor?: ((params: any) => Promise<void> | void) | undefined;
   componentResponseInterceptor?: ((data: any, params: any) => any) | undefined;
-  key: string;
   weight: number;
 }
 

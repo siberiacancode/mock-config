@@ -20,10 +20,13 @@ import {
   convertToEntityDescriptor,
   getGraphQLInput,
   isEntityDescriptor,
+  normalizeUrl,
   parseQuery,
   resolveEntityValues,
   sleep
 } from '@/utils/helpers';
+
+import { matchGraphQLRequestArtifacts } from './helpers';
 
 interface CreateGraphQLRouteParams {
   graphQLRequestArtifacts: GraphQLRequestArtifact[];
@@ -36,34 +39,19 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
       if (request.method !== 'GET' && request.method !== 'POST') return next();
 
       const graphQLInput = getGraphQLInput(request);
-      if (!graphQLInput.query) {
-        return response.status(400).json({
-          message: 'Query is missing, you must pass a valid GraphQL query'
-        });
-      }
+      if (!graphQLInput.query) return next();
 
       const query = parseQuery(graphQLInput.query);
-      if (!query) {
-        return response.status(400).json({
-          message: 'Query is invalid, you must use a valid GraphQL query'
-        });
-      }
+      if (!query) return next();
 
-      const matchedRequestArtifacts = graphQLRequestArtifacts.filter((artifact) => {
-        if (artifact.operationType !== query.operationType) return false;
-
-        if (artifact.query) {
-          return artifact.query.replace(/\s+/g, '') === graphQLInput.query?.replace(/\s+/g, '');
+      const matchedRequestArtifacts = matchGraphQLRequestArtifacts({
+        artifacts: graphQLRequestArtifacts,
+        meta: {
+          path: normalizeUrl(request.path),
+          query: graphQLInput.query,
+          operationType: query.operationType,
+          operationName: query.operationName
         }
-
-        if (artifact.operationName) {
-          if (!query.operationName) return false;
-          return artifact.operationName instanceof RegExp
-            ? new RegExp(artifact.operationName).test(query.operationName)
-            : artifact.operationName === query.operationName;
-        }
-
-        return true;
       });
 
       if (!matchedRequestArtifacts.length) return next();
@@ -159,53 +147,10 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
         });
       }
 
-      let matchedRouteConfigData = null;
-      if (matchedRouteConfig.config.settings?.polling && 'queue' in matchedRouteConfig.config) {
-        if (!matchedRouteConfig.config.queue.length) return next();
-
-        const shallowMatchedRouteConfig =
-          matchedRouteConfig as unknown as typeof matchedRouteConfig & {
-            __pollingIndex: number;
-            __timeoutInProgress: boolean;
-          };
-
-        let index = shallowMatchedRouteConfig.__pollingIndex ?? 0;
-        const { time, data } = matchedRouteConfig.config.queue[index];
-
-        const updateIndex = () => {
-          if (
-            'queue' in matchedRouteConfig.config &&
-            matchedRouteConfig.config.queue.length - 1 === index
-          ) {
-            index = 0;
-          } else {
-            index += 1;
-          }
-          shallowMatchedRouteConfig.__pollingIndex = index;
-        };
-
-        if (time && !shallowMatchedRouteConfig.__timeoutInProgress) {
-          shallowMatchedRouteConfig.__timeoutInProgress = true;
-          setTimeout(() => {
-            shallowMatchedRouteConfig.__timeoutInProgress = false;
-            updateIndex();
-          }, time);
-        }
-
-        if (!time && !shallowMatchedRouteConfig.__timeoutInProgress) {
-          updateIndex();
-        }
-
-        matchedRouteConfigData = data;
-      }
-
-      if ('data' in matchedRouteConfig.config) {
-        matchedRouteConfigData = matchedRouteConfig.config.data;
-      }
-
       const params: GraphQLParams = {
         request,
         response,
+        next,
         entities: matchedRouteConfig.config.entities ?? {},
         appendHeader: (field, value) => {
           response.append(field, value);
@@ -240,9 +185,13 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
       };
 
       const resolvedData =
-        typeof matchedRouteConfigData === 'function'
-          ? await matchedRouteConfigData(params)
-          : matchedRouteConfigData;
+        typeof matchedRouteConfig.config.data === 'function'
+          ? await matchedRouteConfig.config.data(params)
+          : matchedRouteConfig.config.data;
+
+      if (response.headersSent) {
+        return;
+      }
 
       if (matchedRouteConfig.config.settings?.status) {
         response.statusCode = matchedRouteConfig.config.settings.status;
@@ -266,6 +215,10 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
 
       if (matchedRouteConfig.config.settings?.delay) {
         await sleep(matchedRouteConfig.config.settings.delay);
+      }
+
+      if (response.headersSent) {
+        return;
       }
 
       return response.json(data);

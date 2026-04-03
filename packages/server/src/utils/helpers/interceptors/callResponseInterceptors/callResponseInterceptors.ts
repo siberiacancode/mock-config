@@ -7,14 +7,14 @@ import { setDelay } from '../helpers/setDelay';
 
 interface CallResponseInterceptorsParams {
   data: Data;
-  request: Request;
-  response: Response;
   interceptors?: {
     routeInterceptor?: ResponseInterceptor;
     requestInterceptor?: ResponseInterceptor;
     componentInterceptor?: ResponseInterceptor;
     serverInterceptor?: ResponseInterceptor;
   };
+  request: Request;
+  response: Response;
 }
 
 export const callResponseInterceptors = async (params: CallResponseInterceptorsParams) => {

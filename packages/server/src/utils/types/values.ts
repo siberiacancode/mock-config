@@ -1,4 +1,5 @@
 import type { Query as ExpressQuery, ParamsDictionary } from 'express-serve-static-core';
+import type { Buffer } from 'node:buffer';
 import type { IncomingHttpHeaders } from 'node:http';
 
 export type PlainObject = Record<string, any>;
@@ -10,4 +11,6 @@ export type Query = ExpressQuery;
 export type Params = ParamsDictionary;
 export type Cookies = Record<string, string>;
 
-export type Data = boolean | number | string | any[] | Record<any, any> | null | undefined;
+export type DataPrimitive = boolean | number | string | null | undefined | void;
+export type DataLeaf = Buffer | DataPrimitive;
+export type Data = Data[] | DataLeaf | { [key: string]: Data };

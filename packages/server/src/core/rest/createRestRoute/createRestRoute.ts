@@ -1,17 +1,13 @@
 import type { Express } from 'express';
 
 import { flatten } from 'flat';
-import fs from 'node:fs';
-import path from 'node:path';
 
 import type {
   EntityDescriptor,
   Entries,
   PlainObject,
-  RestDataResponse,
   RestEntitiesByEntityName,
   RestEntity,
-  RestFileResponse,
   RestParams,
   RestRequestArtifact,
   TopLevelPlainEntityArray,
@@ -24,37 +20,56 @@ import {
   callResponseInterceptors,
   convertToEntityDescriptor,
   isEntityDescriptor,
-  isFileDescriptor,
-  isFilePathValid,
+  normalizeUrl,
   resolveEntityValues,
   sleep,
   urlJoin
 } from '@/utils/helpers';
+
+import { generatePathRegex, matchRestRequestArtifacts } from './helpers';
 
 interface CreateRestRoutesParams {
   restRequestArtifacts: RestRequestArtifact[];
   server: Express;
 }
 
+const extractPathParams = (artifact: RestRequestArtifact, path: string) => {
+  if (artifact.path instanceof RegExp) return {};
+
+  const fullPath = urlJoin(artifact.baseUrl, artifact.path);
+  const keys = fullPath.match(/:[^/]+/g)?.map((key) => key.slice(1)) ?? [];
+
+  if (!keys.length) return {};
+
+  const match = path.match(generatePathRegex(fullPath));
+  if (!match) return {};
+
+  return keys.reduce<Record<string, string>>((acc, key, index) => {
+    acc[key] = decodeURIComponent(match[index + 1]);
+    return acc;
+  }, {});
+};
+
 export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRoutesParams) =>
   server.use(
     asyncHandler(async (request, response, next) => {
       const requestMethod = request.method.toLowerCase();
+      const previousParams = { ...request.params };
 
-      const matchedRequestArtifacts = restRequestArtifacts.filter((restRequestArtifact) => {
-        const isMethodMatched = restRequestArtifact.method === requestMethod;
-        if (!isMethodMatched) return false;
-
-        if (restRequestArtifact.path instanceof RegExp) {
-          return restRequestArtifact.path.test(request.path);
+      const matchedRequestArtifacts = matchRestRequestArtifacts({
+        artifacts: restRequestArtifacts,
+        meta: {
+          method: requestMethod,
+          path: normalizeUrl(request.path)
         }
-
-        return request.path === urlJoin(restRequestArtifact.baseUrl, restRequestArtifact.path);
       });
 
       if (!matchedRequestArtifacts.length) return next();
 
-      const matchedRouteConfig = matchedRequestArtifacts.find(({ config }) => {
+      const matchedRouteConfig = matchedRequestArtifacts.find((artifact) => {
+        request.params = extractPathParams(artifact, request.path);
+        const { config } = artifact;
+
         if (!config.entities) return true;
 
         const entityEntries = Object.entries(config.entities) as Entries<
@@ -130,7 +145,10 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         });
       });
 
-      if (!matchedRouteConfig) return next();
+      if (!matchedRouteConfig) {
+        request.params = previousParams;
+        return next();
+      }
 
       if (matchedRouteConfig.componentRequestInterceptor) {
         await callRequestInterceptor({
@@ -153,65 +171,6 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         });
       }
 
-      const matchedRouteConfigDataDescriptor = {} as {
-        data?: RestDataResponse;
-        file?: RestFileResponse;
-      };
-
-      if (matchedRouteConfig.config.settings?.polling && 'queue' in matchedRouteConfig.config) {
-        if (!matchedRouteConfig.config.queue.length) return next();
-
-        const shallowMatchedRouteConfig =
-          matchedRouteConfig as unknown as typeof matchedRouteConfig & {
-            __pollingIndex: number;
-            __timeoutInProgress: boolean;
-          };
-
-        let index = shallowMatchedRouteConfig.__pollingIndex ?? 0;
-        const { time } = matchedRouteConfig.config.queue[index];
-
-        const updateIndex = () => {
-          if (
-            'queue' in matchedRouteConfig.config &&
-            matchedRouteConfig.config.queue.length - 1 === index
-          ) {
-            index = 0;
-          } else {
-            index += 1;
-          }
-          shallowMatchedRouteConfig.__pollingIndex = index;
-        };
-        const queueItem = matchedRouteConfig.config.queue[index];
-
-        if (time && !shallowMatchedRouteConfig.__timeoutInProgress) {
-          shallowMatchedRouteConfig.__timeoutInProgress = true;
-          setTimeout(() => {
-            shallowMatchedRouteConfig.__timeoutInProgress = false;
-            updateIndex();
-          }, time);
-        }
-
-        if (!time && !shallowMatchedRouteConfig.__timeoutInProgress) {
-          updateIndex();
-        }
-
-        if ('data' in queueItem) {
-          matchedRouteConfigDataDescriptor.data = queueItem.data;
-        }
-        if ('file' in queueItem) {
-          if (!isFilePathValid(queueItem.file)) return next();
-          matchedRouteConfigDataDescriptor.file = queueItem.file;
-        }
-      }
-
-      if ('data' in matchedRouteConfig.config) {
-        matchedRouteConfigDataDescriptor.data = matchedRouteConfig.config.data;
-      }
-      if ('file' in matchedRouteConfig.config) {
-        if (!isFilePathValid(matchedRouteConfig.config.file)) return next();
-        matchedRouteConfigDataDescriptor.file = matchedRouteConfig.config.file;
-      }
-
       if (matchedRouteConfig.config.settings?.status) {
         response.statusCode = matchedRouteConfig.config.settings.status;
       }
@@ -219,58 +178,52 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
       // ✅ important:
       // set 'Cache-Control' header for explicit browsers response revalidate: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
       // this code should place before response interceptors for giving opportunity to rewrite 'Cache-Control' header
-      if (request.method === 'GET') response.set('Cache-control', 'no-cache');
+      if (request.method === 'GET') response.set('Cache-control', 'no-store');
 
-      let resolvedData = null;
-
-      if (matchedRouteConfigDataDescriptor.data) {
-        const params: RestParams = {
-          request,
-          response,
-          entities: matchedRouteConfig.config.entities ?? {},
-          appendHeader: (field, value) => {
-            response.append(field, value);
-          },
-          attachment: (filename) => {
-            response.attachment(filename);
-          },
-          clearCookie: (name, options) => {
-            response.clearCookie(name, options);
-          },
-          getCookie: (name) => request.cookies[name],
-          getRequestHeader: (field) => request.headers[field],
-          getRequestHeaders: () => request.headers,
-          getResponseHeader: (field) => response.getHeader(field),
-          getResponseHeaders: () => response.getHeaders(),
-          setCookie: (name, value, options) => {
-            if (options) {
-              response.cookie(name, value, options);
-              return;
-            }
-            response.cookie(name, value);
-          },
-          setDelay: async (delay) => {
-            await sleep(delay === Infinity ? 99999999 : delay);
-          },
-          setHeader: (field, value) => {
-            response.set(field, value);
-          },
-          setStatusCode: (statusCode) => {
-            response.statusCode = statusCode;
+      const params: RestParams = {
+        request,
+        response,
+        next,
+        entities: matchedRouteConfig.config.entities ?? {},
+        appendHeader: (field, value) => {
+          response.append(field, value);
+        },
+        attachment: (filename) => {
+          response.attachment(filename);
+        },
+        clearCookie: (name, options) => {
+          response.clearCookie(name, options);
+        },
+        getCookie: (name) => request.cookies[name],
+        getRequestHeader: (field) => request.headers[field],
+        getRequestHeaders: () => request.headers,
+        getResponseHeader: (field) => response.getHeader(field),
+        getResponseHeaders: () => response.getHeaders(),
+        setCookie: (name, value, options) => {
+          if (options) {
+            response.cookie(name, value, options);
+            return;
           }
-        };
+          response.cookie(name, value);
+        },
+        setDelay: async (delay) => {
+          await sleep(delay === Infinity ? 99999999 : delay);
+        },
+        setHeader: (field, value) => {
+          response.set(field, value);
+        },
+        setStatusCode: (statusCode) => {
+          response.statusCode = statusCode;
+        }
+      };
 
-        resolvedData =
-          typeof matchedRouteConfigDataDescriptor.data === 'function'
-            ? await matchedRouteConfigDataDescriptor.data(params)
-            : matchedRouteConfigDataDescriptor.data;
-      }
-      if (matchedRouteConfigDataDescriptor.file) {
-        const buffer = fs.readFileSync(path.resolve(matchedRouteConfigDataDescriptor.file));
-        resolvedData = {
-          path: matchedRouteConfigDataDescriptor.file,
-          file: buffer
-        };
+      const resolvedData =
+        typeof matchedRouteConfig.config.data === 'function'
+          ? await matchedRouteConfig.config.data(params)
+          : matchedRouteConfig.config.data;
+
+      if (response.headersSent) {
+        return;
       }
 
       const data = await callResponseInterceptors({
@@ -289,20 +242,14 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         await sleep(matchedRouteConfig.config.settings.delay);
       }
 
-      if (isFileDescriptor(data)) {
-        const isFilePathChanged = matchedRouteConfigDataDescriptor.file !== data.path;
-        if (isFilePathChanged) {
-          if (!isFilePathValid(data.path)) return next();
-          data.file = fs.readFileSync(path.resolve(data.path));
-        }
-        // ✅ important: replace backslashes because windows can use them in file path
-        const fileName = data.path.replaceAll('\\', '/').split('/').at(-1)!;
-        const fileExtension = fileName.split('.').at(-1)!;
-        response.type(fileExtension);
-        response.set('Content-Disposition', `filename=${fileName}`);
-        return response.send(data.file);
+      if (response.headersSent) {
+        return;
       }
 
-      response.json(data);
+      if (response.getHeader('content-type')) {
+        return response.send(data);
+      }
+
+      return response.json(data);
     })
   );

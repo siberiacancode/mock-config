@@ -2,8 +2,6 @@ import type { Express } from 'express';
 
 import bodyParser from 'body-parser';
 import express from 'express';
-import { createGraphQLRoute } from 'src/core/graphql';
-import { createRestRoute } from 'src/core/rest';
 import { createWsRoute } from 'src/core/ws';
 
 import type {
@@ -17,6 +15,11 @@ import type {
 
 import { createDatabaseRoutes } from '@/core/database';
 import {
+  calculateGraphQLRouteConfigWeight,
+  createGraphQLRoute,
+  prepareGraphQLRequestArtifacts
+} from '@/core/graphql';
+import {
   contextMiddleware,
   cookieParseMiddleware,
   corsMiddleware,
@@ -25,18 +28,14 @@ import {
   requestInterceptorMiddleware,
   staticMiddleware
 } from '@/core/middlewares';
+import {
+  calculateRestRouteConfigWeight,
+  createRestRoute,
+  prepareRestRequestArtifacts
+} from '@/core/rest';
+import { calculateWsRouteConfigWeight } from '@/core/ws';
 import { urlJoin } from '@/utils/helpers';
-import { WS_MESSAGE_EVENT } from '@/utils/types';
 import { validateMockServerConfig } from '@/utils/validate';
-
-import { calculateGraphQLRouteConfigWeight } from '../../core/graphql/createGraphQLRoute/helpers';
-import { calculateRestRouteConfigWeight } from '../../core/rest/createRestRoute/helpers';
-import { calculateWsRouteConfigWeight } from '../../core/ws/createWsRoute/helpers';
-
-const getWsArtifactEventKey = (event: WsRequestArtifact['event']) => {
-  if (event === WS_MESSAGE_EVENT) return 'message';
-  return String(event);
-};
 
 export const createMockServer = (
   mockServerConfig: MockServerConfig,
@@ -100,7 +99,6 @@ export const createMockServer = (
           if (isRest) {
             config.routes.forEach((route) => {
               acc.restRequestsArtifacts.push({
-                key: `${serverBaseUrl}${component.baseUrl}/${config.method}/${config.path}`,
                 baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
                 method: config.method,
                 path: config.path,
@@ -122,9 +120,6 @@ export const createMockServer = (
           if (isGraphql) {
             config.routes.forEach((route) => {
               acc.graphQLRequestsArtifacts.push({
-                key: `${serverBaseUrl}${component.baseUrl}/${config.operationType}/${
-                  'operationName' in config ? config.operationName : config.query
-                }`,
                 baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
                 operationType: config.operationType,
                 operationName: 'operationName' in config ? config.operationName : undefined,
@@ -147,15 +142,12 @@ export const createMockServer = (
           if (isWs) {
             config.routes.forEach((route) => {
               acc.wsRequestsArtifacts.push({
-                key: `${serverBaseUrl}${
-                  component.baseUrl
-                }/ws/${getWsArtifactEventKey(config.event)}`,
                 baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
                 event: config.event,
                 config: route,
                 weight: calculateWsRouteConfigWeight(route),
-                componentRequestInterceptor: component.interceptors?.request as any,
-                componentResponseInterceptor: component.interceptors?.response as any
+                componentRequestInterceptor: component.interceptors?.request,
+                componentResponseInterceptor: component.interceptors?.response
               });
             });
           }
@@ -170,27 +162,23 @@ export const createMockServer = (
       }
     );
 
-  const sortedRestRequestsArtifacts = restRequestsArtifacts.toSorted(
-    (first, second) => second.weight - first.weight
-  );
-  const sortedGraphQLRequestsArtifacts = graphQLRequestsArtifacts.toSorted(
-    (first, second) => second.weight - first.weight
-  );
+  const preparedRestRequestArtifacts = prepareRestRequestArtifacts(restRequestsArtifacts);
+  const preparedGraphQLRequestArtifacts = prepareGraphQLRequestArtifacts(graphQLRequestsArtifacts);
   const sortedWsRequestsArtifacts = wsRequestsArtifacts.toSorted(
     (first, second) => second.weight - first.weight
   );
 
-  if (sortedRestRequestsArtifacts.length) {
+  if (preparedRestRequestArtifacts.length) {
     createRestRoute({
       server,
-      restRequestArtifacts: sortedRestRequestsArtifacts
+      restRequestArtifacts: preparedRestRequestArtifacts
     });
   }
 
-  if (sortedGraphQLRequestsArtifacts.length) {
+  if (preparedGraphQLRequestArtifacts.length) {
     createGraphQLRoute({
       server,
-      graphQLRequestArtifacts: sortedGraphQLRequestsArtifacts
+      graphQLRequestArtifacts: preparedGraphQLRequestArtifacts
     });
   }
 

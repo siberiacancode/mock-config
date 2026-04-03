@@ -12,7 +12,7 @@ describe('rest', () => {
       routes: [
         {
           data: 'value',
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
@@ -39,7 +39,7 @@ describe('rest', () => {
               key: 'value'
             }
           },
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
@@ -60,13 +60,13 @@ describe('rest', () => {
       path: '/users',
       routes: [
         {
-          file: '/tmp/user.json',
+          data: expect.any(Function),
           entities: {
             headers: {
               key: 'value'
             }
           },
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
@@ -82,7 +82,7 @@ describe('rest', () => {
       routes: [
         {
           data: handler,
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
@@ -110,13 +110,13 @@ describe('rest', () => {
               key: 'value'
             }
           },
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
   });
 
-  it('Should build config for queue object and normalize queue items', () => {
+  it('Should build config for queue object as data handler', async () => {
     const queueHandler = vi.fn();
     const result = rest.get('/users', {
       match: {
@@ -136,17 +136,13 @@ describe('rest', () => {
       path: '/users',
       routes: [
         {
-          queue: [
-            { data: queueHandler, time: 100 },
-            { data: { ok: 'response' }, time: 200 },
-            { file: '/tmp/user.json', time: 300 }
-          ],
+          data: expect.any(Function),
           entities: {
             headers: {
               key: 'value'
             }
           },
-          settings: { polling: true }
+          settings: {}
         }
       ]
     });
@@ -164,7 +160,7 @@ describe('rest', () => {
         routes: [
           {
             data: { ok: true },
-            settings: { polling: false }
+            settings: {}
           }
         ]
       });
@@ -172,11 +168,7 @@ describe('rest', () => {
   });
 
   it('Should keep provided settings for request', () => {
-    const result = rest.get(
-      '/users',
-      { response: { ok: true } },
-      { delay: 150, polling: false, status: 200 }
-    );
+    const result = rest.get('/users', { response: { ok: true } }, { delay: 150, status: 200 });
 
     expect(result).toStrictEqual({
       method: 'get',
@@ -185,10 +177,89 @@ describe('rest', () => {
         {
           data: { ok: true },
           entities: undefined,
-          settings: { delay: 150, polling: false, status: 200 }
+          settings: { delay: 150, status: 200 }
         }
       ]
     });
+  });
+
+  it('Should build config for SSE request', () => {
+    const result = rest.sse('/users/stream', () => undefined);
+
+    expect(result).toStrictEqual({
+      method: 'get',
+      path: '/users/stream',
+      routes: [
+        {
+          data: expect.any(Function),
+          settings: {}
+        }
+      ]
+    });
+  });
+
+  it('Should build config for stream request', () => {
+    const result = rest.stream('/users/stream', () => undefined);
+
+    expect(result).toStrictEqual({
+      method: 'post',
+      path: '/users/stream',
+      routes: [
+        {
+          data: expect.any(Function),
+          settings: {}
+        }
+      ]
+    });
+  });
+
+  it('Should send SSE payload and close stream client', async () => {
+    const result = rest.sse('/users/stream', ({ client }) => {
+      client.send('hello');
+      client.close();
+    });
+
+    const [route] = result.routes as [{ data: (params: any) => unknown }];
+    const routeData = route.data;
+    const setHeader = vi.fn();
+    const write = vi.fn();
+    const end = vi.fn();
+
+    await routeData({
+      setHeader,
+      response: { write, end }
+    });
+
+    expect(setHeader).toHaveBeenCalledTimes(3);
+    expect(setHeader).toHaveBeenNthCalledWith(1, 'connection', 'keep-alive');
+    expect(setHeader).toHaveBeenNthCalledWith(2, 'content-type', 'text/event-stream');
+    expect(setHeader).toHaveBeenNthCalledWith(3, 'cache-control', 'no-cache');
+    expect(write).toHaveBeenCalledWith('data: hello\n\n');
+    expect(end).toHaveBeenCalledTimes(1);
+  });
+
+  it('Should send SSE payload with meta fields', async () => {
+    const result = rest.sse('/users/stream', ({ client }) => {
+      client.send('msg', {
+        id: 'id-1',
+        event: 'user.created',
+        retry: 1500
+      });
+      client.close();
+    });
+
+    const [route] = result.routes as [{ data: (params: any) => unknown }];
+    const routeData = route.data;
+    const setHeader = vi.fn();
+    const write = vi.fn();
+    const end = vi.fn();
+
+    await routeData({
+      setHeader,
+      response: { write, end }
+    });
+
+    expect(write).toHaveBeenCalledWith('id: id-1\nevent: user.created\nretry: 1500\ndata: msg\n\n');
   });
 
   it('Should type handler params with all typed fields', () => {
@@ -197,14 +268,7 @@ describe('rest', () => {
       body: { body: string };
       params: { params: string };
       response: { response: string };
-    }>('/users/:id', (params) => {
-      const query = params.request.query.query;
-      const body = params.request.body.body;
-      const path = params.request.params.params;
-      console.log(query, body, path);
-
-      return { response: 'value' };
-    });
+    }>('/users/:id', () => ({ response: 'value' }));
 
     expect(result).toStrictEqual({
       method: 'post',
@@ -212,7 +276,7 @@ describe('rest', () => {
       routes: [
         {
           data: expect.any(Function),
-          settings: { polling: false }
+          settings: {}
         }
       ]
     });
