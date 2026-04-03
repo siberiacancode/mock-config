@@ -266,10 +266,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         await sleep(matchedRouteConfig.config.settings.delay);
       }
 
-      if (
-        response.headersSent ||
-        response.getHeader('content-type')?.toString().toLowerCase().includes('text/event-stream')
-      ) {
+      if (response.headersSent) {
         return;
       }
 
