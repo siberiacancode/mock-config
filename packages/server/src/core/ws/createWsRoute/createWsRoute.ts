@@ -21,9 +21,9 @@ import {
   isEntityDescriptor,
   isPlainObject,
   resolveEntityValues,
+  sleep,
   urlJoin
 } from '@/utils/helpers';
-import { sleep } from '@/utils/sleep';
 import { WS_MESSAGE_EVENT } from '@/utils/types';
 
 interface CreateWsRouteParams {

@@ -2,7 +2,6 @@ import type { Express } from 'express';
 
 import bodyParser from 'body-parser';
 import express from 'express';
-import { createWsRoute } from 'src/core/ws';
 
 import type {
   BaseUrl,
@@ -33,7 +32,7 @@ import {
   createRestRoute,
   prepareRestRequestArtifacts
 } from '@/core/rest';
-import { calculateWsRouteConfigWeight } from '@/core/ws';
+import { calculateWsRouteConfigWeight, createWsRoute, prepareWsRequestArtifacts } from '@/core/ws';
 import { urlJoin } from '@/utils/helpers';
 import { validateMockServerConfig } from '@/utils/validate';
 
@@ -164,9 +163,7 @@ export const createMockServer = (
 
   const preparedRestRequestArtifacts = prepareRestRequestArtifacts(restRequestsArtifacts);
   const preparedGraphQLRequestArtifacts = prepareGraphQLRequestArtifacts(graphQLRequestsArtifacts);
-  const sortedWsRequestsArtifacts = wsRequestsArtifacts.toSorted(
-    (first, second) => second.weight - first.weight
-  );
+  const preparedWsRequestsArtifacts = prepareWsRequestArtifacts(wsRequestsArtifacts);
 
   if (preparedRestRequestArtifacts.length) {
     createRestRoute({
@@ -182,10 +179,10 @@ export const createMockServer = (
     });
   }
 
-  if (sortedWsRequestsArtifacts.length) {
+  if (preparedWsRequestsArtifacts.length) {
     createWsRoute({
       server,
-      wsRequestArtifacts: sortedWsRequestsArtifacts
+      wsRequestArtifacts: preparedWsRequestsArtifacts
     });
   }
 
