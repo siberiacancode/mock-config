@@ -1,19 +1,21 @@
 import type {
   BaseRestRequestConfig,
+  Data,
   RestEntitiesByEntityName,
   RestFileResponse,
   RestMethod,
   RestParams,
   RestRequestConfig,
-  RestRouteConfig,
   RestSettings
 } from '@/utils/types';
+
+import { createFileHandler, formatSsePayload } from './helpers';
 
 interface RestRequestInput {
   body?: unknown;
   params?: unknown;
   query?: unknown;
-  response?: unknown;
+  response?: Data;
 }
 
 type ReservedRestConfigKeys = {
@@ -23,14 +25,19 @@ type ReservedRestConfigKeys = {
 type RestInlineResponse<Response> =
   Response extends Record<string, unknown> ? Response & ReservedRestConfigKeys : Response;
 
-type RestFunction<Method extends RestMethod, Options extends RestRequestInput> = (
+type RestFunction<
+  Method extends RestMethod,
+  Options extends RestRequestInput,
+  AdditionalParams = {}
+> = (
   params: RestParams<
     Method,
     Options['query'],
     Options['body'],
     Options['params'],
     Options['response']
-  >
+  > &
+    AdditionalParams
 ) => Options['response'] | Promise<Options['response']>;
 
 interface RestResponseObject<Method extends RestMethod, Response> {
@@ -61,9 +68,9 @@ type RestConfig<Method extends RestMethod, Options extends RestRequestInput> =
   | RestFileObject<Method>
   | RestFunction<Method, Options>
   | RestHandlerObject<Method, Options>
-  | RestInlineResponse<Response>
+  | RestInlineResponse<Options['response']>
   | RestQueueObject<Method, Options>
-  | RestResponseObject<Method, Response>;
+  | RestResponseObject<Method, Options['response']>;
 
 const resolveConfigType = <Method extends RestMethod, Options extends RestRequestInput>(
   config: RestConfig<Method, Options>
@@ -88,22 +95,22 @@ const createConfigResolver = <Method extends RestMethod, Options extends RestReq
     case 'inlineResponse':
       return {
         data: resolvedConfig.config,
-        settings: { ...settings, polling: false }
+        settings: { ...settings, polling: false as const }
       };
 
     case 'data': {
       return {
         data: resolvedConfig.config.response,
         entities: resolvedConfig.config.match,
-        settings: { ...settings, polling: false }
+        settings: { ...settings, polling: false as const }
       };
     }
 
     case 'file': {
       return {
-        file: resolvedConfig.config.file,
+        data: createFileHandler<Method>(resolvedConfig.config.file),
         entities: resolvedConfig.config.match,
-        settings: { ...settings, polling: false }
+        settings: { ...settings, polling: false as const }
       };
     }
 
@@ -118,24 +125,27 @@ const createConfigResolver = <Method extends RestMethod, Options extends RestReq
             return { data: item.response, time: item.time };
           }
 
-          return item;
+          return {
+            data: createFileHandler<Method>(item.file),
+            time: item.time
+          };
         }),
         entities: resolvedConfig.config.match,
-        settings: { ...settings, polling: true }
+        settings: { ...settings, polling: true as const }
       };
     }
 
     case 'inlineHandler':
       return {
         data: resolvedConfig.config,
-        settings: { ...settings, polling: false }
+        settings: { ...settings, polling: false as const }
       };
 
     case 'handler': {
       return {
         data: resolvedConfig.config.handler,
         entities: resolvedConfig.config.match,
-        settings: { ...settings, polling: false }
+        settings: { ...settings, polling: false as const }
       };
     }
 
@@ -190,11 +200,61 @@ const createRestFactory = <Method extends RestMethod>(method: Method) => {
     return {
       method,
       path,
-      routes: [createConfigResolver(config, settings) as RestRouteConfig<Method>]
+      routes: [createConfigResolver(config, settings)]
     };
   }
 
   return createRequestConfig;
+};
+
+interface RestSseClient<Response extends string> {
+  close: () => void;
+  send: (
+    data: Response,
+    meta?: {
+      event?: string;
+      id?: string;
+      retry?: number;
+    }
+  ) => void;
+}
+
+const createSseRestFactory = <Method extends 'get' | 'post'>(method: Method) => {
+  function createSseRequestConfig<
+    Options extends RestRequestInput = Partial<RestRequestInput>,
+    Response extends string = string
+  >(
+    path: RestRequestConfig['path'],
+    config: RestFunction<Method, Options, { client: RestSseClient<Response> }>,
+    settings?: RestSettings
+  ): BaseRestRequestConfig<Method> {
+    const sseHandler: RestFunction<Method, Options> = (params) => {
+      params.setHeader('connection', 'keep-alive');
+      params.setHeader('content-type', 'text/event-stream');
+      params.setHeader('cache-control', 'no-cache');
+
+      const client: RestSseClient<Response> = {
+        send(message, meta) {
+          const payload = formatSsePayload(message, meta);
+          params.response.write(payload);
+        },
+
+        close() {
+          params.response.end();
+        }
+      };
+
+      return config({ ...params, client });
+    };
+
+    return {
+      method,
+      path,
+      routes: [createConfigResolver(sseHandler, settings)]
+    };
+  }
+
+  return createSseRequestConfig;
 };
 
 export const rest = {
@@ -203,5 +263,7 @@ export const rest = {
   options: createRestFactory('options'),
   patch: createRestFactory('patch'),
   post: createRestFactory('post'),
-  put: createRestFactory('put')
+  put: createRestFactory('put'),
+  sse: createSseRestFactory('get'),
+  stream: createSseRestFactory('post')
 };

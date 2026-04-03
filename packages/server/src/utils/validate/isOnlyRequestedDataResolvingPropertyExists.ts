@@ -1,6 +1,6 @@
 import type { PlainObject } from '@/utils/types';
 
-const DATA_RESOLVING_PROPERTIES = ['data', 'file', 'queue'] as const;
+const DATA_RESOLVING_PROPERTIES = ['data', 'queue'] as const;
 
 export const isOnlyRequestedDataResolvingPropertyExists = (
   object: PlainObject,

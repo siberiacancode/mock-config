@@ -7,7 +7,8 @@ import { routeConfigSchema } from './routeConfigSchema';
 describe('routeConfigSchema: data resolving properties combinations', () => {
   const incorrectDataResolvingPropertiesCombinations = [
     {},
-    { data: {}, file: 'data.json', queue: [], settings: { polling: true } }
+    { data: {}, file: 'data.json', queue: [], settings: { polling: true } },
+    { file: 'data.json' }
   ];
   incorrectDataResolvingPropertiesCombinations.forEach(
     (incorrectDataResolvingPropertiesCombination) => {
@@ -30,7 +31,6 @@ describe('routeConfigSchema: data resolving properties combinations', () => {
 
   const correctDataResolvingPropertiesCombinations = [
     { data: {} },
-    { file: 'data.json' },
     { queue: [], settings: { polling: true } }
   ];
   correctDataResolvingPropertiesCombinations.forEach(
