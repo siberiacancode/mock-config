@@ -223,6 +223,80 @@ describe('graphql', () => {
     });
   });
 
+  it('Should build subscription config for inline response only', () => {
+    const result = graphql.subscription('OnUsers', { key: 'value' });
+
+    expect(result).toStrictEqual({
+      operationName: 'OnUsers',
+      operationType: 'subscription',
+      routes: [
+        {
+          data: { key: 'value' },
+          entities: {}
+        }
+      ]
+    });
+  });
+
+  it('Should build subscription config for handler function only', () => {
+    const result = graphql.subscription('OnUsers', () => ({ ok: true }));
+
+    expect(result).toStrictEqual({
+      operationName: 'OnUsers',
+      operationType: 'subscription',
+      routes: [
+        {
+          data: expect.any(Function),
+          entities: {}
+        }
+      ]
+    });
+  });
+
+  it('Should build subscription config for response object with match (e.g. variables)', () => {
+    const result = graphql.subscription('OnUsers', {
+      match: {
+        variables: { key: 'value' }
+      },
+      response: { key: 'value' }
+    });
+
+    expect(result).toStrictEqual({
+      operationName: 'OnUsers',
+      operationType: 'subscription',
+      routes: [
+        {
+          data: { key: 'value' },
+          entities: {
+            variables: { key: 'value' }
+          }
+        }
+      ]
+    });
+  });
+
+  it('Should build subscription config for handler object with match', () => {
+    const result = graphql.subscription('OnUsers', {
+      handler: () => ({ count: 1 }),
+      match: {
+        variables: { key: 'value' }
+      }
+    });
+
+    expect(result).toStrictEqual({
+      operationName: 'OnUsers',
+      operationType: 'subscription',
+      routes: [
+        {
+          data: expect.any(Function),
+          entities: {
+            variables: { key: 'value' }
+          }
+        }
+      ]
+    });
+  });
+
   it('Should type handler params with all typed fields', () => {
     const result = graphql.query<{
       query: { query: string };
@@ -245,86 +319,6 @@ describe('graphql', () => {
         {
           data: expect.any(Function),
           entities: {},
-          settings: {}
-        }
-      ]
-    });
-  });
-});
-
-describe('graphql.subscription', () => {
-  it('Should build config for inline response only', () => {
-    const result = graphql.subscription('OnMessage', { payload: 'hello' }, { delay: 10 });
-
-    expect(result).toStrictEqual({
-      operationName: 'OnMessage',
-      operationType: 'subscription',
-      routes: [
-        {
-          data: { payload: 'hello' },
-          entities: {},
-          settings: { delay: 10 }
-        }
-      ]
-    });
-  });
-
-  it('Should build config for handler function only', () => {
-    const result = graphql.subscription('OnMessage', () => ({ ok: true }));
-
-    expect(result).toStrictEqual({
-      operationName: 'OnMessage',
-      operationType: 'subscription',
-      routes: [
-        {
-          data: expect.any(Function),
-          entities: {},
-          settings: {}
-        }
-      ]
-    });
-  });
-
-  it('Should build config for response object with match (e.g. variables)', () => {
-    const result = graphql.subscription('OnCounter', {
-      match: {
-        variables: { id: '1' }
-      },
-      response: { count: 0 }
-    });
-
-    expect(result).toStrictEqual({
-      operationName: 'OnCounter',
-      operationType: 'subscription',
-      routes: [
-        {
-          data: { count: 0 },
-          entities: {
-            variables: { id: '1' }
-          },
-          settings: {}
-        }
-      ]
-    });
-  });
-
-  it('Should build config for handler object with match', () => {
-    const result = graphql.subscription('OnCounter', {
-      handler: () => ({ count: 1 }),
-      match: {
-        variables: { region: 'eu' }
-      }
-    });
-
-    expect(result).toStrictEqual({
-      operationName: 'OnCounter',
-      operationType: 'subscription',
-      routes: [
-        {
-          data: expect.any(Function),
-          entities: {
-            variables: { region: 'eu' }
-          },
           settings: {}
         }
       ]

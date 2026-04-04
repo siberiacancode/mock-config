@@ -10,7 +10,9 @@ export const getGraphQLSubscriptionInput = (
 ): GetGraphQLSubscriptionInputResult => {
   const query = typeof value.query === 'string' ? value.query : undefined;
   const variables =
-    typeof value.variables === 'object' && !!value.variables ? value.variables : undefined;
+    typeof value.variables === 'object' && !!value.variables && !Array.isArray(value.variables)
+      ? value.variables
+      : undefined;
 
   return {
     query,
