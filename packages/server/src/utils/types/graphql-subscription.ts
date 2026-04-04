@@ -2,7 +2,6 @@ import type { RawData, WebSocket } from 'ws';
 
 import type { VariablesPlainEntity } from './entities';
 import type { GraphQLOperationName, GraphQLSettings } from './graphql';
-import type { BaseUrl } from './server';
 import type { Data, PlainObject } from './values';
 
 export interface GraphQLSubscriptionEntitiesByEntityName {
@@ -50,15 +49,6 @@ export type GraphQLSubscriptionRequestInterceptor = (
 ) => Promise<void> | void;
 
 export type GraphQLSubscriptionResponseInterceptor = (
-  data: unknown,
+  data: Data,
   params: GraphQLSubscriptionParams
-) => unknown;
-
-export interface GraphQLSubscriptionRequestArtifact {
-  baseUrl: BaseUrl;
-  config: GraphQLSubscriptionRouteConfig;
-  operationName?: GraphQLOperationName;
-  operationType: GraphQLSubscriptionHttpOperationType;
-  query?: string;
-  weight: number;
-}
+) => Data;

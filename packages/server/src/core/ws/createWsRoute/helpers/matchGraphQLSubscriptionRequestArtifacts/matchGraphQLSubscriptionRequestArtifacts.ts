@@ -1,11 +1,11 @@
 import { parse, print, stripIgnoredCharacters } from 'graphql';
 
-import type { GraphQLSubscriptionRequestArtifact } from '@/utils/types';
+import type { GraphQLWsArtifact } from '@/utils/types';
 
 import { normalizeUrl } from '@/utils/helpers';
 
 interface MatchGraphQLSubscriptionRequestArtifactsParams {
-  artifacts: GraphQLSubscriptionRequestArtifact[];
+  artifacts: GraphQLWsArtifact[];
   meta: {
     path: string;
     operationType: string;

@@ -6,6 +6,7 @@ import { prepareWsRequestArtifacts } from './prepareWsRequestArtifacts';
 
 const makeArtifact = (overrides: Partial<WsRequestArtifact>): WsRequestArtifact =>
   ({
+    type: 'ws',
     baseUrl: '/' as BaseUrl,
     event: 'ping',
     config: { data: { ok: true } },

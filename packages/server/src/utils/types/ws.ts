@@ -1,6 +1,11 @@
 import type { RawData, WebSocket } from 'ws';
 
 import type { BodyPlainEntity } from './entities';
+import type { GraphQLOperationName } from './graphql';
+import type {
+  GraphQLSubscriptionHttpOperationType,
+  GraphQLSubscriptionRouteConfig
+} from './graphql-subscription';
 import type { BaseUrl } from './server';
 import type { Data } from './values';
 
@@ -40,9 +45,22 @@ export interface WsRequestConfig {
   routes: WsRouteConfig[];
 }
 
-export interface WsRequestArtifact {
+export interface WsArtifact {
   baseUrl: BaseUrl;
   config: WsRouteConfig;
   event: WsEventName | typeof WS_MESSAGE_EVENT;
+  type: 'ws';
   weight: number;
 }
+
+export interface GraphQLWsArtifact {
+  baseUrl: BaseUrl;
+  config: GraphQLSubscriptionRouteConfig;
+  operationName?: GraphQLOperationName;
+  operationType: GraphQLSubscriptionHttpOperationType;
+  query?: string;
+  type: 'graphql-ws';
+  weight: number;
+}
+
+export type WsRequestArtifact = GraphQLWsArtifact | WsArtifact;

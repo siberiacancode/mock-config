@@ -1,19 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { BaseUrl, GraphQLSubscriptionRequestArtifact } from '@/utils/types';
+import type { BaseUrl, GraphQLWsArtifact } from '@/utils/types';
 
 import { matchGraphQLSubscriptionRequestArtifacts } from './matchGraphQLSubscriptionRequestArtifacts';
 
-const makeArtifact = (
-  overrides: Partial<GraphQLSubscriptionRequestArtifact>
-): GraphQLSubscriptionRequestArtifact =>
+const makeArtifact = (overrides: Partial<GraphQLWsArtifact>): GraphQLWsArtifact =>
   ({
+    type: 'graphql-ws',
     baseUrl: '/' as BaseUrl,
     operationType: 'subscription',
     config: { data: { ok: true } },
     weight: 0,
     ...overrides
-  }) as GraphQLSubscriptionRequestArtifact;
+  }) as GraphQLWsArtifact;
 
 describe('matchGraphQLSubscriptionRequestArtifacts', () => {
   it('Should not match when path differs from baseUrl', () => {
