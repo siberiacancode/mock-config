@@ -40,14 +40,9 @@ export interface WsRequestConfig {
   routes: WsRouteConfig[];
 }
 
-interface BaseWsRequestArtifact {
+export interface WsRequestArtifact {
   baseUrl: BaseUrl;
-  componentRequestInterceptor?: ((params: any) => Promise<void> | void) | undefined;
-  componentResponseInterceptor?: ((data: any, params: any) => any) | undefined;
-  weight: number;
-}
-
-export interface WsRequestArtifact extends BaseWsRequestArtifact {
   config: WsRouteConfig;
   event: WsEventName | typeof WS_MESSAGE_EVENT;
+  weight: number;
 }

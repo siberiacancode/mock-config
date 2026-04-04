@@ -6,15 +6,22 @@ import { describe, expect, it, vi } from 'vitest';
 import type {
   BaseServerConfig,
   BaseUrl,
-  GraphqlConfig,
   GraphQLOperationType,
-  GraphQLRequestArtifact
+  GraphQLRequestArtifact,
+  GraphQLRequestConfig,
+  Interceptors
 } from '@/utils/types';
 
 import { urlJoin } from '@/utils/helpers';
 
 import { createGraphQLRoute } from './createGraphQLRoute';
 import { calculateGraphQLRouteConfigWeight, prepareGraphQLRequestArtifacts } from './helpers';
+
+interface GraphqlConfig {
+  baseUrl?: BaseUrl;
+  configs: GraphQLRequestConfig[];
+  interceptors?: Interceptors<'graphql'>;
+}
 
 const createServer = (
   mockServerConfig: Pick<BaseServerConfig, 'baseUrl' | 'interceptors'> & {

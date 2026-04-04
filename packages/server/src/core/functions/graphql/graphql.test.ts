@@ -251,3 +251,83 @@ describe('graphql', () => {
     });
   });
 });
+
+describe('graphql.subscription', () => {
+  it('Should build config for inline response only', () => {
+    const result = graphql.subscription('OnMessage', { payload: 'hello' }, { delay: 10 });
+
+    expect(result).toStrictEqual({
+      operationName: 'OnMessage',
+      operationType: 'subscription',
+      routes: [
+        {
+          data: { payload: 'hello' },
+          entities: {},
+          settings: { delay: 10 }
+        }
+      ]
+    });
+  });
+
+  it('Should build config for handler function only', () => {
+    const result = graphql.subscription('OnMessage', () => ({ ok: true }));
+
+    expect(result).toStrictEqual({
+      operationName: 'OnMessage',
+      operationType: 'subscription',
+      routes: [
+        {
+          data: expect.any(Function),
+          entities: {},
+          settings: {}
+        }
+      ]
+    });
+  });
+
+  it('Should build config for response object with match (e.g. variables)', () => {
+    const result = graphql.subscription('OnCounter', {
+      match: {
+        variables: { id: '1' }
+      },
+      response: { count: 0 }
+    });
+
+    expect(result).toStrictEqual({
+      operationName: 'OnCounter',
+      operationType: 'subscription',
+      routes: [
+        {
+          data: { count: 0 },
+          entities: {
+            variables: { id: '1' }
+          },
+          settings: {}
+        }
+      ]
+    });
+  });
+
+  it('Should build config for handler object with match', () => {
+    const result = graphql.subscription('OnCounter', {
+      handler: () => ({ count: 1 }),
+      match: {
+        variables: { region: 'eu' }
+      }
+    });
+
+    expect(result).toStrictEqual({
+      operationName: 'OnCounter',
+      operationType: 'subscription',
+      routes: [
+        {
+          data: expect.any(Function),
+          entities: {
+            variables: { region: 'eu' }
+          },
+          settings: {}
+        }
+      ]
+    });
+  });
+});

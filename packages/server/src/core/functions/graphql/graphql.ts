@@ -6,7 +6,11 @@ import type {
   GraphQLParams,
   GraphQLRequestConfig,
   GraphQLRouteConfig,
-  GraphQLSettings
+  GraphQLSettings,
+  GraphQLSubscriptionEntitiesByEntityName,
+  GraphQLSubscriptionParams,
+  GraphQLSubscriptionRequestConfig,
+  GraphQLSubscriptionRouteConfig
 } from '@/utils/types';
 
 import { createQueueHandler } from './helpers';
@@ -127,7 +131,7 @@ const createConfigResolver = <Options extends GraphQLRequestInput>(
   }
 };
 
-type GraphQLFactoryMode = 'raw' | GraphQLOperationType;
+type GraphQLFactoryMode = 'raw' | Exclude<GraphQLOperationType, 'subscription'>;
 type GraphQLIdentifier<Mode extends GraphQLFactoryMode> = Mode extends 'raw'
   ? string
   : GraphQLOperationName;
@@ -195,8 +199,136 @@ const createGraphQLFactory = <Mode extends GraphQLFactoryMode>(mode: Mode) => {
   return createRequestConfig;
 };
 
+interface GraphQLSubscriptionRequestInput {
+  response?: Data;
+}
+
+type ReservedGraphQLSubscriptionConfigKeys = {
+  [K in 'handler' | 'match']?: never;
+};
+
+type GraphQLSubscriptionInlineResponse<Response> =
+  Response extends Record<string, unknown>
+    ? Response & ReservedGraphQLSubscriptionConfigKeys
+    : Response;
+
+type GraphQLSubscriptionSugarFunction<Options extends GraphQLSubscriptionRequestInput> = (
+  params: GraphQLSubscriptionParams
+) => Options['response'] | Promise<Options['response']>;
+
+interface GraphQLSubscriptionSugarResponseObject<Response> {
+  match?: GraphQLSubscriptionEntitiesByEntityName;
+  response: Response;
+}
+
+interface GraphQLSubscriptionSugarHandlerObject<Options extends GraphQLSubscriptionRequestInput> {
+  handler: GraphQLSubscriptionSugarFunction<Options>;
+  match?: GraphQLSubscriptionEntitiesByEntityName;
+}
+
+type GraphQLSubscriptionSugarConfig<Options extends GraphQLSubscriptionRequestInput> =
+  | GraphQLSubscriptionInlineResponse<Options['response']>
+  | GraphQLSubscriptionSugarFunction<Options>
+  | GraphQLSubscriptionSugarHandlerObject<Options>
+  | GraphQLSubscriptionSugarResponseObject<Options['response']>;
+
+const resolveSubscriptionSugarConfigType = <Options extends GraphQLSubscriptionRequestInput>(
+  config: GraphQLSubscriptionSugarConfig<Options>
+) => {
+  if (typeof config === 'function') return { type: 'inlineHandler' as const, config };
+  if (typeof config !== 'object' || config === null)
+    return { type: 'inlineResponse' as const, config };
+  if ('response' in config) return { type: 'data' as const, config };
+  if ('handler' in config) return { type: 'handler' as const, config };
+  return { type: 'inlineResponse' as const, config };
+};
+
+const createSubscriptionRouteConfig = <Options extends GraphQLSubscriptionRequestInput>(
+  config: GraphQLSubscriptionSugarConfig<Options>
+): GraphQLSubscriptionRouteConfig => {
+  const resolvedConfig = resolveSubscriptionSugarConfigType(config);
+
+  switch (resolvedConfig.type) {
+    case 'inlineResponse':
+      return {
+        data: resolvedConfig.config,
+        entities: {}
+      };
+
+    case 'data':
+      return {
+        data: resolvedConfig.config.response,
+        entities: resolvedConfig.config.match ?? {}
+      };
+
+    case 'inlineHandler':
+      return {
+        data: resolvedConfig.config,
+        entities: {}
+      };
+
+    case 'handler':
+      return {
+        data: resolvedConfig.config.handler,
+        entities: resolvedConfig.config.match ?? {}
+      };
+
+    default: {
+      throw new Error(
+        `Unexpected subscription route config kind: ${JSON.stringify(config, null, 2)}`
+      );
+    }
+  }
+};
+
+const createGraphQLSubscriptionFactory = () => {
+  function createRequestConfig<
+    Options extends GraphQLSubscriptionRequestInput = Partial<GraphQLSubscriptionRequestInput>
+  >(
+    identifier: GraphQLOperationName,
+    config: GraphQLSubscriptionSugarFunction<Options>
+  ): GraphQLSubscriptionRequestConfig;
+
+  function createRequestConfig<
+    Options extends GraphQLSubscriptionRequestInput = Partial<GraphQLSubscriptionRequestInput>
+  >(
+    identifier: GraphQLOperationName,
+    config: GraphQLSubscriptionSugarHandlerObject<Options>
+  ): GraphQLSubscriptionRequestConfig;
+
+  function createRequestConfig<
+    Options extends GraphQLSubscriptionRequestInput = Partial<GraphQLSubscriptionRequestInput>
+  >(
+    identifier: GraphQLOperationName,
+    config: GraphQLSubscriptionInlineResponse<Options['response']>
+  ): GraphQLSubscriptionRequestConfig;
+
+  function createRequestConfig<
+    Options extends GraphQLSubscriptionRequestInput = Partial<GraphQLSubscriptionRequestInput>
+  >(
+    identifier: GraphQLOperationName,
+    config: GraphQLSubscriptionSugarResponseObject<Options['response']>
+  ): GraphQLSubscriptionRequestConfig;
+
+  function createRequestConfig<
+    Options extends GraphQLSubscriptionRequestInput = Partial<GraphQLSubscriptionRequestInput>
+  >(
+    identifier: GraphQLOperationName,
+    config: GraphQLSubscriptionSugarConfig<Options>
+  ): GraphQLSubscriptionRequestConfig {
+    return {
+      operationName: identifier,
+      operationType: 'subscription',
+      routes: [createSubscriptionRouteConfig(config)]
+    };
+  }
+
+  return createRequestConfig;
+};
+
 export const graphql = {
   query: createGraphQLFactory('query'),
   mutation: createGraphQLFactory('mutation'),
-  raw: createGraphQLFactory('raw')
+  raw: createGraphQLFactory('raw'),
+  subscription: createGraphQLSubscriptionFactory()
 };

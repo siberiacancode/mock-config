@@ -8,6 +8,7 @@ import { databaseConfigSchema } from './databaseConfigSchema/databaseConfigSchem
 import { getMostSpecificPathFromError } from './getMostSpecificPathFromError';
 import { getValidationMessageFromPath } from './getValidationMessageFromPath';
 import { graphqlRequestConfigSchema } from './graphqlConfigSchema/graphqlConfigSchema';
+import { graphqlSubscriptionRequestConfigSchema } from './graphqlSubscriptionConfigSchema/graphqlSubscriptionConfigSchema';
 import { interceptorsSchema } from './interceptorsSchema/interceptorsSchema';
 import { portSchema } from './portSchema/portSchema';
 import { restRequestConfigSchema } from './restConfigSchema/restConfigSchema';
@@ -36,7 +37,12 @@ export const validateMockServerConfig = (mockServerConfig: PlainObject) => {
     baseUrl: baseUrlSchema.optional(),
     interceptors: plainObjectSchema(interceptorsSchema).optional(),
     configs: z.array(
-      z.union([restRequestConfigSchema, graphqlRequestConfigSchema, wsRequestConfigSchema])
+      z.union([
+        restRequestConfigSchema,
+        graphqlRequestConfigSchema,
+        graphqlSubscriptionRequestConfigSchema,
+        wsRequestConfigSchema
+      ])
     )
   });
 

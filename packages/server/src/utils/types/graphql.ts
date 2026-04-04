@@ -59,9 +59,11 @@ export interface GraphQLRouteConfig {
   settings?: GraphQLSettings;
 }
 
+export type GraphQLHttpOperationType = Exclude<GraphQLOperationType, 'subscription'>;
+
 interface BaseGraphQLRequestConfig {
   interceptors?: Interceptors<'graphql'>;
-  operationType: GraphQLOperationType;
+  operationType: GraphQLHttpOperationType;
   routes: GraphQLRouteConfig[];
 }
 

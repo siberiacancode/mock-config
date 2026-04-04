@@ -3,7 +3,7 @@ import type { DocumentNode, OperationDefinitionNode, OperationTypeNode } from 'g
 import { parse } from 'graphql';
 
 interface ParseDocumentNodeResult {
-  operationName: string | undefined;
+  operationName?: string;
   operationType: OperationTypeNode;
 }
 

@@ -4,6 +4,7 @@ export * from './databaseConfigSchema/databaseConfigSchema';
 export * from './getMostSpecificPathFromError';
 export * from './getValidationMessageFromPath';
 export * from './graphqlConfigSchema/graphqlConfigSchema';
+export * from './graphqlSubscriptionConfigSchema/graphqlSubscriptionConfigSchema';
 export * from './interceptorsSchema/interceptorsSchema';
 export * from './portSchema/portSchema';
 export * from './restConfigSchema/restConfigSchema';

@@ -1,4 +1,3 @@
-import type { Express } from 'express';
 import type { RawData, WebSocket } from 'ws';
 
 import { flatten } from 'flat';
@@ -8,6 +7,7 @@ import type {
   EntityDescriptor,
   Entries,
   PlainObject,
+  RegisterWebSocketUpgradeHandler,
   TopLevelPlainEntityArray,
   TopLevelPlainEntityDescriptor,
   WsEntitiesByEntityName,
@@ -27,7 +27,7 @@ import {
 import { WS_MESSAGE_EVENT } from '@/utils/types';
 
 interface CreateWsRouteParams {
-  server: Express;
+  registerWebSocketUpgradeHandler: RegisterWebSocketUpgradeHandler;
   wsRequestArtifacts: WsRequestArtifact[];
 }
 
@@ -48,29 +48,29 @@ const sendWsData = (socket: WebSocket, data: unknown) => {
   socket.send(typeof data === 'string' ? data : JSON.stringify(data));
 };
 
-export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParams) => {
+export const createWsRoute = ({
+  registerWebSocketUpgradeHandler,
+  wsRequestArtifacts
+}: CreateWsRouteParams) => {
   const wsServer = new WebSocketServer({
     noServer: true
   });
 
   const wsBaseUrls = new Set(wsRequestArtifacts.map((artifact) => urlJoin('/', artifact.baseUrl)));
 
-  const originalListen = server.listen.bind(server);
-  server.listen = ((...args: any[]) => {
-    const httpServer = originalListen(...args);
-    httpServer.on('upgrade', (request, socket, head) => {
-      const shouldHandleUpgrade = wsBaseUrls.has(urlJoin('/', request.url ?? '/'));
-      if (!shouldHandleUpgrade) {
-        socket.destroy();
-        return;
-      }
+  registerWebSocketUpgradeHandler((request, socket, head) => {
+    const pathname = request.url ?? '/';
+    const shouldHandleUpgrade = wsBaseUrls.has(urlJoin('/', pathname));
+    if (!shouldHandleUpgrade) {
+      return false;
+    }
 
-      wsServer.handleUpgrade(request, socket, head, (upgradedSocket) => {
-        wsServer.emit('connection', upgradedSocket, request);
-      });
+    wsServer.handleUpgrade(request, socket, head, (upgradedSocket) => {
+      wsServer.emit('connection', upgradedSocket, request);
     });
-    return httpServer;
-  }) as typeof server.listen;
+
+    return true;
+  });
 
   wsServer.on('connection', (socket) => {
     socket.on('message', async (raw: RawData) => {
@@ -79,23 +79,22 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       );
 
       if (wsMessagesRequestArtifacts.length) {
-        let data = raw;
         wsMessagesRequestArtifacts.forEach(async (artifact) => {
-          if (artifact.componentRequestInterceptor) {
-            await artifact.componentRequestInterceptor({
-              message: raw,
-              socket,
-              send: (data: unknown) => sendWsData(socket, data)
-            });
-          }
+          // if (artifact.componentRequestInterceptor) {
+          //   await artifact.componentRequestInterceptor({
+          //     message: raw,
+          //     socket,
+          //     send: (data: unknown) => sendWsData(socket, data)
+          //   });
+          // }
 
-          if (artifact.componentResponseInterceptor) {
-            data = artifact.componentResponseInterceptor(data, {
-              message: raw,
-              socket,
-              send: (data: unknown) => sendWsData(socket, data)
-            } as unknown as WsParams);
-          }
+          // if (artifact.componentResponseInterceptor) {
+          //   data = artifact.componentResponseInterceptor(data, {
+          //     message: raw,
+          //     socket,
+          //     send: (data: unknown) => sendWsData(socket, data)
+          //   } as unknown as WsParams);
+          // }
 
           if (typeof artifact.config.data === 'function') {
             await artifact.config.data?.({
@@ -214,19 +213,21 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       });
       if (!matchedEventArtifact) return;
 
-      if (matchedEventArtifact.componentRequestInterceptor) {
-        await matchedEventArtifact.componentRequestInterceptor(params);
-      }
+      // if (matchedEventArtifact.componentRequestInterceptor) {
+      //   await matchedEventArtifact.componentRequestInterceptor(params);
+      // }
 
       const resolvedData =
         typeof matchedEventArtifact.config.data === 'function'
           ? await matchedEventArtifact.config.data(params)
           : matchedEventArtifact.config.data;
 
-      let data = resolvedData;
-      if (matchedEventArtifact.componentResponseInterceptor) {
-        data = matchedEventArtifact.componentResponseInterceptor(data, params);
-      }
+      const data = resolvedData;
+      // if (matchedEventArtifact.componentResponseInterceptor) {
+      //   data = matchedEventArtifact.componentResponseInterceptor(data, params);
+      // }
+
+      if (!data) return;
 
       sendWsData(socket, data);
     });

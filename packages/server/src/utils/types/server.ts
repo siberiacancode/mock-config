@@ -1,9 +1,13 @@
 import type { Request } from 'express';
+import type { Buffer } from 'node:buffer';
+import type { IncomingMessage } from 'node:http';
+import type { Duplex } from 'node:stream';
 import type { WebSocket } from 'ws';
 import type { Arguments } from 'yargs';
 
 import type { Database, Orm } from './database';
 import type { GraphQLRequestConfig } from './graphql';
+import type { GraphQLSubscriptionRequestConfig } from './graphql-subscription';
 import type { Interceptors } from './interceptors';
 import type { RestMethod, RestRequestConfig } from './rest';
 import type { WsRequestConfig } from './ws';
@@ -25,20 +29,14 @@ export interface Cors {
   origin: ((request: Request) => CorsOrigin | Promise<CorsOrigin>) | CorsOrigin;
 }
 
-type Port = number;
+export type Port = number;
 export type BaseUrl = `/${string}`;
-
-export interface RestConfig {
-  baseUrl?: BaseUrl;
-  configs: RestRequestConfig[];
-  interceptors?: Interceptors<'rest'>;
-}
-
-export interface GraphqlConfig {
-  baseUrl?: BaseUrl;
-  configs: GraphQLRequestConfig[];
-  interceptors?: Interceptors<'graphql'>;
-}
+export type WebSocketUpgradeHandler = (
+  request: IncomingMessage,
+  socket: Duplex,
+  head: Buffer
+) => boolean;
+export type RegisterWebSocketUpgradeHandler = (handler: WebSocketUpgradeHandler) => void;
 
 export interface DatabaseConfig {
   data: `${string}.json` | Record<string, unknown>;
@@ -74,7 +72,9 @@ declare global {
 
 export interface MockServerComponent {
   baseUrl?: BaseUrl;
-  configs: Array<GraphQLRequestConfig | RestRequestConfig | WsRequestConfig>;
+  configs: Array<
+    GraphQLRequestConfig | GraphQLSubscriptionRequestConfig | RestRequestConfig | WsRequestConfig
+  >;
   interceptors?: Interceptors;
   name?: string;
 }
