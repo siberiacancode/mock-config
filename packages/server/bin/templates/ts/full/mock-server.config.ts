@@ -1,21 +1,46 @@
-import type { MockServerConfig } from 'mock-config-server';
+import { graphql, mock, rest, ws } from 'mock-config-server';
 
-import { createUserMutation, getUserQuery, getUsersQuery } from './mock-requests/graphql';
-import { getUserRequest, getUsersRequest, postUserRequest } from './mock-requests/rest';
+const users = [
+  { emoji: '🍎', name: 'Alice' },
+  { emoji: '🍌', name: 'Bob' },
+  { emoji: '🍒', name: 'Carol' },
+  { emoji: '🍇', name: 'Dan' },
+  { emoji: '🥝', name: 'Eve' }
+];
 
-const mockServerConfig: MockServerConfig = [
-  {
-    port: 31299,
-    baseUrl: '/'
-  },
+export default mock(
+  { port: 7777, baseUrl: '/' },
   {
     name: 'rest',
-    configs: [getUserRequest, getUsersRequest, postUserRequest]
+    configs: [
+      rest.get('/users', users),
+      rest.get<{ params: { id: string } }>('/users/:id', (params) => {
+        const user = users[Number(params.request.params.id) - 1];
+        if (!user) {
+          params.setStatusCode(404);
+          return { error: 'Not found' };
+        }
+        return user;
+      })
+    ]
   },
   {
     name: 'graphql',
-    configs: [getUserQuery, getUsersQuery, createUserMutation]
+    baseUrl: '/graphql',
+    configs: [
+      graphql.query('GetUsers', users),
+      graphql.mutation('CreateUser', { ok: true, id: users.length + 1 })
+    ]
+  },
+  {
+    name: 'ws',
+    baseUrl: '/ws',
+    configs: [
+      ws.event('notification', { message: 'Hello from server' }),
+      ws.message(async (params) => {
+        await params.setDelay(200);
+        params.send({ ok: true });
+      })
+    ]
   }
-];
-
-export default mockServerConfig;
+);

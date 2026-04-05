@@ -1,5 +1,5 @@
 export const DEFAULT = {
-  PORT: 31299,
+  PORT: 7777,
   CORS: {
     ORIGIN: '*',
     METHODS: 'GET,OPTIONS,PUT,PATCH,POST,DELETE',

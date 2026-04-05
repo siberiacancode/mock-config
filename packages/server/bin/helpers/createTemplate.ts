@@ -4,7 +4,7 @@ import path from 'node:path';
 import { APP_PATH, DEFAULT } from '@/utils/constants';
 
 interface CreateTemplateOptions {
-  apiType: 'full' | 'graphql' | 'rest';
+  apiType: 'full' | 'graphql-playground' | 'graphql' | 'rest-playground' | 'rest' | 'ws';
   baseUrl: string;
   port: number;
   staticPath: string;
@@ -14,11 +14,6 @@ interface CreateTemplateOptions {
 export const createTemplate = (options: CreateTemplateOptions) => {
   const language = options.withTypescript ? 'ts' : 'js';
   const templatePath = path.join(__dirname, '..', `templates/${language}/${options.apiType}`);
-
-  fs.cpSync(`${templatePath}/mock-requests`, `${APP_PATH}/mock-requests`, {
-    recursive: true,
-    force: true
-  });
 
   let mockServerConfig = fs.readFileSync(`${templatePath}/mock-server.config.${language}`, 'utf8');
 
