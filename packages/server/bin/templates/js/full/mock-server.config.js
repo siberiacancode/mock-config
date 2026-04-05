@@ -30,7 +30,7 @@ export default mock(
     configs: [
       graphql.query('GetUsers', users),
       graphql.query('GetUser', (params) => {
-        const user = users[Number(params.request.params.id) - 1];
+        const user = users[Number(params.request.body.variables.id) - 1];
         if (!user) {
           params.setStatusCode(404);
           return { error: 'Not found' };

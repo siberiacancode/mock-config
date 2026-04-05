@@ -29,14 +29,21 @@ export default mock(
     baseUrl: '/graphql',
     configs: [
       graphql.query('GetUsers', users),
-      graphql.mutation('CreateUser', { ok: true, id: users.length + 1 })
+      graphql.query<{ body: { variables: { id: string } } }>('GetUser', (params) => {
+        const user = users[Number(params.request.body.variables.id) - 1];
+        if (!user) {
+          params.setStatusCode(404);
+          return { error: 'Not found' };
+        }
+        return user;
+      })
     ]
   },
   {
     name: 'ws',
     baseUrl: '/ws',
     configs: [
-      ws.event('notification', { message: 'Hello from server' }),
+      ws.event('notification', { message: `${new Date().toISOString()} Hello from server` }),
       ws.message(async (params) => {
         await params.setDelay(200);
         params.send({ ok: true });
