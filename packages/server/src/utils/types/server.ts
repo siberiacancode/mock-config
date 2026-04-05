@@ -28,13 +28,11 @@ export type BaseUrl = `/${string}`;
 export interface RestConfig {
   baseUrl?: BaseUrl;
   configs: RestRequestConfig[];
-  interceptors?: Interceptors<'rest'>;
 }
 
 export interface GraphqlConfig {
   baseUrl?: BaseUrl;
   configs: GraphQLRequestConfig[];
-  interceptors?: Interceptors<'graphql'>;
 }
 
 export interface BaseServerConfig {

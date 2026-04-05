@@ -1,25 +1,22 @@
 import type { CookieOptions, Request, Response } from 'express';
 
 import type { Logger, LoggerTokens } from './logger';
-import type { ApiType } from './shared';
 
 type InterceptorCookieValue = string | undefined;
 type InterceptorHeaderValue = number | string | string[] | undefined;
 
-export interface RequestInterceptorParams<Api extends ApiType = ApiType> {
+export interface RequestInterceptorParams {
   request: Request;
   getCookie: (name: string) => InterceptorCookieValue;
   getHeader: (field: string) => InterceptorHeaderValue;
   getHeaders: () => Record<string, InterceptorHeaderValue>;
-  log: (logger?: Logger<'request', Api>) => Partial<LoggerTokens>;
+  log: (logger?: Logger<'request'>) => Partial<LoggerTokens>;
   setDelay: (delay: number) => Promise<void>;
 }
 
-export type RequestInterceptor<Api extends ApiType = ApiType> = (
-  params: RequestInterceptorParams<Api>
-) => Promise<void> | void;
+export type RequestInterceptor = (params: RequestInterceptorParams) => Promise<void> | void;
 
-export interface ResponseInterceptorParams<Api extends ApiType = ApiType> {
+export interface ResponseInterceptorParams {
   request: Request;
   response: Response;
   appendHeader: (field: string, value?: string | string[]) => void;
@@ -30,19 +27,19 @@ export interface ResponseInterceptorParams<Api extends ApiType = ApiType> {
   getRequestHeaders: () => Record<string, InterceptorHeaderValue>;
   getResponseHeader: (field: string) => InterceptorHeaderValue;
   getResponseHeaders: () => Record<string, InterceptorHeaderValue>;
-  log: (logger?: Logger<'response', Api>) => Partial<LoggerTokens>;
+  log: (logger?: Logger<'response'>) => Partial<LoggerTokens>;
   setCookie: (name: string, value: string, options?: CookieOptions) => void;
   setDelay: (delay: number) => Promise<void>;
   setHeader: (field: string, value?: string | string[]) => void;
   setStatusCode: (statusCode: number) => void;
 }
 
-export type ResponseInterceptor<Data = any, Api extends ApiType = ApiType> = (
+export type ResponseInterceptor<Data = any> = (
   data: Data,
-  params: ResponseInterceptorParams<Api>
+  params: ResponseInterceptorParams
 ) => any;
 
-export interface Interceptors<Api extends ApiType = ApiType> {
-  request?: RequestInterceptor<Api>;
-  response?: ResponseInterceptor<any, Api>;
+export interface Interceptors {
+  request?: RequestInterceptor;
+  response?: ResponseInterceptor<any>;
 }

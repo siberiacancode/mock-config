@@ -90,12 +90,8 @@ export const createMockServer = (
               weight: calculateRestRouteConfigWeight(route),
               serverResponseInterceptor: interceptors?.response,
               serverRequestInterceptor: interceptors?.request,
-              requestResponseInterceptor: config.interceptors?.response,
-              requestRequestInterceptor: config.interceptors?.request,
               componentResponseInterceptor: component.interceptors?.response,
-              componentRequestInterceptor: component.interceptors?.request,
-              routeResponseInterceptor: route.interceptors?.response,
-              routeRequestInterceptor: route.interceptors?.request
+              componentRequestInterceptor: component.interceptors?.request
             });
           });
         }
@@ -112,12 +108,8 @@ export const createMockServer = (
               weight: calculateGraphQLRouteConfigWeight(route),
               serverResponseInterceptor: interceptors?.response,
               serverRequestInterceptor: interceptors?.request,
-              requestResponseInterceptor: config.interceptors?.response,
-              requestRequestInterceptor: config.interceptors?.request,
               componentResponseInterceptor: component.interceptors?.response,
-              componentRequestInterceptor: component.interceptors?.request,
-              routeResponseInterceptor: route.interceptors?.response,
-              routeRequestInterceptor: route.interceptors?.request
+              componentRequestInterceptor: component.interceptors?.request
             });
           });
         }

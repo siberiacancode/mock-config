@@ -97,8 +97,6 @@ Every route must be configured to handle response content in one of three ways: 
   - `file?` `string` path to file for return in response
   - `settings?` `Settings` settings for route (status, delay)
   - `entities?` `Object<headers | cookies | query | params | body>` object that helps in data retrieval
-  - `interceptors?` `Interceptors` functions to change request or response parameters, [read](#interceptors)
-- `interceptors?` `Interceptors` functions to change request or response parameters, [read](#interceptors)
 
 ##### Rest example
 
@@ -160,8 +158,6 @@ Every route must be configured to handle response content in one of two ways: da
   - `queue?` `Array<{ time?: number; data: any}>` queue for polling with opportunity to set time for each response
   - `settings?` `Settings` settings for route (polling on/off, etc.)
   - `entities?` `Object<headers | cookies | query | variables>` object that helps in data retrieval
-  - `interceptors?` `Interceptors` functions to change request or response parameters, [read](#interceptors)
-- `interceptors?` `Interceptors` functions to change request or response parameters, [read](#interceptors)
 
 > Every graphql config should contain `operationName` or `query` or both of them
 

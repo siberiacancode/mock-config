@@ -10,7 +10,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
   type={{
     options: {
       description: 'What to include in log output',
-      type: 'LoggerOptions<Type, Api>',
+      type: 'LoggerOptions<Type>',
       typeDescriptionLink: '#LoggerOptions'
     },
     rewrite: {
@@ -31,7 +31,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 <a id='LoggerOptions'></a>
 ## LoggerOptions
 
-`LoggerOptions<Type, Api>` is an object where:
+`LoggerOptions<Type>` is an object where:
 
 - key is any [available logger token](#available-logger-tokens)
 - value is `boolean` for scalar tokens
@@ -40,7 +40,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 <a id='LoggerTokens'></a>
 ## LoggerTokens
 
-`LoggerTokens<Type, Api>` is an object where keys are [available logger tokens](#available-logger-tokens) for the selected `Type` (`request` | `response`) and `Api` (`rest` | `graphql`), and values are token payloads.
+`LoggerTokens<Type>` is an object where keys are [available logger tokens](#available-logger-tokens) for the selected `Type` (`request` | `response`) and `Api` (`rest` | `graphql`), and values are token payloads.
 
 <a id='available-logger-tokens'></a>
 ## Available Logger Tokens

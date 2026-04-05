@@ -33,13 +33,13 @@ export type BaseUrl = `/${string}`;
 export interface RestConfig {
   baseUrl?: BaseUrl;
   configs: RestRequestConfig[];
-  interceptors?: Interceptors<'rest'>;
+  interceptors?: Interceptors;
 }
 
 export interface GraphqlConfig {
   baseUrl?: BaseUrl;
   configs: GraphQLRequestConfig[];
-  interceptors?: Interceptors<'graphql'>;
+  interceptors?: Interceptors;
 }
 
 export interface BaseMockServerConfig {
@@ -48,6 +48,11 @@ export interface BaseMockServerConfig {
   interceptors?: Interceptors;
   port?: Port;
   staticPath?: StaticPath;
+}
+
+export interface DatabaseConfig {
+  data: `${string}.json` | Record<string, unknown>;
+  routes?: `${string}.json` | Record<`/${string}`, `/${string}`>;
 }
 
 export interface MockServerConfig extends BaseMockServerConfig {
