@@ -51,18 +51,22 @@ export default [
   {
     baseUrl: '/graphql'
   },
-  configs: [
-    operationType: 'query',
-    operationName: 'GetUser',
-    routes: [
+  {
+    configs: [
       {
-        entities: {
-          headers: { 'name-header': 'Dmitriy' }
-        },
-          data: { emoji: '🧊', name: 'Dmitriy' }
+        operationType: 'query',
+        operationName: 'GetUser',
+        routes: [
+          {
+            entities: {
+              headers: { 'name-header': 'Dmitriy' }
+            },
+            data: { emoji: '🧊', name: 'Dmitriy' }
+          }
+        ]
       }
     ]
-  ]
+  }
 ] satisfies FlatMockServerConfig;
 ```
 
