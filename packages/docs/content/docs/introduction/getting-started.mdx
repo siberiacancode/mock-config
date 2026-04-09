@@ -15,23 +15,29 @@ Create a `mock-server.config.ts` file with server configuration and export it as
   <Tab value='REST'>
 
 ```typescript
-import { MockServerConfig, rest } from 'mock-config-server';
+import type { FlatMockServerConfig } from "mock-config-server";
 
 export default [
   {
-    baseUrl: '/api'
+    baseUrl: "/api",
   },
   {
     configs: [
-      rest.get('user', {
-        response: {
-          emoji: '🧊',
-          name: 'Siberia can code'
-        }
-      })
-    ]
-  }
-] satisfies MockServerConfig;
+      {
+        path: "/user",
+        method: "get",
+        routes: [
+          {
+            data: {
+              emoji: "🧊",
+              name: "Siberia can code",
+            },
+          },
+        ],
+      },
+    ],
+  },
+] satisfies FlatMockServerConfig;
 ```
 
   </Tab>
@@ -39,20 +45,25 @@ export default [
 <Tab value='GraphQL'>
 
 ```typescript
-import { MockServerConfig, graphql } from 'mock-config-server';
+import type { FlatMockServerConfig } from "mock-config-server";
 
 export default [
   {
     baseUrl: '/graphql'
   },
-  {
-    configs: [
-      graphql.query('GetUser', {
-        response: { emoji: '🧊', name: 'Siberia can code' }
-      })
+  configs: [
+    operationType: 'query',
+    operationName: 'GetUser',
+    routes: [
+      {
+        entities: {
+          headers: { 'name-header': 'Dmitriy' }
+        },
+          data: { emoji: '🧊', name: 'Dmitriy' }
+      }
     ]
-  }
-] satisfies MockServerConfig;
+  ]
+] satisfies FlatMockServerConfig;
 ```
 
   </Tab>
