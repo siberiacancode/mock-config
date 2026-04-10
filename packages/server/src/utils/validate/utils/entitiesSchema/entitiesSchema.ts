@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { checkModeSymbol } from '@/utils/constants';
 import { isPlainObject } from '@/utils/helpers';
 
 import {
@@ -12,7 +13,6 @@ import {
 import { extendedDiscriminatedUnion } from '../extendedDiscriminatedUnion/extendedDiscriminatedUnion';
 import { nestedObjectOrArraySchema } from '../nestedObjectOrArraySchema/nestedObjectOrArraySchema';
 import { plainObjectSchema } from '../plainObjectSchema/plainObjectSchema';
-import {checkModeSymbol} from '@/utils/constants';
 
 /* ----- Plain entity schema ----- */
 

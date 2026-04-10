@@ -14,12 +14,12 @@ import { isPlainObject } from '../../isPlainObject/isPlainObject';
 import { isPrimitive } from '../../isPrimitive/isPrimitive';
 
 const checkFunction: CheckFunction = (checkMode, actualValue, descriptorValue?) => {
-  const isActualValueUndefined = typeof actualValue === 'undefined';
+  const isActualValueUndefined = actualValue === undefined;
   if (checkMode === 'exists') return !isActualValueUndefined;
   if (checkMode === 'notExists') return isActualValueUndefined;
 
   if (checkMode === 'function') {
-    return !!(descriptorValue as EntityFunctionDescriptorValue<typeof actualValue>)(
+    return (descriptorValue as EntityFunctionDescriptorValue<typeof actualValue>)(
       actualValue,
       checkFunction
     );
@@ -95,44 +95,21 @@ const compareEntityValues = (checkMode: CheckMode, actualValue: any, descriptorV
   return isNegativeCheckMode;
 };
 
-interface ResolveEntityValuesParamsWithCheckActualValueCheckMode {
-  actualValue: unknown;
-  [checkModeSymbol]: CheckActualValueCheckMode;
-}
-
-interface ResolveEntityValuesParamsWithEnabledOneOf {
-  actualValue: unknown;
-  [checkModeSymbol]: Exclude<CheckMode, CheckActualValueCheckMode>;
-  descriptorValue: unknown[];
-  oneOf: true;
-}
-
-interface ResolveEntityValuesParamsWithDisabledOneOf {
-  actualValue: unknown;
-  [checkModeSymbol]: Exclude<CheckMode, CheckActualValueCheckMode>;
-  descriptorValue: unknown;
-  oneOf?: false;
-}
-
-type ResolveEntityValuesParams =
-  | ResolveEntityValuesParamsWithCheckActualValueCheckMode
-  | ResolveEntityValuesParamsWithDisabledOneOf
-  | ResolveEntityValuesParamsWithEnabledOneOf;
+type ResolveEntityValuesParams<Check extends CheckMode = CheckMode> =
+  Check extends CheckActualValueCheckMode
+    ? {
+        actualValue: unknown;
+        [checkModeSymbol]: Check;
+      }
+    : {
+        actualValue: unknown;
+        [checkModeSymbol]: Check;
+        descriptorValue: unknown;
+      };
 
 export const resolveEntityValues = (params: ResolveEntityValuesParams) => {
   if (params[checkModeSymbol] === 'exists' || params[checkModeSymbol] === 'notExists') {
     return compareEntityValues(params[checkModeSymbol], params.actualValue);
   }
-
-  const { oneOf, descriptorValue } = params as Exclude<
-    ResolveEntityValuesParams,
-    ResolveEntityValuesParamsWithCheckActualValueCheckMode
-  >;
-
-  if (!oneOf) {
-    return compareEntityValues(params[checkModeSymbol], params.actualValue, descriptorValue);
-  }
-  return descriptorValue.some((descriptorValueElement) =>
-    compareEntityValues(params[checkModeSymbol], params.actualValue, descriptorValueElement)
-  );
+  return compareEntityValues(params[checkModeSymbol], params.actualValue, params.descriptorValue);
 };

@@ -290,55 +290,6 @@ const flatMockServerConfig = [
 export default flatMockServerConfig;
 ```
 
-#### Descriptor _oneOf_ property
-
-For `checkMode` with the `value` property (all `checkMode` options except `exists` and `notExists`) you can use an array as value.
-Mock server will find matches by iterating through the array until **some** match is found.
-To be able to use this functionality you need to explicitly set `oneOf: true` property in descriptor object.
-
-```javascript
-/** @type {import('mock-config-server').FlatMockServerConfig} */
-const flatMockServerConfig = [
-  {
-    baseUrl: "/api",
-  },
-  {
-    configs: [
-      {
-        path: "/user",
-        method: "post",
-        routes: [
-          {
-            entities: {
-              // if body equals to { key1: 'value1' } OR { key2: 'value2' } then mock-config-server return 'Some user data 1'
-              body: {
-                checkMode: "equals",
-                value: [{ key1: "value1" }, { key2: "value2" }],
-                oneOf: true,
-              },
-            },
-            data: "Some user data 1",
-          },
-          {
-            entities: {
-              // if body equals to [{ key1: 'value1' }, { key2: 'value2' }] then mock-config-server return 'Some user data 2'
-              // NO `oneOf` => array processed entirely
-              body: {
-                checkMode: "equals",
-                value: [{ key1: "value1" }, { key2: "value2" }],
-              },
-            },
-            data: "Some user data 2",
-          },
-        ],
-      },
-    ],
-  },
-];
-
-export default flatMockServerConfig;
-```
-
 #### Function check mode
 
 `function checkMode` is the most powerful way to describe your `entities` logic, but in most cases you will be fine using other `checkModes`.

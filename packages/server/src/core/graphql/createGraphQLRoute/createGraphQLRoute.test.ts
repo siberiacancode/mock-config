@@ -11,11 +11,11 @@ import type {
   GraphQLRequestArtifact
 } from '@/utils/types';
 
+import { checkModeSymbol } from '@/utils/constants';
 import { urlJoin } from '@/utils/helpers';
 
 import { createGraphQLRoute } from './createGraphQLRoute';
 import { calculateGraphQLRouteConfigWeight } from './helpers';
-import {checkModeSymbol} from '@/utils/constants';
 
 const createServer = (
   mockServerConfig: Pick<BaseServerConfig, 'baseUrl' | 'interceptors'> & {
@@ -398,7 +398,7 @@ describe('createGraphQLRoute: content', () => {
                 },
                 data: ({ request, entities }) => ({
                   url: request.url,
-                  query: entities.queries
+                  queries: entities.queries
                 })
               }
             ]
@@ -459,7 +459,7 @@ describe('createGraphQLRoute: content', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({
       url: `/?query=${encodeURIComponent('query GetUsers { users { name } }')}&key1=value1`,
-      queries: {
+      query: {
         key1: 'value1'
       }
     });

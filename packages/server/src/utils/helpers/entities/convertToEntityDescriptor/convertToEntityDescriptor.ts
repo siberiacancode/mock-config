@@ -1,7 +1,8 @@
 import type { EntityDescriptor } from '@/utils/types';
 
+import { checkModeSymbol } from '@/utils/constants';
+
 import { isEntityDescriptor } from '../isEntityDescriptor/isEntityDescriptor';
-import {checkModeSymbol} from '@/utils/constants';
 
 export const convertToEntityDescriptor = (valueOrDescriptor: any): EntityDescriptor =>
   isEntityDescriptor(valueOrDescriptor)

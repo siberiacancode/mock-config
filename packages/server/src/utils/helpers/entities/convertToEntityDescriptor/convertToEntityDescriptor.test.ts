@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import { checkModeSymbol } from '@/utils/constants';
+
 import { convertToEntityDescriptor } from './convertToEntityDescriptor';
-import {checkModeSymbol} from '@/utils/constants';
 
 describe('convertToEntityDescriptor', () => {
   it('Should correctly convert value to descriptor', () => {

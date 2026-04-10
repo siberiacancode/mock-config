@@ -14,12 +14,12 @@ import type {
   RestRequestArtifact
 } from '@/utils/types';
 
+import { checkModeSymbol } from '@/utils/constants';
 import { urlJoin } from '@/utils/helpers';
 import { createTmpDir } from '@/utils/helpers/tests';
 
 import { createRestRoute } from './createRestRoute';
 import { calculateRestRouteConfigWeight } from './helpers';
-import {checkModeSymbol} from '@/utils/constants';
 
 const createServer = (
   mockServerConfig: Pick<BaseServerConfig, 'baseUrl' | 'interceptors'> & {
@@ -196,7 +196,7 @@ describe('createRestRoutes: content', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({
       url: '/users?key1=value1',
-      queries: {
+      query: {
         key1: 'value1'
       }
     });
@@ -237,7 +237,7 @@ describe('createRestRoutes: content', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({
       url: '/users?key1=value1',
-      queries: {
+      query: {
         key1: 'value1'
       }
     });

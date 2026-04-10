@@ -1,7 +1,7 @@
 import type { RestMethod, RestRouteConfig } from '@/utils/types';
 
+import { checkModeSymbol } from '@/utils/constants';
 import { isPlainObject } from '@/utils/helpers';
-import {checkModeSymbol} from '@/utils/constants';
 
 export const calculateRestRouteConfigWeight = (restRouteConfig: RestRouteConfig<RestMethod>) => {
   const { entities } = restRouteConfig;

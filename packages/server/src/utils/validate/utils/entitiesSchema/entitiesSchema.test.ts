@@ -1,9 +1,10 @@
 import { expect, it } from 'vitest';
 
+import { checkModeSymbol } from '@/utils/constants';
+
 import { getMostSpecificPathFromError } from '../../getMostSpecificPathFromError';
 import { getValidationMessageFromPath } from '../../getValidationMessageFromPath';
 import { bodyPlainEntitySchema } from './entitiesSchema';
-import {checkModeSymbol} from '@/utils/constants';
 
 it('Should return correct error path: firstly check object as a descriptor', () => {
   const incorrectTopLevelDescriptorBodyEntities = {

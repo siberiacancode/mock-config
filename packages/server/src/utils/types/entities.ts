@@ -35,9 +35,9 @@ export type TopLevelPlainEntityDescriptor<Check extends CheckMode = CheckMode> =
 export type PropertyLevelPlainEntityDescriptor<Check extends CheckMode = CheckMode> =
   Check extends 'function'
     ? EntityDescriptor<
-      Check,
-      EntityFunctionDescriptorValue<PlainEntityObjectiveValue | PlainEntityPrimitiveValue>
-    >
+        Check,
+        EntityFunctionDescriptorValue<PlainEntityObjectiveValue | PlainEntityPrimitiveValue>
+      >
     : Check extends 'regExp'
       ? EntityDescriptor<Check, RegExp>
       : Check extends CompareWithDescriptorAnyValueCheckMode

@@ -1,7 +1,8 @@
 import type { EntityDescriptor } from '@/utils/types';
 
+import { checkModeSymbol } from '@/utils/constants';
+
 import { isPlainObject } from '../../isPlainObject/isPlainObject';
-import {checkModeSymbol} from '@/utils/constants';
 
 export const isEntityDescriptor = (value: any): value is EntityDescriptor =>
   isPlainObject(value) && Object.getOwnPropertySymbols(value).includes(checkModeSymbol);

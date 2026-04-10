@@ -8,15 +8,18 @@ import type {
   GraphQLEntitiesByEntityName,
   GraphQLEntity,
   GraphQLParams,
-  GraphQLRequestArtifact, NonSymbolEntries,
+  GraphQLRequestArtifact,
+  NonSymbolEntries,
   PlainObject,
   TopLevelPlainEntityDescriptor
 } from '@/utils/types';
 
+import { checkModeSymbol } from '@/utils/constants';
 import {
   asyncHandler,
   callRequestInterceptor,
-  callResponseInterceptors, convertToEntitiesDescriptor,
+  callResponseInterceptors,
+  convertToEntitiesDescriptor,
   convertToEntityDescriptor,
   getGraphQLInput,
   isEntityDescriptor,
@@ -24,7 +27,6 @@ import {
   resolveEntityValues,
   sleep
 } from '@/utils/helpers';
-import {checkModeSymbol} from '@/utils/constants';
 
 interface CreateGraphQLRouteParams {
   graphQLRequestArtifacts: GraphQLRequestArtifact[];
@@ -94,8 +96,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
             return resolveEntityValues({
               actualValue: graphQLInput.variables,
               descriptorValue: variablesDescriptor.value,
-              [checkModeSymbol]: variablesDescriptor[checkModeSymbol],
-              oneOf: variablesDescriptor.oneOf ?? false
+              [checkModeSymbol]: variablesDescriptor[checkModeSymbol]
             });
           }
 
@@ -137,8 +138,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
               return resolveEntityValues({
                 actualValue: actualPropertyValue,
                 descriptorValue: entityPropertyDescriptor.value,
-                [checkModeSymbol]: entityPropertyDescriptor[checkModeSymbol],
-                oneOf: entityPropertyDescriptor.oneOf ?? false
+                [checkModeSymbol]: entityPropertyDescriptor[checkModeSymbol]
               });
             }
           );

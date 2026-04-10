@@ -6,7 +6,8 @@ import path from 'node:path';
 
 import type {
   EntityDescriptor,
-  Entries, NonSymbolEntries,
+  Entries,
+  NonSymbolEntries,
   PlainObject,
   RestDataResponse,
   RestEntitiesByEntityName,
@@ -18,6 +19,7 @@ import type {
   TopLevelPlainEntityDescriptor
 } from '@/utils/types';
 
+import { checkModeSymbol } from '@/utils/constants';
 import {
   asyncHandler,
   callRequestInterceptor,
@@ -31,7 +33,6 @@ import {
   sleep,
   urlJoin
 } from '@/utils/helpers';
-import {checkModeSymbol} from '@/utils/constants';
 
 interface CreateRestRoutesParams {
   restRequestArtifacts: RestRequestArtifact[];
@@ -69,7 +70,10 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
             entityName === 'body' && isEntityDescriptor(entityDescriptorOrValue);
           if (isEntityBodyByTopLevelDescriptor) {
             const bodyDescriptor: EntityDescriptor = entityDescriptorOrValue;
-            if (bodyDescriptor[checkModeSymbol] === 'exists' || bodyDescriptor[checkModeSymbol] === 'notExists') {
+            if (
+              bodyDescriptor[checkModeSymbol] === 'exists' ||
+              bodyDescriptor[checkModeSymbol] === 'notExists'
+            ) {
               return resolveEntityValues({
                 actualValue: request.body,
                 [checkModeSymbol]: bodyDescriptor[checkModeSymbol]
@@ -79,8 +83,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
             return resolveEntityValues({
               actualValue: request.body,
               descriptorValue: bodyDescriptor.value,
-              [checkModeSymbol]: bodyDescriptor[checkModeSymbol],
-              oneOf: bodyDescriptor.oneOf ?? false
+              [checkModeSymbol]: bodyDescriptor[checkModeSymbol]
             });
           }
 
@@ -129,8 +132,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
               return resolveEntityValues({
                 actualValue: actualPropertyValue,
                 descriptorValue: entityPropertyDescriptor.value,
-                [checkModeSymbol]: entityPropertyDescriptor[checkModeSymbol],
-                oneOf: entityPropertyDescriptor.oneOf ?? false
+                [checkModeSymbol]: entityPropertyDescriptor[checkModeSymbol]
               });
             }
           );

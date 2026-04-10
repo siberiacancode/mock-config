@@ -35,26 +35,12 @@ export interface EntityDescriptorSchema {
       | typeof compareWithDescriptorStringValueCheckModeSchema
       | typeof compareWithDescriptorValueCheckModeSchema,
     valueSchema: z.ZodTypeAny
-  ): z.ZodDiscriminatedUnion<
-    'oneOf',
-    [
-      z.ZodObject<
-        {
-          [checkModeSymbol]: typeof checkModeSchema;
-          oneOf: z.ZodLiteral<true>;
-          value: z.ZodArray<typeof valueSchema>;
-        },
-        'strict'
-      >,
-      z.ZodObject<
-        {
-          [checkModeSymbol]: typeof checkModeSchema;
-          oneOf: z.ZodOptional<z.ZodLiteral<false>>;
-          value: typeof valueSchema;
-        },
-        'strict'
-      >
-    ]
+  ): z.ZodObject<
+    {
+      [checkModeSymbol]: typeof checkModeSchema;
+      value: typeof valueSchema;
+    },
+    'strict'
   >;
 }
 
@@ -74,16 +60,8 @@ export const entityDescriptorSchema = ((
       [checkModeSymbol]: checkModeSchema
     });
   }
-  return z.discriminatedUnion('oneOf', [
-    z.strictObject({
-      [checkModeSymbol]: checkModeSchema,
-      value: valueSchema,
-      oneOf: z.literal(false).optional()
-    }),
-    z.strictObject({
-      [checkModeSymbol]: checkModeSchema,
-      value: z.array(valueSchema),
-      oneOf: z.literal(true)
-    })
-  ]);
+  return z.strictObject({
+    [checkModeSymbol]: checkModeSchema,
+    value: valueSchema
+  });
 }) as EntityDescriptorSchema;

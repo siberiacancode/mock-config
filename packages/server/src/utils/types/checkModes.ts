@@ -28,9 +28,7 @@ export type EntityDescriptor<
   Value = any
 > = Check extends CheckActualValueCheckMode
   ? { [checkModeSymbol]: Check }
-  :
-  | { [checkModeSymbol]: Check; value: Value; oneOf?: false }
-  | { [checkModeSymbol]: Check; value: Value[]; oneOf: true };
+  : { [checkModeSymbol]: Check; value: Value };
 
 export type EntitiesCheckMode = 'every' | 'some';
 

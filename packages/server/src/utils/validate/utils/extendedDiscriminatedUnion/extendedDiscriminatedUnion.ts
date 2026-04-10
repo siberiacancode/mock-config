@@ -17,24 +17,15 @@ export const extendedDiscriminatedUnion = <Discriminator extends string | symbol
     ExtendedDiscriminatedUnionVariant<Discriminator>,
     ...ExtendedDiscriminatedUnionVariant<Discriminator>[]
   ]
-) => {
-  // console.log(`extendedDiscriminatedUnion for discriminator=${String(discriminator)}`);
-  return z
+) =>
+  z
     .custom((value) => {
-      // console.log('\n\ncheck value=', value);
       if (!isPlainObject(value)) {
-        // console.log('value is !isPlainObject');
         return false;
       }
       if (typeof discriminator === 'string') {
-        // console.log('discriminator is string');
         return discriminator in value;
       }
-      // console.log(
-      //   `discriminator(${String(discriminator)}) is symbol, value(${JSON.stringify(value)}), symbols=${Object.getOwnPropertySymbols(value).map((sym) => String(sym))},`,
-      //   'value symbols includes discriminator=',
-      //   Object.getOwnPropertySymbols(value).includes(discriminator)
-      // );
       return Object.getOwnPropertySymbols(value).includes(discriminator);
     })
     .superRefine((value, context) => {
@@ -45,14 +36,14 @@ export const extendedDiscriminatedUnion = <Discriminator extends string | symbol
             (option) =>
               option
                 .strip()
-                .pick({[discriminator]: true} as any)
+                .pick({ [discriminator]: true } as any)
                 .safeParse(value).success
           );
         }
 
         return variant
           .strip()
-          .pick({[discriminator]: true} as any)
+          .pick({ [discriminator]: true } as any)
           .safeParse(value).success;
       });
 
@@ -76,6 +67,3 @@ export const extendedDiscriminatedUnion = <Discriminator extends string | symbol
         return z.NEVER;
       }
     });
-}
-
-

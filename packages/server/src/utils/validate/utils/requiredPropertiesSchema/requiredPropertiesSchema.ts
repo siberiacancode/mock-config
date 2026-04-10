@@ -12,8 +12,6 @@ export const requiredPropertiesSchema = <T extends PlainObject>(
     .custom(
       (value) =>
         isPlainObject(value) &&
-        requiredProperties.every((property) =>
-          Object.prototype.hasOwnProperty.call(value, property)
-        )
+        requiredProperties.every((property) => Object.hasOwn(value, property))
     )
     .pipe(schema);

@@ -1,7 +1,7 @@
 import type { GraphQLRouteConfig } from '@/utils/types';
 
+import { checkModeSymbol } from '@/utils/constants';
 import { isPlainObject } from '@/utils/helpers';
-import {checkModeSymbol} from '@/utils/constants';
 
 export const calculateGraphQLRouteConfigWeight = (graphQLRouteConfig: GraphQLRouteConfig) => {
   const { entities } = graphQLRouteConfig;
