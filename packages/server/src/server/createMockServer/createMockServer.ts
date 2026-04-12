@@ -32,7 +32,7 @@ import {
   createRestRoute,
   prepareRestRequestArtifacts
 } from '@/core/rest';
-import { calculateWsRouteConfigWeight, createWsRoute, prepareWsRequestArtifacts } from '@/core/ws';
+import { createWsRoute, prepareWsRequestArtifacts } from '@/core/ws';
 import { urlJoin } from '@/utils/helpers';
 import { validateMockServerConfig } from '@/utils/validate';
 
@@ -137,14 +137,14 @@ export const createMockServer = (
             });
           }
 
-          const isWs = 'event' in config;
+          const isWs = 'protocol' in config;
           if (isWs) {
             config.routes.forEach((route) => {
               acc.wsRequestsArtifacts.push({
                 baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
-                event: config.event,
+                protocol: config.protocol,
                 config: route,
-                weight: calculateWsRouteConfigWeight(route),
+                weight: 0,
                 componentRequestInterceptor: component.interceptors?.request,
                 componentResponseInterceptor: component.interceptors?.response
               });
@@ -161,28 +161,24 @@ export const createMockServer = (
       }
     );
 
-  const preparedRestRequestArtifacts = prepareRestRequestArtifacts(restRequestsArtifacts);
-  const preparedGraphQLRequestArtifacts = prepareGraphQLRequestArtifacts(graphQLRequestsArtifacts);
-  const preparedWsRequestsArtifacts = prepareWsRequestArtifacts(wsRequestsArtifacts);
-
-  if (preparedRestRequestArtifacts.length) {
+  if (restRequestsArtifacts.length) {
     createRestRoute({
       server,
-      restRequestArtifacts: preparedRestRequestArtifacts
+      restRequestArtifacts: prepareRestRequestArtifacts(restRequestsArtifacts)
     });
   }
 
-  if (preparedGraphQLRequestArtifacts.length) {
+  if (graphQLRequestsArtifacts.length) {
     createGraphQLRoute({
       server,
-      graphQLRequestArtifacts: preparedGraphQLRequestArtifacts
+      graphQLRequestArtifacts: prepareGraphQLRequestArtifacts(graphQLRequestsArtifacts)
     });
   }
 
-  if (preparedWsRequestsArtifacts.length) {
+  if (wsRequestsArtifacts.length) {
     createWsRoute({
       server,
-      wsRequestArtifacts: preparedWsRequestsArtifacts
+      wsRequestArtifacts: prepareWsRequestArtifacts(wsRequestsArtifacts)
     });
   }
 
