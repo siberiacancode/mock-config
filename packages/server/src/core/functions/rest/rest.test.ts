@@ -192,6 +192,35 @@ describe('rest', () => {
       routes: [
         {
           data: expect.any(Function),
+          entities: undefined,
+          settings: {}
+        }
+      ]
+    });
+  });
+
+  it('Should build config for SSE request with handler object and match', () => {
+    const handler = vi.fn();
+    const result = rest.sse('/users/stream', {
+      handler,
+      match: {
+        headers: {
+          key: 'value'
+        }
+      }
+    });
+
+    expect(result).toStrictEqual({
+      method: 'get',
+      path: '/users/stream',
+      routes: [
+        {
+          data: expect.any(Function),
+          entities: {
+            headers: {
+              key: 'value'
+            }
+          },
           settings: {}
         }
       ]
@@ -207,6 +236,35 @@ describe('rest', () => {
       routes: [
         {
           data: expect.any(Function),
+          entities: undefined,
+          settings: {}
+        }
+      ]
+    });
+  });
+
+  it('Should build config for stream request with handler object and match', () => {
+    const handler = vi.fn();
+    const result = rest.stream('/users/stream', {
+      handler,
+      match: {
+        headers: {
+          key: 'value'
+        }
+      }
+    });
+
+    expect(result).toStrictEqual({
+      method: 'post',
+      path: '/users/stream',
+      routes: [
+        {
+          data: expect.any(Function),
+          entities: {
+            headers: {
+              key: 'value'
+            }
+          },
           settings: {}
         }
       ]
