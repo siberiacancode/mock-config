@@ -139,6 +139,19 @@ const comparators = {
     if (expected === 'null') return actual === null;
     // eslint-disable-next-line valid-typeof
     return typeof actual === expected;
+  },
+
+  haveEntries: (actual: unknown, expected: any[] | PlainObject) => {
+    if (!isObjectLike(actual) || !isObjectLike(expected)) {
+      return false;
+    }
+
+    const actualFlatten = normalize(actual);
+    const expectedFlatten = normalize(expected);
+
+    return Object.entries(expectedFlatten).every(([expectedFlattenKey, expectedValue]) =>
+      comparators.equals(actualFlatten[expectedFlattenKey], expectedValue)
+    );
   }
 };
 

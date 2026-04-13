@@ -1,4 +1,5 @@
 import type { FnComparator, HaveTypeTypes } from '@/utils/helpers';
+import type { PlainObject } from '@/utils/types';
 
 export const exists =
   (): FnComparator =>
@@ -80,6 +81,11 @@ export const haveType =
   (actual, { haveType }) =>
     haveType(actual, expected);
 
+export const haveEntries =
+  (expected: any[] | PlainObject): FnComparator =>
+  (actual, { haveEntries }) =>
+    haveEntries(actual, expected);
+
 export const some =
   (...comparators: FnComparator[]): FnComparator =>
   (actual, { fn }) =>
@@ -89,6 +95,11 @@ export const every =
   (...comparators: FnComparator[]): FnComparator =>
   (actual, { fn }) =>
     comparators.every((comparator) => fn(actual, comparator));
+
+export const oneOf =
+  (...comparators: FnComparator[]): FnComparator =>
+  (actual, { fn }) =>
+    comparators.filter((comparator) => fn(actual, comparator)).length === 1;
 
 export const not =
   (comparator: FnComparator): FnComparator =>
