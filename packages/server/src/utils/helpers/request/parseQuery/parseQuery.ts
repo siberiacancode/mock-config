@@ -1,23 +1,21 @@
-export const parseQuery = (requestUrl?: string) => {
-  if (!requestUrl) return {};
-
-  const url = new URL(requestUrl, 'http://localhost');
+export const parseQuery = (requestUrl: string) => {
+  const url = new URL(requestUrl);
   const query: Record<string, string | string[]> = {};
 
   for (const [key, value] of url.searchParams.entries()) {
-    const previousValue = query[key];
+    const currentValue = query[key];
 
-    if (previousValue === undefined) {
+    if (query[key] === undefined) {
       query[key] = value;
       continue;
     }
 
-    if (Array.isArray(previousValue)) {
-      previousValue.push(value);
+    if (Array.isArray(currentValue)) {
+      currentValue.push(value);
       continue;
     }
 
-    query[key] = [previousValue, value];
+    query[key] = [currentValue, value];
   }
 
   return query;
