@@ -1,5 +1,5 @@
 export const parseQuery = (requestUrl: string) => {
-  const url = new URL(requestUrl);
+  const url = new URL(requestUrl, 'http://localhost');
   const query: Record<string, string | string[]> = {};
 
   for (const [key, value] of url.searchParams.entries()) {
