@@ -1,5 +1,4 @@
 import type { Request } from 'express';
-import type { WebSocket } from 'ws';
 import type { Arguments } from 'yargs';
 
 import type { Database, Orm } from './database';
@@ -66,7 +65,7 @@ declare global {
     interface Request {
       context: {
         orm: Orm<Database>;
-        socket?: WebSocket | null;
+        emit: <Response>(response: Response) => void;
       };
     }
   }

@@ -7,7 +7,7 @@ import { prepareWsRequestArtifacts } from './prepareWsRequestArtifacts';
 const makeArtifact = (overrides: Partial<WsRequestArtifact>): WsRequestArtifact =>
   ({
     baseUrl: '/' as BaseUrl,
-    protocol: 'raw',
+    type: 'raw',
     config: { data: { ok: true } },
     weight: 0,
     ...overrides

@@ -1,70 +1,172 @@
-import type { Express } from 'express';
-import type { RawData, WebSocket } from 'ws';
+import type { IncomingMessage } from 'node:http';
+import type { RawData, WebSocketServer } from 'ws';
 
-import { WebSocketServer } from 'ws';
+import { flatten } from 'flat';
+import { Buffer } from 'node:buffer';
+import { WebSocket } from 'ws';
 
-import type { WsParams, WsRequestArtifact } from '@/utils/types';
+import type { Entries, WsFrame, WsParams, WsRequestArtifact } from '@/utils/types';
 
-import { sleep, urlJoin } from '@/utils/helpers';
+import {
+  convertToEntityDescriptor,
+  parseCookie,
+  parseQuery,
+  resolveEntityValues,
+  sleep
+} from '@/utils/helpers';
 
 interface CreateWsRouteParams {
-  server: Express;
+  server: WebSocketServer;
   wsRequestArtifacts: WsRequestArtifact[];
 }
 
 const sendWsData = (socket: WebSocket, data: unknown) => {
   if (data === undefined) return;
-  socket.send(typeof data === 'string' ? data : JSON.stringify(data));
+  if (typeof data === 'string') {
+    socket.send(data);
+    return;
+  }
+
+  const isBinary =
+    data instanceof ArrayBuffer ||
+    ArrayBuffer.isView(data) ||
+    data instanceof Blob ||
+    Buffer.isBuffer(data);
+  if (isBinary) {
+    socket.send(data);
+    return;
+  }
+
+  socket.send(JSON.stringify(data));
+};
+
+const emitWsData = (server: WebSocketServer, data: unknown) => {
+  if (data === undefined) return;
+  for (const client of server.clients) {
+    if (client.readyState !== WebSocket.OPEN) continue;
+    sendWsData(client, data);
+  }
 };
 
 export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParams) => {
-  const wsServer = new WebSocketServer({
-    noServer: true
-  });
-
-  const wsBaseUrls = new Set(wsRequestArtifacts.map((artifact) => urlJoin('/', artifact.baseUrl)));
-
-  const originalListen = server.listen.bind(server);
-  server.listen = ((...args: any[]) => {
-    const httpServer = originalListen(...args);
-    httpServer.on('upgrade', (request, socket, head) => {
-      const shouldHandleUpgrade = wsBaseUrls.has(urlJoin('/', request.url ?? '/'));
-      if (!shouldHandleUpgrade) {
-        socket.destroy();
-        return;
+  server.on(
+    'connection',
+    async (
+      socket,
+      request: IncomingMessage & {
+        query: Record<string, string | string[]>;
+        cookies: Record<string, string>;
       }
-
-      wsServer.handleUpgrade(request, socket, head, (upgradedSocket) => {
-        wsServer.emit('connection', upgradedSocket, request);
+    ) => {
+      const requestPath = (request.url ?? '/').split('?')[0] ?? '/';
+      const matchedRequestArtifacts = wsRequestArtifacts.filter((artifact) => {
+        if (requestPath === '/') return true;
+        return requestPath === artifact.baseUrl || requestPath.startsWith(`${artifact.baseUrl}/`);
       });
-    });
-    return httpServer;
-  }) as typeof server.listen;
 
-  wsServer.on('connection', (socket) => {
-    socket.on('message', async (raw: RawData) => {
-      const params: WsParams = {
-        raw,
-        socket,
-        send: (data: unknown) => sendWsData(socket, data),
-        setDelay: async (delay) => {
-          await sleep(delay === Infinity ? 99999999 : delay);
+      const connectionArtifacts = matchedRequestArtifacts.filter(
+        (artifact) => artifact.type === 'connection'
+      );
+      const rawArtifacts = matchedRequestArtifacts.filter((artifact) => artifact.type === 'raw');
+
+      request.query = parseQuery(request.url ?? '');
+      request.cookies = parseCookie(request.headers.cookie ?? '');
+
+      for (const artifact of connectionArtifacts) {
+        if (artifact.config.entities) {
+          const entityEntries = Object.entries(artifact.config.entities) as Entries<
+            Required<typeof artifact.config.entities>
+          >;
+
+          const isMatchedByEntities = entityEntries.every(([entityName, entity]) => {
+            const actualEntity = flatten<Record<string, unknown>, Record<string, unknown>>(
+              request[entityName]
+            );
+            const entityValueEntries = Object.entries(entity) as Entries<typeof entity>;
+
+            return entityValueEntries.every(
+              ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
+                const entityPropertyDescriptor = convertToEntityDescriptor(
+                  entityPropertyDescriptorOrValue
+                );
+
+                const actualPropertyKey =
+                  entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
+                const actualPropertyValue = actualEntity[actualPropertyKey];
+
+                if (
+                  entityPropertyDescriptor.checkMode === 'exists' ||
+                  entityPropertyDescriptor.checkMode === 'notExists'
+                ) {
+                  return resolveEntityValues({
+                    actualValue: actualPropertyValue,
+                    checkMode: entityPropertyDescriptor.checkMode
+                  });
+                }
+
+                return resolveEntityValues({
+                  actualValue: actualPropertyValue,
+                  descriptorValue: entityPropertyDescriptor.value,
+                  checkMode: entityPropertyDescriptor.checkMode,
+                  oneOf: entityPropertyDescriptor.oneOf ?? false
+                });
+              }
+            );
+          });
+
+          if (!isMatchedByEntities) continue;
         }
-      };
 
-      for (const artifact of wsRequestArtifacts) {
-        if (artifact.componentRequestInterceptor) {
-          await artifact.componentRequestInterceptor(params);
-        }
+        const params = {
+          emit: (data: unknown) => emitWsData(server, data),
+          request,
+          socket,
+          send: (data: unknown) => sendWsData(socket, data),
+          setDelay: async (delay: number) => {
+            await sleep(delay === Infinity ? 99999999 : delay);
+          }
+        };
 
-        const resolvedData = await artifact.config.data(params);
+        const resolvedData =
+          typeof artifact.config.data === 'function'
+            ? await artifact.config.data(params)
+            : artifact.config.data;
 
-        const data = artifact.componentResponseInterceptor
-          ? artifact.componentResponseInterceptor(resolvedData, params)
-          : resolvedData;
-
-        sendWsData(socket, data);
+        sendWsData(socket, resolvedData);
       }
-    });
-  });
+
+      socket.on('message', async (raw: RawData, isBinary: boolean) => {
+        const frame: WsFrame = isBinary
+          ? { isBinary: true, raw: raw as Buffer }
+          : { isBinary: false, raw: raw.toString() };
+
+        const params: WsParams = {
+          ...frame,
+          emit: (data: unknown) => emitWsData(server, data),
+          socket,
+          send: (data: unknown) => sendWsData(socket, data),
+          setDelay: async (delay) => {
+            await sleep(delay === Infinity ? 99999999 : delay);
+          }
+        };
+
+        for (const artifact of rawArtifacts) {
+          if (artifact.componentRequestInterceptor) {
+            await artifact.componentRequestInterceptor(params);
+          }
+
+          const resolvedData =
+            typeof artifact.config.data === 'function'
+              ? await artifact.config.data(params)
+              : artifact.config.data;
+
+          const data = artifact.componentResponseInterceptor
+            ? artifact.componentResponseInterceptor(resolvedData, params)
+            : resolvedData;
+
+          sendWsData(socket, data);
+        }
+      });
+    }
+  );
 };

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseQuery } from './parseQuery';
+import { parseGraphQLQuery } from './parseGraphQLQuery';
 
-describe('parseQuery', () => {
+describe('parseGraphQLQuery', () => {
   it('Should parse graphQL query', () => {
-    const parsedQuery = parseQuery('query GetCharacters { characters { name } }');
+    const parsedQuery = parseGraphQLQuery('query GetCharacters { characters { name } }');
 
     expect(parsedQuery).toStrictEqual({
       operationType: 'query',
@@ -13,7 +13,7 @@ describe('parseQuery', () => {
   });
 
   it('Should parse graphQL mutation', () => {
-    const parsedQuery = parseQuery(
+    const parsedQuery = parseGraphQLQuery(
       'mutation CreateCharacters($name: String!) { createCharacters(name: $name) { name } }'
     );
 
@@ -24,7 +24,7 @@ describe('parseQuery', () => {
   });
 
   it('Should parse graphQL query with empty operationName', () => {
-    const parsedQuery = parseQuery('query { characters { name } }');
+    const parsedQuery = parseGraphQLQuery('query { characters { name } }');
 
     expect(parsedQuery).toStrictEqual({
       operationType: 'query',

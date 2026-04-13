@@ -1,8 +1,17 @@
 import { z } from 'zod';
 
-import { routeConfigSchema } from './routeConfigSchema/routeConfigSchema';
+import {
+  connectionRouteConfigSchema,
+  rawRouteConfigSchema
+} from './routeConfigSchema/routeConfigSchema';
 
-export const wsRequestConfigSchema = z.strictObject({
-  protocol: z.literal('raw'),
-  routes: z.array(routeConfigSchema)
-});
+export const wsRequestConfigSchema = z.union([
+  z.strictObject({
+    type: z.literal('raw'),
+    routes: z.array(rawRouteConfigSchema)
+  }),
+  z.strictObject({
+    type: z.literal('connection'),
+    routes: z.array(connectionRouteConfigSchema)
+  })
+]);

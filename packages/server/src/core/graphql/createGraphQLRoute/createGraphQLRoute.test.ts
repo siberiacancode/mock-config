@@ -25,7 +25,7 @@ const createServer = (
   const server = express();
 
   server.use((request, _, next) => {
-    request.context = { orm: {} };
+    request.context = { orm: {}, emit: vi.fn() };
     next();
   });
 

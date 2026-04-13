@@ -2,6 +2,7 @@ import type { Express } from 'express';
 
 import bodyParser from 'body-parser';
 import express from 'express';
+import { WebSocketServer } from 'ws';
 
 import type {
   BaseUrl,
@@ -41,6 +42,11 @@ export const createMockServer = (
   server: Express = express()
 ) => {
   validateMockServerConfig(mockServerConfig);
+
+  const ws = new WebSocketServer({
+    noServer: true
+  });
+
   const [option, ...mockServerComponents] = mockServerConfig;
 
   const mockServerSettings = !('configs' in option) ? option : undefined;
@@ -59,7 +65,7 @@ export const createMockServer = (
 
   server.use(bodyParser.text());
 
-  contextMiddleware(server, { database });
+  contextMiddleware(server, { database, ws });
 
   cookieParseMiddleware(server);
 
@@ -137,17 +143,18 @@ export const createMockServer = (
             });
           }
 
-          const isWs = 'protocol' in config;
+          const isWs = 'type' in config;
           if (isWs) {
+            const baseUrl = urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl;
             config.routes.forEach((route) => {
               acc.wsRequestsArtifacts.push({
-                baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
-                protocol: config.protocol,
+                baseUrl,
+                type: config.type,
                 config: route,
                 weight: 0,
                 componentRequestInterceptor: component.interceptors?.request,
                 componentResponseInterceptor: component.interceptors?.response
-              });
+              } as WsRequestArtifact);
             });
           }
         });
@@ -160,6 +167,29 @@ export const createMockServer = (
         wsRequestsArtifacts: [] as WsRequestArtifact[]
       }
     );
+
+  const wsBaseUrls = new Set<string>(wsRequestsArtifacts.map((artifact) => artifact.baseUrl));
+  const originalListen = server.listen.bind(server);
+  server.listen = ((...args: any[]) => {
+    const httpServer = originalListen(...args);
+    httpServer.on('upgrade', (request, socket, head) => {
+      const requestPath = (request.url ?? '/').split('?')[0] ?? '/';
+      const shouldHandleUpgrade = [...wsBaseUrls].some((baseUrl) => {
+        if (baseUrl === '/') return true;
+        return requestPath === baseUrl || requestPath.startsWith(`${baseUrl}/`);
+      });
+
+      if (!shouldHandleUpgrade) {
+        socket.destroy();
+        return;
+      }
+
+      ws.handleUpgrade(request, socket, head, (upgradedSocket) => {
+        ws.emit('connection', upgradedSocket, request);
+      });
+    });
+    return httpServer;
+  }) as typeof server.listen;
 
   if (restRequestsArtifacts.length) {
     createRestRoute({
@@ -177,7 +207,7 @@ export const createMockServer = (
 
   if (wsRequestsArtifacts.length) {
     createWsRoute({
-      server,
+      server: ws,
       wsRequestArtifacts: prepareWsRequestArtifacts(wsRequestsArtifacts)
     });
   }

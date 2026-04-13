@@ -185,6 +185,9 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         response,
         next,
         entities: matchedRouteConfig.config.entities ?? {},
+        emit: (payload) => {
+          request.context.emit(payload);
+        },
         appendHeader: (field, value) => {
           response.append(field, value);
         },

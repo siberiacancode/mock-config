@@ -2,10 +2,23 @@ import { z } from 'zod';
 
 import { isPlainObject } from '@/utils/helpers';
 
-const dataRouteConfigSchema = z.strictObject({
-  data: z.function()
+import { mappedEntitySchema, plainObjectSchema } from '../../utils';
+
+export const rawRouteConfigSchema = z.strictObject({
+  data: z.union([z.function(), z.any()])
+});
+
+export const connectionRouteConfigSchema = z.strictObject({
+  data: z.function(),
+  entities: plainObjectSchema(
+    z.strictObject({
+      headers: mappedEntitySchema.optional(),
+      cookies: mappedEntitySchema.optional(),
+      query: mappedEntitySchema.optional()
+    })
+  ).optional()
 });
 
 export const routeConfigSchema = z
   .custom((value) => isPlainObject(value) && 'data' in value)
-  .pipe(dataRouteConfigSchema);
+  .pipe(rawRouteConfigSchema);
