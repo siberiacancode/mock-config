@@ -1,27 +1,27 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseRequestQuery } from './parseQuery';
+import { parseQuery } from './parseQuery';
 
-describe('parseRequestQuery', () => {
+describe('parseQuery', () => {
   it('Should return an empty object if request url is empty', () => {
-    expect(parseRequestQuery()).toEqual({});
-    expect(parseRequestQuery('')).toEqual({});
+    expect(parseQuery()).toEqual({});
+    expect(parseQuery('')).toEqual({});
   });
 
   it('Should parse single query parameter', () => {
-    const query = parseRequestQuery('/ws?room=public');
+    const query = parseQuery('/ws?room=public');
     expect(query).toEqual({ room: 'public' });
   });
 
   it('Should parse repeated keys into array', () => {
-    const query = parseRequestQuery('/ws?room=public&room=private&room=vip');
+    const query = parseQuery('/ws?room=public&room=private&room=vip');
     expect(query).toEqual({
       room: ['public', 'private', 'vip']
     });
   });
 
   it('Should parse mixed params with array and scalar keys', () => {
-    const query = parseRequestQuery('/ws?room=public&room=private&user=42');
+    const query = parseQuery('/ws?room=public&room=private&user=42');
     expect(query).toEqual({
       room: ['public', 'private'],
       user: '42'
@@ -29,7 +29,7 @@ describe('parseRequestQuery', () => {
   });
 
   it('Should decode encoded values', () => {
-    const query = parseRequestQuery('/ws?message=hello%20world');
+    const query = parseQuery('/ws?message=hello%20world');
     expect(query).toEqual({
       message: 'hello world'
     });
