@@ -1,35 +1,36 @@
 import { z } from 'zod';
 
+import type { RestMethod } from '@/utils/types';
+
 import { isPlainObject } from '@/utils/helpers';
 
 import { interceptorsSchema } from '../../interceptorsSchema/interceptorsSchema';
 import { isOnlyRequestedDataResolvingPropertyExists } from '../../isOnlyRequestedDataResolvingPropertyExists';
 import { queueSchema } from '../../queueSchema/queueSchema';
 import { settingsSchema } from '../../settingsSchema/settingsSchema';
-import { plainObjectSchema } from '../../utils';
+import { bodyEntitySchema, mappedEntitySchema, plainObjectSchema } from '../../utils';
 
-// const METHODS_WITH_BODY = ['post', 'put', 'patch'];
-// const entitiesByEntityNameSchema = (method: RestMethod) => {
-//   const isMethodWithBody = METHODS_WITH_BODY.includes(method);
-//   return plainObjectSchema(
-//     z.strictObject({
-//       headers: mappedEntitySchema.optional(),
-//       cookies: mappedEntitySchema.optional(),
-//       params: mappedEntitySchema.optional(),
-//       queries: mappedEntitySchema.optional(),
-//       ...(isMethodWithBody && { body: bodyPlainEntitySchema.optional() })
-//     })
-//   );
-// };
+const METHODS_WITH_BODY = ['post', 'put', 'patch'];
+const entitiesByEntityNameSchema = (method: RestMethod) => {
+  const isMethodWithBody = METHODS_WITH_BODY.includes(method);
+  return plainObjectSchema(
+    z.strictObject({
+      headers: mappedEntitySchema.optional(),
+      cookies: mappedEntitySchema.optional(),
+      params: mappedEntitySchema.optional(),
+      queries: mappedEntitySchema.optional(),
+      ...(isMethodWithBody && { body: bodyEntitySchema.optional() })
+    })
+  );
+};
 
-const baseRouteConfigSchema = () =>
+const baseRouteConfigSchema = (method: RestMethod) =>
   z.strictObject({
-    // TODO: update and use entitiesByEntityNameSchema instead
-    entities: z.any(),
+    entities: entitiesByEntityNameSchema(method).optional(),
     interceptors: plainObjectSchema(interceptorsSchema).optional()
   });
 
-const dataRouteConfigSchema = () =>
+const dataRouteConfigSchema = (method: RestMethod) =>
   z
     .strictObject({
       settings: plainObjectSchema(
@@ -37,9 +38,9 @@ const dataRouteConfigSchema = () =>
       ).optional(),
       data: z.union([z.function(), z.any()])
     })
-    .merge(baseRouteConfigSchema());
+    .merge(baseRouteConfigSchema(method));
 
-const fileRouteConfigSchema = () =>
+const fileRouteConfigSchema = (method: RestMethod) =>
   z
     .strictObject({
       settings: plainObjectSchema(
@@ -47,32 +48,32 @@ const fileRouteConfigSchema = () =>
       ).optional(),
       file: z.string()
     })
-    .merge(baseRouteConfigSchema());
+    .merge(baseRouteConfigSchema(method));
 
-const queueRouteConfigSchema = () =>
+const queueRouteConfigSchema = (method: RestMethod) =>
   z
     .strictObject({
       settings: settingsSchema.extend({ polling: z.literal(true) }),
       queue: queueSchema
     })
-    .merge(baseRouteConfigSchema());
+    .merge(baseRouteConfigSchema(method));
 
-export const routeConfigSchema = () =>
+export const routeConfigSchema = (method: RestMethod) =>
   z.union([
     z
       .custom(
         (value) => isPlainObject(value) && isOnlyRequestedDataResolvingPropertyExists(value, 'data')
       )
-      .pipe(dataRouteConfigSchema()),
+      .pipe(dataRouteConfigSchema(method)),
     z
       .custom(
         (value) => isPlainObject(value) && isOnlyRequestedDataResolvingPropertyExists(value, 'file')
       )
-      .pipe(fileRouteConfigSchema()),
+      .pipe(fileRouteConfigSchema(method)),
     z
       .custom(
         (value) =>
           isPlainObject(value) && isOnlyRequestedDataResolvingPropertyExists(value, 'queue')
       )
-      .pipe(queueRouteConfigSchema())
+      .pipe(queueRouteConfigSchema(method))
   ]);

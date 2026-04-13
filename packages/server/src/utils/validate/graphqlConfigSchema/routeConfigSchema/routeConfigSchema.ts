@@ -6,19 +6,17 @@ import { interceptorsSchema } from '../../interceptorsSchema/interceptorsSchema'
 import { isOnlyRequestedDataResolvingPropertyExists } from '../../isOnlyRequestedDataResolvingPropertyExists';
 import { queueSchema } from '../../queueSchema/queueSchema';
 import { settingsSchema } from '../../settingsSchema/settingsSchema';
-import { plainObjectSchema } from '../../utils';
+import { mappedEntitySchema, plainObjectSchema, variablesEntitySchema } from '../../utils';
 
 const baseRouteConfigSchema = z.strictObject({
-  // entities: plainObjectSchema(
-  //   z.strictObject({
-  //     headers: mappedEntitySchema.optional(),
-  //     cookies: mappedEntitySchema.optional(),
-  //     queries: mappedEntitySchema.optional(),
-  //     variables: variablesPlainEntitySchema.optional()
-  //   })
-  // ).optional(),
-  // TODO: update and use schema above
-  entities: z.any(),
+  entities: plainObjectSchema(
+    z.strictObject({
+      headers: mappedEntitySchema.optional(),
+      cookies: mappedEntitySchema.optional(),
+      queries: mappedEntitySchema.optional(),
+      variables: variablesEntitySchema.optional()
+    })
+  ).optional(),
   interceptors: plainObjectSchema(interceptorsSchema).optional()
 });
 
