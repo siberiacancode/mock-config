@@ -26,7 +26,9 @@ export type EntityDescriptor<
   Value = any
 > = Check extends CheckActualValueCheckMode
   ? { checkMode: Check }
-  : { checkMode: Check; value: Value };
+  :
+      | { checkMode: Check; value: Value; oneOf?: false }
+      | { checkMode: Check; value: Value[]; oneOf: true };
 
 export type CheckFunction = <ActualValue = any, DescriptorValue = any>(
   checkMode: CheckMode,

@@ -8,6 +8,14 @@ import { isPrimitive } from '../../isPrimitive/isPrimitive';
 const isIterable = (value: any): value is Iterable<unknown> =>
   value != null && typeof value[Symbol.iterator] === 'function';
 
+const getLength = (value: unknown) => {
+  if (isIterable(value)) {
+    return [...value].length;
+  }
+
+  return Number.NaN;
+};
+
 const isObjectLike = (value: unknown) => isPlainObject(value) || Array.isArray(value);
 
 const normalize = (value: any) => {
@@ -43,6 +51,18 @@ const compareComplex = (
   return bKeys[method]((key) => predicate(String(a[key]), String(b[key])));
 };
 
+export type HaveTypeTypes =
+  | 'array'
+  | 'bigint'
+  | 'boolean'
+  | 'function'
+  | 'null'
+  | 'number'
+  | 'object'
+  | 'string'
+  | 'symbol'
+  | 'undefined';
+
 export type FnComparator<ActualValue = unknown> = (
   actual: ActualValue,
   comparators: Comparators
@@ -50,7 +70,6 @@ export type FnComparator<ActualValue = unknown> = (
 
 const comparators = {
   exists: (actual: unknown) => actual !== undefined,
-  notExists: (actual: unknown) => !comparators.exists(actual),
 
   equals: (actual: unknown, expected: unknown) => {
     if (isObjectLike(actual) && isObjectLike(expected)) {
@@ -58,7 +77,6 @@ const comparators = {
     }
     return comparePrimitive(actual, expected, (a, b) => a === b);
   },
-  notEquals: (actual: unknown, expected: unknown) => !comparators.equals(actual, expected),
 
   includes: (actual: unknown, expected: unknown) => {
     if (isIterable(actual)) {
@@ -67,7 +85,6 @@ const comparators = {
     }
     return false;
   },
-  notIncludes: (actual: unknown, expected: unknown) => !comparators.includes(actual, expected),
 
   startsWith: (actual: unknown, expected: unknown) => {
     if (isIterable(actual)) {
@@ -76,7 +93,6 @@ const comparators = {
     }
     return false;
   },
-  notStartsWith: (actual: unknown, expected: unknown) => !comparators.startsWith(actual, expected),
 
   endsWith: (actual: unknown, expected: unknown) => {
     if (isIterable(actual)) {
@@ -85,11 +101,45 @@ const comparators = {
     }
     return false;
   },
-  notEndsWith: (actual: unknown, expected: unknown) => !comparators.endsWith(actual, expected),
 
   regExp: (actual: unknown, expected: RegExp) => new RegExp(expected).test(String(actual)),
 
-  fn: (actual: unknown, expected: FnComparator) => expected(actual, comparators)
+  fn: (actual: unknown, expected: FnComparator) => expected(actual, comparators),
+
+  greater: (actual: unknown, expected: number) => Number(actual) > expected,
+
+  greaterOrEquals: (actual: unknown, expected: number) => Number(actual) >= expected,
+
+  less: (actual: unknown, expected: number) => Number(actual) < expected,
+
+  lessOrEquals: (actual: unknown, expected: number) => Number(actual) <= expected,
+
+  length: (actual: unknown, expected: number) => {
+    const actualLength = getLength(actual);
+    return actualLength === expected;
+  },
+
+  minLength: (actual: unknown, expected: number) => {
+    const actualLength = getLength(actual);
+    return actualLength >= expected;
+  },
+
+  maxLength: (actual: unknown, expected: number) => {
+    const actualLength = getLength(actual);
+    return actualLength <= expected;
+  },
+
+  inRange: (actual: unknown, expected: [number, number]) => {
+    const [min, max] = expected;
+    return Number(actual) >= min && Number(actual) <= max;
+  },
+
+  haveType: (actual: unknown, expected: HaveTypeTypes) => {
+    if (expected === 'array') return Array.isArray(actual);
+    if (expected === 'null') return actual === null;
+    // eslint-disable-next-line valid-typeof
+    return typeof actual === expected;
+  }
 };
 
 type Comparators = typeof comparators;
