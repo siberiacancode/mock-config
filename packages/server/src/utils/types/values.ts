@@ -11,3 +11,5 @@ export type Params = ParamsDictionary;
 export type Cookies = Record<string, string>;
 
 export type Data = boolean | number | string | any[] | Record<any, any> | null | undefined;
+
+export type AnyValue = any;

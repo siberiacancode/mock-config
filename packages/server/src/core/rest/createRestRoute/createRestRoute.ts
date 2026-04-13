@@ -1,38 +1,30 @@
 import type { Express } from 'express';
 
-import { flatten } from 'flat';
 import fs from 'node:fs';
 import path from 'node:path';
 
 import type {
-  EntityDescriptor,
   Entries,
-  NonSymbolEntries,
-  PlainObject,
   RestDataResponse,
   RestEntitiesByEntityName,
-  RestEntity,
   RestFileResponse,
   RestParams,
-  RestRequestArtifact,
-  TopLevelPlainEntityArray,
-  TopLevelPlainEntityDescriptor
+  RestRequestArtifact
 } from '@/utils/types';
 
-import { checkModeSymbol } from '@/utils/constants';
 import {
   asyncHandler,
   callRequestInterceptor,
   callResponseInterceptors,
-  convertToEntitiesDescriptor,
-  convertToEntityDescriptor,
-  isEntityDescriptor,
+  isComparator,
   isFileDescriptor,
   isFilePathValid,
   resolveEntityValues,
   sleep,
   urlJoin
 } from '@/utils/helpers';
+
+import { equals } from '../../../utils/helpers/entities/handlers';
 
 interface CreateRestRoutesParams {
   restRequestArtifacts: RestRequestArtifact[];
@@ -63,79 +55,36 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         const entityEntries = Object.entries(config.entities) as Entries<
           Required<RestEntitiesByEntityName>
         >;
-        return entityEntries.every(([entityName, entityDescriptorOrValue]) => {
-          // ✅ important:
-          // check whole body as plain value strictly if descriptor used for body
-          const isEntityBodyByTopLevelDescriptor =
-            entityName === 'body' && isEntityDescriptor(entityDescriptorOrValue);
-          if (isEntityBodyByTopLevelDescriptor) {
-            const bodyDescriptor: EntityDescriptor = entityDescriptorOrValue;
-            if (
-              bodyDescriptor[checkModeSymbol] === 'exists' ||
-              bodyDescriptor[checkModeSymbol] === 'notExists'
-            ) {
-              return resolveEntityValues({
-                actualValue: request.body,
-                [checkModeSymbol]: bodyDescriptor[checkModeSymbol]
-              });
-            }
+        return entityEntries.every(([entityName, valueOrComparator]) => {
+          const actualEntity = entityName === 'queries' ? request.query : request[entityName];
+          const valueIsComparator = isComparator(valueOrComparator);
 
-            return resolveEntityValues({
-              actualValue: request.body,
-              descriptorValue: bodyDescriptor.value,
-              [checkModeSymbol]: bodyDescriptor[checkModeSymbol]
-            });
+          if (valueIsComparator) {
+            const comparator = valueOrComparator;
+            return resolveEntityValues({ actual: actualEntity, comparator });
           }
 
-          const isEntityBodyByTopLevelArray =
-            entityName === 'body' && Array.isArray(entityDescriptorOrValue);
-          if (isEntityBodyByTopLevelArray) {
-            if (!Array.isArray(request.body)) return false;
+          const isBody = entityName === 'body';
+          if (isBody) {
+            const comparator = equals(valueOrComparator);
+            return resolveEntityValues({ actual: request.body, comparator });
+          }
+          const mappedEntityEntries = Object.entries(valueOrComparator);
+          return mappedEntityEntries.every(([entityPropertyKey, valueOrComparator]) => {
+            // ✅ important: transform header keys to lower case because browsers send headers in lowercase
+            const actualPropertyKey =
+              entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
+            const actualPropertyValue = actualEntity[actualPropertyKey];
+
+            const comparator = isComparator(valueOrComparator)
+              ? valueOrComparator
+              : equals(valueOrComparator);
 
             return resolveEntityValues({
-              actualValue: request.body,
-              descriptorValue: entityDescriptorOrValue,
-              [checkModeSymbol]: 'equals'
+              actual: actualPropertyValue,
+              comparator
             });
-          }
-
-          const actualEntity = flatten<PlainObject, PlainObject>(
-            entityName === 'queries' ? request.query : request[entityName]
-          );
-          const entitiesDescriptor = convertToEntitiesDescriptor(entityDescriptorOrValue);
-          const checkMode = entitiesDescriptor[checkModeSymbol];
-
-          const entityValueEntries = Object.entries(entitiesDescriptor.value) as NonSymbolEntries<
-            Entries<Exclude<RestEntity, TopLevelPlainEntityArray | TopLevelPlainEntityDescriptor>>
-          >;
-          return entityValueEntries[checkMode](
-            ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
-              const entityPropertyDescriptor = convertToEntityDescriptor(
-                entityPropertyDescriptorOrValue
-              );
-
-              // ✅ important: transform header keys to lower case because browsers send headers in lowercase
-              const actualPropertyKey =
-                entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
-              const actualPropertyValue = actualEntity[actualPropertyKey];
-
-              if (
-                entityPropertyDescriptor[checkModeSymbol] === 'exists' ||
-                entityPropertyDescriptor[checkModeSymbol] === 'notExists'
-              ) {
-                return resolveEntityValues({
-                  actualValue: actualPropertyValue,
-                  [checkModeSymbol]: entityPropertyDescriptor[checkModeSymbol]
-                });
-              }
-
-              return resolveEntityValues({
-                actualValue: actualPropertyValue,
-                descriptorValue: entityPropertyDescriptor.value,
-                [checkModeSymbol]: entityPropertyDescriptor[checkModeSymbol]
-              });
-            }
-          );
+          });
         });
       });
 

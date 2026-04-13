@@ -1,6 +1,6 @@
 import type { CookieOptions, Response as ExpressResponse, Request } from 'express';
 
-import type { BodyPlainEntity, MappedEntities } from './entities';
+import type { BodyEntity, MappedEntity } from './entities';
 import type { Interceptors } from './interceptors';
 import type { BaseUrl } from './server';
 import type { Data } from './values';
@@ -9,7 +9,7 @@ export type RestMethod = 'delete' | 'get' | 'options' | 'patch' | 'post' | 'put'
 export type RestEntityName = 'body' | 'cookies' | 'headers' | 'params' | 'queries';
 
 export type RestEntity<EntityName extends RestEntityName = RestEntityName> =
-  EntityName extends 'body' ? BodyPlainEntity : MappedEntities;
+  EntityName extends 'body' ? BodyEntity : MappedEntity;
 
 export type RestEntityNamesByMethod = {
   [key in RestMethod]: key extends 'delete' | 'get' | 'options'

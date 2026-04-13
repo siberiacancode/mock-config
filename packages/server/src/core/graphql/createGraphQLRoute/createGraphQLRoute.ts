@@ -3,26 +3,20 @@ import type { Express } from 'express';
 import { flatten } from 'flat';
 
 import type {
-  EntityDescriptor,
   Entries,
   GraphQLEntitiesByEntityName,
-  GraphQLEntity,
   GraphQLParams,
   GraphQLRequestArtifact,
-  NonSymbolEntries,
-  PlainObject,
-  TopLevelPlainEntityDescriptor
+  PlainObject
 } from '@/utils/types';
 
-import { checkModeSymbol } from '@/utils/constants';
 import {
   asyncHandler,
   callRequestInterceptor,
   callResponseInterceptors,
-  convertToEntitiesDescriptor,
-  convertToEntityDescriptor,
+  equals,
   getGraphQLInput,
-  isEntityDescriptor,
+  isComparator,
   parseQuery,
   resolveEntityValues,
   sleep
@@ -78,28 +72,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
           Required<GraphQLEntitiesByEntityName>
         >;
 
-        return entityEntries.every(([entityName, entityDescriptorOrValue]) => {
-          const isEntityVariablesByTopLevelDescriptor =
-            entityName === 'variables' && isEntityDescriptor(entityDescriptorOrValue);
-          if (isEntityVariablesByTopLevelDescriptor) {
-            const variablesDescriptor = entityDescriptorOrValue as EntityDescriptor;
-            if (
-              variablesDescriptor[checkModeSymbol] === 'exists' ||
-              variablesDescriptor[checkModeSymbol] === 'notExists'
-            ) {
-              return resolveEntityValues({
-                actualValue: graphQLInput.variables,
-                [checkModeSymbol]: variablesDescriptor[checkModeSymbol]
-              });
-            }
-
-            return resolveEntityValues({
-              actualValue: graphQLInput.variables,
-              descriptorValue: variablesDescriptor.value,
-              [checkModeSymbol]: variablesDescriptor[checkModeSymbol]
-            });
-          }
-
+        return entityEntries.every(([entityName, valueOrComparator]) => {
           const actualEntity = flatten<PlainObject, PlainObject>(
             entityName === 'variables'
               ? graphQLInput.variables
@@ -107,41 +80,34 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
                 ? request.query
                 : request[entityName]
           );
+          const valueIsComparator = isComparator(valueOrComparator);
 
-          const entitiesDescriptor = convertToEntitiesDescriptor(entityDescriptorOrValue);
-          const checkMode = entitiesDescriptor[checkModeSymbol];
+          if (valueIsComparator) {
+            const comparator = valueOrComparator;
+            return resolveEntityValues({ actual: actualEntity, comparator });
+          }
 
-          const entityValueEntries = Object.entries(entityDescriptorOrValue) as NonSymbolEntries<
-            Entries<Exclude<GraphQLEntity, TopLevelPlainEntityDescriptor>>
-          >;
+          const isVariables = entityName === 'variables';
+          if (isVariables) {
+            const comparator = equals(valueOrComparator);
+            return resolveEntityValues({ actual: graphQLInput.variables, comparator });
+          }
+          const mappedEntityEntries = Object.entries(valueOrComparator);
+          return mappedEntityEntries.every(([entityPropertyKey, valueOrComparator]) => {
+            // ✅ important: transform header keys to lower case because browsers send headers in lowercase
+            const actualPropertyKey =
+              entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
+            const actualPropertyValue = actualEntity[actualPropertyKey];
 
-          return entityValueEntries[checkMode](
-            ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
-              const entityPropertyDescriptor = convertToEntityDescriptor(
-                entityPropertyDescriptorOrValue
-              );
+            const comparator = isComparator(valueOrComparator)
+              ? valueOrComparator
+              : equals(valueOrComparator);
 
-              const actualPropertyKey =
-                entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
-              const actualPropertyValue = actualEntity[actualPropertyKey];
-
-              if (
-                entityPropertyDescriptor[checkModeSymbol] === 'exists' ||
-                entityPropertyDescriptor[checkModeSymbol] === 'notExists'
-              ) {
-                return resolveEntityValues({
-                  actualValue: actualPropertyValue,
-                  [checkModeSymbol]: entityPropertyDescriptor[checkModeSymbol]
-                });
-              }
-
-              return resolveEntityValues({
-                actualValue: actualPropertyValue,
-                descriptorValue: entityPropertyDescriptor.value,
-                [checkModeSymbol]: entityPropertyDescriptor[checkModeSymbol]
-              });
-            }
-          );
+            return resolveEntityValues({
+              actual: actualPropertyValue,
+              comparator
+            });
+          });
         });
       });
 

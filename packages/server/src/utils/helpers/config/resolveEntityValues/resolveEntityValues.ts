@@ -1,115 +1,103 @@
 import { flatten } from 'flat';
 
-import type {
-  CheckActualValueCheckMode,
-  CheckFunction,
-  CheckMode,
-  EntityFunctionDescriptorValue,
-  PlainObject
-} from '@/utils/types';
-
-import { checkModeSymbol, NEGATIVE_CHECK_MODES } from '@/utils/constants';
+import type { PlainObject } from '@/utils/types';
 
 import { isPlainObject } from '../../isPlainObject/isPlainObject';
 import { isPrimitive } from '../../isPrimitive/isPrimitive';
 
-const checkFunction: CheckFunction = (checkMode, actualValue, descriptorValue?) => {
-  const isActualValueUndefined = actualValue === undefined;
-  if (checkMode === 'exists') return !isActualValueUndefined;
-  if (checkMode === 'notExists') return isActualValueUndefined;
+const isIterable = (value: any): value is Iterable<unknown> =>
+  value != null && typeof value[Symbol.iterator] === 'function';
 
-  if (checkMode === 'function') {
-    return (descriptorValue as EntityFunctionDescriptorValue<typeof actualValue>)(
-      actualValue,
-      checkFunction
-    );
+const isObjectLike = (value: unknown) => isPlainObject(value) || Array.isArray(value);
+
+const normalize = (value: any) => {
+  if (isObjectLike(value)) {
+    return flatten<PlainObject | unknown[], PlainObject>(value);
   }
-
-  const actualValueString = String(actualValue);
-
-  if (checkMode === 'regExp' && descriptorValue instanceof RegExp) {
-    return new RegExp(descriptorValue).test(actualValueString);
-  }
-
-  // ✅ important:
-  // cast values to string for ignore types of values
-  const descriptorValueString = String(descriptorValue);
-
-  if (checkMode === 'equals') return actualValueString === descriptorValueString;
-  if (checkMode === 'notEquals') return actualValueString !== descriptorValueString;
-
-  if (checkMode === 'includes') return actualValueString.includes(descriptorValueString);
-  if (checkMode === 'notIncludes') return !actualValueString.includes(descriptorValueString);
-
-  if (checkMode === 'startsWith') return actualValueString.startsWith(descriptorValueString);
-  if (checkMode === 'notStartsWith') return !actualValueString.startsWith(descriptorValueString);
-
-  if (checkMode === 'endsWith') return actualValueString.endsWith(descriptorValueString);
-  if (checkMode === 'notEndsWith') return !actualValueString.endsWith(descriptorValueString);
-
-  throw new Error(`Wrong checkMode ${checkMode}`);
+  return value;
 };
 
-const compareEntityValues = (checkMode: CheckMode, actualValue: any, descriptorValue?: any) => {
-  if (checkMode === 'exists' || checkMode === 'notExists') {
-    return checkFunction(checkMode, actualValue);
+const comparePrimitive = (
+  actual: unknown,
+  expected: unknown,
+  predicate: (a: unknown, b: unknown) => boolean
+) => predicate(actual, expected);
+
+const compareComplex = (
+  actual: unknown,
+  expected: unknown,
+  predicate: (a: string, b: string) => boolean,
+  negative = false
+) => {
+  const a = normalize(actual);
+  const b = normalize(expected);
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+
+  if (aKeys.length !== bKeys.length) {
+    return negative;
   }
 
-  if (checkMode === 'function') {
-    return !!descriptorValue(actualValue, checkFunction);
-  }
+  const method = negative ? 'some' : 'every';
 
-  if (checkMode === 'regExp') {
-    return checkFunction(checkMode, actualValue, descriptorValue);
-  }
+  return bKeys[method]((key) => predicate(String(a[key]), String(b[key])));
+};
 
-  const isActualValuePrimitive = isPrimitive(actualValue);
-  const isDescriptorValuePrimitive = isPrimitive(descriptorValue);
-  if (isActualValuePrimitive && isDescriptorValuePrimitive) {
-    return checkFunction(checkMode, actualValue, descriptorValue);
-  }
+export type FnComparator<ActualValue = unknown> = (
+  actual: ActualValue,
+  comparators: Comparators
+) => boolean;
 
-  const isActualValueObject = isPlainObject(actualValue) || Array.isArray(actualValue);
-  const isDescriptorValueObject = isPlainObject(descriptorValue) || Array.isArray(descriptorValue);
-  const isNegativeCheckMode = NEGATIVE_CHECK_MODES.includes(
-    checkMode as (typeof NEGATIVE_CHECK_MODES)[number]
-  );
-  if (isActualValueObject && isDescriptorValueObject) {
-    const flattenActualValue = flatten<PlainObject | unknown[], PlainObject>(actualValue);
-    const flattenDescriptorValue = flatten<PlainObject | unknown[], PlainObject>(descriptorValue);
+const comparators = {
+  exists: (actual: unknown) => actual !== undefined,
+  notExists: (actual: unknown) => !comparators.exists(actual),
 
-    if (Object.keys(flattenActualValue).length !== Object.keys(flattenDescriptorValue).length) {
-      return isNegativeCheckMode;
+  equals: (actual: unknown, expected: unknown) => {
+    if (isObjectLike(actual) && isObjectLike(expected)) {
+      return compareComplex(actual, expected, (a, b) => a === b);
     }
+    return comparePrimitive(actual, expected, (a, b) => a === b);
+  },
+  notEquals: (actual: unknown, expected: unknown) => !comparators.equals(actual, expected),
 
-    return Object.keys(flattenDescriptorValue)[isNegativeCheckMode ? 'some' : 'every'](
-      (flattenDescriptorValueKey) =>
-        checkFunction(
-          checkMode,
-          flattenActualValue[flattenDescriptorValueKey],
-          flattenDescriptorValue[flattenDescriptorValueKey]
-        )
-    );
-  }
+  includes: (actual: unknown, expected: unknown) => {
+    if (isIterable(actual)) {
+      if (isPrimitive(actual)) return actual.includes(String(expected));
+      return [...actual].some((value) => JSON.stringify(value) === JSON.stringify(expected));
+    }
+    return false;
+  },
+  notIncludes: (actual: unknown, expected: unknown) => !comparators.includes(actual, expected),
 
-  return isNegativeCheckMode;
+  startsWith: (actual: unknown, expected: unknown) => {
+    if (isIterable(actual)) {
+      if (isPrimitive(actual)) return actual.startsWith(String(expected));
+      return JSON.stringify([...actual].at(0)).startsWith(JSON.stringify(expected));
+    }
+    return false;
+  },
+  notStartsWith: (actual: unknown, expected: unknown) => !comparators.startsWith(actual, expected),
+
+  endsWith: (actual: unknown, expected: unknown) => {
+    if (isIterable(actual)) {
+      if (isPrimitive(actual)) return actual.startsWith(String(expected));
+      return JSON.stringify([...actual].at(-1)).startsWith(JSON.stringify(expected));
+    }
+    return false;
+  },
+  notEndsWith: (actual: unknown, expected: unknown) => !comparators.endsWith(actual, expected),
+
+  regExp: (actual: unknown, expected: RegExp) => new RegExp(expected).test(String(actual)),
+
+  fn: (actual: unknown, expected: FnComparator) => expected(actual, comparators)
 };
 
-type ResolveEntityValuesParams<Check extends CheckMode = CheckMode> =
-  Check extends CheckActualValueCheckMode
-    ? {
-        actualValue: unknown;
-        [checkModeSymbol]: Check;
-      }
-    : {
-        actualValue: unknown;
-        [checkModeSymbol]: Check;
-        descriptorValue: unknown;
-      };
+type Comparators = typeof comparators;
 
-export const resolveEntityValues = (params: ResolveEntityValuesParams) => {
-  if (params[checkModeSymbol] === 'exists' || params[checkModeSymbol] === 'notExists') {
-    return compareEntityValues(params[checkModeSymbol], params.actualValue);
-  }
-  return compareEntityValues(params[checkModeSymbol], params.actualValue, params.descriptorValue);
-};
+interface ResolveEntityValuesParams {
+  actual: unknown;
+  comparator: FnComparator;
+}
+
+export const resolveEntityValues = ({ actual, comparator }: ResolveEntityValuesParams) =>
+  comparator(actual, comparators);
