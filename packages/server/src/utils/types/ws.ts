@@ -49,8 +49,6 @@ export interface WsConnectionRouteConfig {
   entities?: WsConnectionEntitiesByEntityName;
 }
 
-export type WsRouteConfig = WsConnectionRouteConfig | WsRawRouteConfig;
-
 export interface WsRawRequestConfig {
   routes: WsRawRouteConfig[];
   type: 'raw';

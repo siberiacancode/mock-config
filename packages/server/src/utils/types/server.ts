@@ -39,6 +39,12 @@ export interface GraphqlConfig {
   interceptors?: Interceptors<'graphql'>;
 }
 
+export interface WsConfig {
+  baseUrl?: BaseUrl;
+  configs: WsRequestConfig[];
+  interceptors?: Interceptors<'rest'>;
+}
+
 export interface DatabaseConfig {
   data: `${string}.json` | Record<string, unknown>;
   routes?: `${string}.json` | Record<`/${string}`, `/${string}`>;
