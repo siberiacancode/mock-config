@@ -61,7 +61,7 @@ export const contextMiddleware = (
   let requestId = 0;
   const context: Express['request']['context'] = {
     orm: {},
-    emit: (payload: unknown) => broadcast(payload)
+    broadcast: (payload: unknown) => broadcast(payload)
   };
 
   if (database) {

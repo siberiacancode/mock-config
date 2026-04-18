@@ -8,7 +8,7 @@ import type {
 } from '@/utils/types';
 
 type WsMessageHandler = (params: WsParams) => Data | Promise<Data>;
-type WsConnectionHandler = (params: WsConnectionParams) => Data | Promise<Data> | undefined;
+type WsConnectionHandler = (params: WsConnectionParams) => Data | Promise<Data>;
 
 interface WsConnectionHandlerObject {
   handler: WsConnectionHandler;

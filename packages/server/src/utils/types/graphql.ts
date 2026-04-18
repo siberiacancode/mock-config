@@ -36,8 +36,8 @@ export interface GraphQLParams<
   response: ExpressResponse;
   appendHeader: (field: string, value?: string | string[]) => void;
   attachment: (filename: string) => void;
+  broadcast: <Response>(response: Response) => void;
   clearCookie: (name: string, options?: CookieOptions) => void;
-  emit: <Response>(response: Response) => void;
   getCookie: (name: string) => GraphQLCookieValue;
   getRequestHeader: (field: string) => GraphQLHeaderValue;
   getRequestHeaders: () => Record<string, GraphQLHeaderValue>;

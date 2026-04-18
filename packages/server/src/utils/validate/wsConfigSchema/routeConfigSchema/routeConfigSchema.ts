@@ -5,7 +5,7 @@ import { isPlainObject } from '@/utils/helpers';
 import { mappedEntitySchema, plainObjectSchema } from '../../utils';
 
 export const rawRouteConfigSchema = z.strictObject({
-  data: z.union([z.function(), z.any()])
+  data: z.function()
 });
 
 export const connectionRouteConfigSchema = z.strictObject({

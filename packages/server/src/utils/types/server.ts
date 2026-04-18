@@ -65,7 +65,7 @@ declare global {
     interface Request {
       context: {
         orm: Orm<Database>;
-        emit: <Response>(response: Response) => void;
+        broadcast: <Response>(response: Response) => void;
       };
     }
   }

@@ -1,4 +1,6 @@
 export const parseQuery = (requestUrl: string) => {
+  // ✅ important:
+  // base URL is required to parse relative request URLs; localhost here is just a placeholder
   const url = new URL(requestUrl, 'http://localhost');
   const query: Record<string, string | string[]> = {};
 

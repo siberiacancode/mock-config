@@ -40,7 +40,7 @@ const sendWsData = (socket: WebSocket, data: unknown) => {
   socket.send(JSON.stringify(data));
 };
 
-const emitWsData = (server: WebSocketServer, data: unknown) => {
+const broadcastWsData = (server: WebSocketServer, data: unknown) => {
   if (data === undefined) return;
   for (const client of server.clients) {
     if (client.readyState !== WebSocket.OPEN) continue;
@@ -58,10 +58,12 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         cookies: Record<string, string>;
       }
     ) => {
-      const requestPath = (request.url ?? '/').split('?')[0] ?? '/';
+      const [requestPathname] = request.url!.split('?');
       const matchedRequestArtifacts = wsRequestArtifacts.filter((artifact) => {
-        if (requestPath === '/') return true;
-        return requestPath === artifact.baseUrl || requestPath.startsWith(`${artifact.baseUrl}/`);
+        if (artifact.baseUrl === '/') return true;
+        return (
+          requestPathname === artifact.baseUrl || requestPathname.startsWith(`${artifact.baseUrl}/`)
+        );
       });
 
       const connectionArtifacts = matchedRequestArtifacts.filter(
@@ -118,7 +120,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         }
 
         const params = {
-          emit: (data: unknown) => emitWsData(server, data),
+          broadcast: (data: unknown) => broadcastWsData(server, data),
           request,
           socket,
           send: (data: unknown) => sendWsData(socket, data),
@@ -127,10 +129,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           }
         };
 
-        const resolvedData =
-          typeof artifact.config.data === 'function'
-            ? await artifact.config.data(params)
-            : artifact.config.data;
+        const resolvedData = await artifact.config.data(params);
 
         sendWsData(socket, resolvedData);
       }
@@ -142,7 +141,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
         const params: WsParams = {
           ...frame,
-          emit: (data: unknown) => emitWsData(server, data),
+          broadcast: (data: unknown) => broadcastWsData(server, data),
           socket,
           send: (data: unknown) => sendWsData(socket, data),
           setDelay: async (delay) => {
@@ -155,10 +154,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
             await artifact.componentRequestInterceptor(params);
           }
 
-          const resolvedData =
-            typeof artifact.config.data === 'function'
-              ? await artifact.config.data(params)
-              : artifact.config.data;
+          const resolvedData = await artifact.config.data(params);
 
           const data = artifact.componentResponseInterceptor
             ? artifact.componentResponseInterceptor(resolvedData, params)

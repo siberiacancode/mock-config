@@ -152,8 +152,8 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
         response,
         next,
         entities: matchedRouteConfig.config.entities ?? {},
-        emit: (payload) => {
-          request.context.emit(payload);
+        broadcast: (payload) => {
+          request.context.broadcast(payload);
         },
         appendHeader: (field, value) => {
           response.append(field, value);

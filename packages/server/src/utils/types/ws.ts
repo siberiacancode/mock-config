@@ -6,8 +6,6 @@ import type { MappedEntity } from './entities';
 import type { BaseUrl } from './server';
 import type { Data } from './values';
 
-export type WsType = 'connection' | 'raw';
-
 export interface WsFrameBinary {
   isBinary: true;
   raw: Buffer;
@@ -19,23 +17,22 @@ export interface WsFrameText {
 export type WsFrame = WsFrameBinary | WsFrameText;
 
 export type WsParams = WsFrame & {
-  emit: <Response = unknown>(response: Response) => void;
+  broadcast: <Response = unknown>(response: Response) => void;
   socket: WebSocket;
   send: <Response = unknown>(response: Response) => void;
   setDelay: (delay: number) => Promise<void>;
 };
 
 export type WsDataResponse = (params: WsParams) => Data | Promise<Data>;
-export type WsData = Data | WsDataResponse;
 
 export interface WsRawRouteConfig {
-  data: WsData;
+  data: WsDataResponse;
 }
 
 export interface WsConnectionParams {
   request: IncomingMessage;
   socket: WebSocket;
-  emit: <Response = unknown>(response: Response) => void;
+  broadcast: <Response = unknown>(response: Response) => void;
   send: <Response = unknown>(response: Response) => void;
   setDelay: (delay: number) => Promise<void>;
 }
@@ -45,13 +42,10 @@ export type WsConnectionEntitiesByEntityName = {
   [EntityName in WsConnectionEntityName]?: MappedEntity;
 };
 
-export type WsConnectionDataResponse = (
-  params: WsConnectionParams
-) => Data | Promise<Data> | Promise<undefined> | undefined;
-export type WsConnectionData = Data | WsConnectionDataResponse;
+export type WsConnectionDataResponse = (params: WsConnectionParams) => Data | Promise<Data>;
 
 export interface WsConnectionRouteConfig {
-  data: WsConnectionData;
+  data: WsConnectionDataResponse;
   entities?: WsConnectionEntitiesByEntityName;
 }
 
