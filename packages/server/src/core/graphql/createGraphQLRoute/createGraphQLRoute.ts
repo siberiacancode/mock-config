@@ -1,13 +1,10 @@
 import type { Express } from 'express';
 
-import { flatten } from 'flat';
-
 import type {
   Entries,
   GraphQLEntitiesByEntityName,
   GraphQLParams,
-  GraphQLRequestArtifact,
-  PlainObject
+  GraphQLRequestArtifact
 } from '@/utils/types';
 
 import {
@@ -76,9 +73,8 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
         >;
 
         return entityEntries.every(([entityName, valueOrComparator]) => {
-          const actualEntity = flatten<PlainObject, PlainObject>(
-            entityName === 'variables' ? graphQLInput.variables : request[entityName]
-          );
+          const actualEntity =
+            entityName === 'variables' ? graphQLInput.variables : request[entityName];
           if (isComparator(valueOrComparator)) {
             const comparator = valueOrComparator;
             return resolveEntityValues({ actual: actualEntity, comparator });
