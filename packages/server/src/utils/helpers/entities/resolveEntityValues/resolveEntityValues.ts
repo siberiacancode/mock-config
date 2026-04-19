@@ -42,15 +42,15 @@ const compareComplex = (
   const flattenExpected = flatten<unknown, PlainObject>(expected);
 
   const flattenActualKeys = Object.keys(flattenActual);
-  const flattenActualExpected = Object.keys(flattenExpected);
+  const flattenExpectedKeys = Object.keys(flattenExpected);
 
-  if (flattenActualKeys.length !== flattenActualExpected.length) {
+  if (flattenActualKeys.length !== flattenExpectedKeys.length) {
     return negative;
   }
 
   const method = negative ? 'some' : 'every';
 
-  return flattenActualExpected[method]((key) =>
+  return flattenExpectedKeys[method]((key) =>
     predicate(String(flattenActual[key]), String(flattenExpected[key]))
   );
 };
