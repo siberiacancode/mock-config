@@ -14,13 +14,14 @@ import {
   asyncHandler,
   callRequestInterceptor,
   callResponseInterceptors,
-  equals,
   getGraphQLInput,
   isComparator,
   parseQuery,
   resolveEntityValues,
   sleep
 } from '@/utils/helpers';
+
+import { equals } from '../../entities';
 
 interface CreateGraphQLRouteParams {
   graphQLRequestArtifacts: GraphQLRequestArtifact[];
@@ -45,6 +46,8 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
           message: 'Query is invalid, you must use a valid GraphQL query'
         });
       }
+
+      request.queries = request.query;
 
       const matchedRequestArtifacts = graphQLRequestArtifacts.filter((artifact) => {
         if (artifact.operationType !== query.operationType) return false;
@@ -74,15 +77,9 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
 
         return entityEntries.every(([entityName, valueOrComparator]) => {
           const actualEntity = flatten<PlainObject, PlainObject>(
-            entityName === 'variables'
-              ? graphQLInput.variables
-              : entityName === 'queries'
-                ? request.query
-                : request[entityName]
+            entityName === 'variables' ? graphQLInput.variables : request[entityName]
           );
-          const valueIsComparator = isComparator(valueOrComparator);
-
-          if (valueIsComparator) {
+          if (isComparator(valueOrComparator)) {
             const comparator = valueOrComparator;
             return resolveEntityValues({ actual: actualEntity, comparator });
           }
@@ -94,7 +91,9 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
           }
           const mappedEntityEntries = Object.entries(valueOrComparator);
           return mappedEntityEntries.every(([entityPropertyKey, valueOrComparator]) => {
-            // ✅ important: transform header keys to lower case because browsers send headers in lowercase
+            // ✅ important:
+            // transform header keys to lower case
+            // because browsers send headers in lowercase
             const actualPropertyKey =
               entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
             const actualPropertyValue = actualEntity[actualPropertyKey];

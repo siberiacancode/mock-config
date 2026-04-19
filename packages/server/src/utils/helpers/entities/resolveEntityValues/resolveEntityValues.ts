@@ -1,6 +1,6 @@
 import { flatten } from 'flat';
 
-import type { PlainObject } from '@/utils/types';
+import type { Comparator, PlainObject } from '@/utils/types';
 
 import { isPlainObject } from '../../isPlainObject/isPlainObject';
 import { isPrimitive } from '../../isPrimitive/isPrimitive';
@@ -63,12 +63,9 @@ export type HaveTypeTypes =
   | 'symbol'
   | 'undefined';
 
-export type FnComparator<ActualValue = unknown> = (
-  actual: ActualValue,
-  comparators: Comparators
-) => boolean;
-
 const comparators = {
+  fn: (actual: unknown, expected: Comparator) => expected(actual, comparators),
+
   exists: (actual: unknown) => actual !== undefined,
 
   equals: (actual: unknown, expected: unknown) => {
@@ -97,14 +94,12 @@ const comparators = {
   endsWith: (actual: unknown, expected: unknown) => {
     if (isIterable(actual)) {
       if (isPrimitive(actual)) return actual.startsWith(String(expected));
-      return JSON.stringify([...actual].at(-1)).startsWith(JSON.stringify(expected));
+      return JSON.stringify([...actual].at(-1)).endsWith(JSON.stringify(expected));
     }
     return false;
   },
 
   regExp: (actual: unknown, expected: RegExp) => new RegExp(expected).test(String(actual)),
-
-  fn: (actual: unknown, expected: FnComparator) => expected(actual, comparators),
 
   greater: (actual: unknown, expected: number) => Number(actual) > expected,
 
@@ -155,11 +150,11 @@ const comparators = {
   }
 };
 
-type Comparators = typeof comparators;
+export type Comparators = typeof comparators;
 
 interface ResolveEntityValuesParams {
   actual: unknown;
-  comparator: FnComparator;
+  comparator: Comparator;
 }
 
 export const resolveEntityValues = ({ actual, comparator }: ResolveEntityValuesParams) =>

@@ -1,4 +1,6 @@
-import type { FnComparator } from '@/utils/helpers';
+import type { Comparator } from '@/utils/types';
 
-export const isComparator = <ActualValue>(value: unknown): value is FnComparator<ActualValue> =>
-  typeof value === 'function';
+import { IS_COMPARATOR_SYMBOL } from '@/utils/constants';
+
+export const isComparator = (value: unknown): value is Comparator =>
+  typeof value === 'function' && IS_COMPARATOR_SYMBOL in value && !!value[IS_COMPARATOR_SYMBOL];

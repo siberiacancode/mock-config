@@ -1,4 +1,4 @@
-import type { Request } from 'express';
+import type { Express, Request } from 'express';
 import type { Arguments } from 'yargs';
 
 import type { Database, Orm } from './database';
@@ -59,12 +59,15 @@ export type MockServerCliArgv = Arguments<{
   watch?: boolean;
 }>;
 
+type Queries = Express['request']['query'];
+
 declare global {
   namespace Express {
     interface Request {
       context: {
         orm: Orm<Database>;
       };
+      queries: Queries;
     }
   }
 }

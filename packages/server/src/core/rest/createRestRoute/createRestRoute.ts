@@ -24,7 +24,7 @@ import {
   urlJoin
 } from '@/utils/helpers';
 
-import { equals } from '../../../utils/helpers/entities/handlers';
+import { equals } from '../../entities';
 
 interface CreateRestRoutesParams {
   restRequestArtifacts: RestRequestArtifact[];
@@ -35,6 +35,8 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
   server.use(
     asyncHandler(async (request, response, next) => {
       const requestMethod = request.method.toLowerCase();
+
+      request.queries = request.query;
 
       const matchedRequestArtifacts = restRequestArtifacts.filter((restRequestArtifact) => {
         const isMethodMatched = restRequestArtifact.method === requestMethod;
@@ -57,9 +59,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         >;
         return entityEntries.every(([entityName, valueOrComparator]) => {
           const actualEntity = entityName === 'queries' ? request.query : request[entityName];
-          const valueIsComparator = isComparator(valueOrComparator);
-
-          if (valueIsComparator) {
+          if (isComparator(valueOrComparator)) {
             const comparator = valueOrComparator;
             return resolveEntityValues({ actual: actualEntity, comparator });
           }
@@ -71,7 +71,9 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
           }
           const mappedEntityEntries = Object.entries(valueOrComparator);
           return mappedEntityEntries.every(([entityPropertyKey, valueOrComparator]) => {
-            // ✅ important: transform header keys to lower case because browsers send headers in lowercase
+            // ✅ important:
+            // transform header keys to lower case
+            // because browsers send headers in lowercase
             const actualPropertyKey =
               entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
             const actualPropertyValue = actualEntity[actualPropertyKey];
@@ -79,7 +81,6 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
             const comparator = isComparator(valueOrComparator)
               ? valueOrComparator
               : equals(valueOrComparator);
-
             return resolveEntityValues({
               actual: actualPropertyValue,
               comparator

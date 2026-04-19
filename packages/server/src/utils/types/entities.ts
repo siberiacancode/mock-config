@@ -1,12 +1,18 @@
-import type { FnComparator } from '@/utils/helpers';
+import type { IS_COMPARATOR_SYMBOL } from '@/utils/constants';
 
-type AnyValue = boolean | number | object | string | symbol | null | undefined;
+export type Comparator<Actual = unknown, Expected = unknown> = ((
+  actual: Actual,
+  expected: Expected
+) => boolean) & {
+  [IS_COMPARATOR_SYMBOL]: true;
+};
 
-type ValueOrComparator<ActualValue = unknown> = AnyValue | FnComparator<ActualValue>;
+type MappedEntityValue = boolean | number | string | (boolean | number | string)[];
+type MappedEntityObject = Record<string, Comparator<MappedEntityValue> | MappedEntityValue>;
+export type MappedEntity = Comparator<MappedEntityObject> | MappedEntityObject;
 
-export type MappedEntity<ActualValue = unknown> =
-  | FnComparator<ActualValue>
-  | Record<string, ValueOrComparator<ActualValue>>;
+type BodyEntityValue = string | Record<string, unknown> | unknown[];
+export type BodyEntity = BodyEntityValue | Comparator<BodyEntityValue>;
 
-export type BodyEntity = ValueOrComparator;
-export type VariablesEntity = MappedEntity;
+type VariablesEntityValue = MappedEntityObject;
+export type VariablesEntity = Comparator<VariablesEntityValue> | VariablesEntityValue;
