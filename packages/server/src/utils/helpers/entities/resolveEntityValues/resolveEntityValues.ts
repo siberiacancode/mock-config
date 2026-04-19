@@ -38,18 +38,21 @@ const compareComplex = (
   predicate: (a: string, b: string) => boolean,
   negative = false
 ) => {
-  const a = normalize(actual);
-  const b = normalize(expected);
-  const aKeys = Object.keys(a);
-  const bKeys = Object.keys(b);
+  const flattenActual = flatten<unknown, PlainObject>(actual);
+  const flattenExpected = flatten<unknown, PlainObject>(expected);
 
-  if (aKeys.length !== bKeys.length) {
+  const flattenActualKeys = Object.keys(flattenActual);
+  const flattenActualExpected = Object.keys(flattenExpected);
+
+  if (flattenActualKeys.length !== flattenActualExpected.length) {
     return negative;
   }
 
   const method = negative ? 'some' : 'every';
 
-  return bKeys[method]((key) => predicate(String(a[key]), String(b[key])));
+  return flattenActualExpected[method]((key) =>
+    predicate(String(flattenActual[key]), String(flattenExpected[key]))
+  );
 };
 
 export type HaveTypeTypes =
