@@ -144,8 +144,7 @@ const comparators = {
 
     const actualFlatten = normalize(actual);
     const expectedFlatten = normalize(expected);
-    console.log('actualFlatten=', actualFlatten);
-    console.log('expectedFlatten=', expectedFlatten);
+
     return Object.entries(expectedFlatten).every(([expectedFlattenKey, expectedValue]) => {
       if (isComparator(expectedValue)) {
         return comparators.fn(actualFlatten[expectedFlattenKey], expectedValue);
