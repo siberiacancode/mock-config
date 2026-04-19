@@ -4,6 +4,7 @@ import type { Comparator, PlainObject } from '@/utils/types';
 
 import { isPlainObject } from '../../isPlainObject/isPlainObject';
 import { isPrimitive } from '../../isPrimitive/isPrimitive';
+import { isComparator } from '../isComparator/isComparator';
 
 const isIterable = (value: any): value is Iterable<unknown> =>
   value != null && typeof value[Symbol.iterator] === 'function';
@@ -143,10 +144,14 @@ const comparators = {
 
     const actualFlatten = normalize(actual);
     const expectedFlatten = normalize(expected);
-
-    return Object.entries(expectedFlatten).every(([expectedFlattenKey, expectedValue]) =>
-      comparators.equals(actualFlatten[expectedFlattenKey], expectedValue)
-    );
+    console.log('actualFlatten=', actualFlatten);
+    console.log('expectedFlatten=', expectedFlatten);
+    return Object.entries(expectedFlatten).every(([expectedFlattenKey, expectedValue]) => {
+      if (isComparator(expectedValue)) {
+        return comparators.fn(actualFlatten[expectedFlattenKey], expectedValue);
+      }
+      return comparators.equals(actualFlatten[expectedFlattenKey], expectedValue);
+    });
   }
 };
 
