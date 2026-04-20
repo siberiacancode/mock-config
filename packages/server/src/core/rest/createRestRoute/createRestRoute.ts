@@ -72,7 +72,8 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
           Required<RestEntitiesByEntityName>
         >;
         return entityEntries.every(([entityName, valueOrComparator]) => {
-          const actualEntity = entityName === 'queries' ? request.query : request[entityName];
+          const actualEntity = request[entityName];
+
           if (isComparator(valueOrComparator)) {
             const comparator = valueOrComparator;
             return resolveEntityValues({ actual: actualEntity, comparator });
@@ -83,13 +84,18 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
             const comparator = equals(valueOrComparator);
             return resolveEntityValues({ actual: request.body, comparator });
           }
-          const mappedEntityEntries = Object.entries(valueOrComparator);
+
+          const mappedEntityEntries = Object.entries(valueOrComparator) as Entries<
+            typeof valueOrComparator
+          >;
           return mappedEntityEntries.every(([entityPropertyKey, valueOrComparator]) => {
             // ✅ important:
             // transform header keys to lower case
             // because browsers send headers in lowercase
             const actualPropertyKey =
-              entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
+              entityName === 'headers' && typeof entityPropertyKey === 'string'
+                ? entityPropertyKey.toLowerCase()
+                : entityPropertyKey;
             const actualPropertyValue = actualEntity[actualPropertyKey];
 
             const comparator = isComparator(valueOrComparator)
