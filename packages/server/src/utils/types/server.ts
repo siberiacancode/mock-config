@@ -5,6 +5,7 @@ import type { Database, Orm } from './database';
 import type { GraphQLRequestConfig } from './graphql';
 import type { Interceptors } from './interceptors';
 import type { RestMethod, RestRequestConfig } from './rest';
+import type { WsRequestConfig } from './ws';
 
 interface StaticPathObject {
   path: `/${string}`;
@@ -38,6 +39,12 @@ export interface GraphqlConfig {
   interceptors?: Interceptors<'graphql'>;
 }
 
+export interface WsConfig {
+  baseUrl?: BaseUrl;
+  configs: WsRequestConfig[];
+  interceptors?: Interceptors<'rest'>;
+}
+
 export interface DatabaseConfig {
   data: `${string}.json` | Record<string, unknown>;
   routes?: `${string}.json` | Record<`/${string}`, `/${string}`>;
@@ -64,6 +71,7 @@ declare global {
     interface Request {
       context: {
         orm: Orm<Database>;
+        broadcast: <Response>(response: Response) => void;
       };
     }
   }
@@ -71,7 +79,7 @@ declare global {
 
 export interface MockServerComponent {
   baseUrl?: BaseUrl;
-  configs: Array<GraphQLRequestConfig | RestRequestConfig>;
+  configs: Array<GraphQLRequestConfig | RestRequestConfig | WsRequestConfig>;
   interceptors?: Interceptors;
   name?: string;
 }

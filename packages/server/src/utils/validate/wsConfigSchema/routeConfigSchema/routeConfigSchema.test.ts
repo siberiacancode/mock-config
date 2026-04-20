@@ -11,9 +11,9 @@ describe('routeConfigSchema: data resolving properties combinations', () => {
       it(`Should return error on handle object with incorrect data resolving properties combination:\n${JSON.stringify(
         incorrectDataResolvingPropertiesCombination
       )}`, () => {
-        const schema = routeConfigSchema('get');
-
-        const parseResult = schema.safeParse(incorrectDataResolvingPropertiesCombination);
+        const parseResult = routeConfigSchema.safeParse(
+          incorrectDataResolvingPropertiesCombination
+        );
         expect(parseResult.success).toBe(false);
 
         if (!parseResult.success) {
@@ -25,15 +25,11 @@ describe('routeConfigSchema: data resolving properties combinations', () => {
     }
   );
 
-  const correctDataResolvingPropertiesCombinations = [{ data: {} }, { data: () => ({ ok: true }) }];
+  const correctDataResolvingPropertiesCombinations = [{ data: () => ({ ok: true }) }];
   correctDataResolvingPropertiesCombinations.forEach(
     (correctDataResolvingPropertiesCombination) => {
-      it(`Should pass object with correct data resolving properties combination:\n${JSON.stringify(
-        correctDataResolvingPropertiesCombination
-      )}`, () => {
-        const schema = routeConfigSchema('get');
-
-        const parseResult = schema.safeParse(correctDataResolvingPropertiesCombination);
+      it('Should pass object with function data resolving strategy', () => {
+        const parseResult = routeConfigSchema.safeParse(correctDataResolvingPropertiesCombination);
         expect(parseResult.success).toBe(true);
       });
     }

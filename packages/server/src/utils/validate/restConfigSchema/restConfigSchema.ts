@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 import type { RestMethod } from '@/utils/types';
 
-import { baseUrlSchema } from '../baseUrlSchema/baseUrlSchema';
 import { interceptorsSchema } from '../interceptorsSchema/interceptorsSchema';
 import { plainObjectSchema, stringForwardSlashSchema } from '../utils';
 import { routeConfigSchema } from './routeConfigSchema/routeConfigSchema';
@@ -23,9 +22,3 @@ export const restRequestConfigSchema = z.union([
   baseRequestConfigSchema('patch'),
   baseRequestConfigSchema('options')
 ]);
-
-export const restConfigSchema = z.strictObject({
-  baseUrl: baseUrlSchema.optional(),
-  configs: z.array(restRequestConfigSchema),
-  interceptors: plainObjectSchema(interceptorsSchema).optional()
-});

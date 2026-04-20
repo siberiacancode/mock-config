@@ -21,7 +21,7 @@ import {
   getGraphQLInput,
   isEntityDescriptor,
   normalizeUrl,
-  parseQuery,
+  parseGraphQLQuery,
   resolveEntityValues,
   sleep
 } from '@/utils/helpers';
@@ -41,7 +41,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
       const graphQLInput = getGraphQLInput(request);
       if (!graphQLInput.query) return next();
 
-      const query = parseQuery(graphQLInput.query);
+      const query = parseGraphQLQuery(graphQLInput.query);
       if (!query) return next();
 
       const matchedRequestArtifacts = matchGraphQLRequestArtifacts({
@@ -152,6 +152,9 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
         response,
         next,
         entities: matchedRouteConfig.config.entities ?? {},
+        broadcast: (payload) => {
+          request.context.broadcast(payload);
+        },
         appendHeader: (field, value) => {
           response.append(field, value);
         },

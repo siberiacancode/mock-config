@@ -18,7 +18,7 @@ const parseDocumentNode = (node: DocumentNode): ParseDocumentNodeResult => {
   };
 };
 
-export const parseQuery = (query: string) => {
+export const parseGraphQLQuery = (query: string) => {
   try {
     const document = parse(query);
     return parseDocumentNode(document);

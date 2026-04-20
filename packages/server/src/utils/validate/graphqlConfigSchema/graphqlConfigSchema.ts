@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 import { isPlainObject } from '@/utils/helpers';
 
-import { baseUrlSchema } from '../baseUrlSchema/baseUrlSchema';
 import { interceptorsSchema } from '../interceptorsSchema/interceptorsSchema';
 import { plainObjectSchema } from '../utils';
 import { routeConfigSchema } from './routeConfigSchema/routeConfigSchema';
@@ -33,9 +32,3 @@ export const graphqlRequestConfigSchema = z.union([
     .pipe(operationNameRequestConfigSchema),
   z.custom((value) => isPlainObject(value) && 'query' in value).pipe(queryRequestConfigSchema)
 ]);
-
-export const graphqlConfigSchema = z.strictObject({
-  baseUrl: baseUrlSchema.optional(),
-  configs: z.array(graphqlRequestConfigSchema),
-  interceptors: plainObjectSchema(interceptorsSchema).optional()
-});
