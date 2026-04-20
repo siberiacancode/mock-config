@@ -71,7 +71,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
           const isVariables = entityName === 'variables';
           if (isVariables) {
             const comparator = equals(valueOrComparator);
-            return resolveEntityValues({ actual: graphQLInput.variables, comparator });
+            return resolveEntityValues({ actual: actualEntity, comparator });
           }
 
           const mappedEntityEntries = Object.entries(valueOrComparator) as Entries<

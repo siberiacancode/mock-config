@@ -82,7 +82,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
           const isBody = entityName === 'body';
           if (isBody) {
             const comparator = equals(valueOrComparator);
-            return resolveEntityValues({ actual: request.body, comparator });
+            return resolveEntityValues({ actual: actualEntity, comparator });
           }
 
           const mappedEntityEntries = Object.entries(valueOrComparator) as Entries<

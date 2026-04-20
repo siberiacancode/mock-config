@@ -35,8 +35,7 @@ const comparePrimitive = (
 const compareComplex = (
   actual: unknown,
   expected: unknown,
-  predicate: (a: string, b: string) => boolean,
-  negative = false
+  predicate: (a: string, b: string) => boolean
 ) => {
   const flattenActual = flatten<unknown, PlainObject>(actual);
   const flattenExpected = flatten<unknown, PlainObject>(expected);
@@ -45,12 +44,10 @@ const compareComplex = (
   const flattenExpectedKeys = Object.keys(flattenExpected);
 
   if (flattenActualKeys.length !== flattenExpectedKeys.length) {
-    return negative;
+    return false;
   }
 
-  const method = negative ? 'some' : 'every';
-
-  return flattenExpectedKeys[method]((key) =>
+  return flattenExpectedKeys.every((key) =>
     predicate(String(flattenActual[key]), String(flattenExpected[key]))
   );
 };
