@@ -168,7 +168,11 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           }
         };
 
-        for (const artifact of wsRequestArtifacts) {
+        const messageWsRequestArtifacts = wsRequestArtifacts.filter(
+          (artifact) => artifact.type !== 'connection'
+        );
+
+        for (const artifact of messageWsRequestArtifacts) {
           if (artifact.type === 'graphql-ws') {
             if (frame.isBinary) continue;
 
@@ -178,16 +182,14 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
             } catch {
               continue;
             }
-
             const graphQLInput = getGraphQLSubscriptionInput(payload);
 
             if (!graphQLInput.query) continue;
-
             const query = parseGraphQLQuery(graphQLInput.query);
             if (!query || query.operationType !== 'subscription') continue;
 
             const matchedRequestArtifacts = matchGraphQLSubscriptionRequestArtifacts({
-              artifacts: [artifact],
+              artifact,
               meta: {
                 path: requestPathname,
                 query: graphQLInput.query,
@@ -195,69 +197,75 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
                 operationName: query.operationName
               }
             });
-            if (!matchedRequestArtifacts.length) continue;
+            if (!matchedRequestArtifacts) continue;
 
             const entities = artifact.config.entities;
             const graphQLVariables = graphQLInput.variables;
+            if (entities) {
+              const entityEntries = Object.entries(entities) as Entries<Required<typeof entities>>;
 
-            let isEntitiesMatched = true;
-            if (entities?.variables) {
-              const entityDescriptorOrValue = entities.variables;
-
-              if (isEntityDescriptor(entityDescriptorOrValue)) {
-                const variablesDescriptor = entityDescriptorOrValue as EntityDescriptor;
-                if (
-                  variablesDescriptor.checkMode === 'exists' ||
-                  variablesDescriptor.checkMode === 'notExists'
-                ) {
-                  isEntitiesMatched = resolveEntityValues({
-                    actualValue: graphQLVariables,
-                    checkMode: variablesDescriptor.checkMode
-                  });
-                } else {
-                  isEntitiesMatched = resolveEntityValues({
-                    actualValue: graphQLVariables,
-                    descriptorValue: variablesDescriptor.value,
-                    checkMode: variablesDescriptor.checkMode,
-                    oneOf: variablesDescriptor.oneOf ?? false
-                  });
-                }
-              } else {
-                const actualEntity = flatten<PlainObject, PlainObject>(graphQLVariables!);
-                const entityValueEntries = Object.entries(entityDescriptorOrValue) as Entries<
-                  Exclude<GraphQLEntity, TopLevelPlainEntityDescriptor>
-                >;
-
-                isEntitiesMatched = entityValueEntries.every(
-                  ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
-                    const entityPropertyDescriptor = convertToEntityDescriptor(
-                      entityPropertyDescriptorOrValue
-                    );
-
-                    const actualPropertyValue = actualEntity[entityPropertyKey];
-
+              const isMatchedByEntities = entityEntries.every(
+                ([entityName, entityDescriptorOrValue]) => {
+                  const isEntityVariablesByTopLevelDescriptor =
+                    entityName === 'variables' && isEntityDescriptor(entityDescriptorOrValue);
+                  if (isEntityVariablesByTopLevelDescriptor) {
+                    const variablesDescriptor = entityDescriptorOrValue as EntityDescriptor;
                     if (
-                      entityPropertyDescriptor.checkMode === 'exists' ||
-                      entityPropertyDescriptor.checkMode === 'notExists'
+                      variablesDescriptor.checkMode === 'exists' ||
+                      variablesDescriptor.checkMode === 'notExists'
                     ) {
                       return resolveEntityValues({
-                        actualValue: actualPropertyValue,
-                        checkMode: entityPropertyDescriptor.checkMode
+                        actualValue: graphQLVariables,
+                        checkMode: variablesDescriptor.checkMode
                       });
                     }
 
                     return resolveEntityValues({
-                      actualValue: actualPropertyValue,
-                      descriptorValue: entityPropertyDescriptor.value,
-                      checkMode: entityPropertyDescriptor.checkMode,
-                      oneOf: entityPropertyDescriptor.oneOf ?? false
+                      actualValue: graphQLVariables,
+                      descriptorValue: variablesDescriptor.value,
+                      checkMode: variablesDescriptor.checkMode,
+                      oneOf: variablesDescriptor.oneOf ?? false
                     });
                   }
-                );
-              }
-            }
 
-            if (!isEntitiesMatched) continue;
+                  const actualEntity = flatten<PlainObject, PlainObject>(
+                    entityName === 'variables' ? (graphQLVariables ?? {}) : {}
+                  );
+                  const entityValueEntries = Object.entries(entityDescriptorOrValue) as Entries<
+                    Exclude<GraphQLEntity, TopLevelPlainEntityDescriptor>
+                  >;
+
+                  return entityValueEntries.every(
+                    ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
+                      const entityPropertyDescriptor = convertToEntityDescriptor(
+                        entityPropertyDescriptorOrValue
+                      );
+
+                      const actualPropertyValue = actualEntity[entityPropertyKey];
+
+                      if (
+                        entityPropertyDescriptor.checkMode === 'exists' ||
+                        entityPropertyDescriptor.checkMode === 'notExists'
+                      ) {
+                        return resolveEntityValues({
+                          actualValue: actualPropertyValue,
+                          checkMode: entityPropertyDescriptor.checkMode
+                        });
+                      }
+
+                      return resolveEntityValues({
+                        actualValue: actualPropertyValue,
+                        descriptorValue: entityPropertyDescriptor.value,
+                        checkMode: entityPropertyDescriptor.checkMode,
+                        oneOf: entityPropertyDescriptor.oneOf ?? false
+                      });
+                    }
+                  );
+                }
+              );
+
+              if (!isMatchedByEntities) continue;
+            }
 
             const params: GraphQLSubscriptionParams = {
               entities: artifact.config.entities ?? {},
@@ -289,12 +297,12 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
           if (artifact.type === 'raw') {
             const matchedRawArtifacts = matchRawRequestArtifacts({
-              artifacts: [artifact],
+              artifact,
               meta: {
                 path: requestPathname
               }
             });
-            if (!matchedRawArtifacts.length) continue;
+            if (!matchedRawArtifacts) continue;
 
             if (artifact.componentRequestInterceptor) {
               await artifact.componentRequestInterceptor(params);
@@ -314,7 +322,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
             return;
           }
 
-          console.warn(`Unsupported artifact type: ${artifact.type}`);
+          console.warn(`Unsupported artifact type`);
         }
       });
     }
