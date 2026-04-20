@@ -5,10 +5,7 @@ import { getValidationMessageFromPath } from '../../getValidationMessageFromPath
 import { routeConfigSchema } from './routeConfigSchema';
 
 describe('routeConfigSchema: data resolving properties combinations', () => {
-  const incorrectDataResolvingPropertiesCombinations = [
-    {},
-    { data: {}, file: 'data.json', queue: [], settings: { polling: true } }
-  ];
+  const incorrectDataResolvingPropertiesCombinations = [{}];
   incorrectDataResolvingPropertiesCombinations.forEach(
     (incorrectDataResolvingPropertiesCombination) => {
       it(`Should return error on handle object with incorrect data resolving properties combination:\n${JSON.stringify(
@@ -28,11 +25,7 @@ describe('routeConfigSchema: data resolving properties combinations', () => {
     }
   );
 
-  const correctDataResolvingPropertiesCombinations = [
-    { data: {} },
-    { file: 'data.json' },
-    { queue: [], settings: { polling: true } }
-  ];
+  const correctDataResolvingPropertiesCombinations = [{ data: {} }, { data: () => ({ ok: true }) }];
   correctDataResolvingPropertiesCombinations.forEach(
     (correctDataResolvingPropertiesCombination) => {
       it(`Should pass object with correct data resolving properties combination:\n${JSON.stringify(

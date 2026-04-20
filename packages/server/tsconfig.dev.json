@@ -10,6 +10,7 @@
       "@/core/handlers": ["./src/core/handlers"],
       "@/core/rest": ["./src/core/rest"],
       "@/core/graphql": ["./src/core/graphql"],
+      "@/core/ws": ["./src/core/ws"],
       "@/core/middlewares": ["./src/core/middlewares"],
       "@/utils/helpers": ["./src/utils/helpers"],
       "@/utils/helpers/tests": ["./src/utils/helpers/tests"],

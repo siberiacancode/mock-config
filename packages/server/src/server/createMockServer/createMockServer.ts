@@ -2,18 +2,23 @@ import type { Express } from 'express';
 
 import bodyParser from 'body-parser';
 import express from 'express';
-import { createGraphQLRoute } from 'src/core/graphql/createGraphQLRoute/createGraphQLRoute';
-import { createRestRoute } from 'src/core/rest/createRestRoute/createRestRoute';
+import { WebSocketServer } from 'ws';
 
 import type {
   BaseUrl,
   GraphQLRequestArtifact,
   MockServerComponent,
   MockServerConfig,
-  RestRequestArtifact
+  RestRequestArtifact,
+  WsRequestArtifact
 } from '@/utils/types';
 
 import { createDatabaseRoutes } from '@/core/database';
+import {
+  calculateGraphQLRouteConfigWeight,
+  createGraphQLRoute,
+  prepareGraphQLRequestArtifacts
+} from '@/core/graphql';
 import {
   contextMiddleware,
   cookieParseMiddleware,
@@ -23,17 +28,25 @@ import {
   requestInterceptorMiddleware,
   staticMiddleware
 } from '@/core/middlewares';
+import {
+  calculateRestRouteConfigWeight,
+  createRestRoute,
+  prepareRestRequestArtifacts
+} from '@/core/rest';
+import { createWsRoute } from '@/core/ws';
 import { urlJoin } from '@/utils/helpers';
 import { validateMockServerConfig } from '@/utils/validate';
-
-import { calculateGraphQLRouteConfigWeight } from '../../core/graphql/createGraphQLRoute/helpers';
-import { calculateRestRouteConfigWeight } from '../../core/rest/createRestRoute/helpers';
 
 export const createMockServer = (
   mockServerConfig: MockServerConfig,
   server: Express = express()
 ) => {
   validateMockServerConfig(mockServerConfig);
+
+  const ws = new WebSocketServer({
+    noServer: true
+  });
+
   const [option, ...mockServerComponents] = mockServerConfig;
 
   const mockServerSettings = !('configs' in option) ? option : undefined;
@@ -52,7 +65,7 @@ export const createMockServer = (
 
   server.use(bodyParser.text());
 
-  contextMiddleware(server, { database });
+  contextMiddleware(server, { database, ws });
 
   cookieParseMiddleware(server);
 
@@ -83,15 +96,14 @@ export const createMockServer = (
     ? mockServerComponents
     : (mockServerConfig as MockServerComponent[]);
 
-  const { restRequestsArtifacts, graphQLRequestsArtifacts } = components.reduce(
+  const { restRequestArtifacts, graphQLRequestArtifacts, wsRequestArtifacts } = components.reduce(
     (acc, component) => {
       component.configs.forEach((config) => {
         const isRest = 'method' in config;
         if (isRest) {
           config.routes.forEach((route) => {
-            acc.restRequestsArtifacts.push({
-              key: `${serverBaseUrl}${component.baseUrl}/${config.method}/${config.path}`,
-              baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '/') as BaseUrl,
+            acc.restRequestArtifacts.push({
+              baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
               method: config.method,
               path: config.path,
               config: route,
@@ -111,11 +123,8 @@ export const createMockServer = (
         const isGraphql = 'operationType' in config;
         if (isGraphql) {
           config.routes.forEach((route) => {
-            acc.graphQLRequestsArtifacts.push({
-              key: `${serverBaseUrl}${component.baseUrl}/${config.operationType}/${
-                'operationName' in config ? config.operationName : config.query
-              }`,
-              baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '/') as BaseUrl,
+            acc.graphQLRequestArtifacts.push({
+              baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
               operationType: config.operationType,
               operationName: 'operationName' in config ? config.operationName : undefined,
               query: 'query' in config ? config.query : undefined,
@@ -132,34 +141,73 @@ export const createMockServer = (
             });
           });
         }
+
+        const isWs = 'type' in config;
+        if (isWs) {
+          const baseUrl = urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl;
+          config.routes.forEach((route) => {
+            acc.wsRequestArtifacts.push({
+              baseUrl,
+              type: config.type,
+              config: route,
+              weight: 0,
+              componentRequestInterceptor: component.interceptors?.request,
+              componentResponseInterceptor: component.interceptors?.response
+            } as WsRequestArtifact);
+          });
+        }
       });
 
       return acc;
     },
     {
-      restRequestsArtifacts: [] as RestRequestArtifact[],
-      graphQLRequestsArtifacts: [] as GraphQLRequestArtifact[]
+      restRequestArtifacts: [] as RestRequestArtifact[],
+      graphQLRequestArtifacts: [] as GraphQLRequestArtifact[],
+      wsRequestArtifacts: [] as WsRequestArtifact[]
     }
   );
 
-  const sortedRestRequestsArtifacts = restRequestsArtifacts.toSorted(
-    (first, second) => second.weight - first.weight
-  );
-  const sortedGraphQLRequestsArtifacts = graphQLRequestsArtifacts.toSorted(
-    (first, second) => second.weight - first.weight
-  );
+  const wsBaseUrls = new Set<string>(wsRequestArtifacts.map((artifact) => artifact.baseUrl));
+  const originalListen = server.listen.bind(server);
+  server.listen = ((...args: any[]) => {
+    const httpServer = originalListen(...args);
+    httpServer.on('upgrade', (request, socket, head) => {
+      const [requestPathname] = request.url!.split('?');
+      const shouldHandleUpgrade = [...wsBaseUrls].some((baseUrl) => {
+        if (baseUrl === '/') return true;
+        return requestPathname === baseUrl || requestPathname.startsWith(`${baseUrl}/`);
+      });
 
-  if (sortedRestRequestsArtifacts.length) {
+      if (!shouldHandleUpgrade) {
+        socket.destroy();
+        return;
+      }
+
+      ws.handleUpgrade(request, socket, head, (upgradedSocket) => {
+        ws.emit('connection', upgradedSocket, request);
+      });
+    });
+    return httpServer;
+  }) as typeof server.listen;
+
+  if (restRequestArtifacts.length) {
     createRestRoute({
       server,
-      restRequestArtifacts: sortedRestRequestsArtifacts
+      restRequestArtifacts: prepareRestRequestArtifacts(restRequestArtifacts)
     });
   }
 
-  if (sortedGraphQLRequestsArtifacts.length) {
+  if (graphQLRequestArtifacts.length) {
     createGraphQLRoute({
       server,
-      graphQLRequestArtifacts: sortedGraphQLRequestsArtifacts
+      graphQLRequestArtifacts: prepareGraphQLRequestArtifacts(graphQLRequestArtifacts)
+    });
+  }
+
+  if (wsRequestArtifacts.length) {
+    createWsRoute({
+      server: ws,
+      wsRequestArtifacts
     });
   }
 

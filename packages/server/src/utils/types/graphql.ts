@@ -19,7 +19,6 @@ export type GraphQLEntitiesByEntityName = {
 
 export interface GraphQLSettings {
   readonly delay?: number;
-  readonly polling?: boolean;
   readonly status?: number;
 }
 
@@ -37,36 +36,29 @@ export interface GraphQLParams<
   response: ExpressResponse;
   appendHeader: (field: string, value?: string | string[]) => void;
   attachment: (filename: string) => void;
+  broadcast: <Response>(response: Response) => void;
   clearCookie: (name: string, options?: CookieOptions) => void;
   getCookie: (name: string) => GraphQLCookieValue;
   getRequestHeader: (field: string) => GraphQLHeaderValue;
   getRequestHeaders: () => Record<string, GraphQLHeaderValue>;
   getResponseHeader: (field: string) => GraphQLHeaderValue;
   getResponseHeaders: () => Record<string, GraphQLHeaderValue>;
+  next: () => void;
   setCookie: (name: string, value: string, options?: CookieOptions) => void;
   setDelay: (delay: number) => Promise<void>;
   setHeader: (field: string, value?: string | string[]) => void;
   setStatusCode: (statusCode: number) => void;
 }
 
-export type GraphqlDataResponse = ((params: GraphQLParams) => Data | Promise<Data>) | Data;
+export type GraphqlDataResponseFunction = (params: GraphQLParams) => Data | Promise<Data>;
+export type GraphqlDataResponse = Data | GraphqlDataResponseFunction;
 
-export type GraphQLRouteConfig = (
-  | {
-      settings: GraphQLSettings & { polling: true };
-      queue: Array<{
-        time?: number;
-        data: GraphqlDataResponse;
-      }>;
-    }
-  | {
-      settings?: GraphQLSettings & { polling?: false };
-      data: GraphqlDataResponse;
-    }
-) & {
+export interface GraphQLRouteConfig {
+  data: GraphqlDataResponse;
   entities?: GraphQLEntitiesByEntityName;
   interceptors?: Interceptors<'graphql'>;
-};
+  settings?: GraphQLSettings;
+}
 
 interface BaseGraphQLRequestConfig {
   interceptors?: Interceptors<'graphql'>;
@@ -89,7 +81,6 @@ export interface GraphQLRequestArtifact {
   componentRequestInterceptor?: Interceptors<'graphql'>['request'];
   componentResponseInterceptor?: Interceptors<'graphql'>['response'];
   config: GraphQLRouteConfig;
-  key: string;
   operationName?: GraphQLOperationName;
   operationType: GraphQLOperationType;
   query?: string;

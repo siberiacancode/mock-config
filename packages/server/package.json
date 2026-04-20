@@ -1,6 +1,6 @@
 {
   "name": "mock-config-server",
-  "version": "4.0.3",
+  "version": "5.0.0-beta.1",
   "description": "Tool that easily and quickly imitates server operation, create full fake api in few steps",
   "author": {
     "name": "SIBERIA CAN CODE 🧊",
@@ -37,7 +37,7 @@
     "dist"
   ],
   "engines": {
-    "node": "^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0"
+    "node": "^16.0.0 || >=17.0.0"
   },
   "scripts": {
     "prepublishOnly": "git diff --exit-code",
@@ -72,6 +72,7 @@
     "graphql": "^16.10.0",
     "please-upgrade-node": "^3.2.0",
     "prompts": "^2.4.2",
+    "ws": "^8.20.0",
     "yargs": "^17.7.2",
     "zod": "^3.24.1"
   },
@@ -80,6 +81,7 @@
     "@swc/cli": "^0.6.0",
     "@swc/core": "^1.10.7",
     "@types/supertest": "^6.0.2",
+    "@types/ws": "^8.18.1",
     "husky": "^9.1.7",
     "lint-staged": "^15.3.0",
     "nodemon": "^3.1.9",

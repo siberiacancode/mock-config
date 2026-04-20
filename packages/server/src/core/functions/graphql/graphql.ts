@@ -1,4 +1,5 @@
 import type {
+  Data,
   GraphQLEntitiesByEntityName,
   GraphQLOperationName,
   GraphQLOperationType,
@@ -8,11 +9,13 @@ import type {
   GraphQLSettings
 } from '@/utils/types';
 
+import { createQueueHandler } from './helpers';
+
 interface GraphQLRequestInput {
   body?: unknown;
   params?: unknown;
   query?: unknown;
-  response?: unknown;
+  response?: Data;
 }
 
 type ReservedGraphQLConfigKeys = {
@@ -57,14 +60,14 @@ const resolveConfigType = <Options extends GraphQLRequestInput>(config: GraphQLC
     return { type: 'inlineResponse' as const, config };
   if ('queue' in config) return { type: 'queue' as const, config };
   if ('response' in config) return { type: 'data' as const, config };
-  if ('handler' in config) return { type: 'handlerObj' as const, config };
+  if ('handler' in config) return { type: 'handler' as const, config };
   return { type: 'inlineResponse' as const, config };
 };
 
 const createConfigResolver = <Options extends GraphQLRequestInput>(
   config: GraphQLConfig<Options>,
-  settings?: GraphQLSettings
-) => {
+  settings: GraphQLSettings = {}
+): GraphQLRouteConfig => {
   const resolvedConfig = resolveConfigType(config);
 
   switch (resolvedConfig.type) {
@@ -72,28 +75,34 @@ const createConfigResolver = <Options extends GraphQLRequestInput>(
       return {
         data: resolvedConfig.config,
         entities: {},
-        settings: { ...settings, polling: false }
+        settings
       };
 
     case 'data': {
       return {
         data: resolvedConfig.config.response,
         entities: resolvedConfig.config.match ?? {},
-        settings: { ...settings, polling: false }
+        settings
       };
     }
 
     case 'queue': {
-      return {
-        queue: resolvedConfig.config.queue.map((item) => {
-          if ('handler' in item) {
-            return { data: item.handler, time: item.time };
-          }
+      const normalizedQueue = resolvedConfig.config.queue.map((item) => {
+        if ('handler' in item) {
+          return { data: item.handler, time: item.time };
+        }
 
+        if ('response' in item) {
           return { data: item.response, time: item.time };
-        }),
+        }
+
+        throw new Error(`Unexpected queue item kind: ${JSON.stringify(item, null, 2)}`);
+      });
+
+      return {
+        data: createQueueHandler(normalizedQueue),
         entities: resolvedConfig.config.match ?? {},
-        settings: { ...settings, polling: true }
+        settings
       };
     }
 
@@ -101,14 +110,14 @@ const createConfigResolver = <Options extends GraphQLRequestInput>(
       return {
         data: resolvedConfig.config,
         entities: {},
-        settings: { ...settings, polling: false }
+        settings
       };
 
-    case 'handlerObj': {
+    case 'handler': {
       return {
         data: resolvedConfig.config.handler,
         entities: resolvedConfig.config.match ?? {},
-        settings: { ...settings, polling: false }
+        settings
       };
     }
 
@@ -171,17 +180,15 @@ const createGraphQLFactory = <Mode extends GraphQLFactoryMode>(mode: Mode) => {
     if (mode === 'raw') {
       return {
         query: identifier as string,
-        operationType: (operationType ?? 'query') as GraphQLOperationType,
-        routes: [
-          createConfigResolver(config as GraphQLConfig<Options>, settings) as GraphQLRouteConfig
-        ]
+        operationType: operationType ?? 'query',
+        routes: [createConfigResolver(config, settings)]
       };
     }
 
     return {
-      operationName: identifier as GraphQLOperationName,
+      operationName: identifier,
       operationType: mode,
-      routes: [createConfigResolver(config, settings) as GraphQLRouteConfig]
+      routes: [createConfigResolver(config, settings)]
     };
   }
 
