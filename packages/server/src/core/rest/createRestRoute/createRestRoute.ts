@@ -119,7 +119,8 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
                 entityPropertyDescriptorOrValue
               );
 
-              // ✅ important: transform header keys to lower case because browsers send headers in lowercase
+              // ✅ important:
+              // transform header keys to lower case because browsers send headers in lowercase
               const actualPropertyKey =
                 entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
               const actualPropertyValue = actualEntity[actualPropertyKey];
@@ -185,6 +186,9 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         response,
         next,
         entities: matchedRouteConfig.config.entities ?? {},
+        broadcast: (payload) => {
+          request.context.broadcast(payload);
+        },
         appendHeader: (field, value) => {
           response.append(field, value);
         },

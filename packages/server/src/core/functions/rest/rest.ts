@@ -226,7 +226,25 @@ interface RestSseClient<Response extends string> {
   ) => void;
 }
 
+interface SseRestHandlerObject<
+  Method extends 'get' | 'post',
+  Options extends RestRequestInput,
+  Response extends string
+> {
+  handler: RestFunction<Method, Options, { client: RestSseClient<Response> }>;
+  match?: RestEntitiesByEntityName<Method>;
+}
+
 const createSseRestFactory = <Method extends 'get' | 'post'>(method: Method) => {
+  function createSseRequestConfig<
+    Options extends RestRequestInput = Partial<RestRequestInput>,
+    Response extends string = string
+  >(
+    path: RestRequestConfig['path'],
+    config: SseRestHandlerObject<Method, Options, Response>,
+    settings?: RestSettings
+  ): BaseRestRequestConfig<Method>;
+
   function createSseRequestConfig<
     Options extends RestRequestInput = Partial<RestRequestInput>,
     Response extends string = string
@@ -234,7 +252,21 @@ const createSseRestFactory = <Method extends 'get' | 'post'>(method: Method) => 
     path: RestRequestConfig['path'],
     config: RestFunction<Method, Options, { client: RestSseClient<Response> }>,
     settings?: RestSettings
+  ): BaseRestRequestConfig<Method>;
+
+  function createSseRequestConfig<
+    Options extends RestRequestInput = Partial<RestRequestInput>,
+    Response extends string = string
+  >(
+    path: RestRequestConfig['path'],
+    config:
+      | RestFunction<Method, Options, { client: RestSseClient<Response> }>
+      | SseRestHandlerObject<Method, Options, Response>,
+    settings?: RestSettings
   ): BaseRestRequestConfig<Method> {
+    const normalizedConfig: SseRestHandlerObject<Method, Options, Response> =
+      typeof config === 'function' ? { handler: config } : config;
+
     const wrapperHandler: RestFunction<Method, Options> = (params) => {
       params.setHeader('connection', 'keep-alive');
       params.setHeader('content-type', 'text/event-stream');
@@ -251,13 +283,15 @@ const createSseRestFactory = <Method extends 'get' | 'post'>(method: Method) => 
         }
       };
 
-      return config({ ...params, client });
+      return normalizedConfig.handler({ ...params, client });
     };
 
     return {
       method,
       path,
-      routes: [createConfigResolver(wrapperHandler, settings)]
+      routes: [
+        createConfigResolver({ handler: wrapperHandler, match: normalizedConfig.match }, settings)
+      ]
     };
   }
 

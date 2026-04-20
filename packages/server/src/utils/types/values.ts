@@ -11,6 +11,13 @@ export type Query = ExpressQuery;
 export type Params = ParamsDictionary;
 export type Cookies = Record<string, string>;
 
-export type DataPrimitive = boolean | number | string | null | undefined | void;
-export type DataLeaf = Buffer | DataPrimitive;
-export type Data = Data[] | DataLeaf | { [key: string]: Data };
+export type Data =
+  | boolean
+  | number
+  | string
+  | any[]
+  | Buffer
+  | Record<any, any>
+  | null
+  | undefined
+  | void;

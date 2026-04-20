@@ -25,7 +25,7 @@ describe('routeConfigSchema: data resolving properties combinations', () => {
     }
   );
 
-  const correctDataResolvingPropertiesCombinations = [{ data: {} }];
+  const correctDataResolvingPropertiesCombinations = [{ data: {} }, { data: () => ({ ok: true }) }];
   correctDataResolvingPropertiesCombinations.forEach(
     (correctDataResolvingPropertiesCombination) => {
       it(`Should pass object with correct data resolving properties combination:\n${JSON.stringify(

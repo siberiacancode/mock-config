@@ -25,12 +25,10 @@ describe('routeConfigSchema: data resolving properties combinations', () => {
     }
   );
 
-  const correctDataResolvingPropertiesCombinations = [{ data: {} }];
+  const correctDataResolvingPropertiesCombinations = [{ data: () => ({ ok: true }) }];
   correctDataResolvingPropertiesCombinations.forEach(
     (correctDataResolvingPropertiesCombination) => {
-      it(`Should pass object with correct data resolving properties combination:\n${JSON.stringify(
-        correctDataResolvingPropertiesCombination
-      )}`, () => {
+      it('Should pass object with function data resolving strategy', () => {
         const parseResult = routeConfigSchema.safeParse(correctDataResolvingPropertiesCombination);
         expect(parseResult.success).toBe(true);
       });

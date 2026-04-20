@@ -1,7 +1,7 @@
 import type { RawData, WebSocket } from 'ws';
 
 import type { VariablesPlainEntity } from './entities';
-import type { GraphQLOperationName, GraphQLSettings } from './graphql';
+import type { GraphQLOperationName } from './graphql';
 import type { Data, PlainObject } from './values';
 
 export interface GraphQLSubscriptionEntitiesByEntityName {
@@ -23,18 +23,22 @@ export type GraphQLSubscriptionDataResponse =
   | ((params: GraphQLSubscriptionParams) => Data | Promise<Data>)
   | Data;
 
+export interface GraphQLSubscriptionSettings {
+  readonly delay?: number;
+}
+
 export interface GraphQLSubscriptionRouteConfig {
   data: GraphQLSubscriptionDataResponse;
   entities?: GraphQLSubscriptionEntitiesByEntityName;
-  settings?: GraphQLSettings;
+  settings?: GraphQLSubscriptionSettings;
 }
 
-export type GraphQLSubscriptionHttpOperationType = 'subscription';
+export type GraphQLSubscriptionOperationType = 'subscription';
 
 export interface GraphQLSubscriptionRequestConfig {
   interceptors?: GraphQLSubscriptionRequestInterceptors;
   operationName?: GraphQLOperationName;
-  operationType: GraphQLSubscriptionHttpOperationType;
+  operationType: GraphQLSubscriptionOperationType;
   query?: string;
   routes: GraphQLSubscriptionRouteConfig[];
 }

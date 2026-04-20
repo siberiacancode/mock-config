@@ -1,27 +1,27 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { BaseUrl, GraphQLWsArtifact } from '@/utils/types';
+import type { GraphQLWsRequestArtifact, WsRequestArtifact } from '@/utils/types';
 
 import { matchGraphQLSubscriptionRequestArtifacts } from './matchGraphQLSubscriptionRequestArtifacts';
 
-const makeArtifact = (overrides: Partial<GraphQLWsArtifact>): GraphQLWsArtifact =>
+const makeArtifact = (overrides: Partial<GraphQLWsRequestArtifact>) =>
   ({
     type: 'graphql-ws',
-    baseUrl: '/' as BaseUrl,
+    baseUrl: '/',
     operationType: 'subscription',
     config: { data: { ok: true } },
     weight: 0,
     ...overrides
-  }) as GraphQLWsArtifact;
+  }) as WsRequestArtifact;
 
 describe('matchGraphQLSubscriptionRequestArtifacts', () => {
   it('Should not match when path differs from baseUrl', () => {
     const matched = matchGraphQLSubscriptionRequestArtifacts({
-      artifacts: [makeArtifact({ baseUrl: '/sub', operationName: 'OnMsg' })],
+      artifacts: [makeArtifact({ baseUrl: '/sub', operationName: 'Users' })],
       meta: {
         path: '/other',
         operationType: 'subscription',
-        operationName: 'OnMsg'
+        operationName: 'Users'
       }
     });
     expect(matched).toHaveLength(0);
@@ -29,11 +29,11 @@ describe('matchGraphQLSubscriptionRequestArtifacts', () => {
 
   it('Should return empty when operationType is not subscription', () => {
     const matched = matchGraphQLSubscriptionRequestArtifacts({
-      artifacts: [makeArtifact({ operationName: 'OnMsg' })],
+      artifacts: [makeArtifact({ operationName: 'Users' })],
       meta: {
         path: '/',
         operationType: 'query',
-        operationName: 'OnMsg'
+        operationName: 'Users'
       }
     });
     expect(matched).toHaveLength(0);
@@ -41,11 +41,11 @@ describe('matchGraphQLSubscriptionRequestArtifacts', () => {
 
   it('Should match equivalent queries with different insignificant whitespace', () => {
     const matched = matchGraphQLSubscriptionRequestArtifacts({
-      artifacts: [makeArtifact({ query: 'subscription Sub { x }' })],
+      artifacts: [makeArtifact({ query: 'subscription Users { id }' })],
       meta: {
         path: '/',
         operationType: 'subscription',
-        query: `subscription  Sub  {  x  }`
+        query: `subscription  Users  {  id  }`
       }
     });
     expect(matched).toHaveLength(1);
@@ -53,11 +53,11 @@ describe('matchGraphQLSubscriptionRequestArtifacts', () => {
 
   it('Should match operation name string', () => {
     const matched = matchGraphQLSubscriptionRequestArtifacts({
-      artifacts: [makeArtifact({ operationName: 'OnCounter' })],
+      artifacts: [makeArtifact({ operationName: 'Users' })],
       meta: {
         path: '/',
         operationType: 'subscription',
-        operationName: 'OnCounter'
+        operationName: 'Users'
       }
     });
     expect(matched).toHaveLength(1);
@@ -71,7 +71,7 @@ describe('matchGraphQLSubscriptionRequestArtifacts', () => {
       meta: {
         path: '/',
         operationType: 'subscription',
-        operationName: 'X'
+        operationName: 'Users'
       }
     });
 

@@ -1,32 +1,53 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { WS_MESSAGE_EVENT } from '@/utils/types';
-
 import { ws } from './ws';
 
 describe('ws', () => {
-  it('Should build config for ws.event inline response', () => {
-    const result = ws.event('user.created', { ok: true });
+  it('Should build config for ws.message handler', () => {
+    const handler = vi.fn();
+    const result = ws.message(handler);
 
     expect(result).toStrictEqual({
-      event: 'user.created',
+      type: 'raw',
       routes: [
         {
-          data: { ok: true }
+          data: handler
         }
       ]
     });
   });
 
-  it('Should build config for ws.message sugar handler', () => {
+  it('Should build config for ws.connection handler', () => {
     const handler = vi.fn();
-    const result = ws.message(handler);
+    const result = ws.connection(handler);
 
     expect(result).toStrictEqual({
-      event: WS_MESSAGE_EVENT,
+      type: 'connection',
+      routes: [{ data: handler }]
+    });
+  });
+
+  it('Should build config for ws.connection handler object with match', () => {
+    const handler = vi.fn();
+    const result = ws.connection({
+      handler,
+      match: {
+        headers: {
+          key: 'value'
+        }
+      }
+    });
+
+    expect(result).toStrictEqual({
+      type: 'connection',
       routes: [
         {
-          data: handler
+          data: handler,
+          entities: {
+            headers: {
+              key: 'value'
+            }
+          }
         }
       ]
     });

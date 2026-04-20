@@ -1,11 +1,11 @@
 import { parse, print, stripIgnoredCharacters } from 'graphql';
 
-import type { GraphQLWsArtifact } from '@/utils/types';
+import type { WsRequestArtifact } from '@/utils/types';
 
 import { normalizeUrl } from '@/utils/helpers';
 
 interface MatchGraphQLSubscriptionRequestArtifactsParams {
-  artifacts: GraphQLWsArtifact[];
+  artifacts: WsRequestArtifact[];
   meta: {
     path: string;
     operationType: string;
@@ -19,6 +19,8 @@ export const matchGraphQLSubscriptionRequestArtifacts = ({
   meta
 }: MatchGraphQLSubscriptionRequestArtifactsParams) =>
   artifacts.filter((artifact) => {
+    if (artifact.type !== 'graphql-ws') return false;
+
     if (normalizeUrl(meta.path) !== normalizeUrl(artifact.baseUrl)) {
       return false;
     }

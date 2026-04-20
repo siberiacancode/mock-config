@@ -1,66 +1,102 @@
-import type { RawData, WebSocket } from 'ws';
+import type { Buffer } from 'node:buffer';
+import type { IncomingMessage } from 'node:http';
+import type { WebSocket } from 'ws';
 
-import type { BodyPlainEntity } from './entities';
+import type { MappedEntity } from './entities';
 import type { GraphQLOperationName } from './graphql';
 import type {
-  GraphQLSubscriptionHttpOperationType,
+  GraphQLSubscriptionOperationType,
   GraphQLSubscriptionRouteConfig
 } from './graphql-subscription';
 import type { BaseUrl } from './server';
 import type { Data } from './values';
 
-export const WS_MESSAGE_EVENT = Symbol.for('ws.message');
+export interface WsFrameBinary {
+  isBinary: true;
+  raw: Buffer;
+}
+export interface WsFrameText {
+  isBinary: false;
+  raw: string;
+}
+export type WsFrame = WsFrameBinary | WsFrameText;
 
-export type WsEventName = string | RegExp;
-export type WsEntityName = 'meta' | 'payload';
-
-export type WsEntity<EntityName extends WsEntityName = WsEntityName> = EntityName extends 'payload'
-  ? BodyPlainEntity
-  : EntityName extends 'meta'
-    ? BodyPlainEntity
-    : never;
-
-export type WsEntitiesByEntityName = {
-  [EntityName in WsEntityName]?: WsEntity<EntityName>;
-};
-
-export interface WsParams<Payload = unknown, Meta = Record<string, unknown>> {
-  event: string;
-  meta: Meta;
-  payload: Payload;
-  raw: RawData;
+export type WsParams = WsFrame & {
+  broadcast: <Response = unknown>(response: Response) => void;
   socket: WebSocket;
   send: <Response = unknown>(response: Response) => void;
   setDelay: (delay: number) => Promise<void>;
-}
-export type WsDataResponse = ((params: WsParams) => Data | Promise<Data>) | Data;
+};
 
-export interface WsRouteConfig {
+export type WsDataResponse = (params: WsParams) => Data | Promise<Data>;
+
+export interface WsRawRouteConfig {
   data: WsDataResponse;
-  entities?: WsEntitiesByEntityName;
+  settings?: WsSettings;
 }
 
-export interface WsRequestConfig {
-  event: WsEventName | typeof WS_MESSAGE_EVENT;
-  routes: WsRouteConfig[];
+export interface WsConnectionParams {
+  request: IncomingMessage;
+  socket: WebSocket;
+  broadcast: <Response = unknown>(response: Response) => void;
+  send: <Response = unknown>(response: Response) => void;
+  setDelay: (delay: number) => Promise<void>;
 }
 
-export interface WsArtifact {
+export type WsConnectionEntityName = 'cookies' | 'headers' | 'query';
+export type WsConnectionEntitiesByEntityName = {
+  [EntityName in WsConnectionEntityName]?: MappedEntity;
+};
+
+export type WsConnectionDataResponse = (params: WsConnectionParams) => Data | Promise<Data>;
+
+export interface WsConnectionRouteConfig {
+  data: WsConnectionDataResponse;
+  entities?: WsConnectionEntitiesByEntityName;
+}
+
+export interface WsRawRequestConfig {
+  routes: WsRawRouteConfig[];
+  type: 'raw';
+}
+
+export interface WsConnectionRequestConfig {
+  routes: WsConnectionRouteConfig[];
+  type: 'connection';
+}
+
+export type WsRequestConfig = WsConnectionRequestConfig | WsRawRequestConfig;
+
+interface BaseWsRequestArtifact {
   baseUrl: BaseUrl;
-  config: WsRouteConfig;
-  event: WsEventName | typeof WS_MESSAGE_EVENT;
-  type: 'ws';
+  componentRequestInterceptor?: any;
+  componentResponseInterceptor?: any;
   weight: number;
 }
 
-export interface GraphQLWsArtifact {
-  baseUrl: BaseUrl;
+export interface WsSettings {
+  readonly delay?: number;
+}
+
+export interface RawWsRequestArtifact extends BaseWsRequestArtifact {
+  config: WsRawRouteConfig;
+  type: 'raw';
+}
+
+export interface ConnectionWsRequestArtifact extends BaseWsRequestArtifact {
+  config: WsConnectionRouteConfig;
+  type: 'connection';
+}
+
+export interface GraphQLWsRequestArtifact extends BaseWsRequestArtifact {
   config: GraphQLSubscriptionRouteConfig;
   operationName?: GraphQLOperationName;
-  operationType: GraphQLSubscriptionHttpOperationType;
+  operationType: GraphQLSubscriptionOperationType;
   query?: string;
   type: 'graphql-ws';
-  weight: number;
 }
 
-export type WsRequestArtifact = GraphQLWsArtifact | WsArtifact;
+export type WsRequestArtifact =
+  | ConnectionWsRequestArtifact
+  | GraphQLWsRequestArtifact
+  | RawWsRequestArtifact;

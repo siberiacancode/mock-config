@@ -1,8 +1,4 @@
 import type { Request } from 'express';
-import type { Buffer } from 'node:buffer';
-import type { IncomingMessage } from 'node:http';
-import type { Duplex } from 'node:stream';
-import type { WebSocket } from 'ws';
 import type { Arguments } from 'yargs';
 
 import type { Database, Orm } from './database';
@@ -31,12 +27,12 @@ export interface Cors {
 
 export type Port = number;
 export type BaseUrl = `/${string}`;
-export type WebSocketUpgradeHandler = (
-  request: IncomingMessage,
-  socket: Duplex,
-  head: Buffer
-) => boolean;
-export type RegisterWebSocketUpgradeHandler = (handler: WebSocketUpgradeHandler) => void;
+
+export interface WsConfig {
+  baseUrl?: BaseUrl;
+  configs: WsRequestConfig[];
+  interceptors?: Interceptors<'rest'>;
+}
 
 export interface DatabaseConfig {
   data: `${string}.json` | Record<string, unknown>;
@@ -64,7 +60,7 @@ declare global {
     interface Request {
       context: {
         orm: Orm<Database>;
-        socket?: WebSocket | null;
+        broadcast: <Response>(response: Response) => void;
       };
     }
   }

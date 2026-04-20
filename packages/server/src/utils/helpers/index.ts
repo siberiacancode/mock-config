@@ -8,5 +8,6 @@ export * from './interceptors';
 export * from './isPlainObject/isPlainObject';
 export * from './isPrimitive/isPrimitive';
 export * from './logger';
+export * from './request';
 export * from './sleep';
 export * from './url';

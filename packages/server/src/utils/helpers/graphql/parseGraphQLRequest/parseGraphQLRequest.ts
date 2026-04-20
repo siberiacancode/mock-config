@@ -1,11 +1,11 @@
 import type { Request } from 'express';
 
 import { getGraphQLInput } from '../getGraphQLInput/getGraphQLInput';
-import { parseQuery } from '../parseQuery/parseQuery';
+import { parseGraphQLQuery } from '../parseGraphQLQuery/parseGraphQLQuery';
 
-export const parseGraphQLRequest = (request: Request): ReturnType<typeof parseQuery> => {
+export const parseGraphQLRequest = (request: Request): ReturnType<typeof parseGraphQLQuery> => {
   const graphQLInput = getGraphQLInput(request);
   if (!graphQLInput.query) return null;
 
-  return parseQuery(graphQLInput.query);
+  return parseGraphQLQuery(graphQLInput.query);
 };
