@@ -93,9 +93,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
             // transform header keys to lower case
             // because browsers send headers in lowercase
             const actualPropertyKey =
-              entityName === 'headers' && typeof entityPropertyKey === 'string'
-                ? entityPropertyKey.toLowerCase()
-                : entityPropertyKey;
+              entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
             const actualPropertyValue = actualEntity[actualPropertyKey];
 
             const comparator = isComparator(valueOrComparator)
