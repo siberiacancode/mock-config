@@ -66,7 +66,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       );
       const rawArtifacts = matchedRequestArtifacts.filter((artifact) => artifact.type === 'raw');
 
-      request.queries = parseQuery(request.url ?? '');
+      request.queries = parseQuery(request.url!);
       request.cookies = parseCookie(request.headers.cookie ?? '');
 
       for (const artifact of connectionArtifacts) {
@@ -89,9 +89,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
               // transform header keys to lower case
               // because browsers send headers in lowercase
               const actualPropertyKey =
-                entityName === 'headers' && typeof entityPropertyKey === 'string'
-                  ? entityPropertyKey.toLowerCase()
-                  : entityPropertyKey;
+                entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
               const actualPropertyValue = actualEntity[actualPropertyKey];
 
               const comparator = isComparator(valueOrComparator)

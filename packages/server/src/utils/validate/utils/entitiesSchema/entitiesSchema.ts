@@ -27,8 +27,5 @@ export const bodyEntitySchema = z.union([
 
 export const variablesEntitySchema = z.union([
   z.custom<Comparator>(isComparator),
-  z.record(
-    z.string(),
-    z.union([z.boolean(), z.number(), z.string(), z.custom<Comparator>(isComparator)])
-  )
+  z.record(z.string(), z.unknown())
 ]);
