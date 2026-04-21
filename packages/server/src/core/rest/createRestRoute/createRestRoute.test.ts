@@ -170,13 +170,13 @@ describe('createRestRoutes: content', () => {
             routes: [
               {
                 entities: {
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
                 data: ({ request, entities }) => ({
                   url: request.url,
-                  query: entities.query as Record<string, string>
+                  query: entities.queries
                 })
               }
             ]
@@ -264,7 +264,7 @@ describe('createRestRoutes: entities', () => {
                     key1: 'value1',
                     key2: 'value2'
                   },
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
@@ -299,7 +299,7 @@ describe('createRestRoutes: entities', () => {
                     key1: 'value1',
                     key2: 'value2'
                   },
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
@@ -311,7 +311,7 @@ describe('createRestRoutes: entities', () => {
                     key1: 'value1',
                     key2: 'value2'
                   },
-                  query: {
+                  queries: {
                     key1: 'value1',
                     key2: 'value2'
                   }
@@ -333,102 +333,6 @@ describe('createRestRoutes: entities', () => {
     expect(response.body).toStrictEqual({ name: 'John', surname: 'Smith' });
   });
 
-  it('Should strictly compare plain array body if top level descriptor used', async () => {
-    const server = createServer({
-      rest: {
-        configs: [
-          {
-            path: '/users',
-            method: 'post',
-            routes: [
-              {
-                entities: {
-                  body: {
-                    checkMode: 'equals',
-                    value: [
-                      {
-                        key1: 'value1',
-                        key2: { nestedKey1: 'nestedValue1' }
-                      }
-                    ]
-                  }
-                },
-                data: { name: 'John', surname: 'Doe' }
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const successResponse = await request(server)
-      .post('/users')
-      .set('Content-Type', 'application/json')
-      .send([{ key1: 'value1', key2: { nestedKey1: 'nestedValue1' } }]);
-    expect(successResponse.statusCode).toBe(200);
-    expect(successResponse.body).toStrictEqual({
-      name: 'John',
-      surname: 'Doe'
-    });
-
-    const failedResponse = await request(server)
-      .post('/users')
-      .set('Content-Type', 'application/json')
-      .send([
-        {
-          key1: 'value1',
-          key2: { nestedKey1: 'nestedValue1', nestedKey2: 'nestedValue2' }
-        }
-      ]);
-    expect(failedResponse.statusCode).toBe(404);
-  });
-
-  it('Should strictly compare plain object body if top level descriptor used', async () => {
-    const server = createServer({
-      rest: {
-        configs: [
-          {
-            path: '/users',
-            method: 'post',
-            routes: [
-              {
-                entities: {
-                  body: {
-                    checkMode: 'equals',
-                    value: {
-                      key1: 'value1',
-                      key2: { nestedKey1: 'nestedValue1' }
-                    }
-                  }
-                },
-                data: { name: 'John', surname: 'Doe' }
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const successResponse = await request(server)
-      .post('/users')
-      .set('Content-Type', 'application/json')
-      .send({ key1: 'value1', key2: { nestedKey1: 'nestedValue1' } });
-    expect(successResponse.statusCode).toBe(200);
-    expect(successResponse.body).toStrictEqual({
-      name: 'John',
-      surname: 'Doe'
-    });
-
-    const failedResponse = await request(server)
-      .post('/users')
-      .set('Content-Type', 'application/json')
-      .send({
-        key1: 'value1',
-        key2: { nestedKey1: 'nestedValue1', nestedKey2: 'nestedValue2' }
-      });
-    expect(failedResponse.statusCode).toBe(404);
-  });
-
   it('Should correctly resolve flat object body with nested key matching', async () => {
     const server = createServer({
       rest: {
@@ -441,10 +345,7 @@ describe('createRestRoutes: entities', () => {
                 entities: {
                   body: {
                     'key1.nestedKey1': 'nestedValue1',
-                    'key2.nestedKey2': {
-                      checkMode: 'equals',
-                      value: 'nestedValue2'
-                    }
+                    'key2.nestedKey2': 'nestedValue2'
                   }
                 },
                 data: { name: 'John', surname: 'Doe' }
@@ -509,10 +410,7 @@ describe('createRestRoutes: entities', () => {
             routes: [
               {
                 entities: {
-                  body: {
-                    checkMode: 'equals',
-                    value: {}
-                  }
+                  body: {}
                 },
                 data: { name: 'John', surname: 'Doe' }
               }

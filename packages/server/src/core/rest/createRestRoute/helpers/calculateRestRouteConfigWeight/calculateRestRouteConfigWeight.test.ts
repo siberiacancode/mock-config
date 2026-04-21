@@ -14,70 +14,12 @@ describe('calculateRestRouteConfigWeight', () => {
         entities: {
           headers: { key: 'value' },
           cookies: { key: 'value' },
-          query: { key: 'value' },
+          queries: { key: 'value' },
           params: { key: 'value' },
           body: { key: 'value' }
         }
       })
     ).toBe(5);
-  });
-
-  it('Should add one for body exists/notExists descriptor', () => {
-    expect(
-      calculateRestRouteConfigWeight({
-        data: {},
-        entities: {
-          body: { checkMode: 'exists' }
-        }
-      })
-    ).toBe(1);
-    expect(
-      calculateRestRouteConfigWeight({
-        data: {},
-        entities: {
-          body: { checkMode: 'notExists' }
-        }
-      })
-    ).toBe(1);
-  });
-
-  it('Should count keys of body descriptor value when it is a plain object', () => {
-    expect(
-      calculateRestRouteConfigWeight({
-        data: {},
-        entities: {
-          body: {
-            checkMode: 'equals',
-            value: { a: 'value', b: 'value', c: 'value' }
-          }
-        }
-      })
-    ).toBe(3);
-  });
-
-  it('Should add one for body descriptor scalar value', () => {
-    expect(
-      calculateRestRouteConfigWeight({
-        data: {},
-        entities: {
-          body: {
-            checkMode: 'equals',
-            value: 'scalar'
-          }
-        } as any
-      })
-    ).toBe(1);
-  });
-
-  it('Should count plain object body without descriptor', () => {
-    expect(
-      calculateRestRouteConfigWeight({
-        data: {},
-        entities: {
-          body: { a: 'value', b: 'value' }
-        }
-      })
-    ).toBe(2);
   });
 
   it('Should add one for non-plain body array', () => {

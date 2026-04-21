@@ -1,97 +1,34 @@
 import { z } from 'zod';
 
-import { isPlainObject } from '@/utils/helpers';
+import type { Comparator } from '@/utils/types';
 
-import {
-  checkActualValueCheckModeSchema,
-  compareWithDescriptorAnyValueCheckModeSchema,
-  compareWithDescriptorStringValueCheckModeSchema,
-  compareWithDescriptorValueCheckModeSchema,
-  entityDescriptorSchema
-} from '../checkModeSchema/checkModeSchema';
-import { extendedDiscriminatedUnion } from '../extendedDiscriminatedUnion/extendedDiscriminatedUnion';
-import { nestedObjectOrArraySchema } from '../nestedObjectOrArraySchema/nestedObjectOrArraySchema';
-import { plainObjectSchema } from '../plainObjectSchema/plainObjectSchema';
+import { isComparator } from '@/utils/helpers';
 
-/* ----- Plain entity schema ----- */
-
-const plainEntityPrimitiveValueSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
-const plainEntityObjectiveValueSchema = nestedObjectOrArraySchema(plainEntityPrimitiveValueSchema);
-
-const topLevelPlainEntityDescriptorSchema = extendedDiscriminatedUnion('checkMode', [
-  entityDescriptorSchema(checkActualValueCheckModeSchema),
-  entityDescriptorSchema(z.literal('function'), z.function()),
-  entityDescriptorSchema(
-    compareWithDescriptorAnyValueCheckModeSchema,
-    plainEntityObjectiveValueSchema
-  )
-]);
-
-const propertyLevelPlainEntityDescriptorSchema = extendedDiscriminatedUnion('checkMode', [
-  entityDescriptorSchema(checkActualValueCheckModeSchema),
-  entityDescriptorSchema(z.literal('function'), z.function()),
-  entityDescriptorSchema(z.literal('regExp'), z.instanceof(RegExp)),
-  entityDescriptorSchema(
-    compareWithDescriptorAnyValueCheckModeSchema,
-    z.union([plainEntityPrimitiveValueSchema, plainEntityObjectiveValueSchema])
-  ),
-  entityDescriptorSchema(
-    compareWithDescriptorStringValueCheckModeSchema,
-    plainEntityPrimitiveValueSchema
-  )
-]);
-
-const nonCheckModeSchema = (schema: z.ZodTypeAny) =>
-  z
-    .custom((value) => typeof value === 'object')
-    .superRefine((value, context) => {
-      if (isPlainObject(value) && 'checkMode' in value) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['checkMode'],
-          fatal: true
-        });
-        return z.NEVER;
-      }
-    })
-    .pipe(schema);
-
-const topLevelPlainEntityRecordSchema = nonCheckModeSchema(
+export const mappedEntitySchema = z.union([
+  z.custom<Comparator>(isComparator),
   z.record(
+    z.string(),
     z.union([
-      propertyLevelPlainEntityDescriptorSchema,
-      nonCheckModeSchema(plainEntityObjectiveValueSchema),
-      plainEntityPrimitiveValueSchema
+      z.boolean(),
+      z.number(),
+      z.string(),
+      z.custom<Comparator>(isComparator),
+      z.array(z.union([z.boolean(), z.number(), z.string()]))
     ])
   )
-);
-
-const topLevelPlainEntityArraySchema = z.array(
-  z.union([plainEntityPrimitiveValueSchema, plainEntityObjectiveValueSchema])
-);
-
-export const bodyPlainEntitySchema = z.union([
-  topLevelPlainEntityDescriptorSchema,
-  topLevelPlainEntityRecordSchema,
-  topLevelPlainEntityArraySchema
 ]);
 
-export const variablesPlainEntitySchema = z.union([
-  topLevelPlainEntityDescriptorSchema,
-  topLevelPlainEntityRecordSchema
+export const bodyEntitySchema = z.union([
+  z.custom<Comparator>(isComparator),
+  z.string(),
+  z.record(z.string(), z.unknown()),
+  z.array(z.unknown())
 ]);
 
-/* ----- Mapped entity schema ----- */
-
-const mappedEntityValueSchema = z.union([z.string(), z.number(), z.boolean()]);
-
-const mappedEntityDescriptorSchema = extendedDiscriminatedUnion('checkMode', [
-  entityDescriptorSchema(checkActualValueCheckModeSchema),
-  entityDescriptorSchema(z.literal('function'), z.function()),
-  entityDescriptorSchema(z.literal('regExp'), z.instanceof(RegExp)),
-  entityDescriptorSchema(compareWithDescriptorValueCheckModeSchema, mappedEntityValueSchema)
+export const variablesEntitySchema = z.union([
+  z.custom<Comparator>(isComparator),
+  z.record(
+    z.string(),
+    z.union([z.boolean(), z.number(), z.string(), z.custom<Comparator>(isComparator)])
+  )
 ]);
-
-export const mappedEntitySchema = plainObjectSchema(
-  z.record(z.union([mappedEntityValueSchema, mappedEntityDescriptorSchema]))
-);
