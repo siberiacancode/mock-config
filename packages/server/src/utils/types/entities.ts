@@ -14,5 +14,5 @@ export type MappedEntity = Comparator<MappedEntityObject> | MappedEntityObject;
 type BodyEntityValue = string | Record<string, unknown> | unknown[];
 export type BodyEntity = BodyEntityValue | Comparator<BodyEntityValue>;
 
-type VariablesEntityValue = MappedEntityObject;
+type VariablesEntityValue = Record<string, unknown>;
 export type VariablesEntity = Comparator<VariablesEntityValue> | VariablesEntityValue;
