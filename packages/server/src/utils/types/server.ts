@@ -43,11 +43,6 @@ export interface WsConfig {
   interceptors?: Interceptors;
 }
 
-export interface DatabaseConfig {
-  data: `${string}.json` | Record<string, unknown>;
-  routes?: `${string}.json` | Record<`/${string}`, `/${string}`>;
-}
-
 export interface BaseServerConfig {
   baseUrl?: BaseUrl;
   cors?: Cors;
