@@ -1,6 +1,6 @@
 import type { Express } from 'express';
 
-import { parseCookie } from './helpers';
+import { parseCookie } from '@/utils/helpers';
 
 export const cookieParseMiddleware = (server: Express) => {
   server.use((request, _response, next) => {

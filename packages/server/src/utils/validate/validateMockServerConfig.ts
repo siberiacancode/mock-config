@@ -12,6 +12,7 @@ import { portSchema } from './portSchema/portSchema';
 import { restRequestConfigSchema } from './restConfigSchema/restConfigSchema';
 import { staticPathSchema } from './staticPathSchema/staticPathSchema';
 import { plainObjectSchema } from './utils';
+import { wsRequestConfigSchema } from './wsConfigSchema/wsConfigSchema';
 
 export const validateMockServerConfig = (mockServerConfig: PlainObject) => {
   if (!mockServerConfig.length) {
@@ -32,7 +33,9 @@ export const validateMockServerConfig = (mockServerConfig: PlainObject) => {
     name: z.string().optional(),
     baseUrl: baseUrlSchema.optional(),
     interceptors: plainObjectSchema(interceptorsSchema).optional(),
-    configs: z.array(z.union([restRequestConfigSchema, graphqlRequestConfigSchema]))
+    configs: z.array(
+      z.union([restRequestConfigSchema, graphqlRequestConfigSchema, wsRequestConfigSchema])
+    )
   });
 
   const mockServerConfigSchema = z
@@ -44,7 +47,6 @@ export const validateMockServerConfig = (mockServerConfig: PlainObject) => {
   if (!validationMockServerConfigSchemaResult.success) {
     const path = getMostSpecificPathFromError(validationMockServerConfigSchemaResult.error);
     const validationMessage = getValidationMessageFromPath(path);
-
     throw new Error(
       `Validation Error: configuration${validationMessage} does not match the API schema. Click here to see correct type: https://github.com/siberiacancode/mock-config-server`
     );

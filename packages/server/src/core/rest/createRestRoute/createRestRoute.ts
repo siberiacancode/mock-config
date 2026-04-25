@@ -1,31 +1,24 @@
 import type { Express } from 'express';
 
-import { flatten } from 'flat';
-
 import type {
-  EntityDescriptor,
   Entries,
-  PlainObject,
   RestEntitiesByEntityName,
-  RestEntity,
   RestParams,
-  RestRequestArtifact,
-  TopLevelPlainEntityArray,
-  TopLevelPlainEntityDescriptor
+  RestRequestArtifact
 } from '@/utils/types';
 
 import {
   asyncHandler,
   callRequestInterceptor,
   callResponseInterceptors,
-  convertToEntityDescriptor,
-  isEntityDescriptor,
+  isComparator,
   normalizeUrl,
   resolveEntityValues,
   sleep,
   urlJoin
 } from '@/utils/helpers';
 
+import { equals } from '../../entities';
 import { generatePathRegex, matchRestRequestArtifacts } from './helpers';
 
 interface CreateRestRoutesParams {
@@ -54,6 +47,9 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
   server.use(
     asyncHandler(async (request, response, next) => {
       const requestMethod = request.method.toLowerCase();
+
+      request.queries = request.query;
+
       const previousParams = { ...request.params };
 
       const matchedRequestArtifacts = matchRestRequestArtifacts({
@@ -75,73 +71,39 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         const entityEntries = Object.entries(config.entities) as Entries<
           Required<RestEntitiesByEntityName>
         >;
-        return entityEntries.every(([entityName, entityDescriptorOrValue]) => {
-          // ✅ important:
-          // check whole body as plain value strictly if descriptor used for body
-          const isEntityBodyByTopLevelDescriptor =
-            entityName === 'body' && isEntityDescriptor(entityDescriptorOrValue);
-          if (isEntityBodyByTopLevelDescriptor) {
-            const bodyDescriptor: EntityDescriptor = entityDescriptorOrValue;
-            if (bodyDescriptor.checkMode === 'exists' || bodyDescriptor.checkMode === 'notExists') {
-              return resolveEntityValues({
-                actualValue: request.body,
-                checkMode: bodyDescriptor.checkMode
-              });
-            }
+        return entityEntries.every(([entityName, valueOrComparator]) => {
+          const actualEntity = request[entityName];
 
-            return resolveEntityValues({
-              actualValue: request.body,
-              descriptorValue: bodyDescriptor.value,
-              checkMode: bodyDescriptor.checkMode,
-              oneOf: bodyDescriptor.oneOf ?? false
-            });
+          if (isComparator(valueOrComparator)) {
+            const comparator = valueOrComparator;
+            return resolveEntityValues({ actual: actualEntity, comparator });
           }
 
-          const isEntityBodyByTopLevelArray =
-            entityName === 'body' && Array.isArray(entityDescriptorOrValue);
-          if (isEntityBodyByTopLevelArray) {
-            if (!Array.isArray(request.body)) return false;
-
-            return resolveEntityValues({
-              actualValue: request.body,
-              descriptorValue: entityDescriptorOrValue,
-              checkMode: 'equals'
-            });
+          const isBody = entityName === 'body';
+          if (isBody) {
+            const comparator = equals(valueOrComparator);
+            return resolveEntityValues({ actual: actualEntity, comparator });
           }
 
-          const actualEntity = flatten<PlainObject, PlainObject>(request[entityName]);
-          const entityValueEntries = Object.entries(entityDescriptorOrValue) as Entries<
-            Exclude<RestEntity, TopLevelPlainEntityArray | TopLevelPlainEntityDescriptor>
+          const mappedEntityEntries = Object.entries(valueOrComparator) as Entries<
+            typeof valueOrComparator
           >;
-          return entityValueEntries.every(
-            ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
-              const entityPropertyDescriptor = convertToEntityDescriptor(
-                entityPropertyDescriptorOrValue
-              );
+          return mappedEntityEntries.every(([entityPropertyKey, valueOrComparator]) => {
+            // ✅ important:
+            // transform header keys to lower case
+            // because browsers send headers in lowercase
+            const actualPropertyKey =
+              entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
+            const actualPropertyValue = actualEntity[actualPropertyKey];
 
-              // ✅ important: transform header keys to lower case because browsers send headers in lowercase
-              const actualPropertyKey =
-                entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
-              const actualPropertyValue = actualEntity[actualPropertyKey];
-
-              if (
-                entityPropertyDescriptor.checkMode === 'exists' ||
-                entityPropertyDescriptor.checkMode === 'notExists'
-              ) {
-                return resolveEntityValues({
-                  actualValue: actualPropertyValue,
-                  checkMode: entityPropertyDescriptor.checkMode
-                });
-              }
-
-              return resolveEntityValues({
-                actualValue: actualPropertyValue,
-                descriptorValue: entityPropertyDescriptor.value,
-                checkMode: entityPropertyDescriptor.checkMode,
-                oneOf: entityPropertyDescriptor.oneOf ?? false
-              });
-            }
-          );
+            const comparator = isComparator(valueOrComparator)
+              ? valueOrComparator
+              : equals(valueOrComparator);
+            return resolveEntityValues({
+              actual: actualPropertyValue,
+              comparator
+            });
+          });
         });
       });
 
@@ -171,6 +133,9 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         response,
         next,
         entities: matchedRouteConfig.config.entities ?? {},
+        broadcast: (payload) => {
+          request.context.broadcast(payload);
+        },
         appendHeader: (field, value) => {
           response.append(field, value);
         },

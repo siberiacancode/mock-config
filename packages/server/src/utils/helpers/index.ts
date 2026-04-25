@@ -1,5 +1,4 @@
 export * from './asyncHandler';
-export * from './config';
 export * from './date';
 export * from './entities';
 export * from './files';
@@ -8,5 +7,6 @@ export * from './interceptors';
 export * from './isPlainObject/isPlainObject';
 export * from './isPrimitive/isPrimitive';
 export * from './logger';
+export * from './request';
 export * from './sleep';
 export * from './url';

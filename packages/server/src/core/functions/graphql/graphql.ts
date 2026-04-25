@@ -60,7 +60,7 @@ const resolveConfigType = <Options extends GraphQLRequestInput>(config: GraphQLC
     return { type: 'inlineResponse' as const, config };
   if ('queue' in config) return { type: 'queue' as const, config };
   if ('response' in config) return { type: 'data' as const, config };
-  if ('handler' in config) return { type: 'handlerObj' as const, config };
+  if ('handler' in config) return { type: 'handler' as const, config };
   return { type: 'inlineResponse' as const, config };
 };
 
@@ -113,7 +113,7 @@ const createConfigResolver = <Options extends GraphQLRequestInput>(
         settings
       };
 
-    case 'handlerObj': {
+    case 'handler': {
       return {
         data: resolvedConfig.config.handler,
         entities: resolvedConfig.config.match ?? {},

@@ -1,15 +1,15 @@
 import type { CookieOptions, Response as ExpressResponse, Request } from 'express';
 
-import type { BodyPlainEntity, MappedEntity } from './entities';
+import type { BodyEntity, MappedEntity } from './entities';
 import type { Interceptors } from './interceptors';
 import type { BaseUrl } from './server';
 import type { Data } from './values';
 
 export type RestMethod = 'delete' | 'get' | 'options' | 'patch' | 'post' | 'put';
-export type RestEntityName = 'body' | 'cookies' | 'headers' | 'params' | 'query';
+export type RestEntityName = 'body' | 'cookies' | 'headers' | 'params' | 'queries';
 
 export type RestEntity<EntityName extends RestEntityName = RestEntityName> =
-  EntityName extends 'body' ? BodyPlainEntity : MappedEntity;
+  EntityName extends 'body' ? BodyEntity : MappedEntity;
 
 export type RestEntityNamesByMethod = {
   [key in RestMethod]: key extends 'delete' | 'get' | 'options'
@@ -40,6 +40,7 @@ export interface RestParams<
   response: ExpressResponse;
   appendHeader: (field: string, value?: string | string[]) => void;
   attachment: (filename: string) => void;
+  broadcast: <Response>(response: Response) => void;
   clearCookie: (name: string, options?: CookieOptions) => void;
   getCookie: (name: string) => RestCookieValue;
   getRequestHeader: (field: string) => RestHeaderValue;

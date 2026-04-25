@@ -1,4 +1,3 @@
-export * from './checkModes';
 export * from './entities';
 export * from './files';
 export * from './graphql';
@@ -8,3 +7,4 @@ export * from './rest';
 export * from './server';
 export * from './utils';
 export * from './values';
+export * from './ws';

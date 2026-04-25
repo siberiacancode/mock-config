@@ -215,6 +215,8 @@ fetch('http://localhost:31299/graphql', {
   .then((data) => console.log(data)); // {  emoji: '🦁', name: 'Nursultan' }
 ```
 
+// TODO: rewrite to handlers
+
 #### Entity descriptors
 
 If you need more complex logic for matching entities, you can use entity descriptors.
@@ -233,7 +235,7 @@ Allowed `checkModes`
 - endsWith - checks actual value for ending with descriptor value.
 - notEndsWith - checks actual value for non-ending with descriptor value.
 - regExp - checks actual value with descriptor regExp.
-- function - checks actual value with descriptor function.
+- fn - checks actual value with descriptor function.
 
 ```javascript
 /** @type {import('mock-config-server').FlatMockServerConfig} */
@@ -282,58 +284,11 @@ const flatMockServerConfig = [
 export default flatMockServerConfig;
 ```
 
-#### Descriptor _oneOf_ property
-
-For `checkMode` with the `value` property (all `checkMode` options except `exists` and `notExists`) you can use an array as value.
-Mock server will find matches by iterating through the array until **some** match is found.
-To be able to use this functionality you need to explicitly set `oneOf: true` property in descriptor object.
-
-```javascript
-/** @type {import('mock-config-server').FlatMockServerConfig} */
-const flatMockServerConfig = [
-  {
-    baseUrl: '/api'
-  },
-  {
-    configs: [
-      {
-        path: '/user',
-        method: 'post',
-        routes: [
-          {
-            entities: {
-              // if body equals to { key1: 'value1' } OR { key2: 'value2' } then mock-config-server return 'Some user data 1'
-              body: {
-                checkMode: 'equals',
-                value: [{ key1: 'value1' }, { key2: 'value2' }],
-                oneOf: true
-              }
-            },
-            data: 'Some user data 1'
-          },
-          {
-            entities: {
-              // if body equals to [{ key1: 'value1' }, { key2: 'value2' }] then mock-config-server return 'Some user data 2'
-              // NO `oneOf` => array processed entirely
-              body: {
-                checkMode: 'equals',
-                value: [{ key1: 'value1' }, { key2: 'value2' }]
-              }
-            },
-            data: 'Some user data 2'
-          }
-        ]
-      }
-    ]
-  }
-];
-
-export default flatMockServerConfig;
-```
+// TODO: rewrite
 
 #### Function check mode
 
-`function checkMode` is the most powerful way to describe your `entities` logic, but in most cases you will be fine using other `checkModes`.
+`fn checkMode` is the most powerful way to describe your `entities` logic, but in most cases you will be fine using other `checkModes`.
 
 `Function value` has the following signature `(actualValue, checkFunction) => boolean`.
 Return `true` if `actualValue` matches your logic or `false` otherwise.
@@ -357,13 +312,13 @@ const flatMockServerConfig = [
             entities: {
               params: {
                 postId: {
-                  checkMode: 'function',
+                  checkMode: 'fn',
                   value: (actualValue) => +actualValue >= 0 && +actualValue <= 50
                 }
               },
               cookies: {
                 authToken: {
-                  checkMode: 'function',
+                  checkMode: 'fn',
                   value: (actualValue, checkFunction) =>
                     checkFunction('equals', actualValue, 123) ||
                     checkFunction('startsWith', actualValue, 2)

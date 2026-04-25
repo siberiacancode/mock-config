@@ -1,9 +1,10 @@
-import type { Request } from 'express';
+import type { Express, Request } from 'express';
 import type { Arguments } from 'yargs';
 
 import type { GraphQLRequestConfig } from './graphql';
 import type { Interceptors } from './interceptors';
 import type { RestMethod, RestRequestConfig } from './rest';
+import type { WsRequestConfig } from './ws';
 
 interface StaticPathObject {
   path: `/${string}`;
@@ -33,6 +34,18 @@ export interface RestConfig {
 export interface GraphqlConfig {
   baseUrl?: BaseUrl;
   configs: GraphQLRequestConfig[];
+  interceptors?: Interceptors;
+}
+
+export interface WsConfig {
+  baseUrl?: BaseUrl;
+  configs: WsRequestConfig[];
+  interceptors?: Interceptors;
+}
+
+export interface DatabaseConfig {
+  data: `${string}.json` | Record<string, unknown>;
+  routes?: `${string}.json` | Record<`/${string}`, `/${string}`>;
 }
 
 export interface BaseServerConfig {
@@ -51,9 +64,22 @@ export type MockServerCliArgv = Arguments<{
   watch?: boolean;
 }>;
 
+type Queries = Express['request']['query'];
+
+declare global {
+  namespace Express {
+    interface Request {
+      context: {
+        broadcast: <Response>(response: Response) => void;
+      };
+      queries: Queries;
+    }
+  }
+}
+
 export interface MockServerComponent {
   baseUrl?: BaseUrl;
-  configs: Array<GraphQLRequestConfig | RestRequestConfig>;
+  configs: Array<GraphQLRequestConfig | RestRequestConfig | WsRequestConfig>;
   interceptors?: Interceptors;
   name?: string;
 }

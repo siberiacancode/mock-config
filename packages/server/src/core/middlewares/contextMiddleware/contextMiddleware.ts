@@ -1,8 +1,12 @@
 import type { Express } from 'express';
+import type { WebSocketServer } from 'ws';
+
+import { Buffer } from 'node:buffer';
+import { WebSocket } from 'ws';
 
 import type { GraphQLEntity, GraphQLOperationName, GraphQLOperationType } from '@/utils/types';
 
-import { getGraphQLInput, parseQuery } from '@/utils/helpers';
+import { getGraphQLInput, parseGraphQLQuery } from '@/utils/helpers';
 
 declare global {
   namespace Express {
@@ -19,8 +23,36 @@ declare global {
   }
 }
 
-export const contextMiddleware = (server: Express) => {
+export const contextMiddleware = (server: Express, { ws }: { ws: WebSocketServer }) => {
+  const broadcast = (data: unknown) => {
+    if (data === undefined) return;
+
+    for (const client of ws.clients) {
+      if (client.readyState !== WebSocket.OPEN) continue;
+
+      if (typeof data === 'string') {
+        client.send(data);
+        continue;
+      }
+
+      const isBinary =
+        data instanceof ArrayBuffer ||
+        ArrayBuffer.isView(data) ||
+        data instanceof Blob ||
+        Buffer.isBuffer(data);
+      if (isBinary) {
+        client.send(data);
+        continue;
+      }
+
+      client.send(JSON.stringify(data));
+    }
+  };
+
   let requestId = 0;
+  const context: Express['request']['context'] = {
+    broadcast: (payload: unknown) => broadcast(payload)
+  };
 
   server.use((request, _response, next) => {
     requestId += 1;
@@ -31,7 +63,7 @@ export const contextMiddleware = (server: Express) => {
     request.graphQL = null;
     if (request.method === 'GET' || request.method === 'POST') {
       const graphQLInput = getGraphQLInput(request);
-      const graphQLQuery = parseQuery(graphQLInput.query ?? '');
+      const graphQLQuery = parseGraphQLQuery(graphQLInput.query ?? '');
 
       if (graphQLInput.query && graphQLQuery) {
         request.graphQL = {
@@ -43,6 +75,7 @@ export const contextMiddleware = (server: Express) => {
       }
     }
 
+    request.context = context;
     return next();
   });
 };

@@ -12,7 +12,7 @@ interface LoggerRequestTokens {
   id: number;
   method: RestMethod;
   params: Params;
-  query: Query;
+  queries: Query;
   timestamp: number;
   type: string;
   url: string;
