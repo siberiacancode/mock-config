@@ -43,10 +43,9 @@
     "prepublishOnly": "git diff --exit-code",
     "lint-staged": "lint-staged",
     "prepare": "husky && pnpm build",
-    "build:types": "tsc -p tsconfig.production.json && tsc-alias -p tsconfig.production.json",
-    "build:swc": "swc bin src index.ts -d dist --extensions .ts --copy-files --ignore **/*.test.ts --ignore bin/templates",
+    "build:tsdown": "tsdown",
     "build:copy-templates": "shx mkdir -p dist/bin/templates/ts && shx cp -r bin/templates/ts dist/bin/templates && shx mkdir -p dist/bin/templates/js && shx cp -r bin/templates/js dist/bin/templates",
-    "build": "shx rm -rf dist && pnpm build:types && pnpm build:swc && pnpm build:copy-templates",
+    "build": "pnpm build:tsdown && pnpm build:copy-templates",
     "start": "pnpm build && node ./dist/bin/bin.js",
     "dev": "nodemon --watch src --watch bin --watch mock-server.config.* -e js,ts --exec \"pnpm start\"",
     "type": "tsc --noEmit",
@@ -78,8 +77,6 @@
   },
   "devDependencies": {
     "@siberiacancode/vitest": "^1.2.4",
-    "@swc/cli": "^0.6.0",
-    "@swc/core": "^1.10.7",
     "@types/supertest": "^6.0.2",
     "@types/ws": "^8.18.1",
     "husky": "^9.1.7",
@@ -87,7 +84,7 @@
     "nodemon": "^3.1.9",
     "shx": "^0.3.4",
     "supertest": "^7.0.0",
-    "tsc-alias": "^1.8.10",
+    "tsdown": "^0.21.10",
     "vitest": "^3.2.4"
   },
   "lint-staged": {
