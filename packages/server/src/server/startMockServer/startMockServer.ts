@@ -5,10 +5,10 @@ import type { MockServerConfig } from '@/utils/types';
 import { destroyerMiddleware } from '@/core/middlewares';
 import { DEFAULT } from '@/utils/constants';
 
-import { createMockServer } from '../createMockServer/createMockServer';
+import { createNativeMockServer } from '../createNativeMockServer/createNativeMockServer';
 
 export const startMockServer = (mockServerConfig: MockServerConfig) => {
-  const mockServer = createMockServer(mockServerConfig);
+  const mockServer = createNativeMockServer(mockServerConfig);
 
   const [option] = mockServerConfig;
   const mockServerSettings = !('configs' in option) ? option : {};
