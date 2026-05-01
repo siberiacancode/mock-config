@@ -7,6 +7,7 @@ describe('parseGraphQLQuery', () => {
     const parsedQuery = parseGraphQLQuery('query GetCharacters { characters { name } }');
 
     expect(parsedQuery).toStrictEqual({
+      eventName: 'characters',
       operationType: 'query',
       operationName: 'GetCharacters'
     });
@@ -18,15 +19,17 @@ describe('parseGraphQLQuery', () => {
     );
 
     expect(parsedQuery).toStrictEqual({
+      eventName: 'createCharacters',
       operationType: 'mutation',
       operationName: 'CreateCharacters'
     });
   });
 
   it('Should parse graphQL query with empty operationName', () => {
-    const parsedQuery = parseGraphQLQuery('query { characters { name } }');
+    const parsedQuery = parseGraphQLQuery('query { users { name } }');
 
     expect(parsedQuery).toStrictEqual({
+      eventName: 'users',
       operationType: 'query',
       operationName: undefined
     });

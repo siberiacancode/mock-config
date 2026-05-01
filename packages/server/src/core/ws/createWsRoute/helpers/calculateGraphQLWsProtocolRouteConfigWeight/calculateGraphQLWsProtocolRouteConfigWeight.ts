@@ -1,11 +1,11 @@
-import type { GraphQLSubscriptionRouteConfig } from '@/utils/types';
+import type { GraphQLWsProtocolRouteConfig } from '@/utils/types';
 
 import { isPlainObject } from '@/utils/helpers';
 
-export const calculateGraphQLSubscriptionRouteConfigWeight = (
-  graphQLSubscriptionRouteConfig: GraphQLSubscriptionRouteConfig
+export const calculateGraphQLWsProtocolRouteConfigWeight = (
+  graphQLWsProtocolRouteConfig: GraphQLWsProtocolRouteConfig
 ) => {
-  const { variables } = graphQLSubscriptionRouteConfig.entities ?? {};
+  const { variables } = graphQLWsProtocolRouteConfig.entities ?? {};
   if (!variables) return 0;
 
   if ('checkMode' in variables && variables.checkMode) {

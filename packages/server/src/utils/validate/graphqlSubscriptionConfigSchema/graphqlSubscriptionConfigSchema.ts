@@ -19,14 +19,24 @@ const baseSubscriptionRequestConfigSchema = z.strictObject({
 const operationNameSubscriptionRequestConfigSchema = z
   .strictObject({
     operationName: z.union([z.string(), z.instanceof(RegExp)]),
+    eventName: z.union([z.string(), z.instanceof(RegExp)]).optional(),
     query: z.string().optional()
   })
   .merge(baseSubscriptionRequestConfigSchema);
 
 const querySubscriptionRequestConfigSchema = z
   .strictObject({
+    eventName: z.union([z.string(), z.instanceof(RegExp)]).optional(),
     operationName: z.union([z.string(), z.instanceof(RegExp)]).optional(),
     query: z.string()
+  })
+  .merge(baseSubscriptionRequestConfigSchema);
+
+const eventNameSubscriptionRequestConfigSchema = z
+  .strictObject({
+    eventName: z.union([z.string(), z.instanceof(RegExp)]),
+    operationName: z.union([z.string(), z.instanceof(RegExp)]).optional(),
+    query: z.string().optional()
   })
   .merge(baseSubscriptionRequestConfigSchema);
 
@@ -36,5 +46,8 @@ export const graphqlSubscriptionRequestConfigSchema = z.union([
     .pipe(operationNameSubscriptionRequestConfigSchema),
   z
     .custom((value) => isPlainObject(value) && 'query' in value)
-    .pipe(querySubscriptionRequestConfigSchema)
+    .pipe(querySubscriptionRequestConfigSchema),
+  z
+    .custom((value) => isPlainObject(value) && 'eventName' in value)
+    .pipe(eventNameSubscriptionRequestConfigSchema)
 ]);

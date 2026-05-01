@@ -49,6 +49,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
         meta: {
           path: normalizeUrl(request.path),
           query: graphQLInput.query,
+          eventName: query.eventName,
           operationType: query.operationType,
           operationName: query.operationName
         }

@@ -3,6 +3,7 @@ import type { DocumentNode, OperationDefinitionNode, OperationTypeNode } from 'g
 import { parse } from 'graphql';
 
 interface ParseDocumentNodeResult {
+  eventName?: string;
   operationName?: string;
   operationType: OperationTypeNode;
 }
@@ -12,9 +13,14 @@ const parseDocumentNode = (node: DocumentNode): ParseDocumentNodeResult => {
     (definition) => definition.kind === 'OperationDefinition'
   ) as OperationDefinitionNode;
 
+  const eventName = operationDefinition.selectionSet.selections.find(
+    (selection) => selection.kind === 'Field'
+  )?.name.value;
+
   return {
     operationType: operationDefinition.operation,
-    operationName: operationDefinition.name?.value ?? undefined
+    operationName: operationDefinition.name?.value ?? undefined,
+    eventName
   };
 };
 

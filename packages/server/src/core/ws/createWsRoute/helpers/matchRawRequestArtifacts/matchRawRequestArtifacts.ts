@@ -1,13 +1,16 @@
 import type { RawWsRequestArtifact } from '@/utils/types';
 
 interface MatchRawRequestArtifactsParams {
-  artifact: RawWsRequestArtifact;
+  artifacts: RawWsRequestArtifact[];
   meta: {
     path: string;
   };
 }
 
-export const matchRawRequestArtifacts = ({ artifact, meta }: MatchRawRequestArtifactsParams) =>
-  artifact.baseUrl === '/' ||
-  meta.path === artifact.baseUrl ||
-  meta.path.startsWith(`${artifact.baseUrl}/`);
+export const matchRawRequestArtifacts = ({ artifacts, meta }: MatchRawRequestArtifactsParams) =>
+  artifacts.filter(
+    (artifact) =>
+      artifact.baseUrl === '/' ||
+      meta.path === artifact.baseUrl ||
+      meta.path.startsWith(`${artifact.baseUrl}/`)
+  );

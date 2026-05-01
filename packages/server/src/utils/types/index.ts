@@ -3,7 +3,7 @@ export * from './database';
 export * from './entities';
 export * from './files';
 export * from './graphql';
-export * from './graphql-subscription';
+export * from './graphql-ws-protocol';
 export * from './interceptors';
 export * from './logger';
 export * from './rest';

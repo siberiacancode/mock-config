@@ -1,11 +1,11 @@
 import { parse, print, stripIgnoredCharacters } from 'graphql';
 
-import type { GraphQLRequestArtifact } from '@/utils/types';
+import type { GraphQLWsRequestArtifact } from '@/utils/types';
 
 import { normalizeUrl } from '@/utils/helpers';
 
-interface MatchGraphQLRequestArtifactsParams {
-  artifacts: GraphQLRequestArtifact[];
+interface MatchGraphQLWsProtocolRequestArtifactsParams {
+  artifacts: GraphQLWsRequestArtifact[];
   meta: {
     eventName?: string;
     path: string;
@@ -15,14 +15,12 @@ interface MatchGraphQLRequestArtifactsParams {
   };
 }
 
-export const matchGraphQLRequestArtifacts = ({
+export const matchGraphQLWsProtocolRequestArtifacts = ({
   artifacts,
   meta
-}: MatchGraphQLRequestArtifactsParams) =>
+}: MatchGraphQLWsProtocolRequestArtifactsParams) =>
   artifacts.filter((artifact) => {
-    if (normalizeUrl(meta.path) !== normalizeUrl(artifact.baseUrl)) {
-      return false;
-    }
+    if (normalizeUrl(meta.path) !== normalizeUrl(artifact.baseUrl)) return false;
 
     if (artifact.operationType !== meta.operationType) return false;
 
@@ -49,7 +47,7 @@ export const matchGraphQLRequestArtifacts = ({
     }
 
     console.warn(
-      `[mock-config] GraphQL artifact with no query or operationName was skipped: ${JSON.stringify(
+      `[mock-config] GraphQL subscription artifact with no query, eventName or operationName was skipped: ${JSON.stringify(
         artifact
       )}`
     );

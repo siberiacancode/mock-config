@@ -7,10 +7,10 @@ import type {
   GraphQLRequestConfig,
   GraphQLRouteConfig,
   GraphQLSettings,
-  GraphQLSubscriptionEntitiesByEntityName,
-  GraphQLSubscriptionParams,
-  GraphQLSubscriptionRequestConfig,
-  GraphQLSubscriptionRouteConfig
+  GraphQLWsProtocolEntitiesByEntityName,
+  GraphQLWsProtocolParams,
+  GraphQLWsProtocolRequestConfig,
+  GraphQLWsProtocolRouteConfig
 } from '@/utils/types';
 
 import { createQueueHandler } from './helpers';
@@ -199,41 +199,41 @@ const createGraphQLFactory = <Mode extends GraphQLFactoryMode>(mode: Mode) => {
   return createRequestConfig;
 };
 
-interface GraphQLSubscriptionRequestInput {
+interface GraphQLWsProtocolRequestInput {
   response?: Data;
 }
 
-type ReservedGraphQLSubscriptionConfigKeys = {
+type ReservedGraphQLWsProtocolConfigKeys = {
   [K in 'handler' | 'match']?: never;
 };
 
-type GraphQLSubscriptionInlineResponse<Response> =
+type GraphQLWsProtocolInlineResponse<Response> =
   Response extends Record<string, unknown>
-    ? Response & ReservedGraphQLSubscriptionConfigKeys
+    ? Response & ReservedGraphQLWsProtocolConfigKeys
     : Response;
 
-type GraphQLSubscriptionSugarFunction<Options extends GraphQLSubscriptionRequestInput> = (
-  params: GraphQLSubscriptionParams
+type GraphQLWsProtocolSugarFunction<Options extends GraphQLWsProtocolRequestInput> = (
+  params: GraphQLWsProtocolParams
 ) => Options['response'] | Promise<Options['response']>;
 
-interface GraphQLSubscriptionSugarResponseObject<Response> {
-  match?: GraphQLSubscriptionEntitiesByEntityName;
+interface GraphQLWsProtocolSugarResponseObject<Response> {
+  match?: GraphQLWsProtocolEntitiesByEntityName;
   response: Response;
 }
 
-interface GraphQLSubscriptionSugarHandlerObject<Options extends GraphQLSubscriptionRequestInput> {
-  handler: GraphQLSubscriptionSugarFunction<Options>;
-  match?: GraphQLSubscriptionEntitiesByEntityName;
+interface GraphQLWsProtocolSugarHandlerObject<Options extends GraphQLWsProtocolRequestInput> {
+  handler: GraphQLWsProtocolSugarFunction<Options>;
+  match?: GraphQLWsProtocolEntitiesByEntityName;
 }
 
-type GraphQLSubscriptionSugarConfig<Options extends GraphQLSubscriptionRequestInput> =
-  | GraphQLSubscriptionInlineResponse<Options['response']>
-  | GraphQLSubscriptionSugarFunction<Options>
-  | GraphQLSubscriptionSugarHandlerObject<Options>
-  | GraphQLSubscriptionSugarResponseObject<Options['response']>;
+type GraphQLWsProtocolSugarConfig<Options extends GraphQLWsProtocolRequestInput> =
+  | GraphQLWsProtocolInlineResponse<Options['response']>
+  | GraphQLWsProtocolSugarFunction<Options>
+  | GraphQLWsProtocolSugarHandlerObject<Options>
+  | GraphQLWsProtocolSugarResponseObject<Options['response']>;
 
-const resolveSubscriptionSugarConfigType = <Options extends GraphQLSubscriptionRequestInput>(
-  config: GraphQLSubscriptionSugarConfig<Options>
+const resolveSubscriptionSugarConfigType = <Options extends GraphQLWsProtocolRequestInput>(
+  config: GraphQLWsProtocolSugarConfig<Options>
 ) => {
   if (typeof config === 'function') return { type: 'inlineHandler' as const, config };
   if (typeof config !== 'object' || config === null)
@@ -243,9 +243,9 @@ const resolveSubscriptionSugarConfigType = <Options extends GraphQLSubscriptionR
   return { type: 'inlineResponse' as const, config };
 };
 
-const createSubscriptionRouteConfig = <Options extends GraphQLSubscriptionRequestInput>(
-  config: GraphQLSubscriptionSugarConfig<Options>
-): GraphQLSubscriptionRouteConfig => {
+const createSubscriptionRouteConfig = <Options extends GraphQLWsProtocolRequestInput>(
+  config: GraphQLWsProtocolSugarConfig<Options>
+): GraphQLWsProtocolRouteConfig => {
   const resolvedConfig = resolveSubscriptionSugarConfigType(config);
 
   switch (resolvedConfig.type) {
@@ -281,41 +281,41 @@ const createSubscriptionRouteConfig = <Options extends GraphQLSubscriptionReques
   }
 };
 
-const createGraphQLSubscriptionFactory = () => {
+const createGraphQLWsProtocolFactory = () => {
   function createRequestConfig<
-    Options extends GraphQLSubscriptionRequestInput = Partial<GraphQLSubscriptionRequestInput>
+    Options extends GraphQLWsProtocolRequestInput = Partial<GraphQLWsProtocolRequestInput>
   >(
     identifier: GraphQLOperationName,
-    config: GraphQLSubscriptionSugarFunction<Options>
-  ): GraphQLSubscriptionRequestConfig;
+    config: GraphQLWsProtocolSugarFunction<Options>
+  ): GraphQLWsProtocolRequestConfig;
 
   function createRequestConfig<
-    Options extends GraphQLSubscriptionRequestInput = Partial<GraphQLSubscriptionRequestInput>
+    Options extends GraphQLWsProtocolRequestInput = Partial<GraphQLWsProtocolRequestInput>
   >(
     identifier: GraphQLOperationName,
-    config: GraphQLSubscriptionSugarHandlerObject<Options>
-  ): GraphQLSubscriptionRequestConfig;
+    config: GraphQLWsProtocolSugarHandlerObject<Options>
+  ): GraphQLWsProtocolRequestConfig;
 
   function createRequestConfig<
-    Options extends GraphQLSubscriptionRequestInput = Partial<GraphQLSubscriptionRequestInput>
+    Options extends GraphQLWsProtocolRequestInput = Partial<GraphQLWsProtocolRequestInput>
   >(
     identifier: GraphQLOperationName,
-    config: GraphQLSubscriptionInlineResponse<Options['response']>
-  ): GraphQLSubscriptionRequestConfig;
+    config: GraphQLWsProtocolInlineResponse<Options['response']>
+  ): GraphQLWsProtocolRequestConfig;
 
   function createRequestConfig<
-    Options extends GraphQLSubscriptionRequestInput = Partial<GraphQLSubscriptionRequestInput>
+    Options extends GraphQLWsProtocolRequestInput = Partial<GraphQLWsProtocolRequestInput>
   >(
     identifier: GraphQLOperationName,
-    config: GraphQLSubscriptionSugarResponseObject<Options['response']>
-  ): GraphQLSubscriptionRequestConfig;
+    config: GraphQLWsProtocolSugarResponseObject<Options['response']>
+  ): GraphQLWsProtocolRequestConfig;
 
   function createRequestConfig<
-    Options extends GraphQLSubscriptionRequestInput = Partial<GraphQLSubscriptionRequestInput>
+    Options extends GraphQLWsProtocolRequestInput = Partial<GraphQLWsProtocolRequestInput>
   >(
     identifier: GraphQLOperationName,
-    config: GraphQLSubscriptionSugarConfig<Options>
-  ): GraphQLSubscriptionRequestConfig {
+    config: GraphQLWsProtocolSugarConfig<Options>
+  ): GraphQLWsProtocolRequestConfig {
     return {
       operationName: identifier,
       operationType: 'subscription',
@@ -330,5 +330,5 @@ export const graphql = {
   query: createGraphQLFactory('query'),
   mutation: createGraphQLFactory('mutation'),
   raw: createGraphQLFactory('raw'),
-  subscription: createGraphQLSubscriptionFactory()
+  subscription: createGraphQLWsProtocolFactory()
 };

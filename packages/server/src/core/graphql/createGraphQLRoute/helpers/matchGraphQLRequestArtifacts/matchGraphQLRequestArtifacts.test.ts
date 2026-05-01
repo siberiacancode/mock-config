@@ -88,6 +88,70 @@ describe('matchGraphQLRequestArtifacts', () => {
     expect(matched).toHaveLength(1);
   });
 
+  it('Should match operation name regexp', () => {
+    const matched = matchGraphQLRequestArtifacts({
+      artifacts: [makeArtifact({ operationName: /^Get(.+?)sers$/g })],
+      meta: {
+        path: '/',
+        operationType: 'query',
+        operationName: 'GetUsers'
+      }
+    });
+
+    expect(matched).toHaveLength(1);
+  });
+
+  it('Should match operation name regexp with case-insensitive flag', () => {
+    const matched = matchGraphQLRequestArtifacts({
+      artifacts: [makeArtifact({ operationName: /^getusers$/i })],
+      meta: {
+        path: '/',
+        operationType: 'query',
+        operationName: 'GetUsers'
+      }
+    });
+
+    expect(matched).toHaveLength(1);
+  });
+
+  it('Should match event name string', () => {
+    const matched = matchGraphQLRequestArtifacts({
+      artifacts: [makeArtifact({ eventName: 'GetUsers' })],
+      meta: {
+        path: '/',
+        operationType: 'query',
+        eventName: 'GetUsers'
+      }
+    });
+
+    expect(matched).toHaveLength(1);
+  });
+
+  it('Should match event name regexp', () => {
+    const matched = matchGraphQLRequestArtifacts({
+      artifacts: [makeArtifact({ eventName: /^Get(.+?)sers$/g })],
+      meta: {
+        path: '/',
+        operationType: 'query',
+        eventName: 'GetUsers'
+      }
+    });
+    expect(matched).toHaveLength(1);
+  });
+
+  it('Should match event name regexp with case-insensitive flag', () => {
+    const matched = matchGraphQLRequestArtifacts({
+      artifacts: [makeArtifact({ eventName: /^getusers$/i })],
+      meta: {
+        path: '/',
+        operationType: 'query',
+        eventName: 'GetUsers'
+      }
+    });
+
+    expect(matched).toHaveLength(1);
+  });
+
   it('Should fail operation name string when names differ', () => {
     const matched = matchGraphQLRequestArtifacts({
       artifacts: [makeArtifact({ operationName: 'GetUsers' })],
@@ -110,31 +174,6 @@ describe('matchGraphQLRequestArtifacts', () => {
       }
     });
     expect(matched).toHaveLength(0);
-  });
-
-  it('Should match operation name regexp', () => {
-    const matched = matchGraphQLRequestArtifacts({
-      artifacts: [makeArtifact({ operationName: /^Get(.+?)sers$/g })],
-      meta: {
-        path: '/',
-        operationType: 'query',
-        query: 'query GetUsers { users { id } }',
-        operationName: 'GetUsers'
-      }
-    });
-    expect(matched).toHaveLength(1);
-  });
-
-  it('Should match operation name regexp with case-insensitive flag', () => {
-    const matched = matchGraphQLRequestArtifacts({
-      artifacts: [makeArtifact({ operationName: /^getusers$/i })],
-      meta: {
-        path: '/',
-        operationType: 'query',
-        operationName: 'GetUsers'
-      }
-    });
-    expect(matched).toHaveLength(1);
   });
 
   it('Should skip artifact with neither query nor operationName', () => {

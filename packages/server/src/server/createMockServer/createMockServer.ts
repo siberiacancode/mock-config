@@ -33,7 +33,11 @@ import {
   createRestRoute,
   prepareRestRequestArtifacts
 } from '@/core/rest';
-import { calculateGraphQLSubscriptionRouteConfigWeight, createWsRoute } from '@/core/ws';
+import {
+  calculateGraphQLWsProtocolRouteConfigWeight,
+  createWsRoute,
+  prepareWsRequestArtifacts
+} from '@/core/ws';
 import { urlJoin } from '@/utils/helpers';
 import { validateMockServerConfig } from '@/utils/validate';
 
@@ -126,6 +130,7 @@ export const createMockServer = (
             acc.graphQLRequestArtifacts.push({
               baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
               operationType: config.operationType,
+              eventName: 'eventName' in config ? config.eventName : undefined,
               operationName: 'operationName' in config ? config.operationName : undefined,
               query: 'query' in config ? config.query : undefined,
               config: route,
@@ -149,8 +154,9 @@ export const createMockServer = (
             acc.wsRequestArtifacts.push({
               type: 'graphql-ws',
               baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
-              weight: calculateGraphQLSubscriptionRouteConfigWeight(route),
+              weight: calculateGraphQLWsProtocolRouteConfigWeight(route),
               operationType: config.operationType,
+              eventName: config.eventName,
               operationName: config.operationName,
               query: config.query,
               config: route
@@ -223,7 +229,7 @@ export const createMockServer = (
   if (wsRequestArtifacts.length) {
     createWsRoute({
       server: ws,
-      wsRequestArtifacts
+      wsRequestArtifacts: prepareWsRequestArtifacts(wsRequestArtifacts)
     });
   }
 

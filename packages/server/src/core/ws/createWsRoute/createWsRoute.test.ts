@@ -4,7 +4,14 @@ import { once } from 'node:events';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WebSocket, WebSocketServer } from 'ws';
 
-import type { BaseServerConfig, WsConfig, WsRequestArtifact } from '@/utils/types';
+import type {
+  BaseServerConfig,
+  GraphQLWsProtocolRequestConfig,
+  WsConfig,
+  WsDataResponse,
+  WsRequestArtifact,
+  WsRequestConfig
+} from '@/utils/types';
 
 import { urlJoin } from '@/utils/helpers';
 
@@ -15,7 +22,9 @@ const servers: WebSocketServer[] = [];
 
 const createServer = async (
   mockServerConfig: Pick<BaseServerConfig, 'baseUrl' | 'interceptors'> & {
-    ws: WsConfig;
+    ws: Omit<WsConfig, 'configs'> & {
+      configs: Array<GraphQLWsProtocolRequestConfig | WsRequestConfig>;
+    };
   }
 ) => {
   const { baseUrl, ws } = mockServerConfig;
@@ -24,6 +33,23 @@ const createServer = async (
   createWsRoute({
     server,
     wsRequestArtifacts: ws.configs.reduce((acc, config) => {
+      if ('operationType' in config && config.operationType === 'subscription') {
+        config.routes.forEach((route) => {
+          acc.push({
+            baseUrl: urlJoin(baseUrl ?? '/', ws.baseUrl ?? '/'),
+            type: 'graphql-ws',
+            operationType: 'subscription',
+            operationName: config.operationName,
+            eventName: config.eventName,
+            query: config.query,
+            config: route,
+            weight: 0
+          } as WsRequestArtifact);
+        });
+
+        return acc;
+      }
+
       config.routes.forEach((route) => {
         acc.push({
           baseUrl: urlJoin(baseUrl ?? '/', ws.baseUrl ?? '/'),
@@ -111,7 +137,7 @@ describe('createWsRoute: content', () => {
         configs: [
           {
             type: 'raw',
-            routes: [{ data: ({ raw }) => ({ message: raw }) }]
+            routes: [{ data: (({ raw }) => ({ message: raw })) as WsDataResponse }]
           }
         ]
       }
@@ -131,9 +157,9 @@ describe('createWsRoute: content', () => {
             type: 'raw',
             routes: [
               {
-                data: ({ broadcast, raw }) => {
+                data: (({ broadcast, raw }) => {
                   broadcast({ message: raw });
-                }
+                }) as WsDataResponse
               }
             ]
           }

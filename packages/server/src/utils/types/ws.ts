@@ -5,9 +5,9 @@ import type { WebSocket } from 'ws';
 import type { MappedEntity } from './entities';
 import type { GraphQLOperationName } from './graphql';
 import type {
-  GraphQLSubscriptionOperationType,
-  GraphQLSubscriptionRouteConfig
-} from './graphql-subscription';
+  GraphQLWsProtocolOperationType,
+  GraphQLWsProtocolRouteConfig
+} from './graphql-ws-protocol';
 import type { BaseUrl } from './server';
 import type { Data } from './values';
 
@@ -29,6 +29,10 @@ export type WsParams = WsFrame & {
 };
 
 export type WsDataResponse = (params: WsParams) => Data | Promise<Data>;
+
+export interface WsSettings {
+  readonly delay?: number;
+}
 
 export interface WsRawRouteConfig {
   data: WsDataResponse;
@@ -74,10 +78,6 @@ interface BaseWsRequestArtifact {
   weight: number;
 }
 
-export interface WsSettings {
-  readonly delay?: number;
-}
-
 export interface RawWsRequestArtifact extends BaseWsRequestArtifact {
   config: WsRawRouteConfig;
   type: 'raw';
@@ -88,10 +88,13 @@ export interface ConnectionWsRequestArtifact extends BaseWsRequestArtifact {
   type: 'connection';
 }
 
+export type GraphQLWsProtocolEventName = string | RegExp;
+
 export interface GraphQLWsRequestArtifact extends BaseWsRequestArtifact {
-  config: GraphQLSubscriptionRouteConfig;
+  config: GraphQLWsProtocolRouteConfig;
+  eventName?: GraphQLWsProtocolEventName;
   operationName?: GraphQLOperationName;
-  operationType: GraphQLSubscriptionOperationType;
+  operationType: GraphQLWsProtocolOperationType;
   query?: string;
   type: 'graphql-ws';
 }

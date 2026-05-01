@@ -3,7 +3,7 @@ import type { Arguments } from 'yargs';
 
 import type { Database, Orm } from './database';
 import type { GraphQLRequestConfig } from './graphql';
-import type { GraphQLSubscriptionRequestConfig } from './graphql-subscription';
+import type { GraphQLWsProtocolRequestConfig } from './graphql-ws-protocol';
 import type { Interceptors } from './interceptors';
 import type { RestMethod, RestRequestConfig } from './rest';
 import type { WsRequestConfig } from './ws';
@@ -69,7 +69,7 @@ declare global {
 export interface MockServerComponent {
   baseUrl?: BaseUrl;
   configs: Array<
-    GraphQLRequestConfig | GraphQLSubscriptionRequestConfig | RestRequestConfig | WsRequestConfig
+    GraphQLRequestConfig | GraphQLWsProtocolRequestConfig | RestRequestConfig | WsRequestConfig
   >;
   interceptors?: Interceptors;
   name?: string;

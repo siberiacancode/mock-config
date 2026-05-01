@@ -76,13 +76,21 @@ interface QueryGraphQLRequestConfig extends BaseGraphQLRequestConfig {
   query: string;
 }
 
-export type GraphQLRequestConfig = OperationNameGraphQLRequestConfig | QueryGraphQLRequestConfig;
+interface EventNameGraphQLRequestConfig extends BaseGraphQLRequestConfig {
+  eventName: GraphQLOperationName;
+}
+
+export type GraphQLRequestConfig =
+  | EventNameGraphQLRequestConfig
+  | OperationNameGraphQLRequestConfig
+  | QueryGraphQLRequestConfig;
 
 export interface GraphQLRequestArtifact {
   baseUrl: BaseUrl;
   componentRequestInterceptor?: Interceptors<'graphql'>['request'];
   componentResponseInterceptor?: Interceptors<'graphql'>['response'];
   config: GraphQLRouteConfig;
+  eventName?: GraphQLOperationName;
   operationName?: GraphQLOperationName;
   operationType: GraphQLOperationType;
   query?: string;

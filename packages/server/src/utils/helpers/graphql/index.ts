@@ -1,4 +1,4 @@
 export * from './getGraphQLInput/getGraphQLInput';
-export * from './getGraphQLSubscriptionInput/getGraphQLSubscriptionInput';
+export * from './getGraphQLWsProtocolInput/getGraphQLWsProtocolInput';
 export * from './parseGraphQLQuery/parseGraphQLQuery';
 export * from './parseGraphQLRequest/parseGraphQLRequest';
