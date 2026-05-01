@@ -24,7 +24,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
         operationName: 'Users'
       }
     });
-    expect(matched).toBe(false);
+    expect(matched).toHaveLength(0);
   });
 
   it('Should return empty when operationType is not subscription', () => {
@@ -36,7 +36,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
         operationName: 'Users'
       }
     });
-    expect(matched).toBe(false);
+    expect(matched).toHaveLength(0);
   });
 
   it('Should match equivalent queries with different insignificant whitespace', () => {
@@ -48,7 +48,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
         query: `subscription  Users  {  id  }`
       }
     });
-    expect(matched).toBe(true);
+    expect(matched).toHaveLength(1);
   });
 
   it('Should match operation name string', () => {
@@ -60,7 +60,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
         operationName: 'Users'
       }
     });
-    expect(matched).toBe(true);
+    expect(matched).toHaveLength(1);
   });
 
   it('Should match operation name regexp', () => {
@@ -72,7 +72,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
         operationName: 'users'
       }
     });
-    expect(matched).toBe(true);
+    expect(matched).toHaveLength(1);
   });
 
   it('Should match operation name regexp with case-insensitive flag', () => {
@@ -84,7 +84,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
         operationName: 'Users'
       }
     });
-    expect(matched).toBe(true);
+    expect(matched).toHaveLength(1);
   });
 
   it('Should match event name string', () => {
@@ -96,7 +96,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
         eventName: 'users'
       }
     });
-    expect(matched).toBe(true);
+    expect(matched).toHaveLength(1);
   });
 
   it('Should match event name regexp', () => {
@@ -108,7 +108,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
         eventName: 'users'
       }
     });
-    expect(matched).toBe(true);
+    expect(matched).toHaveLength(1);
   });
 
   it('Should match event name regexp with case-insensitive flag', () => {
@@ -120,7 +120,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
         eventName: 'Users'
       }
     });
-    expect(matched).toBe(true);
+    expect(matched).toHaveLength(1);
   });
 
   it('Should correctly prioritize matching artifacts', () => {
@@ -141,7 +141,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
       }
     });
 
-    expect(queryMatched).toBe(true);
+    expect(queryMatched).toHaveLength(1);
 
     const eventNameMatched = matchGraphQLWsProtocolRequestArtifacts({
       artifacts: [
@@ -158,7 +158,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
       }
     });
 
-    expect(eventNameMatched).toBe(true);
+    expect(eventNameMatched).toHaveLength(1);
 
     const operationNameMatched = matchGraphQLWsProtocolRequestArtifacts({
       artifacts: [
@@ -173,7 +173,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
       }
     });
 
-    expect(operationNameMatched).toBe(true);
+    expect(operationNameMatched).toHaveLength(1);
   });
 
   it('Should warn and skip artifact without data', () => {
@@ -195,7 +195,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
       }
     });
 
-    expect(matched).toBe(false);
+    expect(matched).toHaveLength(0);
     expect(warnSpy).toHaveBeenCalled();
     warnSpy.mockRestore();
   });

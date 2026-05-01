@@ -22,7 +22,7 @@ describe('matchRawRequestArtifacts', () => {
       }
     });
 
-    expect(matched).toBe(true);
+    expect(matched).toHaveLength(1);
   });
 
   it('Should match route configuration by baseUrl prefix', () => {
@@ -33,7 +33,7 @@ describe('matchRawRequestArtifacts', () => {
       }
     });
 
-    expect(matched).toBe(true);
+    expect(matched).toHaveLength(1);
   });
 
   it('Should not match when path differs from baseUrl', () => {
@@ -44,6 +44,6 @@ describe('matchRawRequestArtifacts', () => {
       }
     });
 
-    expect(matched).toBe(false);
+    expect(matched).toHaveLength(0);
   });
 });
