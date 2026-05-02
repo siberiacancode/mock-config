@@ -1,11 +1,11 @@
 import type { RawData, WebSocket } from 'ws';
 
-import type { VariablesPlainEntity } from './entities';
+import type { VariablesEntity } from './entities';
 import type { GraphQLOperationName } from './graphql';
 import type { Data, PlainObject } from './values';
 
 export interface GraphQLSubscriptionEntitiesByEntityName {
-  variables?: VariablesPlainEntity;
+  variables?: VariablesEntity;
 }
 
 export interface GraphQLSubscriptionParams {

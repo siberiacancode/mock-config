@@ -1,2 +1,3 @@
-export * from './convertToEntityDescriptor/convertToEntityDescriptor';
-export * from './isEntityDescriptor/isEntityDescriptor';
+export * from './createComparator/createComparator';
+export * from './isComparator/isComparator';
+export * from './resolveEntityValues/resolveEntityValues';

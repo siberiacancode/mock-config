@@ -14,7 +14,7 @@ export const connectionRouteConfigSchema = z.strictObject({
     z.strictObject({
       headers: mappedEntitySchema.optional(),
       cookies: mappedEntitySchema.optional(),
-      query: mappedEntitySchema.optional()
+      queries: mappedEntitySchema.optional()
     })
   ).optional()
 });

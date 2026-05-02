@@ -7,24 +7,9 @@ export const calculateGraphQLRouteConfigWeight = (graphQLRouteConfig: GraphQLRou
   if (!entities) return 0;
 
   let routeConfigWeight = 0;
-  const { headers, cookies, query, variables } = entities;
-
-  if (headers) routeConfigWeight += Object.keys(headers).length;
-  if (cookies) routeConfigWeight += Object.keys(cookies).length;
-  if (query) routeConfigWeight += Object.keys(query).length;
-  if (variables) {
-    if (variables.checkMode) {
-      // ✅ important:
-      // check that actual value check modes does not have `value` for compare
-      if (variables.checkMode === 'exists' || variables.checkMode === 'notExists') {
-        routeConfigWeight += 1;
-        return routeConfigWeight;
-      }
-      routeConfigWeight += isPlainObject(variables.value) ? Object.keys(variables.value).length : 1;
-      return routeConfigWeight;
-    }
-    routeConfigWeight += Object.keys(variables).length;
-  }
+  Object.values(entities).forEach((entityValue) => {
+    routeConfigWeight += isPlainObject(entityValue) ? Object.keys(entityValue).length : 1;
+  });
 
   return routeConfigWeight;
 };
