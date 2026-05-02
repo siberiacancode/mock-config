@@ -55,29 +55,35 @@ export const toMockServerRequest = async (request: Request): Promise<MockServerR
   // so we set it as empty object for future usage
   const params = {};
 
-  if (!request.body) {
-    return Object.assign(request, {
-      body: undefined,
+  const wrap = (body: unknown, rawBody: ReadableStream<Uint8Array> | undefined) => {
+    const overrides: Record<PropertyKey, unknown> = {
+      body,
       cookies,
       headers,
       params,
       queries,
-      rawBody: undefined,
+      rawBody,
       rawHeaders
-    }) as MockServerRequest;
+    };
+    return new Proxy(request, {
+      get(target, key) {
+        if (key in overrides) return overrides[key];
+        const value = Reflect.get(target, key, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+      has(target, key) {
+        return key in overrides || Reflect.has(target, key);
+      }
+    }) as unknown as MockServerRequest;
+  };
+
+  if (!request.body) {
+    return wrap(undefined, undefined);
   }
 
   const [forParseBody, rawBody] = request.body.tee();
   const contentType = rawHeaders.get('content-type');
   const body = await parseRawBody(forParseBody, contentType);
 
-  return Object.assign(request, {
-    body,
-    cookies,
-    headers,
-    params,
-    queries,
-    rawBody,
-    rawHeaders
-  }) as MockServerRequest;
+  return wrap(body, rawBody);
 };

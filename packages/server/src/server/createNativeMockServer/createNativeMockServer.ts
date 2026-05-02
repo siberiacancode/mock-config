@@ -30,13 +30,16 @@ export const createNativeMockServer = (mockServerConfig: MockServerConfig) => {
       for (const handler of handlers) {
         try {
           const fetchResponse = await handler(mockServerRequest);
-          sendFetchResponse(response, fetchResponse);
+          await sendFetchResponse(response, fetchResponse);
+          break;
         } catch (error) {
           if (error instanceof NextError) continue;
           throw error;
         }
       }
-    } catch {
+    } catch (error) {
+      console.error(error);
+
       if (!response.headersSent) {
         response.statusCode = 500;
       }

@@ -16,7 +16,7 @@ interface CreateRestRoutesParams {
   restRequestArtifacts: NativeRestRequestArtifact[];
 }
 
-interface RestRouteHandler {
+export interface RestRouteHandler {
   (request: MockServerRequest): Promise<Response>;
 }
 
@@ -83,7 +83,7 @@ export const createRestRoute =
 
       const entityEntries = Object.entries(config.entities) as Entries<RestEntitiesByEntityName>;
       return entityEntries.every(([entityName, valueOrComparator]) => {
-        const actualEntity = (request as unknown as Record<string, any>)[entityName];
+        const actualEntity = request[entityName];
 
         if (isComparator(valueOrComparator)) {
           const comparator = valueOrComparator;
