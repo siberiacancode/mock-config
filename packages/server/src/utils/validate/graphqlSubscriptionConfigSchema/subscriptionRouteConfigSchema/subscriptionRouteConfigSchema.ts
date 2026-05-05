@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { isPlainObject } from '@/utils/helpers';
 
-import { plainObjectSchema, variablesPlainEntitySchema } from '../../utils';
+import { plainObjectSchema, variablesEntitySchema } from '../../utils';
 
 export const subscriptionRouteConfigSchema = z
   .custom((value) => isPlainObject(value) && 'data' in value)
@@ -11,7 +11,7 @@ export const subscriptionRouteConfigSchema = z
       data: z.union([z.function(), z.any()]),
       entities: plainObjectSchema(
         z.strictObject({
-          variables: variablesPlainEntitySchema.optional()
+          variables: variablesEntitySchema.optional()
         })
       ).optional()
     })

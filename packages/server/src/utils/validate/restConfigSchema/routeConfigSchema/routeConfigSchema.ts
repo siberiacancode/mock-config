@@ -6,7 +6,7 @@ import { isPlainObject } from '@/utils/helpers';
 
 import { interceptorsSchema } from '../../interceptorsSchema/interceptorsSchema';
 import { settingsSchema } from '../../settingsSchema/settingsSchema';
-import { bodyPlainEntitySchema, mappedEntitySchema, plainObjectSchema } from '../../utils';
+import { bodyEntitySchema, mappedEntitySchema, plainObjectSchema } from '../../utils';
 
 const METHODS_WITH_BODY = ['post', 'put', 'patch'];
 const entitiesByEntityNameSchema = (method: RestMethod) => {
@@ -16,8 +16,8 @@ const entitiesByEntityNameSchema = (method: RestMethod) => {
       headers: mappedEntitySchema.optional(),
       cookies: mappedEntitySchema.optional(),
       params: mappedEntitySchema.optional(),
-      query: mappedEntitySchema.optional(),
-      ...(isMethodWithBody && { body: bodyPlainEntitySchema.optional() })
+      queries: mappedEntitySchema.optional(),
+      ...(isMethodWithBody && { body: bodyEntitySchema.optional() })
     })
   );
 };

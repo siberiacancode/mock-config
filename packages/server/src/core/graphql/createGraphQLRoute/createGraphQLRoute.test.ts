@@ -352,13 +352,13 @@ describe('createGraphQLRoute: content', () => {
             routes: [
               {
                 entities: {
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
                 data: ({ request, entities }) => ({
                   url: request.url,
-                  query: entities.query as Record<string, string>
+                  query: entities.queries
                 })
               }
             ]
@@ -456,7 +456,7 @@ describe('createGraphQLRoute: entities', () => {
                     key1: 'value1',
                     key2: 'value2'
                   },
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
@@ -504,7 +504,7 @@ describe('createGraphQLRoute: entities', () => {
                     key1: 'value1',
                     key2: 'value2'
                   },
-                  query: {
+                  queries: {
                     key1: 'value1'
                   }
                 },
@@ -516,7 +516,7 @@ describe('createGraphQLRoute: entities', () => {
                     key1: 'value1',
                     key2: 'value2'
                   },
-                  query: {
+                  queries: {
                     key1: 'value1',
                     key2: 'value2'
                   }
@@ -551,84 +551,6 @@ describe('createGraphQLRoute: entities', () => {
     expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Smith' });
   });
 
-  it('Should strictly compare variables if top level descriptor used', async () => {
-    const server = createServer({
-      graphql: {
-        configs: [
-          {
-            operationName: 'GetUsers',
-            operationType: 'query',
-            routes: [
-              {
-                entities: {
-                  variables: {
-                    checkMode: 'equals',
-                    value: {
-                      key1: 'value1',
-                      key2: { nestedKey1: 'nestedValue1' }
-                    }
-                  }
-                },
-                data: { name: 'John', surname: 'Doe' }
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    const successPostResponse = await request(server)
-      .post('/')
-      .set('Content-Type', 'application/json')
-      .send({
-        query: 'query GetUsers { users { name } }',
-        variables: {
-          key1: 'value1',
-          key2: { nestedKey1: 'nestedValue1' }
-        }
-      });
-    expect(successPostResponse.statusCode).toBe(200);
-    expect(successPostResponse.body).toStrictEqual({
-      name: 'John',
-      surname: 'Doe'
-    });
-
-    const failedPostResponse = await request(server)
-      .post('/')
-      .set('Content-Type', 'application/json')
-      .send({
-        query: 'query GetUsers { users { name } }',
-        variables: {
-          key1: 'value1',
-          key2: { nestedKey1: 'nestedValue1', nestedKey2: 'nestedValue2' }
-        }
-      });
-    expect(failedPostResponse.statusCode).toBe(404);
-
-    const successGetResponse = await request(server)
-      .get('/')
-      .set('Content-Type', 'application/json')
-      .query({
-        query: 'query GetUsers { users { name } }',
-        variables: '{ "key1": "value1", "key2": { "nestedKey1": "nestedValue1" } }'
-      });
-    expect(successGetResponse.statusCode).toBe(200);
-    expect(successGetResponse.body).toStrictEqual({
-      name: 'John',
-      surname: 'Doe'
-    });
-
-    const failedGetResponse = await request(server)
-      .get('/')
-      .set('Content-Type', 'application/json')
-      .query({
-        query: 'query GetUsers { users { name } }',
-        variables:
-          '{ "key1": "value1", "key2": { "nestedKey1": "nestedValue1", "nestedKey2": "nestedValue2" } }'
-      });
-    expect(failedGetResponse.statusCode).toBe(404);
-  });
-
   it('Should correctly resolve flat object variables with nested key matching', async () => {
     const server = createServer({
       graphql: {
@@ -641,10 +563,7 @@ describe('createGraphQLRoute: entities', () => {
                 entities: {
                   variables: {
                     'key1.nestedKey1': 'nestedValue1',
-                    'key2.nestedKey2': {
-                      checkMode: 'equals',
-                      value: 'nestedValue2'
-                    }
+                    'key2.nestedKey2': 'nestedValue2'
                   }
                 },
                 data: { name: 'John', surname: 'Doe' }

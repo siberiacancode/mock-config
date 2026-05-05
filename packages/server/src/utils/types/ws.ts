@@ -47,7 +47,7 @@ export interface WsConnectionParams {
   setDelay: (delay: number) => Promise<void>;
 }
 
-export type WsConnectionEntityName = 'cookies' | 'headers' | 'query';
+export type WsConnectionEntityName = 'cookies' | 'headers' | 'queries';
 export type WsConnectionEntitiesByEntityName = {
   [EntityName in WsConnectionEntityName]?: MappedEntity;
 };

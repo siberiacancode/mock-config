@@ -1,4 +1,3 @@
-export * from './checkModes';
 export * from './database';
 export * from './entities';
 export * from './files';

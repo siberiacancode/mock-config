@@ -1,30 +1,24 @@
 import type { IncomingMessage } from 'node:http';
 import type { RawData, WebSocketServer } from 'ws';
 
-import { flatten } from 'flat';
 import { Buffer } from 'node:buffer';
 import { WebSocket } from 'ws';
 
 import type {
   ConnectionWsRequestArtifact,
-  EntityDescriptor,
   Entries,
   GraphQLEntitiesByEntityName,
-  GraphQLEntity,
   GraphQLWsProtocolParams,
   GraphQLWsRequestArtifact,
-  PlainObject,
   RawWsRequestArtifact,
-  TopLevelPlainEntityDescriptor,
   WsFrame,
   WsParams,
   WsRequestArtifact
 } from '@/utils/types';
 
 import {
-  convertToEntityDescriptor,
   getGraphQLWsProtocolInput,
-  isEntityDescriptor,
+  isComparator,
   parseCookie,
   parseGraphQLQuery,
   parseQuery,
@@ -32,6 +26,7 @@ import {
   sleep
 } from '@/utils/helpers';
 
+import { equals } from '../../entities';
 import { matchGraphQLWsProtocolRequestArtifacts, matchRawRequestArtifacts } from './helpers';
 
 interface CreateWsRouteParams {
@@ -78,7 +73,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
     async (
       socket,
       request: IncomingMessage & {
-        query: Record<string, string | string[]>;
+        queries: Record<string, string | string[]>;
         cookies: Record<string, string>;
       }
     ) => {
@@ -106,7 +101,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           }
         );
 
-      request.query = parseQuery(request.url ?? '');
+      request.queries = parseQuery(request.url!);
       request.cookies = parseCookie(request.headers.cookie ?? '');
 
       for (const artifact of connectionArtifacts) {
@@ -115,40 +110,32 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
             Required<typeof artifact.config.entities>
           >;
 
-          const isMatchedByEntities = entityEntries.every(([entityName, entity]) => {
-            const actualEntity = flatten<Record<string, unknown>, Record<string, unknown>>(
-              request[entityName]
-            );
-            const entityValueEntries = Object.entries(entity) as Entries<typeof entity>;
+          const isMatchedByEntities = entityEntries.every(([entityName, valueOrComparator]) => {
+            const actualEntity = request[entityName];
 
-            return entityValueEntries.every(
-              ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
-                const entityPropertyDescriptor = convertToEntityDescriptor(
-                  entityPropertyDescriptorOrValue
-                );
+            if (isComparator(valueOrComparator)) {
+              const comparator = valueOrComparator;
+              return resolveEntityValues({ actual: actualEntity, comparator });
+            }
 
-                const actualPropertyKey =
-                  entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
-                const actualPropertyValue = actualEntity[actualPropertyKey];
+            const mappedEntityEntries = Object.entries(valueOrComparator);
+            return mappedEntityEntries.every(([entityPropertyKey, valueOrComparator]) => {
+              // ✅ important:
+              // transform header keys to lower case
+              // because browsers send headers in lowercase
+              const actualPropertyKey =
+                entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
+              const actualPropertyValue = actualEntity[actualPropertyKey];
 
-                if (
-                  entityPropertyDescriptor.checkMode === 'exists' ||
-                  entityPropertyDescriptor.checkMode === 'notExists'
-                ) {
-                  return resolveEntityValues({
-                    actualValue: actualPropertyValue,
-                    checkMode: entityPropertyDescriptor.checkMode
-                  });
-                }
+              const comparator = isComparator(valueOrComparator)
+                ? valueOrComparator
+                : equals(valueOrComparator);
 
-                return resolveEntityValues({
-                  actualValue: actualPropertyValue,
-                  descriptorValue: entityPropertyDescriptor.value,
-                  checkMode: entityPropertyDescriptor.checkMode,
-                  oneOf: entityPropertyDescriptor.oneOf ?? false
-                });
-              }
-            );
+              return resolveEntityValues({
+                actual: actualPropertyValue,
+                comparator
+              });
+            });
           });
 
           if (!isMatchedByEntities) continue;
@@ -254,137 +241,36 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
               Required<GraphQLEntitiesByEntityName>
             >;
 
-            return entityEntries.every(([entityName, entityDescriptorOrValue]) => {
-              const isEntityVariablesByTopLevelDescriptor =
-                entityName === 'variables' && isEntityDescriptor(entityDescriptorOrValue);
-              if (isEntityVariablesByTopLevelDescriptor) {
-                const variablesDescriptor = entityDescriptorOrValue as EntityDescriptor;
-                if (
-                  variablesDescriptor.checkMode === 'exists' ||
-                  variablesDescriptor.checkMode === 'notExists'
-                ) {
-                  return resolveEntityValues({
-                    actualValue: graphqlSubscriptionInput.payload?.variables,
-                    checkMode: variablesDescriptor.checkMode
-                  });
-                }
+            return entityEntries.every(([_, valueOrComparator]) => {
+              const actualEntity = graphqlSubscriptionInput.payload?.variables;
 
-                return resolveEntityValues({
-                  actualValue: graphqlSubscriptionInput.payload?.variables,
-                  descriptorValue: variablesDescriptor.value,
-                  checkMode: variablesDescriptor.checkMode,
-                  oneOf: variablesDescriptor.oneOf ?? false
-                });
+              if (isComparator(valueOrComparator)) {
+                const comparator = valueOrComparator;
+                return resolveEntityValues({ actual: actualEntity, comparator });
               }
 
-              const actualEntity = flatten<PlainObject, PlainObject>(
-                entityName === 'variables'
-                  ? (graphqlSubscriptionInput.payload?.variables ?? {})
-                  : request[entityName]
-              );
-              const entityValueEntries = Object.entries(entityDescriptorOrValue) as Entries<
-                Exclude<GraphQLEntity, TopLevelPlainEntityDescriptor>
-              >;
-
-              return entityValueEntries.every(
-                ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
-                  const entityPropertyDescriptor = convertToEntityDescriptor(
-                    entityPropertyDescriptorOrValue
-                  );
-
-                  const actualPropertyKey =
-                    entityName === 'headers' ? entityPropertyKey.toLowerCase() : entityPropertyKey;
-                  const actualPropertyValue = actualEntity[actualPropertyKey];
-
-                  if (
-                    entityPropertyDescriptor.checkMode === 'exists' ||
-                    entityPropertyDescriptor.checkMode === 'notExists'
-                  ) {
-                    return resolveEntityValues({
-                      actualValue: actualPropertyValue,
-                      checkMode: entityPropertyDescriptor.checkMode
-                    });
-                  }
-
-                  return resolveEntityValues({
-                    actualValue: actualPropertyValue,
-                    descriptorValue: entityPropertyDescriptor.value,
-                    checkMode: entityPropertyDescriptor.checkMode,
-                    oneOf: entityPropertyDescriptor.oneOf ?? false
-                  });
-                }
-              );
+              const comparator = equals(valueOrComparator);
+              return resolveEntityValues({ actual: actualEntity, comparator });
             });
           });
 
           if (!matchedRouteConfig) return;
 
           const entities = matchedRouteConfig.config.entities;
-          const graphQLVariables = graphqlSubscriptionInput.payload?.variables;
           if (entities) {
             const entityEntries = Object.entries(entities) as Entries<Required<typeof entities>>;
 
-            const isMatchedByEntities = entityEntries.every(
-              ([entityName, entityDescriptorOrValue]) => {
-                const isEntityVariablesByTopLevelDescriptor =
-                  entityName === 'variables' && isEntityDescriptor(entityDescriptorOrValue);
-                if (isEntityVariablesByTopLevelDescriptor) {
-                  const variablesDescriptor = entityDescriptorOrValue as EntityDescriptor;
-                  if (
-                    variablesDescriptor.checkMode === 'exists' ||
-                    variablesDescriptor.checkMode === 'notExists'
-                  ) {
-                    return resolveEntityValues({
-                      actualValue: graphQLVariables,
-                      checkMode: variablesDescriptor.checkMode
-                    });
-                  }
+            const isMatchedByEntities = entityEntries.every(([_, valueOrComparator]) => {
+              const actualEntity = graphqlSubscriptionInput.payload?.variables;
 
-                  return resolveEntityValues({
-                    actualValue: graphQLVariables,
-                    descriptorValue: variablesDescriptor.value,
-                    checkMode: variablesDescriptor.checkMode,
-                    oneOf: variablesDescriptor.oneOf ?? false
-                  });
-                }
-
-                const actualEntity = flatten<PlainObject, PlainObject>(
-                  entityName === 'variables'
-                    ? (graphqlSubscriptionInput.payload?.variables ?? {})
-                    : {}
-                );
-                const entityValueEntries = Object.entries(entityDescriptorOrValue) as Entries<
-                  Exclude<GraphQLEntity, TopLevelPlainEntityDescriptor>
-                >;
-
-                return entityValueEntries.every(
-                  ([entityPropertyKey, entityPropertyDescriptorOrValue]) => {
-                    const entityPropertyDescriptor = convertToEntityDescriptor(
-                      entityPropertyDescriptorOrValue
-                    );
-
-                    const actualPropertyValue = actualEntity[entityPropertyKey];
-
-                    if (
-                      entityPropertyDescriptor.checkMode === 'exists' ||
-                      entityPropertyDescriptor.checkMode === 'notExists'
-                    ) {
-                      return resolveEntityValues({
-                        actualValue: actualPropertyValue,
-                        checkMode: entityPropertyDescriptor.checkMode
-                      });
-                    }
-
-                    return resolveEntityValues({
-                      actualValue: actualPropertyValue,
-                      descriptorValue: entityPropertyDescriptor.value,
-                      checkMode: entityPropertyDescriptor.checkMode,
-                      oneOf: entityPropertyDescriptor.oneOf ?? false
-                    });
-                  }
-                );
+              if (isComparator(valueOrComparator)) {
+                const comparator = valueOrComparator;
+                return resolveEntityValues({ actual: actualEntity, comparator });
               }
-            );
+
+              const comparator = equals(valueOrComparator);
+              return resolveEntityValues({ actual: actualEntity, comparator });
+            });
 
             if (!isMatchedByEntities) return;
           }
