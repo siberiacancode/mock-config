@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { GraphQLWsRequestArtifact } from '@/utils/types';
+import type { GraphqlTransportWsRequestArtifact } from '@/utils/types';
 
-import { matchGraphQLWsProtocolRequestArtifacts } from './matchGraphQLWsProtocolRequestArtifacts';
+import { matchGraphqlTransportWsRequestArtifacts } from './matchGraphqlTransportWsRequestArtifacts';
 
-const makeArtifact = (overrides: Partial<GraphQLWsRequestArtifact>) =>
+const makeArtifact = (overrides: Partial<GraphqlTransportWsRequestArtifact>) =>
   ({
     type: 'graphql-ws',
     baseUrl: '/',
@@ -12,11 +12,11 @@ const makeArtifact = (overrides: Partial<GraphQLWsRequestArtifact>) =>
     config: { data: { ok: true } },
     weight: 0,
     ...overrides
-  }) as GraphQLWsRequestArtifact;
+  }) as GraphqlTransportWsRequestArtifact;
 
-describe('matchGraphQLWsProtocolRequestArtifacts', () => {
+describe('matchGraphqlTransportWsRequestArtifacts', () => {
   it('Should not match when path differs from baseUrl', () => {
-    const matched = matchGraphQLWsProtocolRequestArtifacts({
+    const matched = matchGraphqlTransportWsRequestArtifacts({
       artifacts: [makeArtifact({ baseUrl: '/sub', operationName: 'Users' })],
       meta: {
         path: '/other',
@@ -28,7 +28,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
   });
 
   it('Should return empty when operationType is not subscription', () => {
-    const matched = matchGraphQLWsProtocolRequestArtifacts({
+    const matched = matchGraphqlTransportWsRequestArtifacts({
       artifacts: [makeArtifact({ operationName: 'Users' })],
       meta: {
         path: '/',
@@ -40,7 +40,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
   });
 
   it('Should match equivalent queries with different insignificant whitespace', () => {
-    const matched = matchGraphQLWsProtocolRequestArtifacts({
+    const matched = matchGraphqlTransportWsRequestArtifacts({
       artifacts: [makeArtifact({ query: 'subscription Users { id }' })],
       meta: {
         path: '/',
@@ -52,7 +52,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
   });
 
   it('Should match operation name string', () => {
-    const matched = matchGraphQLWsProtocolRequestArtifacts({
+    const matched = matchGraphqlTransportWsRequestArtifacts({
       artifacts: [makeArtifact({ operationName: 'Users' })],
       meta: {
         path: '/',
@@ -64,7 +64,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
   });
 
   it('Should match operation name regexp', () => {
-    const matched = matchGraphQLWsProtocolRequestArtifacts({
+    const matched = matchGraphqlTransportWsRequestArtifacts({
       artifacts: [makeArtifact({ operationName: /^users$/g })],
       meta: {
         path: '/',
@@ -76,7 +76,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
   });
 
   it('Should match operation name regexp with case-insensitive flag', () => {
-    const matched = matchGraphQLWsProtocolRequestArtifacts({
+    const matched = matchGraphqlTransportWsRequestArtifacts({
       artifacts: [makeArtifact({ operationName: /^users$/i })],
       meta: {
         path: '/',
@@ -88,7 +88,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
   });
 
   it('Should match event name string', () => {
-    const matched = matchGraphQLWsProtocolRequestArtifacts({
+    const matched = matchGraphqlTransportWsRequestArtifacts({
       artifacts: [makeArtifact({ eventName: 'users' })],
       meta: {
         path: '/',
@@ -100,7 +100,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
   });
 
   it('Should match event name regexp', () => {
-    const matched = matchGraphQLWsProtocolRequestArtifacts({
+    const matched = matchGraphqlTransportWsRequestArtifacts({
       artifacts: [makeArtifact({ eventName: /^users$/g })],
       meta: {
         path: '/',
@@ -112,7 +112,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
   });
 
   it('Should match event name regexp with case-insensitive flag', () => {
-    const matched = matchGraphQLWsProtocolRequestArtifacts({
+    const matched = matchGraphqlTransportWsRequestArtifacts({
       artifacts: [makeArtifact({ eventName: /^users$/i })],
       meta: {
         path: '/',
@@ -124,7 +124,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
   });
 
   it('Should correctly prioritize matching artifacts', () => {
-    const queryMatched = matchGraphQLWsProtocolRequestArtifacts({
+    const queryMatched = matchGraphqlTransportWsRequestArtifacts({
       artifacts: [
         makeArtifact({
           query: 'subscription Users { users { id } }',
@@ -143,7 +143,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
 
     expect(queryMatched).toHaveLength(1);
 
-    const eventNameMatched = matchGraphQLWsProtocolRequestArtifacts({
+    const eventNameMatched = matchGraphqlTransportWsRequestArtifacts({
       artifacts: [
         makeArtifact({
           eventName: 'users',
@@ -160,7 +160,7 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
 
     expect(eventNameMatched).toHaveLength(1);
 
-    const operationNameMatched = matchGraphQLWsProtocolRequestArtifacts({
+    const operationNameMatched = matchGraphqlTransportWsRequestArtifacts({
       artifacts: [
         makeArtifact({
           operationName: 'Users'
@@ -179,13 +179,13 @@ describe('matchGraphQLWsProtocolRequestArtifacts', () => {
   it('Should warn and skip artifact without data', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const matched = matchGraphQLWsProtocolRequestArtifacts({
+    const matched = matchGraphqlTransportWsRequestArtifacts({
       artifacts: [
         makeArtifact({
           operationName: undefined,
           query: undefined,
           eventName: undefined
-        }) as GraphQLWsRequestArtifact
+        }) as GraphqlTransportWsRequestArtifact
       ],
       meta: {
         path: '/',

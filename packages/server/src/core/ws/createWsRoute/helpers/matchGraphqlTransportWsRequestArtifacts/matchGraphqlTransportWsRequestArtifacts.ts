@@ -1,11 +1,11 @@
 import { parse, print, stripIgnoredCharacters } from 'graphql';
 
-import type { GraphQLWsRequestArtifact } from '@/utils/types';
+import type { GraphqlTransportWsRequestArtifact } from '@/utils/types';
 
 import { normalizeUrl } from '@/utils/helpers';
 
-interface MatchGraphQLWsProtocolRequestArtifactsParams {
-  artifacts: GraphQLWsRequestArtifact[];
+interface MatchGraphqlTransportWsRequestArtifactsParams {
+  artifacts: GraphqlTransportWsRequestArtifact[];
   meta: {
     eventName?: string;
     path: string;
@@ -15,10 +15,10 @@ interface MatchGraphQLWsProtocolRequestArtifactsParams {
   };
 }
 
-export const matchGraphQLWsProtocolRequestArtifacts = ({
+export const matchGraphqlTransportWsRequestArtifacts = ({
   artifacts,
   meta
-}: MatchGraphQLWsProtocolRequestArtifactsParams) =>
+}: MatchGraphqlTransportWsRequestArtifactsParams) =>
   artifacts.filter((artifact) => {
     if (normalizeUrl(meta.path) !== normalizeUrl(artifact.baseUrl)) return false;
 

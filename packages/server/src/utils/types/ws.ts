@@ -5,9 +5,10 @@ import type { WebSocket } from 'ws';
 import type { MappedEntity } from './entities';
 import type { GraphQLOperationName } from './graphql';
 import type {
-  GraphQLWsProtocolOperationType,
-  GraphQLWsProtocolRouteConfig
-} from './graphql-ws-protocol';
+  GraphqlTransportWsOperationType,
+  GraphqlTransportWsRouteConfig
+} from './graphql-transport-ws';
+import type { Interceptors } from './interceptors';
 import type { BaseUrl } from './server';
 import type { Data } from './values';
 
@@ -71,6 +72,12 @@ export interface WsConnectionRequestConfig {
 
 export type WsRequestConfig = WsConnectionRequestConfig | WsRawRequestConfig;
 
+export interface WsConfig {
+  baseUrl?: BaseUrl;
+  configs: WsRequestConfig[];
+  interceptors?: Interceptors<'rest'>;
+}
+
 interface BaseWsRequestArtifact {
   baseUrl: BaseUrl;
   componentRequestInterceptor?: any;
@@ -88,18 +95,18 @@ export interface ConnectionWsRequestArtifact extends BaseWsRequestArtifact {
   type: 'connection';
 }
 
-export type GraphQLWsProtocolEventName = string | RegExp;
+export type GraphqlTransportWsEventName = string | RegExp;
 
-export interface GraphQLWsRequestArtifact extends BaseWsRequestArtifact {
-  config: GraphQLWsProtocolRouteConfig;
-  eventName?: GraphQLWsProtocolEventName;
+export interface GraphqlTransportWsRequestArtifact extends BaseWsRequestArtifact {
+  config: GraphqlTransportWsRouteConfig;
+  eventName?: GraphqlTransportWsEventName;
   operationName?: GraphQLOperationName;
-  operationType: GraphQLWsProtocolOperationType;
+  operationType: GraphqlTransportWsOperationType;
   query?: string;
   type: 'graphql-ws';
 }
 
 export type WsRequestArtifact =
   | ConnectionWsRequestArtifact
-  | GraphQLWsRequestArtifact
+  | GraphqlTransportWsRequestArtifact
   | RawWsRequestArtifact;

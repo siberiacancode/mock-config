@@ -1,6 +1,11 @@
 export interface Database extends Record<string, unknown> {}
 export type ShallowDatabase = Record<string, unknown>;
 
+export interface DatabaseConfig {
+  data: `${string}.json` | Record<string, unknown>;
+  routes?: `${string}.json` | Record<`/${string}`, `/${string}`>;
+}
+
 export type NestedDatabaseId = number | string;
 export type NestedDatabase = Record<string, { id: NestedDatabaseId; [key: string]: unknown }[]>;
 

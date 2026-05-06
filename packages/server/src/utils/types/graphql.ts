@@ -12,6 +12,7 @@ export type GraphQLEntity<EntityName extends GraphQLEntityName = GraphQLEntityNa
 
 export type GraphQLOperationType = 'mutation' | 'query';
 export type GraphQLOperationName = string | RegExp;
+export type GraphQLEventName = string | RegExp;
 
 export type GraphQLEntitiesByEntityName = {
   [EntityName in GraphQLEntityName]?: GraphQLEntity<EntityName>;
@@ -60,11 +61,9 @@ export interface GraphQLRouteConfig {
   settings?: GraphQLSettings;
 }
 
-export type GraphQLHttpOperationType = Exclude<GraphQLOperationType, 'subscription'>;
-
 interface BaseGraphQLRequestConfig {
   interceptors?: Interceptors<'graphql'>;
-  operationType: GraphQLHttpOperationType;
+  operationType: GraphQLOperationType;
   routes: GraphQLRouteConfig[];
 }
 
@@ -77,7 +76,7 @@ interface QueryGraphQLRequestConfig extends BaseGraphQLRequestConfig {
 }
 
 interface EventNameGraphQLRequestConfig extends BaseGraphQLRequestConfig {
-  eventName: GraphQLOperationName;
+  eventName: GraphQLEventName;
 }
 
 export type GraphQLRequestConfig =
@@ -90,7 +89,7 @@ export interface GraphQLRequestArtifact {
   componentRequestInterceptor?: Interceptors<'graphql'>['request'];
   componentResponseInterceptor?: Interceptors<'graphql'>['response'];
   config: GraphQLRouteConfig;
-  eventName?: GraphQLOperationName;
+  eventName?: GraphQLEventName;
   operationName?: GraphQLOperationName;
   operationType: GraphQLOperationType;
   query?: string;

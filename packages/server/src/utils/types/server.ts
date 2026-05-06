@@ -1,11 +1,12 @@
-import type { Express, Request } from 'express';
+import type { Express } from 'express';
 import type { Arguments } from 'yargs';
 
-import type { Database, Orm } from './database';
+import type { Cors } from './cors';
+import type { Database, DatabaseConfig, Orm } from './database';
 import type { GraphQLRequestConfig } from './graphql';
-import type { GraphQLWsProtocolRequestConfig } from './graphql-ws-protocol';
+import type { GraphqlTransportWsRequestConfig } from './graphql-transport-ws';
 import type { Interceptors } from './interceptors';
-import type { RestMethod, RestRequestConfig } from './rest';
+import type { RestRequestConfig } from './rest';
 import type { WsRequestConfig } from './ws';
 
 interface StaticPathObject {
@@ -14,30 +15,8 @@ interface StaticPathObject {
 }
 export type StaticPath = `/${string}` | (`/${string}` | StaticPathObject)[] | StaticPathObject;
 
-type CorsHeader = string;
-export type CorsOrigin = string | (string | RegExp)[] | RegExp;
-export interface Cors {
-  allowedHeaders?: CorsHeader[];
-  credentials?: boolean;
-  exposedHeaders?: CorsHeader[];
-  maxAge?: number;
-  methods?: Uppercase<RestMethod>[];
-  origin: ((request: Request) => CorsOrigin | Promise<CorsOrigin>) | CorsOrigin;
-}
-
 export type Port = number;
 export type BaseUrl = `/${string}`;
-
-export interface WsConfig {
-  baseUrl?: BaseUrl;
-  configs: WsRequestConfig[];
-  interceptors?: Interceptors<'rest'>;
-}
-
-export interface DatabaseConfig {
-  data: `${string}.json` | Record<string, unknown>;
-  routes?: `${string}.json` | Record<`/${string}`, `/${string}`>;
-}
 
 export interface BaseServerConfig {
   baseUrl?: BaseUrl;
@@ -72,7 +51,7 @@ declare global {
 export interface MockServerComponent {
   baseUrl?: BaseUrl;
   configs: Array<
-    GraphQLRequestConfig | GraphQLWsProtocolRequestConfig | RestRequestConfig | WsRequestConfig
+    GraphQLRequestConfig | GraphqlTransportWsRequestConfig | RestRequestConfig | WsRequestConfig
   >;
   interceptors?: Interceptors;
   name?: string;

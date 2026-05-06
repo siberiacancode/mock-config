@@ -1,9 +1,9 @@
-import type { GraphQLWsProtocolMessage } from '@/utils/types';
+import type { GraphqlTransportWsMessage } from '@/utils/types';
 
-export const getGraphQLWsProtocolInput = (message: string) => {
-  let value: GraphQLWsProtocolMessage | undefined;
+export const getGraphqlTransportWsInput = (message: string) => {
+  let value: GraphqlTransportWsMessage | undefined;
   try {
-    value = JSON.parse(message) as GraphQLWsProtocolMessage;
+    value = JSON.parse(message) as GraphqlTransportWsMessage;
   } catch {
     value = {
       type: 'subscribe'

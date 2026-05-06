@@ -6,7 +6,7 @@ import { WebSocket, WebSocketServer } from 'ws';
 
 import type {
   BaseServerConfig,
-  GraphQLWsProtocolRequestConfig,
+  GraphqlTransportWsRequestConfig,
   WsConfig,
   WsDataResponse,
   WsRequestArtifact,
@@ -23,7 +23,7 @@ const servers: WebSocketServer[] = [];
 const createServer = async (
   mockServerConfig: Pick<BaseServerConfig, 'baseUrl' | 'interceptors'> & {
     ws: Omit<WsConfig, 'configs'> & {
-      configs: Array<GraphQLWsProtocolRequestConfig | WsRequestConfig>;
+      configs: Array<GraphqlTransportWsRequestConfig | WsRequestConfig>;
     };
   }
 ) => {
@@ -53,7 +53,7 @@ const createServer = async (
       config.routes.forEach((route) => {
         acc.push({
           baseUrl: urlJoin(baseUrl ?? '/', ws.baseUrl ?? '/'),
-          type: config.type,
+          type: 'raw',
           config: route,
           weight: 0,
           componentRequestInterceptor: ws.interceptors?.request,
@@ -176,6 +176,28 @@ describe('createWsRoute: content', () => {
 
     expect(JSON.parse(firstResponse.toString())).toStrictEqual({ message: 'hello' });
     expect(JSON.parse(secondResponse.toString())).toStrictEqual({ message: 'hello' });
+  });
+});
+
+describe('createWsRoute: graphql transport ws', () => {
+  it('Should acknowledge connection_init without query payload', async () => {
+    const { port } = await createServer({
+      ws: {
+        configs: [
+          {
+            operationType: 'subscription',
+            operationName: 'Users',
+            routes: [{ data: { ok: true } }]
+          }
+        ]
+      }
+    });
+    const client = await connectClient(`ws://127.0.0.1:${port}/`);
+
+    client.send(JSON.stringify({ type: 'connection_init' }));
+    const [response] = await once(client, 'message');
+
+    expect(JSON.parse(response.toString())).toStrictEqual({ type: 'connection_ack' });
   });
 });
 

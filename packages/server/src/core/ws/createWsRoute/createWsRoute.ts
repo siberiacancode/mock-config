@@ -8,8 +8,8 @@ import type {
   ConnectionWsRequestArtifact,
   Entries,
   GraphQLEntitiesByEntityName,
-  GraphQLWsProtocolParams,
-  GraphQLWsRequestArtifact,
+  GraphqlTransportWsParams,
+  GraphqlTransportWsRequestArtifact,
   RawWsRequestArtifact,
   WsFrame,
   WsParams,
@@ -17,7 +17,7 @@ import type {
 } from '@/utils/types';
 
 import {
-  getGraphQLWsProtocolInput,
+  getGraphqlTransportWsInput,
   isComparator,
   parseCookie,
   parseGraphQLQuery,
@@ -27,16 +27,16 @@ import {
 } from '@/utils/helpers';
 
 import { equals } from '../../entities';
-import { matchGraphQLWsProtocolRequestArtifacts, matchRawRequestArtifacts } from './helpers';
+import { matchGraphqlTransportWsRequestArtifacts, matchRawRequestArtifacts } from './helpers';
 
 interface CreateWsRouteParams {
   server: WebSocketServer;
   wsRequestArtifacts: WsRequestArtifact[];
 }
 
-const sendGraphQLWsProtocolData = (socket: WebSocket, data: unknown) => {
-  if (data === undefined) return;
-  socket.send(typeof data === 'string' ? data : JSON.stringify(data));
+const sendGraphqlTransportWsData = (socket: WebSocket, id: string, payload: unknown) => {
+  if (payload === undefined) return;
+  socket.send(JSON.stringify({ id, type: 'next', payload }));
 };
 
 const sendWsData = (socket: WebSocket, data: unknown) => {
@@ -85,18 +85,19 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         );
       });
 
-      const { connectionArtifacts, graphqlWsRequestArtifacts, rawWsRequestArtifacts } =
+      const { connectionArtifacts, graphqlTransportWsRequestArtifacts, rawWsRequestArtifacts } =
         matchedRequestArtifacts.reduce(
           (acc, artifact) => {
             if (artifact.type === 'connection') acc.connectionArtifacts.push(artifact);
-            if (artifact.type === 'graphql-ws') acc.graphqlWsRequestArtifacts.push(artifact);
+            if (artifact.type === 'graphql-ws')
+              acc.graphqlTransportWsRequestArtifacts.push(artifact);
             if (artifact.type === 'raw') acc.rawWsRequestArtifacts.push(artifact);
 
             return acc;
           },
           {
             connectionArtifacts: [] as ConnectionWsRequestArtifact[],
-            graphqlWsRequestArtifacts: [] as GraphQLWsRequestArtifact[],
+            graphqlTransportWsRequestArtifacts: [] as GraphqlTransportWsRequestArtifact[],
             rawWsRequestArtifacts: [] as RawWsRequestArtifact[]
           }
         );
@@ -160,7 +161,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         const frame: WsFrame = isBinary
           ? { isBinary: true, raw: raw as Buffer }
           : { isBinary: false, raw: raw.toString() };
-        const params: WsParams = {
+        const wsParams: WsParams = {
           ...frame,
           broadcast: (data: unknown) => broadcastWsData(server, data),
           socket,
@@ -179,13 +180,13 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
         for (const artifact of matchedRawArtifacts) {
           if (artifact.componentRequestInterceptor) {
-            await artifact.componentRequestInterceptor(params);
+            await artifact.componentRequestInterceptor(wsParams);
           }
 
-          const resolvedData = await artifact.config.data(params);
+          const resolvedData = await artifact.config.data(wsParams);
 
           const data = artifact.componentResponseInterceptor
-            ? artifact.componentResponseInterceptor(resolvedData, params)
+            ? artifact.componentResponseInterceptor(resolvedData, wsParams)
             : resolvedData;
 
           if (artifact.config.settings?.delay) {
@@ -195,113 +196,111 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           sendWsData(socket, data);
         }
 
-        const graphqlSubscriptionInput = getGraphQLWsProtocolInput(frame.raw.toString());
-        const query = parseGraphQLQuery(graphqlSubscriptionInput.payload?.query ?? '');
+        if (frame.isBinary) return;
 
-        const isGraphqlWsProtocol = !!query && !frame.isBinary;
+        const graphqlSubscriptionInput = getGraphqlTransportWsInput(frame.raw.toString());
 
-        if (isGraphqlWsProtocol) {
-          if (graphqlSubscriptionInput.type === 'connection_init') {
-            sendGraphQLWsProtocolData(socket, {
-              type: 'connection_ack'
-            });
-            return;
-          }
-
-          if (graphqlSubscriptionInput.type === 'ping') {
-            sendGraphQLWsProtocolData(socket, {
-              type: 'pong'
-            });
-            return;
-          }
-
-          if (graphqlSubscriptionInput.type !== 'subscribe') {
-            console.warn(
-              'Unsupported graphQL subscription input type',
-              graphqlSubscriptionInput.type
-            );
-            return;
-          }
-
-          const matchedGraphQLWsProtocolRequestArtifacts = matchGraphQLWsProtocolRequestArtifacts({
-            artifacts: graphqlWsRequestArtifacts,
-            meta: {
-              path: requestPathname,
-              eventName: query.eventName,
-              query: graphqlSubscriptionInput.payload?.query,
-              operationType: query.operationType,
-              operationName: query.operationName
-            }
-          });
-
-          const matchedRouteConfig = matchedGraphQLWsProtocolRequestArtifacts.find(({ config }) => {
-            if (!config.entities) return true;
-
-            const entityEntries = Object.entries(config.entities) as Entries<
-              Required<GraphQLEntitiesByEntityName>
-            >;
-
-            return entityEntries.every(([_, valueOrComparator]) => {
-              const actualEntity = graphqlSubscriptionInput.payload?.variables;
-
-              if (isComparator(valueOrComparator)) {
-                const comparator = valueOrComparator;
-                return resolveEntityValues({ actual: actualEntity, comparator });
-              }
-
-              const comparator = equals(valueOrComparator);
-              return resolveEntityValues({ actual: actualEntity, comparator });
-            });
-          });
-
-          if (!matchedRouteConfig) return;
-
-          const entities = matchedRouteConfig.config.entities;
-          if (entities) {
-            const entityEntries = Object.entries(entities) as Entries<Required<typeof entities>>;
-
-            const isMatchedByEntities = entityEntries.every(([_, valueOrComparator]) => {
-              const actualEntity = graphqlSubscriptionInput.payload?.variables;
-
-              if (isComparator(valueOrComparator)) {
-                const comparator = valueOrComparator;
-                return resolveEntityValues({ actual: actualEntity, comparator });
-              }
-
-              const comparator = equals(valueOrComparator);
-              return resolveEntityValues({ actual: actualEntity, comparator });
-            });
-
-            if (!isMatchedByEntities) return;
-          }
-
-          const params: GraphQLWsProtocolParams = {
-            entities: matchedRouteConfig.config.entities ?? {},
-            eventName: query.eventName,
-            next: (payloadToSend) => {
-              sendGraphQLWsProtocolData(socket, payloadToSend);
-            },
-            operationName: query.operationName,
-            query: graphqlSubscriptionInput.payload?.query,
-            raw,
-            setDelay: async (delay) => {
-              await sleep(delay === Infinity ? 99999999 : delay);
-            },
-            socket,
-            variables: graphqlSubscriptionInput.payload?.variables ?? {}
-          };
-
-          const resolvedData =
-            typeof matchedRouteConfig.config.data === 'function'
-              ? await matchedRouteConfig.config.data(params)
-              : matchedRouteConfig.config.data;
-
-          if (matchedRouteConfig.config.settings?.delay) {
-            await sleep(matchedRouteConfig.config.settings.delay);
-          }
-
-          sendGraphQLWsProtocolData(socket, resolvedData);
+        if (graphqlSubscriptionInput.type === 'connection_init') {
+          socket.send(JSON.stringify({ type: 'connection_ack' }));
+          return;
         }
+
+        if (graphqlSubscriptionInput.type === 'ping') {
+          socket.send(JSON.stringify({ type: 'pong' }));
+          return;
+        }
+
+        if (graphqlSubscriptionInput.type !== 'subscribe') {
+          console.warn(
+            'Unsupported graphQL subscription input type',
+            graphqlSubscriptionInput.type
+          );
+          return;
+        }
+
+        const query = parseGraphQLQuery(graphqlSubscriptionInput.payload?.query ?? '');
+        if (!query) return;
+
+        const matchedGraphqlTransportWsRequestArtifacts = matchGraphqlTransportWsRequestArtifacts({
+          artifacts: graphqlTransportWsRequestArtifacts,
+          meta: {
+            path: requestPathname,
+            eventName: query.eventName,
+            query: graphqlSubscriptionInput.payload?.query,
+            operationType: query.operationType,
+            operationName: query.operationName
+          }
+        });
+
+        const matchedRouteConfig = matchedGraphqlTransportWsRequestArtifacts.find(({ config }) => {
+          if (!config.entities) return true;
+
+          const entityEntries = Object.entries(config.entities) as Entries<
+            Required<GraphQLEntitiesByEntityName>
+          >;
+
+          return entityEntries.every(([_, valueOrComparator]) => {
+            const actualEntity = graphqlSubscriptionInput.payload?.variables;
+
+            if (isComparator(valueOrComparator)) {
+              const comparator = valueOrComparator;
+              return resolveEntityValues({ actual: actualEntity, comparator });
+            }
+
+            const comparator = equals(valueOrComparator);
+            return resolveEntityValues({ actual: actualEntity, comparator });
+          });
+        });
+
+        if (!matchedRouteConfig) return;
+
+        const entities = matchedRouteConfig.config.entities;
+        if (entities) {
+          const entityEntries = Object.entries(entities) as Entries<Required<typeof entities>>;
+
+          const isMatchedByEntities = entityEntries.every(([_, valueOrComparator]) => {
+            const actualEntity = graphqlSubscriptionInput.payload?.variables;
+
+            if (isComparator(valueOrComparator)) {
+              const comparator = valueOrComparator;
+              return resolveEntityValues({ actual: actualEntity, comparator });
+            }
+
+            const comparator = equals(valueOrComparator);
+            return resolveEntityValues({ actual: actualEntity, comparator });
+          });
+
+          if (!isMatchedByEntities) return;
+        }
+
+        const graphqlTransportWsParams: GraphqlTransportWsParams = {
+          entities: matchedRouteConfig.config.entities ?? {},
+          eventName: query.eventName,
+          next: (payload) => {
+            if (graphqlSubscriptionInput.id)
+              sendGraphqlTransportWsData(socket, graphqlSubscriptionInput.id, payload);
+          },
+          operationName: query.operationName,
+          query: graphqlSubscriptionInput.payload?.query,
+          raw,
+          setDelay: async (delay) => {
+            await sleep(delay === Infinity ? 99999999 : delay);
+          },
+          socket,
+          variables: graphqlSubscriptionInput.payload?.variables ?? {}
+        };
+
+        const resolvedData =
+          typeof matchedRouteConfig.config.data === 'function'
+            ? await matchedRouteConfig.config.data(graphqlTransportWsParams)
+            : matchedRouteConfig.config.data;
+
+        if (matchedRouteConfig.config.settings?.delay) {
+          await sleep(matchedRouteConfig.config.settings.delay);
+        }
+
+        if (graphqlSubscriptionInput.id)
+          sendGraphqlTransportWsData(socket, graphqlSubscriptionInput.id, resolvedData);
       });
     }
   );

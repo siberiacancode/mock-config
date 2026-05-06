@@ -26,16 +26,16 @@ const operationNameSubscriptionRequestConfigSchema = z
 
 const querySubscriptionRequestConfigSchema = z
   .strictObject({
-    eventName: z.union([z.string(), z.instanceof(RegExp)]).optional(),
     operationName: z.union([z.string(), z.instanceof(RegExp)]).optional(),
+    eventName: z.union([z.string(), z.instanceof(RegExp)]).optional(),
     query: z.string()
   })
   .merge(baseSubscriptionRequestConfigSchema);
 
 const eventNameSubscriptionRequestConfigSchema = z
   .strictObject({
-    eventName: z.union([z.string(), z.instanceof(RegExp)]),
     operationName: z.union([z.string(), z.instanceof(RegExp)]).optional(),
+    eventName: z.union([z.string(), z.instanceof(RegExp)]),
     query: z.string().optional()
   })
   .merge(baseSubscriptionRequestConfigSchema);

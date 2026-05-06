@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { getGraphQLWsProtocolInput } from './getGraphQLWsProtocolInput';
+import { getGraphqlTransportWsInput } from './getGraphqlTransportWsInput';
 
-describe('getGraphQLWsProtocolInput', () => {
+describe('getGraphqlTransportWsInput', () => {
   it('Should get correct graphQL subscription input from message', () => {
     expect(
-      getGraphQLWsProtocolInput(`
+      getGraphqlTransportWsInput(`
         {
           "id": "1",
           "type": "subscribe",
@@ -29,7 +29,7 @@ describe('getGraphQLWsProtocolInput', () => {
 
   it('Should omit variables when not a plain object', () => {
     expect(
-      getGraphQLWsProtocolInput(`
+      getGraphqlTransportWsInput(`
         {
           "id": "1",
           "type": "subscribe",

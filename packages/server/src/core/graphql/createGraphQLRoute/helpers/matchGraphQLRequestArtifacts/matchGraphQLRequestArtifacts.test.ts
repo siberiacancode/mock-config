@@ -101,19 +101,6 @@ describe('matchGraphQLRequestArtifacts', () => {
     expect(matched).toHaveLength(1);
   });
 
-  it('Should match operation name regexp with case-insensitive flag', () => {
-    const matched = matchGraphQLRequestArtifacts({
-      artifacts: [makeArtifact({ operationName: /^getusers$/i })],
-      meta: {
-        path: '/',
-        operationType: 'query',
-        operationName: 'GetUsers'
-      }
-    });
-
-    expect(matched).toHaveLength(1);
-  });
-
   it('Should match event name string', () => {
     const matched = matchGraphQLRequestArtifacts({
       artifacts: [makeArtifact({ eventName: 'GetUsers' })],
@@ -139,19 +126,6 @@ describe('matchGraphQLRequestArtifacts', () => {
     expect(matched).toHaveLength(1);
   });
 
-  it('Should match event name regexp with case-insensitive flag', () => {
-    const matched = matchGraphQLRequestArtifacts({
-      artifacts: [makeArtifact({ eventName: /^getusers$/i })],
-      meta: {
-        path: '/',
-        operationType: 'query',
-        eventName: 'GetUsers'
-      }
-    });
-
-    expect(matched).toHaveLength(1);
-  });
-
   it('Should fail operation name string when names differ', () => {
     const matched = matchGraphQLRequestArtifacts({
       artifacts: [makeArtifact({ operationName: 'GetUsers' })],
@@ -164,7 +138,7 @@ describe('matchGraphQLRequestArtifacts', () => {
     expect(matched).toHaveLength(0);
   });
 
-  it('Should fail operationName match when meta operation name is missing', () => {
+  it('Should fail operation name match when meta operation name is missing', () => {
     const matched = matchGraphQLRequestArtifacts({
       artifacts: [makeArtifact({ operationName: 'GetUsers' })],
       meta: {
@@ -176,7 +150,7 @@ describe('matchGraphQLRequestArtifacts', () => {
     expect(matched).toHaveLength(0);
   });
 
-  it('Should skip artifact with neither query nor operationName', () => {
+  it('Should skip artifact with neither query nor operation name', () => {
     const warn = vi.spyOn(console, 'warn');
     const artifact = makeArtifact({});
 

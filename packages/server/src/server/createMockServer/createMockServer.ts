@@ -34,7 +34,7 @@ import {
   prepareRestRequestArtifacts
 } from '@/core/rest';
 import {
-  calculateGraphQLWsProtocolRouteConfigWeight,
+  calculateGraphqlTransportWsRouteConfigWeight,
   createWsRoute,
   prepareWsRequestArtifacts
 } from '@/core/ws';
@@ -154,7 +154,7 @@ export const createMockServer = (
             acc.wsRequestArtifacts.push({
               type: 'graphql-ws',
               baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
-              weight: calculateGraphQLWsProtocolRouteConfigWeight(route),
+              weight: calculateGraphqlTransportWsRouteConfigWeight(route),
               operationType: config.operationType,
               eventName: config.eventName,
               operationName: config.operationName,
