@@ -7,8 +7,4 @@ const packageJson = require('../package.json');
 
 pleaseUpgradeNode(packageJson);
 
-const { cli } = require('./cli');
-
-cli();
-
-export {};
+import('./cli.mjs').then(({ cli }) => cli());

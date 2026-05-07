@@ -2,21 +2,17 @@ import { defineConfig } from 'tsdown';
 
 export default defineConfig([
   {
-    clean: true,
-    entry: ['bin/bin.ts'],
-    format: 'cjs',
-    fixedExtension: false,
-    outDir: 'dist/bin',
-    sourcemap: false,
-    target: 'node16'
-  },
-  {
-    clean: true,
-    entry: ['src/index.ts'],
-    format: 'cjs',
+    entry: ['bin/cli.ts'],
+    format: 'esm',
     fixedExtension: false,
     outDir: 'dist',
     sourcemap: false,
-    target: 'node16'
+    shims: true,
+    target: 'node20.19',
+    copy: [
+      { from: 'bin/templates/ts', to: 'dist/templates' },
+      { from: 'bin/templates/js', to: 'dist/templates' },
+      { from: 'bin/bin.cjs', to: 'dist' }
+    ]
   }
 ]);
