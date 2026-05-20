@@ -148,11 +148,11 @@ const comparators = {
     const flattenActual = normalize(actual);
     const flattenEntry = normalize(entry);
 
-    return Object.entries(flattenEntry).every(([flattenEntryKey, expectedValue]) => {
-      if (isComparator(expectedValue)) {
-        return comparators.fn(flattenActual[flattenEntryKey], expectedValue);
+    return Object.entries(flattenEntry).every(([flattenEntryKey, flattenEntryValue]) => {
+      if (isComparator(flattenEntryValue)) {
+        return comparators.fn(flattenActual[flattenEntryKey], flattenEntryValue);
       }
-      return comparators.equals(flattenActual[flattenEntryKey], expectedValue);
+      return comparators.equals(flattenActual[flattenEntryKey], flattenEntryValue);
     });
   }
 };
