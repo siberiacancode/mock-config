@@ -21,7 +21,6 @@ $ yarn add mock-config-server --dev
 - **TypeScript support out of the box** - full typed package
 - **Full Rest Api support** - using simple configs of a certain format, you can easily simulate rest operation of servers
 - **GraphQL support** - using simple configs of a certain format, you can easily simulate graphlql operation of servers
-- **Database** - use mock database with all CRUD operations
 - **CORS setup** - turn on and off CORS, fully customizable when CORS is turned on
 - **Support for any kind of static** - server can return any type of static file if needed. Images, HTML, CSS, JSON, etc
 
@@ -41,17 +40,17 @@ Create a `mock-server.config.js` file with server configuration
 /** @type {import('mock-config-server').FlatMockServerConfig} */
 const flatMockServerConfig = [
   {
-    baseUrl: "/api",
+    baseUrl: '/api'
   },
   {
     configs: [
       {
-        path: "/user",
-        method: "get",
-        routes: [{ data: { emoji: "🦁", name: "Nursultan" } }],
-      },
-    ],
-  },
+        path: '/user',
+        method: 'get',
+        routes: [{ data: { emoji: '🦁', name: 'Nursultan' } }]
+      }
+    ]
+  }
 ];
 
 export default flatMockServerConfig;
@@ -74,9 +73,6 @@ $ npx mock-config-server
 - `cors?` {Cors} CORS settings object (default: `CORS is turn off`), [read](#cors)
 - `port?` {number} server port (default: `31299`)
 - `baseUrl?` {string} part of the url that will be substituted at the beginning of the request url (default: `'/'`)
-- `database?` Database config for mock requests [read](#database)
-  - `data` {Object | string} initial data for database
-  - `routes?` {Object | string} map of custom routes for database
 
 ### Components
 
@@ -101,8 +97,6 @@ Every route must be configured to handle response content in one of three ways: 
   - `file?` `string` path to file for return in response
   - `settings?` `Settings` settings for route (status, delay)
   - `entities?` `Object<headers | cookies | query | params | body>` object that helps in data retrieval
-  - `interceptors?` `Interceptors` functions to change request or response parameters, [read](#interceptors)
-- `interceptors?` `Interceptors` functions to change request or response parameters, [read](#interceptors)
 
 ##### Rest example
 
@@ -110,30 +104,30 @@ Every route must be configured to handle response content in one of three ways: 
 /** @type {import('mock-config-server').FlatMockServerConfig} */
 const flatMockServerConfig = [
   {
-    baseUrl: "/api",
+    baseUrl: '/api'
   },
   {
     configs: [
       {
-        path: "/user",
-        method: "get",
+        path: '/user',
+        method: 'get',
         routes: [
           {
             entities: {
-              headers: { "name-header": "Nursultan" },
+              headers: { 'name-header': 'Nursultan' }
             },
-            data: { emoji: "🦁", name: "Nursultan" },
+            data: { emoji: '🦁', name: 'Nursultan' }
           },
           {
             entities: {
-              headers: { "name-header": "Dmitriy" },
+              headers: { 'name-header': 'Dmitriy' }
             },
-            data: { emoji: "☄", name: "Dmitriy" },
-          },
-        ],
-      },
-    ],
-  },
+            data: { emoji: '☄', name: 'Dmitriy' }
+          }
+        ]
+      }
+    ]
+  }
 ];
 
 export default flatMockServerConfig;
@@ -142,11 +136,11 @@ export default flatMockServerConfig;
 Now you can make a request with an additional header and get the desired result
 
 ```javascript
-fetch("http://localhost:31299/api/user", {
+fetch('http://localhost:31299/api/user', {
   headers: {
-    "name-header": "Nursultan",
-    "Content-Type": "application/json",
-  },
+    'name-header': 'Nursultan',
+    'Content-Type': 'application/json'
+  }
 })
   .then((response) => response.json())
   .then((data) => console.log(data)); // {  emoji: '🦁', name: 'Nursultan' }
@@ -164,8 +158,6 @@ Every route must be configured to handle response content in one of two ways: da
   - `queue?` `Array<{ time?: number; data: any}>` queue for polling with opportunity to set time for each response
   - `settings?` `Settings` settings for route (polling on/off, etc.)
   - `entities?` `Object<headers | cookies | query | variables>` object that helps in data retrieval
-  - `interceptors?` `Interceptors` functions to change request or response parameters, [read](#interceptors)
-- `interceptors?` `Interceptors` functions to change request or response parameters, [read](#interceptors)
 
 > Every graphql config should contain `operationName` or `query` or both of them
 
@@ -175,30 +167,30 @@ Every route must be configured to handle response content in one of two ways: da
 /** @type {import('mock-config-server').FlatMockServerConfig} */
 const flatMockServerConfig = [
   {
-    baseUrl: "/graphql",
+    baseUrl: '/graphql'
   },
   {
     configs: [
       {
-        operationType: "query",
-        operationName: "GetUser",
+        operationType: 'query',
+        operationName: 'GetUser',
         routes: [
           {
             entities: {
-              headers: { "name-header": "Nursultan" },
+              headers: { 'name-header': 'Nursultan' }
             },
-            data: { emoji: "🦁", name: "Nursultan" },
+            data: { emoji: '🦁', name: 'Nursultan' }
           },
           {
             entities: {
-              headers: { "name-header": "Dmitriy" },
+              headers: { 'name-header': 'Dmitriy' }
             },
-            data: { emoji: "☄", name: "Dmitriy" },
-          },
-        ],
-      },
-    ],
-  },
+            data: { emoji: '☄', name: 'Dmitriy' }
+          }
+        ]
+      }
+    ]
+  }
 ];
 
 export default flatMockServerConfig;
@@ -208,22 +200,23 @@ Now you can make a request with an additional header and get the desired result
 
 ```javascript
 const body = JSON.stringify({
-  query: "query GetUser { name }",
+  query: 'query GetUser { name }'
 });
 
-fetch("http://localhost:31299/graphql", {
-  method: "POST",
+fetch('http://localhost:31299/graphql', {
+  method: 'POST',
   headers: {
-    "name-header": "Nursultan",
-    "Content-Type": "application/json",
+    'name-header': 'Nursultan',
+    'Content-Type': 'application/json'
   },
-  body,
+  body
 })
   .then((response) => response.json())
   .then((data) => console.log(data)); // {  emoji: '🦁', name: 'Nursultan' }
 ```
 
 // TODO: rewrite to handlers
+
 #### Entity descriptors
 
 If you need more complex logic for matching entities, you can use entity descriptors.
@@ -248,50 +241,51 @@ Allowed `checkModes`
 /** @type {import('mock-config-server').FlatMockServerConfig} */
 const flatMockServerConfig = [
   {
-    baseUrl: "/api",
+    baseUrl: '/api'
   },
   {
     configs: [
       {
-        path: "/user",
-        method: "get",
+        path: '/user',
+        method: 'get',
         routes: [
           {
             entities: {
               headers: {
                 // 'name-header' is 'Dmitriy'
-                "name-header": {
-                  checkMode: "equals",
-                  value: "Dmitriy",
+                'name-header': {
+                  checkMode: 'equals',
+                  value: 'Dmitriy'
                 },
                 // check for 'equals' if descriptor not provided
                 // i.e. it is the same as `role: { checkMode: 'equals', value: 'developer' }`
-                role: "developer",
+                role: 'developer'
               },
               cookies: {
                 // any 'token' cookie
                 token: {
-                  checkMode: "exists",
+                  checkMode: 'exists'
                 },
                 // 'someSecretToken' cookie can be '123-abc' or '456-abc' for example
                 someSecretToken: {
-                  checkMode: "regExp",
-                  value: /^\d\d\d-abc$/,
-                },
-              },
+                  checkMode: 'regExp',
+                  value: /^\d\d\d-abc$/
+                }
+              }
             },
-            data: "Some user data for Dmitriy",
-          },
-        ],
-      },
-    ],
-  },
+            data: 'Some user data for Dmitriy'
+          }
+        ]
+      }
+    ]
+  }
 ];
 
 export default flatMockServerConfig;
 ```
 
 // TODO: rewrite
+
 #### Function check mode
 
 `fn checkMode` is the most powerful way to describe your `entities` logic, but in most cases you will be fine using other `checkModes`.
@@ -306,38 +300,37 @@ You can use the `checkFunction` from second argument if you want to describe you
 /** @type {import('mock-config-server').FlatMockServerConfig} */
 const flatMockServerConfig = [
   {
-    baseUrl: "/api",
+    baseUrl: '/api'
   },
   {
     configs: [
       {
-        path: "/posts/:postId",
-        method: "post",
+        path: '/posts/:postId',
+        method: 'post',
         routes: [
           {
             entities: {
               params: {
                 postId: {
-                  checkMode: "fn",
-                  value: (actualValue) =>
-                    +actualValue >= 0 && +actualValue <= 50,
-                },
+                  checkMode: 'fn',
+                  value: (actualValue) => +actualValue >= 0 && +actualValue <= 50
+                }
               },
               cookies: {
                 authToken: {
-                  checkMode: "fn",
+                  checkMode: 'fn',
                   value: (actualValue, checkFunction) =>
-                    checkFunction("equals", actualValue, 123) ||
-                    checkFunction("startsWith", actualValue, 2),
-                },
-              },
+                    checkFunction('equals', actualValue, 123) ||
+                    checkFunction('startsWith', actualValue, 2)
+                }
+              }
             },
-            data: "Some user data",
-          },
-        ],
-      },
-    ],
-  },
+            data: 'Some user data'
+          }
+        ]
+      }
+    ]
+  }
 ];
 
 module.exports = flatMockServerConfig;
@@ -351,30 +344,30 @@ If you want to check a deep nested property of your body or variables via descri
 /** @type {import('mock-config-server').FlatMockServerConfig} */
 const flatMockServerConfig = [
   {
-    baseUrl: "/api",
+    baseUrl: '/api'
   },
   {
     configs: [
       {
-        path: "/users",
-        method: "post",
+        path: '/users',
+        method: 'post',
         routes: [
           {
             entities: {
               body: {
                 // if body has properties like { user: { name: 'Sergey' } } OR { 'user.name': 'Sergey' } then mock-config-server return data
-                "user.name": {
-                  checkMode: "equals",
-                  value: "Sergey",
-                },
-              },
+                'user.name': {
+                  checkMode: 'equals',
+                  value: 'Sergey'
+                }
+              }
             },
-            data: 'user.name in body is "Sergey"',
-          },
-        ],
-      },
-    ],
-  },
+            data: 'user.name in body is "Sergey"'
+          }
+        ]
+      }
+    ]
+  }
 ];
 
 export default flatMockServerConfig;
@@ -388,34 +381,34 @@ You can also use descriptor for whole body or variables entity.
 /** @type {import('mock-config-server').FlatMockServerConfig} */
 const flatMockServerConfig = [
   {
-    baseUrl: "/api",
+    baseUrl: '/api'
   },
   {
     configs: [
       {
-        path: "/users",
-        method: "post",
+        path: '/users',
+        method: 'post',
         routes: [
           {
             entities: {
               body: {
                 // if actual body contains some extra property(-ies) then this entity won't match
-                checkMode: "equals",
+                checkMode: 'equals',
                 value: {
                   user: {
-                    name: "Sergey",
-                    emoji: "🐘",
-                    roles: ["developer", "moderator"],
-                  },
-                },
-              },
+                    name: 'Sergey',
+                    emoji: '🐘',
+                    roles: ['developer', 'moderator']
+                  }
+                }
+              }
             },
-            data: "your body is strictly equals object from body entity value",
-          },
-        ],
-      },
-    ],
-  },
+            data: 'your body is strictly equals object from body entity value'
+          }
+        ]
+      }
+    ]
+  }
 ];
 
 export default flatMockServerConfig;
@@ -429,21 +422,21 @@ Rest routes support paths to files. If a route is matched, the server will send 
 /** @type {import('mock-config-server').FlatMockServerConfig} */
 const flatMockServerConfig = [
   {
-    baseUrl: "/api",
+    baseUrl: '/api'
   },
   {
     configs: [
       {
-        path: "/files/settings",
-        method: "get",
+        path: '/files/settings',
+        method: 'get',
         routes: [
           {
-            file: "./settings.json",
-          },
-        ],
-      },
-    ],
-  },
+            file: './settings.json'
+          }
+        ]
+      }
+    ]
+  }
 ];
 
 export default flatMockServerConfig;
@@ -459,32 +452,34 @@ If the file exists, response interceptors will receive file content `Buffer` as 
 /** @type {import('mock-config-server').FlatMockServerConfig} */
 const flatMockServerConfig = [
   {
-    baseUrl: "/api",
+    baseUrl: '/api'
   },
   {
     configs: [
       {
-        path: "/files/settings",
-        method: "get",
+        path: '/files/settings',
+        method: 'get',
         routes: [
           {
-            file: "./settings.json",
+            file: './settings.json',
             interceptors: {
               response: (data, { setHeader, getResponseHeader }) => {
                 // Content-Type and Content-Disposition are available before response interceptor runs.
-                console.log("Content-Type:", getResponseHeader("Content-Type"));
-                console.log("Content-Disposition:", getResponseHeader("Content-Disposition"));
+                console.log('Content-Type:', getResponseHeader('Content-Type'));
+                console.log('Content-Disposition:', getResponseHeader('Content-Disposition'));
 
                 const buffer = data;
-                const updatedBuffer = Buffer.from(buffer.toString("utf-8").replace("name", "title"));
+                const updatedBuffer = Buffer.from(
+                  buffer.toString('utf-8').replace('name', 'title')
+                );
                 return updatedBuffer;
-              },
-            },
-          },
-        ],
-      },
-    ],
-  },
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
 ];
 
 export default flatMockServerConfig;
@@ -502,25 +497,25 @@ Routes support polling for data. To add polling for data, use `queue` property i
 /** @type {import('mock-config-server').FlatMockServerConfig} */
 const flatMockServerConfig = [
   {
-    baseUrl: "/api",
+    baseUrl: '/api'
   },
   {
     configs: [
       {
-        path: "/user",
-        method: "get",
+        path: '/user',
+        method: 'get',
         routes: [
           {
             queue: [
-              { data: { emoji: "🦁", name: "Nursultan" } },
-              { data: { emoji: "☄", name: "Dmitriy" } },
-              { file: "./users/Sergey.json" },
-            ],
-          },
-        ],
-      },
-    ],
-  },
+              { data: { emoji: '🦁', name: 'Nursultan' } },
+              { data: { emoji: '☄', name: 'Dmitriy' } },
+              { file: './users/Sergey.json' }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 ];
 
 export default flatMockServerConfig;
@@ -532,24 +527,24 @@ Using the additional `time` properties in milliseconds, you can specify how much
 /** @type {import('mock-config-server').FlatMockServerConfig} */
 const flatMockServerConfig = [
   {
-    baseUrl: "/api",
+    baseUrl: '/api'
   },
   {
     configs: [
       {
-        path: "/user",
-        method: "get",
+        path: '/user',
+        method: 'get',
         routes: [
           {
             queue: [
-              { time: 5000, data: { emoji: "🦁", name: "Nursultan" } },
-              { data: { emoji: "☄", name: "Dmitriy" } },
-            ],
-          },
-        ],
-      },
-    ],
-  },
+              { time: 5000, data: { emoji: '🦁', name: 'Nursultan' } },
+              { data: { emoji: '☄', name: 'Dmitriy' } }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 ];
 
 export default flatMockServerConfig;
@@ -663,13 +658,13 @@ You can log requests and responses using `log` function in any [interceptor](#in
 /** @type {import('mock-config-server').FlatMockServerConfig} */
 const flatMockServerConfig = [
   {
-    baseUrl: "/api",
+    baseUrl: '/api'
   },
   {
     configs: [
       {
-        path: "/posts",
-        method: "get",
+        path: '/posts',
+        method: 'get',
         routes: [
           {
             interceptors: {
@@ -682,8 +677,8 @@ const flatMockServerConfig = [
                     type: true, //  type: 'request',
                     timestamp: true, //  timestamp: '31.12.2024, 23:59:59,999',
                     method: true, //  method: 'GET',
-                    url: true, //  url: 'http://localhost:31299/api/rest/posts/1'
-                  }, // }
+                    url: true //  url: 'http://localhost:31299/api/rest/posts/1'
+                  } // }
                 });
               },
               response: (data, { log }) => {
@@ -694,20 +689,20 @@ const flatMockServerConfig = [
                     type: true,
                     statusCode: true,
                     method: true,
-                    url: true,
+                    url: true
                   },
                   rewrite: ({ type, statusCode, method, url }) => {
                     console.info(`${type} ${method}: ${url} => ${statusCode}`);
-                  },
+                  }
                 });
                 return data;
-              },
-            },
-          },
-        ],
-      },
-    ],
-  },
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
 ];
 
 export default flatMockServerConfig;
@@ -752,13 +747,13 @@ In that case logger will use following logic:
 /** @type {import('mock-config-server').FlatMockServerConfig} */
 const flatMockServerConfig = [
   {
-    baseUrl: "/api",
+    baseUrl: '/api'
   },
   {
     configs: [
       {
-        path: "/posts",
-        method: "get",
+        path: '/posts',
+        method: 'get',
         routes: [
           {
             interceptors: {
@@ -768,9 +763,9 @@ const flatMockServerConfig = [
                   options: {
                     query: {
                       query1: true,
-                      query2: true,
-                    },
-                  },
+                      query2: true
+                    }
+                  }
                 });
                 log({
                   // whitelist. only cookie1 and cookie2 will be logged
@@ -778,216 +773,30 @@ const flatMockServerConfig = [
                     cookies: {
                       cookie1: true,
                       cookie2: true,
-                      cookie3: false,
-                    },
-                  },
+                      cookie3: false
+                    }
+                  }
                 });
                 log({
                   // blacklist. all headers will be logged except header1
                   options: {
                     headers: {
-                      header1: false,
-                    },
-                  },
+                      header1: false
+                    }
+                  }
                 });
-              },
+              }
             },
-            data: {},
-          },
-        ],
-      },
-    ],
-  },
+            data: {}
+          }
+        ]
+      }
+    ]
+  }
 ];
 
 export default flatMockServerConfig;
 ```
-
-## Database
-
-With `mock-config-server` you can create your own mock database with all CRUD operations
-
-- `data` `Object | string` initial data for database
-- `routes?` `Object | string` map of custom routes for database
-
-### Basic example
-
-```javascript
-const flatMockServerConfig = [
-  {
-    database: {
-      data: {
-        users: [{ id: 1, name: "John" }],
-        settings: {
-          blocked: false,
-        },
-      },
-    },
-  },
-];
-```
-
-Now you have the following routes for requests
-
-#### Collection routes
-
-```
-GET    /users
-POST   /users
-GET    /users/1
-PUT    /users/1
-PATCH  /users/1
-DELETE /users/1
-```
-
-#### Single routes
-
-```
-GET   /settings
-POST  /settings
-PUT   /settings
-PATCH /settings
-```
-
-> Collection routes created from arrays which all elements have **unique**(!) id. Other database parts become single routes.
-
-Also, there are additional routes: `/__db` and `/__routes`
-
-```
-__db -> return data from database config
-__routes -> return routes from database config
-```
-
-### Routes example
-
-```javascript
-const flatMockServerConfig = [
-  {
-    database: {
-      data: {
-        users: [{ id: 1, name: "John" }],
-        settings: {
-          blocked: false,
-        },
-      },
-      routes: {
-        "/api/users/:id": "/users/:id",
-        "/*/my-settings": "/settings",
-      },
-    },
-  },
-];
-```
-
-Now following routes will work correctly
-
-```
-/api/users/1 -> return data for /users/1
-/some/custom/url/my-settings -> return data for /settings
-```
-
-Note some things:
-
-- String routes should start with forward slash
-- If you want to use id param in route then use only `:id` template
-- You can use `wildcard` only for custom route, **not for real route**
-
-### Filter
-
-> Use . to access deep properties
-
-```
-GET /users?name=siberiacancode
-GET /users?id=1&id=2
-GET /users?author.name=siberiacancode
-```
-
-### Pagination
-
-> Use \_page and optionally \_limit to paginate returned data.
-
-```
-GET /users?_page=1
-GET /users?_page=1&_limit=5
-```
-
-> **\_limit** is 10 by default
-
-The returned data has the format:
-
-```
-{
-  _link: Link,
-  results: Data[]
-}
-```
-
-In the **Link** header you'll get **count**, **pages**, **next** and **prev** links.
-
-#### Link
-
-- `count` `number` total count of elements
-- `pages` `number` count of pages
-- `next` `string | null` query string for next link
-- `prev` `string | null` query string for prev link
-
-### Sort
-
-> Use \_sort and \_order, use . to access deep properties
-
-```
-GET /users?_sort=name
-GET /users/1/transfers?_sort=id&_order=asc
-GET /users?_sort=address.city&_order=desc
-```
-
-> **\_order** is 'asc' by default
-
-For multiple fields:
-
-```
-GET /users?_sort=id&_order=desc&_sort=name&_order=asc
-```
-
-### Slice
-
-> X-Total-Count header is included in the response
-
-```
-GET /users?_begin=20
-GET /users?_begin=20&_end=30
-```
-
-Works exactly as [slice](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice), \_begin and \_end are optional
-
-### Full text search
-
-> Add \_q parameter for search data, search can be done by strings and numbers
-
-```
-GET /users?_q=siberia
-```
-
-For multiple search
-
-```
-GET /users?_q=siberia&_q=24
-```
-
-### File example
-
-```javascript
-const flatMockServerConfig = [
-  {
-    database: {
-      data: "./data.json",
-      routes: "./routes.json",
-    },
-  },
-];
-```
-
-Instead of objects you can use paths to **JSON** files which contain needed data or routes
 
 ## CLI usage
 

@@ -13,7 +13,6 @@ import type {
   WsRequestArtifact
 } from '@/utils/types';
 
-import { createDatabaseRoutes } from '@/core/database';
 import {
   calculateGraphQLRouteConfigWeight,
   createGraphQLRoute,
@@ -50,13 +49,7 @@ export const createMockServer = (
   const [option, ...mockServerComponents] = mockServerConfig;
 
   const mockServerSettings = !('configs' in option) ? option : undefined;
-  const {
-    cors,
-    staticPath,
-    interceptors,
-    baseUrl: serverBaseUrl = '/',
-    database
-  } = mockServerSettings ?? {};
+  const { cors, staticPath, interceptors, baseUrl: serverBaseUrl = '/' } = mockServerSettings ?? {};
 
   server.use(bodyParser.urlencoded({ extended: false }));
 
@@ -65,7 +58,7 @@ export const createMockServer = (
 
   server.use(bodyParser.text());
 
-  contextMiddleware(server, { database, ws });
+  contextMiddleware(server, { ws });
 
   cookieParseMiddleware(server);
 
@@ -87,11 +80,6 @@ export const createMockServer = (
     staticMiddleware(server, serverBaseUrl, staticPath);
   }
 
-  if (database) {
-    const routerWithDatabaseRoutes = createDatabaseRoutes(express.Router(), database);
-    server.use(serverBaseUrl, routerWithDatabaseRoutes);
-  }
-
   const components = mockServerSettings
     ? mockServerComponents
     : (mockServerConfig as MockServerComponent[]);
@@ -110,12 +98,8 @@ export const createMockServer = (
               weight: calculateRestRouteConfigWeight(route),
               serverResponseInterceptor: interceptors?.response,
               serverRequestInterceptor: interceptors?.request,
-              requestResponseInterceptor: config.interceptors?.response,
-              requestRequestInterceptor: config.interceptors?.request,
               componentResponseInterceptor: component.interceptors?.response,
-              componentRequestInterceptor: component.interceptors?.request,
-              routeResponseInterceptor: route.interceptors?.response,
-              routeRequestInterceptor: route.interceptors?.request
+              componentRequestInterceptor: component.interceptors?.request
             });
           });
         }
@@ -132,12 +116,8 @@ export const createMockServer = (
               weight: calculateGraphQLRouteConfigWeight(route),
               serverResponseInterceptor: interceptors?.response,
               serverRequestInterceptor: interceptors?.request,
-              requestResponseInterceptor: config.interceptors?.response,
-              requestRequestInterceptor: config.interceptors?.request,
               componentResponseInterceptor: component.interceptors?.response,
-              componentRequestInterceptor: component.interceptors?.request,
-              routeResponseInterceptor: route.interceptors?.response,
-              routeRequestInterceptor: route.interceptors?.request
+              componentRequestInterceptor: component.interceptors?.request
             });
           });
         }

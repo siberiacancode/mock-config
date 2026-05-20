@@ -1,7 +1,7 @@
 import bodyParser from 'body-parser';
 import express from 'express';
 import request from 'supertest';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import type {
   BaseServerConfig,
@@ -25,7 +25,7 @@ const createServer = (
   const server = express();
 
   server.use((request, _, next) => {
-    request.context = { orm: {}, broadcast: vi.fn() };
+    request.context = { broadcast: vi.fn() };
     next();
   });
 
@@ -45,12 +45,8 @@ const createServer = (
             weight: calculateGraphQLRouteConfigWeight(route),
             serverResponseInterceptor: interceptors?.response,
             serverRequestInterceptor: interceptors?.request,
-            requestResponseInterceptor: config.interceptors?.response,
-            requestRequestInterceptor: config.interceptors?.request,
             componentResponseInterceptor: undefined,
-            componentRequestInterceptor: undefined,
-            routeResponseInterceptor: route.interceptors?.response,
-            routeRequestInterceptor: route.interceptors?.request
+            componentRequestInterceptor: undefined
           });
         });
 
@@ -632,79 +628,5 @@ describe('createGraphQLRoute: entities', () => {
 
     expect(getResponse.statusCode).toBe(200);
     expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
-  });
-});
-
-describe('createGraphQLRoute: interceptors', () => {
-  it('Should call request interceptors in order: request -> route', async () => {
-    const routeInterceptor = vi.fn();
-    const requestInterceptor = vi.fn();
-
-    const server = createServer({
-      graphql: {
-        configs: [
-          {
-            operationName: 'GetUsers',
-            operationType: 'query',
-            routes: [
-              {
-                entities: {
-                  variables: {
-                    key1: 'value1',
-                    key2: 'value2'
-                  }
-                },
-                data: { name: 'John', surname: 'Doe' },
-                interceptors: { request: routeInterceptor }
-              }
-            ],
-            interceptors: { request: requestInterceptor }
-          },
-          {
-            operationName: 'CreateUser',
-            operationType: 'mutation',
-            routes: [
-              {
-                entities: {
-                  variables: {
-                    name: 'John'
-                  }
-                },
-                data: { name: 'John', surname: 'Smith' }
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    await request(server).get('/').set('Content-Type', 'application/json').query({
-      query: 'query GetUsers { users { name } }',
-      variables: '{ "key1": "value1", "key2": "value2" }'
-    });
-    expect(requestInterceptor).toBeCalledTimes(1);
-    expect(routeInterceptor).toBeCalledTimes(1);
-    expect(requestInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
-      routeInterceptor.mock.invocationCallOrder[0]
-    );
-
-    // ✅ important:
-    // request interceptor called when operation type and operation name is matched
-    await request(server).get('/').set('Content-Type', 'application/json').query({
-      query: 'query GetUsers { users { name } }',
-      variables: '{ "key3": "value3", "key4": "value4" }'
-    });
-    expect(requestInterceptor).toBeCalledTimes(1);
-    expect(routeInterceptor).toBeCalledTimes(1);
-
-    await request(server)
-      .post('/')
-      .set('Content-Type', 'application/json')
-      .send({
-        query: 'mutation CreateUser($name: String!) { createUser(name: $name) { name } }',
-        variables: { name: 'John' }
-      });
-    expect(requestInterceptor).toBeCalledTimes(1);
-    expect(routeInterceptor).toBeCalledTimes(1);
   });
 });

@@ -4,14 +4,8 @@ import type { WebSocketServer } from 'ws';
 import { Buffer } from 'node:buffer';
 import { WebSocket } from 'ws';
 
-import type {
-  DatabaseConfig,
-  GraphQLEntity,
-  GraphQLOperationName,
-  GraphQLOperationType
-} from '@/utils/types';
+import type { GraphQLEntity, GraphQLOperationName, GraphQLOperationType } from '@/utils/types';
 
-import { createOrm, createStorage } from '@/core/database';
 import { getGraphQLInput, parseGraphQLQuery } from '@/utils/helpers';
 
 declare global {
@@ -29,10 +23,7 @@ declare global {
   }
 }
 
-export const contextMiddleware = (
-  server: Express,
-  { database, ws }: { database?: DatabaseConfig; ws: WebSocketServer }
-) => {
+export const contextMiddleware = (server: Express, { ws }: { ws: WebSocketServer }) => {
   const broadcast = (data: unknown) => {
     if (data === undefined) return;
 
@@ -60,15 +51,8 @@ export const contextMiddleware = (
 
   let requestId = 0;
   const context: Express['request']['context'] = {
-    orm: {},
     broadcast: (payload: unknown) => broadcast(payload)
   };
-
-  if (database) {
-    const storage = createStorage(database.data);
-    const orm = createOrm(storage);
-    context.orm = orm;
-  }
 
   server.use((request, _response, next) => {
     requestId += 1;

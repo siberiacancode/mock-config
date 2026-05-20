@@ -6,7 +6,6 @@
     "moduleResolution": "node",
     "paths": {
       "@/server": ["./src/server"],
-      "@/core/database": ["./src/core/database"],
       "@/core/handlers": ["./src/core/handlers"],
       "@/core/rest": ["./src/core/rest"],
       "@/core/graphql": ["./src/core/graphql"],

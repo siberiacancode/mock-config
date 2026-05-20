@@ -8,17 +8,14 @@ import { callResponseInterceptors } from './callResponseInterceptors';
 
 const createRequest = (value: object) =>
   ({
-    context: { orm: {} },
     ...value
   }) as Request;
 
 describe('callResponseInterceptors: order of calls', () => {
-  it('Should call all passed response interceptors in order: route -> request -> api -> server', async () => {
+  it('Should call all passed response interceptors in order: component -> server', async () => {
     const initialData = '';
     const request = createRequest({});
     const response = {} as Response;
-    const routeInterceptor = vi.fn((data) => `${data}routeInterceptor;`);
-    const requestInterceptor = vi.fn((data) => `${data}requestInterceptor;`);
     const componentInterceptor = vi.fn((data) => `${data}componentInterceptor;`);
     const serverInterceptor = vi.fn((data) => `${data}serverInterceptor`);
 
@@ -29,8 +26,6 @@ describe('callResponseInterceptors: order of calls', () => {
         response
       })
     ).toBe('');
-    expect(routeInterceptor).toBeCalledTimes(0);
-    expect(requestInterceptor).toBeCalledTimes(0);
     expect(componentInterceptor).toBeCalledTimes(0);
     expect(serverInterceptor).toBeCalledTimes(0);
 
@@ -40,24 +35,14 @@ describe('callResponseInterceptors: order of calls', () => {
         request,
         response,
         interceptors: {
-          routeInterceptor,
           componentInterceptor,
-          requestInterceptor,
           serverInterceptor
         }
       })
-    ).toBe('routeInterceptor;requestInterceptor;componentInterceptor;serverInterceptor');
-    expect(routeInterceptor).toBeCalledTimes(1);
-    expect(requestInterceptor).toBeCalledTimes(1);
+    ).toBe('componentInterceptor;serverInterceptor');
     expect(componentInterceptor).toBeCalledTimes(1);
     expect(serverInterceptor).toBeCalledTimes(1);
 
-    expect(routeInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
-      requestInterceptor.mock.invocationCallOrder[0]
-    );
-    expect(requestInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
-      componentInterceptor.mock.invocationCallOrder[0]
-    );
     expect(componentInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
       serverInterceptor.mock.invocationCallOrder[0]
     );
@@ -70,7 +55,7 @@ describe('callResponseInterceptors: params functions', () => {
     const request = createRequest({ headers: { name: 'value' } });
     const response = {};
 
-    const getCookieRouteInterceptor: ResponseInterceptor = (data, { getRequestHeader }) => {
+    const getCookieComponentInterceptor: ResponseInterceptor = (data, { getRequestHeader }) => {
       expect(getRequestHeader('name')).toBe('value');
       return data;
     };
@@ -79,7 +64,7 @@ describe('callResponseInterceptors: params functions', () => {
       request: request as unknown as Request,
       response: response as Response,
       interceptors: {
-        routeInterceptor: getCookieRouteInterceptor
+        componentInterceptor: getCookieComponentInterceptor
       }
     });
   });
@@ -89,7 +74,7 @@ describe('callResponseInterceptors: params functions', () => {
     const request = createRequest({ headers: { name: 'value' } });
     const response = {};
 
-    const getCookieRouteInterceptor: ResponseInterceptor = (data, { getRequestHeaders }) => {
+    const getCookieComponentInterceptor: ResponseInterceptor = (data, { getRequestHeaders }) => {
       expect(getRequestHeaders()).toBe(request.headers);
       return data;
     };
@@ -98,7 +83,7 @@ describe('callResponseInterceptors: params functions', () => {
       request: request as unknown as Request,
       response: response as Response,
       interceptors: {
-        routeInterceptor: getCookieRouteInterceptor
+        componentInterceptor: getCookieComponentInterceptor
       }
     });
   });
@@ -108,7 +93,7 @@ describe('callResponseInterceptors: params functions', () => {
     const request = createRequest({});
     const response = { getHeader: vi.fn() };
 
-    const getHeaderRouteInterceptor: ResponseInterceptor = (data, { getResponseHeader }) => {
+    const getHeaderComponentInterceptor: ResponseInterceptor = (data, { getResponseHeader }) => {
       getResponseHeader('header');
       return data;
     };
@@ -117,7 +102,7 @@ describe('callResponseInterceptors: params functions', () => {
       request,
       response: response as unknown as Response,
       interceptors: {
-        routeInterceptor: getHeaderRouteInterceptor
+        componentInterceptor: getHeaderComponentInterceptor
       }
     });
     expect(response.getHeader).toHaveBeenCalledWith('header');
@@ -129,7 +114,7 @@ describe('callResponseInterceptors: params functions', () => {
     const request = createRequest({});
     const response = { getHeaders: vi.fn() };
 
-    const getHeadersRouteInterceptor: ResponseInterceptor = (data, { getResponseHeaders }) => {
+    const getHeadersComponentInterceptor: ResponseInterceptor = (data, { getResponseHeaders }) => {
       getResponseHeaders();
       return data;
     };
@@ -138,7 +123,7 @@ describe('callResponseInterceptors: params functions', () => {
       request,
       response: response as unknown as Response,
       interceptors: {
-        routeInterceptor: getHeadersRouteInterceptor
+        componentInterceptor: getHeadersComponentInterceptor
       }
     });
     expect(response.getHeaders).toHaveBeenCalledWith();
@@ -150,7 +135,7 @@ describe('callResponseInterceptors: params functions', () => {
     const request = createRequest({});
     const response = { set: vi.fn() };
 
-    const setHeaderRouteInterceptor: ResponseInterceptor = (data, { setHeader }) => {
+    const setHeaderComponentInterceptor: ResponseInterceptor = (data, { setHeader }) => {
       setHeader('name', 'value');
       return data;
     };
@@ -159,7 +144,7 @@ describe('callResponseInterceptors: params functions', () => {
       request,
       response: response as unknown as Response,
       interceptors: {
-        routeInterceptor: setHeaderRouteInterceptor
+        componentInterceptor: setHeaderComponentInterceptor
       }
     });
     expect(response.set).toHaveBeenCalledWith('name', 'value');
@@ -171,7 +156,7 @@ describe('callResponseInterceptors: params functions', () => {
     const request = createRequest({});
     const response = { append: vi.fn() };
 
-    const appendHeaderRouteInterceptor: ResponseInterceptor = (data, { appendHeader }) => {
+    const appendHeaderComponentInterceptor: ResponseInterceptor = (data, { appendHeader }) => {
       appendHeader('name', 'value');
       return data;
     };
@@ -180,7 +165,7 @@ describe('callResponseInterceptors: params functions', () => {
       request,
       response: response as unknown as Response,
       interceptors: {
-        routeInterceptor: appendHeaderRouteInterceptor
+        componentInterceptor: appendHeaderComponentInterceptor
       }
     });
     expect(response.append).toHaveBeenCalledWith('name', 'value');
@@ -192,7 +177,7 @@ describe('callResponseInterceptors: params functions', () => {
     const request = createRequest({});
     const response = {} as Response;
 
-    const setStatusCodeRouteInterceptor: ResponseInterceptor = (data, { setStatusCode }) => {
+    const setStatusCodeComponentInterceptor: ResponseInterceptor = (data, { setStatusCode }) => {
       setStatusCode(204);
       return data;
     };
@@ -201,7 +186,7 @@ describe('callResponseInterceptors: params functions', () => {
       request,
       response,
       interceptors: {
-        routeInterceptor: setStatusCodeRouteInterceptor
+        componentInterceptor: setStatusCodeComponentInterceptor
       }
     });
     expect(response.statusCode).toBe(204);
@@ -212,7 +197,7 @@ describe('callResponseInterceptors: params functions', () => {
     const request = createRequest({ cookies: { name: 'value' } });
     const response = {};
 
-    const getCookieRouteInterceptor: ResponseInterceptor = (data, { getCookie }) => {
+    const getCookieComponentInterceptor: ResponseInterceptor = (data, { getCookie }) => {
       expect(getCookie('name')).toBe('value');
       return data;
     };
@@ -221,7 +206,7 @@ describe('callResponseInterceptors: params functions', () => {
       request: request as unknown as Request,
       response: response as Response,
       interceptors: {
-        routeInterceptor: getCookieRouteInterceptor
+        componentInterceptor: getCookieComponentInterceptor
       }
     });
   });
@@ -231,7 +216,10 @@ describe('callResponseInterceptors: params functions', () => {
     const request = createRequest({});
     const response = { cookie: vi.fn() };
 
-    const setCookieWithoutOptionsRouteInterceptor: ResponseInterceptor = (data, { setCookie }) => {
+    const setCookieWithoutOptionsComponentInterceptor: ResponseInterceptor = (
+      data,
+      { setCookie }
+    ) => {
       setCookie('name', 'value');
       return data;
     };
@@ -240,7 +228,7 @@ describe('callResponseInterceptors: params functions', () => {
       request,
       response: response as unknown as Response,
       interceptors: {
-        routeInterceptor: setCookieWithoutOptionsRouteInterceptor
+        componentInterceptor: setCookieWithoutOptionsComponentInterceptor
       }
     });
     expect(response.cookie).toHaveBeenCalledWith('name', 'value');
@@ -248,7 +236,7 @@ describe('callResponseInterceptors: params functions', () => {
 
     response.cookie.mockClear();
 
-    const setCookieWithOptionsRouteInterceptor: ResponseInterceptor = (data, { setCookie }) => {
+    const setCookieWithOptionsComponentInterceptor: ResponseInterceptor = (data, { setCookie }) => {
       setCookie('name', 'value', { path: '/your/path' });
       return data;
     };
@@ -257,7 +245,7 @@ describe('callResponseInterceptors: params functions', () => {
       request,
       response: response as unknown as Response,
       interceptors: {
-        routeInterceptor: setCookieWithOptionsRouteInterceptor
+        componentInterceptor: setCookieWithOptionsComponentInterceptor
       }
     });
     expect(response.cookie).toHaveBeenCalledWith('name', 'value', {
@@ -271,7 +259,7 @@ describe('callResponseInterceptors: params functions', () => {
     const request = createRequest({});
     const response = { clearCookie: vi.fn() };
 
-    const clearCookieRouteInterceptor: ResponseInterceptor = (data, { clearCookie }) => {
+    const clearCookieComponentInterceptor: ResponseInterceptor = (data, { clearCookie }) => {
       clearCookie('name', { path: '/your/path' });
       return data;
     };
@@ -280,7 +268,7 @@ describe('callResponseInterceptors: params functions', () => {
       request,
       response: response as unknown as Response,
       interceptors: {
-        routeInterceptor: clearCookieRouteInterceptor
+        componentInterceptor: clearCookieComponentInterceptor
       }
     });
     expect(response.clearCookie).toHaveBeenCalledWith('name', {
@@ -294,7 +282,7 @@ describe('callResponseInterceptors: params functions', () => {
     const request = createRequest({});
     const response = { attachment: vi.fn() };
 
-    const attachmentRouteInterceptor: ResponseInterceptor = (data, { attachment }) => {
+    const attachmentComponentInterceptor: ResponseInterceptor = (data, { attachment }) => {
       attachment('filename');
       return data;
     };
@@ -303,7 +291,7 @@ describe('callResponseInterceptors: params functions', () => {
       request,
       response: response as unknown as Response,
       interceptors: {
-        routeInterceptor: attachmentRouteInterceptor
+        componentInterceptor: attachmentComponentInterceptor
       }
     });
     expect(response.attachment).toHaveBeenCalledWith('filename');

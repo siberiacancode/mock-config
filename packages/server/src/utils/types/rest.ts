@@ -66,14 +66,12 @@ export type RestFileResponse = string;
 export interface RestRouteConfig<Method extends RestMethod> {
   data: RestDataResponse<Method>;
   entities?: RestEntitiesByEntityName<Method>;
-  interceptors?: Interceptors<'rest'>;
   settings?: RestSettings;
 }
 
 export type RestPathString = `/${string}`;
 
 export interface BaseRestRequestConfig<Method extends RestMethod> {
-  interceptors?: Interceptors<'rest'>;
   method: Method;
   path: RegExp | RestPathString;
   routes: RestRouteConfig<Method>[];
@@ -95,16 +93,12 @@ export type RestRequestConfig =
 
 export interface RestRequestArtifact {
   baseUrl: BaseUrl;
-  componentRequestInterceptor?: Interceptors<'rest'>['request'];
-  componentResponseInterceptor?: Interceptors<'rest'>['response'];
+  componentRequestInterceptor?: Interceptors['request'];
+  componentResponseInterceptor?: Interceptors['response'];
   config: RestRouteConfig<RestMethod>;
   method: RestMethod;
   path: RegExp | RestPathString;
-  requestRequestInterceptor?: Interceptors<'rest'>['request'];
-  requestResponseInterceptor?: Interceptors<'rest'>['response'];
-  routeRequestInterceptor?: Interceptors<'rest'>['request'];
-  routeResponseInterceptor?: Interceptors<'rest'>['response'];
-  serverRequestInterceptor?: Interceptors<'rest'>['request'];
-  serverResponseInterceptor?: Interceptors<'rest'>['response'];
+  serverRequestInterceptor?: Interceptors['request'];
+  serverResponseInterceptor?: Interceptors['response'];
   weight: number;
 }

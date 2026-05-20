@@ -56,12 +56,10 @@ export type GraphqlDataResponse = Data | GraphqlDataResponseFunction;
 export interface GraphQLRouteConfig {
   data: GraphqlDataResponse;
   entities?: GraphQLEntitiesByEntityName;
-  interceptors?: Interceptors<'graphql'>;
   settings?: GraphQLSettings;
 }
 
 interface BaseGraphQLRequestConfig {
-  interceptors?: Interceptors<'graphql'>;
   operationType: GraphQLOperationType;
   routes: GraphQLRouteConfig[];
 }
@@ -78,17 +76,13 @@ export type GraphQLRequestConfig = OperationNameGraphQLRequestConfig | QueryGrap
 
 export interface GraphQLRequestArtifact {
   baseUrl: BaseUrl;
-  componentRequestInterceptor?: Interceptors<'graphql'>['request'];
-  componentResponseInterceptor?: Interceptors<'graphql'>['response'];
+  componentRequestInterceptor?: Interceptors['request'];
+  componentResponseInterceptor?: Interceptors['response'];
   config: GraphQLRouteConfig;
   operationName?: GraphQLOperationName;
   operationType: GraphQLOperationType;
   query?: string;
-  requestRequestInterceptor?: Interceptors<'graphql'>['request'];
-  requestResponseInterceptor?: Interceptors<'graphql'>['response'];
-  routeRequestInterceptor?: Interceptors<'graphql'>['request'];
-  routeResponseInterceptor?: Interceptors<'graphql'>['response'];
-  serverRequestInterceptor?: Interceptors<'graphql'>['request'];
-  serverResponseInterceptor?: Interceptors<'graphql'>['response'];
+  serverRequestInterceptor?: Interceptors['request'];
+  serverResponseInterceptor?: Interceptors['response'];
   weight: number;
 }

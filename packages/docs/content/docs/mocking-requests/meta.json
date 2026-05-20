@@ -4,7 +4,6 @@
     "settings.mdx",
     "logger.mdx",
     "cors.mdx",
-    "database-orm.mdx",
     "static-files.mdx",
     "references"
   ]

@@ -1,7 +1,6 @@
 import type { Express, Request } from 'express';
 import type { Arguments } from 'yargs';
 
-import type { Database, Orm } from './database';
 import type { GraphQLRequestConfig } from './graphql';
 import type { Interceptors } from './interceptors';
 import type { RestMethod, RestRequestConfig } from './rest';
@@ -30,24 +29,18 @@ export type BaseUrl = `/${string}`;
 export interface RestConfig {
   baseUrl?: BaseUrl;
   configs: RestRequestConfig[];
-  interceptors?: Interceptors<'rest'>;
 }
 
 export interface GraphqlConfig {
   baseUrl?: BaseUrl;
   configs: GraphQLRequestConfig[];
-  interceptors?: Interceptors<'graphql'>;
+  interceptors?: Interceptors;
 }
 
 export interface WsConfig {
   baseUrl?: BaseUrl;
   configs: WsRequestConfig[];
-  interceptors?: Interceptors<'rest'>;
-}
-
-export interface DatabaseConfig {
-  data: `${string}.json` | Record<string, unknown>;
-  routes?: `${string}.json` | Record<`/${string}`, `/${string}`>;
+  interceptors?: Interceptors;
 }
 
 export interface BaseServerConfig {
@@ -72,7 +65,6 @@ declare global {
   namespace Express {
     interface Request {
       context: {
-        orm: Orm<Database>;
         broadcast: <Response>(response: Response) => void;
       };
       queries: Queries;
@@ -90,7 +82,6 @@ export interface MockServerComponent {
 export interface MockServerSettings {
   baseUrl?: BaseUrl;
   cors?: Cors;
-  database?: DatabaseConfig;
   interceptors?: Interceptors;
   port?: Port;
   staticPath?: StaticPath;

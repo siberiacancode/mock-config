@@ -1,4 +1,3 @@
-export * from './database';
 export * from './entities';
 export * from './files';
 export * from './graphql';
@@ -6,7 +5,6 @@ export * from './interceptors';
 export * from './logger';
 export * from './rest';
 export * from './server';
-export * from './shared';
 export * from './utils';
 export * from './values';
 export * from './ws';

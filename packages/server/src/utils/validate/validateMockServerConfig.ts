@@ -4,7 +4,6 @@ import type { PlainObject } from '@/utils/types';
 
 import { baseUrlSchema } from './baseUrlSchema/baseUrlSchema';
 import { corsSchema } from './corsSchema/corsSchema';
-import { databaseConfigSchema } from './databaseConfigSchema/databaseConfigSchema';
 import { getMostSpecificPathFromError } from './getMostSpecificPathFromError';
 import { getValidationMessageFromPath } from './getValidationMessageFromPath';
 import { graphqlRequestConfigSchema } from './graphqlConfigSchema/graphqlConfigSchema';
@@ -27,8 +26,7 @@ export const validateMockServerConfig = (mockServerConfig: PlainObject) => {
     port: portSchema.optional(),
     staticPath: staticPathSchema.optional(),
     interceptors: plainObjectSchema(interceptorsSchema).optional(),
-    cors: corsSchema.optional(),
-    database: databaseConfigSchema.optional()
+    cors: corsSchema.optional()
   });
 
   const mockServerComponentSchema = z.strictObject({

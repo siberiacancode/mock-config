@@ -106,20 +106,6 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
         });
       }
 
-      if (matchedRouteConfig.requestRequestInterceptor) {
-        await callRequestInterceptor({
-          request,
-          interceptor: matchedRouteConfig.requestRequestInterceptor
-        });
-      }
-
-      if (matchedRouteConfig.routeRequestInterceptor) {
-        await callRequestInterceptor({
-          request,
-          interceptor: matchedRouteConfig.routeRequestInterceptor
-        });
-      }
-
       const params: GraphQLParams = {
         request,
         response,
@@ -182,9 +168,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
         request,
         response,
         interceptors: {
-          routeInterceptor: matchedRouteConfig.routeResponseInterceptor,
           componentInterceptor: matchedRouteConfig.componentResponseInterceptor,
-          requestInterceptor: matchedRouteConfig.requestResponseInterceptor,
           serverInterceptor: matchedRouteConfig.serverResponseInterceptor
         }
       });

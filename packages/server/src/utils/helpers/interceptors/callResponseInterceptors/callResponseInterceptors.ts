@@ -8,8 +8,6 @@ import { setDelay } from '../helpers/setDelay';
 interface CallResponseInterceptorsParams {
   data: Data;
   interceptors?: {
-    routeInterceptor?: ResponseInterceptor;
-    requestInterceptor?: ResponseInterceptor;
     componentInterceptor?: ResponseInterceptor;
     serverInterceptor?: ResponseInterceptor;
   };
@@ -74,17 +72,10 @@ export const callResponseInterceptors = async (params: CallResponseInterceptorsP
     getCookie,
     clearCookie,
     attachment,
-    log,
-    orm: request.context.orm
+    log
   };
 
   let updatedData = data;
-  if (interceptors?.routeInterceptor) {
-    updatedData = await interceptors.routeInterceptor(updatedData, responseInterceptorParams);
-  }
-  if (interceptors?.requestInterceptor) {
-    updatedData = await interceptors.requestInterceptor(updatedData, responseInterceptorParams);
-  }
   if (interceptors?.componentInterceptor) {
     updatedData = await interceptors.componentInterceptor(updatedData, responseInterceptorParams);
   }

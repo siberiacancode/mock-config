@@ -53,12 +53,12 @@ export type RestRouteConfig<Method extends RestMethod> = (
       settings?: RestSettings & { polling?: false };
       file: RestFileResponse;
     }
-) & { entities?: RestEntitiesByEntityName<Method>; interceptors?: Interceptors<'rest'> };
+) & { entities?: RestEntitiesByEntityName<Method>; interceptors?: Interceptors };
 
 export type RestPathString = `/${string}`;
 
 interface BaseRestRequestConfig<Method extends RestMethod> {
-  interceptors?: Interceptors<'rest'>;
+  interceptors?: Interceptors;
   method: Method;
   path: RegExp | RestPathString;
   routes: RestRouteConfig<Method>[];

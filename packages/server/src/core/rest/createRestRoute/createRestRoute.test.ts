@@ -1,7 +1,7 @@
 import bodyParser from 'body-parser';
 import express from 'express';
 import request from 'supertest';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import type {
   BaseServerConfig,
@@ -25,7 +25,7 @@ const createServer = (
   const server = express();
 
   server.use((request, _, next) => {
-    request.context = { orm: {}, broadcast: vi.fn() };
+    request.context = { broadcast: vi.fn() };
     next();
   });
 
@@ -44,12 +44,8 @@ const createServer = (
             weight: calculateRestRouteConfigWeight(route),
             serverResponseInterceptor: interceptors?.response,
             serverRequestInterceptor: interceptors?.request,
-            requestResponseInterceptor: config.interceptors?.response,
-            requestRequestInterceptor: config.interceptors?.request,
             componentResponseInterceptor: undefined,
-            componentRequestInterceptor: undefined,
-            routeResponseInterceptor: route.interceptors?.response,
-            routeRequestInterceptor: route.interceptors?.request
+            componentRequestInterceptor: undefined
           });
         });
 
@@ -475,75 +471,5 @@ describe('createRestRoutes: interceptors', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toStrictEqual({ source: 'static' });
-  });
-
-  it('Should call request interceptors in order: request -> route', async () => {
-    const routeInterceptor = vi.fn();
-    const requestInterceptor = vi.fn();
-
-    const server = createServer({
-      rest: {
-        configs: [
-          {
-            path: '/users',
-            method: 'post',
-            routes: [
-              {
-                entities: {
-                  body: {
-                    key1: 'value1',
-                    key2: 'value2'
-                  }
-                },
-                data: { name: 'John', surname: 'Doe' },
-                interceptors: { request: routeInterceptor }
-              }
-            ],
-            interceptors: { request: requestInterceptor }
-          },
-          {
-            path: '/settings',
-            method: 'post',
-            routes: [
-              {
-                entities: {
-                  body: {
-                    key1: 'value1',
-                    key2: 'value2'
-                  }
-                },
-                data: { name: 'John', surname: 'Smith' }
-              }
-            ]
-          }
-        ]
-      }
-    });
-
-    await request(server)
-      .post('/users')
-      .set('Content-Type', 'application/json')
-      .send({ key1: 'value1', key2: 'value2' });
-    expect(requestInterceptor).toBeCalledTimes(1);
-    expect(routeInterceptor).toBeCalledTimes(1);
-    expect(requestInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
-      routeInterceptor.mock.invocationCallOrder[0]
-    );
-
-    // ✅ important:
-    // request interceptor called when path and method is matched
-    await request(server)
-      .post('/users')
-      .set('Content-Type', 'application/json')
-      .send({ key3: 'value3', key4: 'value4' });
-    expect(requestInterceptor).toBeCalledTimes(1);
-    expect(routeInterceptor).toBeCalledTimes(1);
-
-    await request(server)
-      .post('/settings')
-      .set('Content-Type', 'application/json')
-      .send({ key1: 'value1', key2: 'value2' });
-    expect(requestInterceptor).toBeCalledTimes(1);
-    expect(routeInterceptor).toBeCalledTimes(1);
   });
 });

@@ -1,11 +1,13 @@
 import type { GraphQLOperationName, GraphQLOperationType } from './graphql';
 import type { RestMethod } from './rest';
-import type { ApiType } from './shared';
 import type { Cookies, Headers, Params, PlainObject, Query } from './values';
 
-export interface LoggerBaseTokens {
+interface LoggerRequestTokens {
   body: any;
   cookies: Cookies;
+  graphQLOperationName: GraphQLOperationName | null;
+  graphQLOperationType: GraphQLOperationType | null;
+  graphQLQuery: string | null;
   headers: Headers;
   id: number;
   method: RestMethod;
@@ -14,56 +16,31 @@ export interface LoggerBaseTokens {
   timestamp: number;
   type: string;
   url: string;
-}
-
-interface LoggerRestRequestTokens extends LoggerBaseTokens {}
-
-interface LoggerRestResponseTokens extends LoggerRestRequestTokens {
-  data: any;
-  statusCode: number;
-}
-
-interface LoggerGraphQLRequestTokens extends LoggerBaseTokens {
-  graphQLOperationName: GraphQLOperationName | null;
-  graphQLOperationType: GraphQLOperationType | null;
-  graphQLQuery: string | null;
   variables: PlainObject | null;
 }
 
-interface LoggerGraphQLResponseTokens extends LoggerGraphQLRequestTokens {
+interface LoggerResponseTokens extends LoggerRequestTokens {
   data: any;
   statusCode: number;
 }
 
 export type LoggerType = 'request' | 'response';
 
-export type LoggerTokens<
-  Type extends LoggerType = LoggerType,
-  Api extends ApiType = ApiType
-> = Type extends 'request'
-  ? Api extends 'rest'
-    ? LoggerRestRequestTokens
-    : Api extends 'graphql'
-      ? LoggerGraphQLRequestTokens
-      : never
+export type LoggerTokens<Type extends LoggerType = LoggerType> = Type extends 'request'
+  ? LoggerRequestTokens
   : Type extends 'response'
-    ? Api extends 'rest'
-      ? LoggerRestResponseTokens
-      : Api extends 'graphql'
-        ? LoggerGraphQLResponseTokens
-        : never
+    ? LoggerResponseTokens
     : never;
 
 type LoggerTokensToLoggerOptions<Type> = {
   [Key in keyof Type]?: Type[Key] extends PlainObject ? boolean | Record<string, boolean> : boolean;
 };
 
-export type LoggerOptions<
-  Type extends LoggerType = LoggerType,
-  Api extends ApiType = ApiType
-> = LoggerTokensToLoggerOptions<LoggerTokens<Type, Api>>;
+export type LoggerOptions<Type extends LoggerType = LoggerType> = LoggerTokensToLoggerOptions<
+  LoggerTokens<Type>
+>;
 
-export interface Logger<Type extends LoggerType = LoggerType, Api extends ApiType = ApiType> {
-  options?: LoggerOptions<Type, Api>;
-  rewrite?: (tokens: Partial<LoggerTokens<Type, Api>>) => void;
+export interface Logger<Type extends LoggerType = LoggerType> {
+  options?: LoggerOptions<Type>;
+  rewrite?: (tokens: Partial<LoggerTokens<Type>>) => void;
 }

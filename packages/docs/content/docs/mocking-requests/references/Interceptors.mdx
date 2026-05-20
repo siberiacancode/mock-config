@@ -4,7 +4,7 @@ title: Interceptors
 
 import { TypeTable } from 'fumadocs-ui/components/type-table';
 
-## Interceptors{'<'}Api{'>'}
+## Interceptors
 
 <TypeTable
   type={{
@@ -14,7 +14,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
         <span>
           (params:{' '}
           <a href='#RequestInterceptorParams' className='underline'>
-            RequestInterceptorParams{'<'}Api{'>'}
+            RequestInterceptorParams
           </a>
           ) {'=>'} void | Promise{'<void>'}
         </span>
@@ -23,7 +23,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
         {
           name: 'params',
           description: 'The parameters of the request interceptor',
-          type: 'RequestInterceptorParams<Api>'
+          type: 'RequestInterceptorParams'
         }
       ]
     },
@@ -33,7 +33,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
         <span>
           (params:{' '}
           <a href='#ResponseInterceptorParams' className='underline'>
-            ResponseInterceptorParams{'<'}Api{'>'}
+            ResponseInterceptorParams
           </a>
           , data: any) {'=>'} void | Promise{'<void>'}
         </span>
@@ -53,16 +53,10 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 />
 
 <a id='RequestInterceptorParams'></a>
-## RequestInterceptorParams{'<'}Api{'>'}
+## RequestInterceptorParams
 
 <TypeTable
   type={{
-    orm: {
-      description: 'ORM instance for database access',
-      type: 'Orm<Database>',
-      typeDescriptionLink: './Database#Orm',
-      required: true
-    },
     request: {
       description: 'Request object',
       type: 'Request',
@@ -86,7 +80,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
     },
     log: {
       description: 'Log request data',
-      type: "(logger?: Logger<'request', Api>) => Partial<LoggerTokens>",
+      type: "(logger?: Logger<'request'>) => Partial<LoggerTokens>",
       typeDescriptionLink: './Logger',
       required: true
     },
@@ -99,16 +93,10 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 />
 
 <a id='ResponseInterceptorParams'></a>
-## ResponseInterceptorParams{'<'}Api{'>'}
+## ResponseInterceptorParams
 
 <TypeTable
   type={{
-    orm: {
-      description: 'ORM instance for database access',
-      type: 'Orm<Database>',
-      typeDescriptionLink: './Database#Orm',
-      required: true
-    },
     request: {
       description: 'Incoming request object',
       type: 'Request',
@@ -163,7 +151,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
     },
     log: {
       description: 'Log response data',
-      type: "(logger?: Logger<'response', Api>) => Partial<LoggerTokens>",
+      type: "(logger?: Logger<'response'>) => Partial<LoggerTokens>",
       typeDescriptionLink: './Logger',
       required: true
     },

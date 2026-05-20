@@ -119,20 +119,6 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         });
       }
 
-      if (matchedRouteConfig.requestRequestInterceptor) {
-        await callRequestInterceptor({
-          request,
-          interceptor: matchedRouteConfig.requestRequestInterceptor
-        });
-      }
-
-      if (matchedRouteConfig.routeRequestInterceptor) {
-        await callRequestInterceptor({
-          request,
-          interceptor: matchedRouteConfig.routeRequestInterceptor
-        });
-      }
-
       if (matchedRouteConfig.config.settings?.status) {
         response.statusCode = matchedRouteConfig.config.settings.status;
       }
@@ -196,8 +182,6 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         request,
         response,
         interceptors: {
-          routeInterceptor: matchedRouteConfig.routeResponseInterceptor,
-          requestInterceptor: matchedRouteConfig.requestResponseInterceptor,
           componentInterceptor: matchedRouteConfig.componentResponseInterceptor,
           serverInterceptor: matchedRouteConfig.serverResponseInterceptor
         }

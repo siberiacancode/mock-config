@@ -38,10 +38,10 @@ export type GraphQLRouteConfig = (
       settings?: GraphQLSettings & { polling?: false };
       data: GraphqlDataResponse;
     }
-) & { entities?: GraphQLEntitiesByEntityName; interceptors?: Interceptors<'graphql'> };
+) & { entities?: GraphQLEntitiesByEntityName; interceptors?: Interceptors };
 
 interface BaseGraphQLRequestConfig {
-  interceptors?: Interceptors<'graphql'>;
+  interceptors?: Interceptors;
   operationType: GraphQLOperationType;
   routes: GraphQLRouteConfig[];
 }
