@@ -1,6 +1,6 @@
-import type { Comparator } from '@/utils/types';
+import type { FnComparator } from '@/utils/helpers';
 
 import { createComparator } from '@/utils/helpers';
 
-export const fn = (expected: Comparator) =>
-  createComparator((actual, { fn }) => fn(actual, expected));
+export const fn = (comparator: FnComparator) =>
+  createComparator((actual, { fn }) => fn(actual, createComparator(comparator)));

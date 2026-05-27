@@ -1,6 +1,6 @@
-import type { HaveTypeTypes } from '@/utils/helpers';
+import type { HaveTypeType } from '@/utils/helpers';
 
 import { createComparator } from '@/utils/helpers';
 
-export const haveType = (expected: HaveTypeTypes) =>
-  createComparator((actual, { haveType }) => haveType(actual, expected));
+export const haveType = (type: HaveTypeType) =>
+  createComparator((actual, { haveType }) => haveType(actual, type));
