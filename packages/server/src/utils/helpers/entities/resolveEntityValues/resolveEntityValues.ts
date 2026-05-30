@@ -52,7 +52,9 @@ const compareComplex = (
   );
 };
 
-export type HaveTypeTypes =
+export type FnComparator = <Actual = unknown>(actual: Actual, comparators: Comparators) => boolean;
+
+export type HaveTypeType =
   | 'array'
   | 'bigint'
   | 'boolean'
@@ -65,7 +67,7 @@ export type HaveTypeTypes =
   | 'undefined';
 
 const comparators = {
-  fn: (actual: unknown, expected: Comparator) => expected(actual, comparators),
+  fn: (actual: unknown, comparator: Comparator) => comparator(actual, comparators),
 
   exists: (actual: unknown) => actual !== undefined,
 
@@ -100,7 +102,8 @@ const comparators = {
     return false;
   },
 
-  regExp: (actual: unknown, expected: RegExp) => new RegExp(expected).test(String(actual)),
+  regExp: (actual: unknown, regExpLike: string | RegExp) =>
+    new RegExp(regExpLike).test(String(actual)),
 
   greater: (actual: unknown, expected: number) => Number(actual) > expected,
 
@@ -125,31 +128,31 @@ const comparators = {
     return actualLength <= expected;
   },
 
-  inRange: (actual: unknown, expected: [number, number]) => {
-    const [min, max] = expected;
+  inRange: (actual: unknown, range: [number, number]) => {
+    const [min, max] = range;
     return Number(actual) >= min && Number(actual) <= max;
   },
 
-  haveType: (actual: unknown, expected: HaveTypeTypes) => {
-    if (expected === 'array') return Array.isArray(actual);
-    if (expected === 'null') return actual === null;
+  haveType: (actual: unknown, type: HaveTypeType) => {
+    if (type === 'array') return Array.isArray(actual);
+    if (type === 'null') return actual === null;
     // eslint-disable-next-line valid-typeof
-    return typeof actual === expected;
+    return typeof actual === type;
   },
 
-  haveEntries: (actual: unknown, expected: any[] | PlainObject) => {
-    if (!isObjectLike(actual) || !isObjectLike(expected)) {
+  haveEntries: (actual: unknown, entry: any[] | PlainObject) => {
+    if (!isObjectLike(actual) || !isObjectLike(entry)) {
       return false;
     }
 
-    const actualFlatten = normalize(actual);
-    const expectedFlatten = normalize(expected);
+    const flattenActual = normalize(actual);
+    const flattenEntry = normalize(entry);
 
-    return Object.entries(expectedFlatten).every(([expectedFlattenKey, expectedValue]) => {
-      if (isComparator(expectedValue)) {
-        return comparators.fn(actualFlatten[expectedFlattenKey], expectedValue);
+    return Object.entries(flattenEntry).every(([flattenEntryKey, flattenEntryValue]) => {
+      if (isComparator(flattenEntryValue)) {
+        return comparators.fn(flattenActual[flattenEntryKey], flattenEntryValue);
       }
-      return comparators.equals(actualFlatten[expectedFlattenKey], expectedValue);
+      return comparators.equals(flattenActual[flattenEntryKey], flattenEntryValue);
     });
   }
 };

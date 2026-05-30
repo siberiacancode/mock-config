@@ -1,4 +1,4 @@
 import { createComparator } from '@/utils/helpers';
 
-export const regExp = (expected: RegExp) =>
-  createComparator((actual, { regExp }) => regExp(actual, expected));
+export const regExp = (regExpLike: string | RegExp) =>
+  createComparator((actual, { regExp }) => regExp(actual, regExpLike));
