@@ -4,12 +4,7 @@ import type { WebSocketServer } from 'ws';
 import { Buffer } from 'node:buffer';
 import { WebSocket } from 'ws';
 
-import type {
-  DatabaseConfig,
-  GraphQLEntity,
-  GraphQLOperationName,
-  GraphQLOperationType
-} from '@/utils/types';
+import type { DatabaseConfig, GraphQLEntity, GraphQLOperationType } from '@/utils/types';
 
 import { createOrm, createStorage } from '@/core/database';
 import { getGraphQLInput, parseGraphQLQuery } from '@/utils/helpers';
@@ -19,7 +14,7 @@ declare global {
     export interface Request {
       graphQL: {
         operationType: GraphQLOperationType;
-        operationName?: GraphQLOperationName;
+        operationName?: string;
         query: string;
         variables?: GraphQLEntity<'variables'>;
       } | null;

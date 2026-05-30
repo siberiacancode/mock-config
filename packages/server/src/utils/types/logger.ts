@@ -1,4 +1,4 @@
-import type { GraphQLOperationName, GraphQLOperationType } from './graphql';
+import type { GraphQLOperationType } from './graphql';
 import type { RestMethod } from './rest';
 import type { ApiType } from './shared';
 import type { Cookies, Headers, Params, PlainObject, Query } from './values';
@@ -24,7 +24,7 @@ interface LoggerRestResponseTokens extends LoggerRestRequestTokens {
 }
 
 interface LoggerGraphQLRequestTokens extends LoggerBaseTokens {
-  graphQLOperationName: GraphQLOperationName | null;
+  graphQLOperationName: string | null;
   graphQLOperationType: GraphQLOperationType | null;
   graphQLQuery: string | null;
   variables: PlainObject | null;
