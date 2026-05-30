@@ -122,6 +122,28 @@ describe('createRestRoutes: routing', () => {
     expect(response.statusCode).toBe(404);
   });
 
+  it('Should match wildcard path', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users/*',
+            method: 'get',
+            routes: [
+              {
+                data: { ok: true }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users/some/nested/path');
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toStrictEqual({ ok: true });
+  });
+
   it('Should have response Cache-Control header value equals to no-cache', async () => {
     const server = createServer({
       rest: {
