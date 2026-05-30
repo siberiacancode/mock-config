@@ -1,5 +1,7 @@
 import type { GraphqlTransportWsMessage } from '@/utils/types';
 
+import { isPlainObject } from '../../isPlainObject/isPlainObject';
+
 export const getGraphqlTransportWsInput = (message: string) => {
   let value: GraphqlTransportWsMessage | undefined;
   try {
@@ -12,12 +14,7 @@ export const getGraphqlTransportWsInput = (message: string) => {
 
   value.payload = {
     ...value.payload,
-    variables:
-      typeof value.payload?.variables === 'object' &&
-      !!value.payload?.variables &&
-      !Array.isArray(value.payload?.variables)
-        ? value.payload?.variables
-        : undefined
+    variables: isPlainObject(value.payload?.variables) ? value.payload?.variables : undefined
   };
 
   return value;

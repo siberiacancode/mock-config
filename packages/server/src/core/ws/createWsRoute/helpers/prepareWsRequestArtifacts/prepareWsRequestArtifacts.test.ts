@@ -1,17 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import type { BaseUrl, WsRequestArtifact } from '@/utils/types';
+import type { WsRequestArtifact } from '@/utils/types';
 
 import { prepareWsRequestArtifacts } from './prepareWsRequestArtifacts';
 
 const makeArtifact = (overrides: Partial<WsRequestArtifact>): WsRequestArtifact =>
   ({
-    baseUrl: '/' as BaseUrl,
+    baseUrl: '/',
     type: 'graphql-ws',
     operationType: 'subscription',
-    operationName: 'Subscription',
-    eventName: 'Subscription',
-    query: 'subscription { hello }',
+    identifier: 'Subscription',
     config: { data: { ok: true } },
     weight: 0,
     ...overrides

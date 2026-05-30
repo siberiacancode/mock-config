@@ -1,5 +1,6 @@
 import type {
   Data,
+  MaybePromise,
   WsConnectionEntitiesByEntityName,
   WsConnectionParams,
   WsConnectionRouteConfig,
@@ -7,8 +8,8 @@ import type {
   WsRequestConfig
 } from '@/utils/types';
 
-type WsMessageHandler = (params: WsParams) => Data | Promise<Data>;
-type WsConnectionHandler = (params: WsConnectionParams) => Data | Promise<Data>;
+type WsMessageHandler = (params: WsParams) => MaybePromise<Data>;
+type WsConnectionHandler = (params: WsConnectionParams) => MaybePromise<Data>;
 
 interface WsConnectionHandlerObject {
   handler: WsConnectionHandler;

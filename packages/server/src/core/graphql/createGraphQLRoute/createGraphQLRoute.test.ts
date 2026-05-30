@@ -46,8 +46,7 @@ const createServer = (
           acc.push({
             baseUrl: urlJoin(baseUrl ?? '/', graphql?.baseUrl ?? '/') as BaseUrl,
             operationType: config.operationType,
-            operationName: 'operationName' in config ? config.operationName : undefined,
-            query: 'query' in config ? config.query : undefined,
+            identifier: config.identifier,
             config: route,
             weight: calculateGraphQLRouteConfigWeight(route),
             serverResponseInterceptor: interceptors?.response,
@@ -70,12 +69,102 @@ const createServer = (
 };
 
 describe('createGraphQLRoute: routing', () => {
-  it('Should match config with operationName', async () => {
+  it('Should match config with query', async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
+            identifier: 'query{User{name}}',
+            operationType: 'query',
+            routes: [
+              {
+                data: { name: 'John', surname: 'Doe' }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const postResponse = await request(server)
+      .post('/')
+      .send({ query: 'query {\n User {\n  name\n  }\n}\n' });
+    expect(postResponse.statusCode).toBe(200);
+    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+
+    const getResponse = await request(server).get('/').query({
+      query: 'query {\n User {\n  name\n  }\n}\n'
+    });
+    expect(getResponse.statusCode).toBe(200);
+    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+  });
+
+  it('Should match config with query regExp', async () => {
+    const server = createServer({
+      graphql: {
+        configs: [
+          {
+            identifier: /^\{User\{name\}\}$/,
+            operationType: 'query',
+            routes: [
+              {
+                data: { name: 'John', surname: 'Doe' }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const postResponse = await request(server)
+      .post('/')
+      .send({ query: 'query {\n User {\n  name\n  }\n}\n' });
+    expect(postResponse.statusCode).toBe(200);
+    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+
+    const getResponse = await request(server).get('/').query({
+      query: 'query {\n User {\n  name\n  }\n}\n'
+    });
+    expect(getResponse.statusCode).toBe(200);
+    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+  });
+
+  it('Should match config with query independent of spaces and new lines', async () => {
+    const server = createServer({
+      graphql: {
+        configs: [
+          {
+            identifier: 'query{User{name}}',
+            operationType: 'query',
+            routes: [
+              {
+                data: { name: 'John', surname: 'Doe' }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const postResponse = await request(server)
+      .post('/')
+      .send({ query: 'query {\n User {\n  name\n  }\n}\n' });
+    expect(postResponse.statusCode).toBe(200);
+    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+
+    const getResponse = await request(server).get('/').query({
+      query: 'query {\n User {\n  name\n  }\n}\n'
+    });
+    expect(getResponse.statusCode).toBe(200);
+    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+  });
+
+  it('Should match config with operation name', async () => {
+    const server = createServer({
+      graphql: {
+        configs: [
+          {
+            identifier: 'GetUsers',
             operationType: 'query',
             routes: [
               {
@@ -100,12 +189,12 @@ describe('createGraphQLRoute: routing', () => {
     expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
   });
 
-  it('Should match config with operationName regExp', async () => {
+  it('Should match config with operation name regExp', async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            operationName: /^Get(.+?)sers$/g,
+            identifier: /^Get(.+?)sers$/g,
             operationType: 'query',
             routes: [
               {
@@ -154,12 +243,12 @@ describe('createGraphQLRoute: routing', () => {
     });
   });
 
-  it('Should match config with query independent of spaces and new lines', async () => {
+  it('Should match config with event name', async () => {
     const server = createServer({
       graphql: {
         configs: [
           {
-            query: 'query { User { name } }',
+            identifier: 'users',
             operationType: 'query',
             routes: [
               {
@@ -173,12 +262,42 @@ describe('createGraphQLRoute: routing', () => {
 
     const postResponse = await request(server)
       .post('/')
-      .send({ query: 'query {\n User {\n  name\n  }\n}\n' });
+      .send({ query: 'query GetUsers { users { name } }' });
     expect(postResponse.statusCode).toBe(200);
     expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
 
     const getResponse = await request(server).get('/').query({
-      query: 'query {\n User {\n  name\n  }\n}\n'
+      query: 'query GetUsers { users { name } }'
+    });
+    expect(getResponse.statusCode).toBe(200);
+    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+  });
+
+  it('Should match config with event name regExp', async () => {
+    const server = createServer({
+      graphql: {
+        configs: [
+          {
+            identifier: /^users$/,
+            operationType: 'query',
+            routes: [
+              {
+                data: { name: 'John', surname: 'Doe' }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const postResponse = await request(server)
+      .post('/')
+      .send({ query: 'query GetUsers { users { name } }' });
+    expect(postResponse.statusCode).toBe(200);
+    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+
+    const getResponse = await request(server).get('/').query({
+      query: 'query GetUsers { users { name } }'
     });
     expect(getResponse.statusCode).toBe(200);
     expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
@@ -189,7 +308,7 @@ describe('createGraphQLRoute: routing', () => {
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
+            identifier: 'GetUsers',
             operationType: 'query',
             routes: [
               {
@@ -225,7 +344,7 @@ describe('createGraphQLRoute: routing', () => {
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
+            identifier: 'GetUsers',
             operationType: 'query',
             routes: [{ data: { name: 'John', surname: 'Doe' } }]
           }
@@ -253,7 +372,7 @@ describe('createGraphQLRoute: routing', () => {
         graphql: {
           configs: [
             {
-              operationName: 'GetUsers',
+              identifier: 'GetUsers',
               operationType: operationTypeWithoutCacheControlHeader,
               routes: [{ data: { name: 'John', surname: 'Doe' } }]
             }
@@ -280,7 +399,7 @@ describe('createGraphQLRoute: content', () => {
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
+            identifier: 'GetUsers',
             operationType: 'query',
             routes: [
               {
@@ -294,7 +413,7 @@ describe('createGraphQLRoute: content', () => {
             ]
           },
           {
-            operationName: 'GetUsers',
+            identifier: 'GetUsers',
             operationType: 'query',
             routes: [
               {
@@ -326,7 +445,7 @@ describe('createGraphQLRoute: content', () => {
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
+            identifier: 'GetUsers',
             operationType: 'query',
             routes: [{ data: { name: 'John', surname: 'Doe' } }]
           }
@@ -347,7 +466,7 @@ describe('createGraphQLRoute: content', () => {
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
+            identifier: 'GetUsers',
             operationType: 'query',
             routes: [
               {
@@ -389,7 +508,7 @@ describe('createGraphQLRoute: settings', () => {
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
+            identifier: 'GetUsers',
             operationType: 'query',
             routes: [
               {
@@ -418,7 +537,7 @@ describe('createGraphQLRoute: settings', () => {
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
+            identifier: 'GetUsers',
             operationType: 'query',
             routes: [
               {
@@ -447,7 +566,7 @@ describe('createGraphQLRoute: entities', () => {
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
+            identifier: 'GetUsers',
             operationType: 'query',
             routes: [
               {
@@ -495,7 +614,7 @@ describe('createGraphQLRoute: entities', () => {
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
+            identifier: 'GetUsers',
             operationType: 'query',
             routes: [
               {
@@ -556,7 +675,7 @@ describe('createGraphQLRoute: entities', () => {
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
+            identifier: 'GetUsers',
             operationType: 'query',
             routes: [
               {
@@ -606,7 +725,7 @@ describe('createGraphQLRoute: entities', () => {
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
+            identifier: 'GetUsers',
             operationType: 'query',
             routes: [
               {
@@ -651,7 +770,7 @@ describe('createGraphQLRoute: interceptors', () => {
       graphql: {
         configs: [
           {
-            operationName: 'GetUsers',
+            identifier: 'GetUsers',
             operationType: 'query',
             routes: [
               {
@@ -668,7 +787,7 @@ describe('createGraphQLRoute: interceptors', () => {
             interceptors: { request: requestInterceptor }
           },
           {
-            operationName: 'CreateUser',
+            identifier: 'CreateUser',
             operationType: 'mutation',
             routes: [
               {

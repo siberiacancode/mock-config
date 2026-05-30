@@ -130,9 +130,7 @@ export const createMockServer = (
             acc.graphQLRequestArtifacts.push({
               baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
               operationType: config.operationType,
-              eventName: 'eventName' in config ? config.eventName : undefined,
-              operationName: 'operationName' in config ? config.operationName : undefined,
-              query: 'query' in config ? config.query : undefined,
+              identifier: config.identifier,
               config: route,
               weight: calculateGraphQLRouteConfigWeight(route),
               serverResponseInterceptor: interceptors?.response,
@@ -156,9 +154,7 @@ export const createMockServer = (
               baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
               weight: calculateGraphqlTransportWsRouteConfigWeight(route),
               operationType: config.operationType,
-              eventName: config.eventName,
-              operationName: config.operationName,
-              query: config.query,
+              identifier: config.identifier,
               config: route
             });
           });

@@ -1,6 +1,7 @@
 import type {
   BaseRestRequestConfig,
   Data,
+  MaybePromise,
   RestEntitiesByEntityName,
   RestFileResponse,
   RestMethod,
@@ -39,7 +40,7 @@ type RestFunction<
     Options['response']
   > &
     AdditionalParams
-) => Options['response'] | Promise<Options['response']>;
+) => MaybePromise<Options['response']>;
 
 interface RestResponseObject<Method extends RestMethod, Response> {
   match?: RestEntitiesByEntityName<Method>;
@@ -93,6 +94,7 @@ const createConfigResolver = <Method extends RestMethod, Options extends RestReq
   const resolvedConfig = resolveConfigType(config);
 
   switch (resolvedConfig.type) {
+    case 'inlineHandler':
     case 'inlineResponse':
       return {
         data: resolvedConfig.config,
@@ -141,12 +143,6 @@ const createConfigResolver = <Method extends RestMethod, Options extends RestReq
         settings
       };
     }
-
-    case 'inlineHandler':
-      return {
-        data: resolvedConfig.config,
-        settings
-      };
 
     case 'handler': {
       return {
@@ -264,7 +260,7 @@ const createSseRestFactory = <Method extends 'get' | 'post'>(method: Method) => 
       | SseRestHandlerObject<Method, Options, Response>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method> {
-    const normalizedConfig: SseRestHandlerObject<Method, Options, Response> =
+    const { handler, match }: SseRestHandlerObject<Method, Options, Response> =
       typeof config === 'function' ? { handler: config } : config;
 
     const wrapperHandler: RestFunction<Method, Options> = (params) => {
@@ -283,15 +279,13 @@ const createSseRestFactory = <Method extends 'get' | 'post'>(method: Method) => 
         }
       };
 
-      return normalizedConfig.handler({ ...params, client });
+      return handler({ ...params, client });
     };
 
     return {
       method,
       path,
-      routes: [
-        createConfigResolver({ handler: wrapperHandler, match: normalizedConfig.match }, settings)
-      ]
+      routes: [createConfigResolver({ handler: wrapperHandler, match }, settings)]
     };
   }
 

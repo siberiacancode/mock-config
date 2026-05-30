@@ -3,13 +3,14 @@ import type { IncomingMessage } from 'node:http';
 import type { WebSocket } from 'ws';
 
 import type { MappedEntity } from './entities';
-import type { GraphQLOperationName } from './graphql';
+import type { GraphQLIdentifier } from './graphql';
 import type {
   GraphqlTransportWsOperationType,
   GraphqlTransportWsRouteConfig
 } from './graphql-transport-ws';
 import type { Interceptors } from './interceptors';
 import type { BaseUrl } from './server';
+import type { MaybePromise } from './utils';
 import type { Data } from './values';
 
 export interface WsFrameBinary {
@@ -29,7 +30,7 @@ export type WsParams = WsFrame & {
   setDelay: (delay: number) => Promise<void>;
 };
 
-export type WsDataResponse = (params: WsParams) => Data | Promise<Data>;
+export type WsDataResponse = (params: WsParams) => MaybePromise<Data>;
 
 export interface WsSettings {
   readonly delay?: number;
@@ -53,7 +54,7 @@ export type WsConnectionEntitiesByEntityName = {
   [EntityName in WsConnectionEntityName]?: MappedEntity;
 };
 
-export type WsConnectionDataResponse = (params: WsConnectionParams) => Data | Promise<Data>;
+export type WsConnectionDataResponse = (params: WsConnectionParams) => MaybePromise<Data>;
 
 export interface WsConnectionRouteConfig {
   data: WsConnectionDataResponse;
@@ -70,7 +71,17 @@ export interface WsConnectionRequestConfig {
   type: 'connection';
 }
 
-export type WsRequestConfig = WsConnectionRequestConfig | WsRawRequestConfig;
+export interface WsGraphqlTransportWsRequestConfig {
+  identifier: GraphQLIdentifier;
+  operationType: GraphqlTransportWsOperationType;
+  routes: GraphqlTransportWsRouteConfig[];
+  type: 'graphql-ws';
+}
+
+export type WsRequestConfig =
+  | WsConnectionRequestConfig
+  | WsGraphqlTransportWsRequestConfig
+  | WsRawRequestConfig;
 
 export interface WsConfig {
   baseUrl?: BaseUrl;
@@ -95,14 +106,10 @@ export interface ConnectionWsRequestArtifact extends BaseWsRequestArtifact {
   type: 'connection';
 }
 
-export type GraphqlTransportWsEventName = string | RegExp;
-
 export interface GraphqlTransportWsRequestArtifact extends BaseWsRequestArtifact {
   config: GraphqlTransportWsRouteConfig;
-  eventName?: GraphqlTransportWsEventName;
-  operationName?: GraphQLOperationName;
+  identifier: GraphQLIdentifier;
   operationType: GraphqlTransportWsOperationType;
-  query?: string;
   type: 'graphql-ws';
 }
 

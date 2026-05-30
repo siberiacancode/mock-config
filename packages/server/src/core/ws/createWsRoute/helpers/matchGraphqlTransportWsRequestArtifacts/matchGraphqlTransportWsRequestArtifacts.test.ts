@@ -9,6 +9,7 @@ const makeArtifact = (overrides: Partial<GraphqlTransportWsRequestArtifact>) =>
     type: 'graphql-ws',
     baseUrl: '/',
     operationType: 'subscription',
+    identifier: 'Users',
     config: { data: { ok: true } },
     weight: 0,
     ...overrides
@@ -17,7 +18,7 @@ const makeArtifact = (overrides: Partial<GraphqlTransportWsRequestArtifact>) =>
 describe('matchGraphqlTransportWsRequestArtifacts', () => {
   it('Should not match when path differs from baseUrl', () => {
     const matched = matchGraphqlTransportWsRequestArtifacts({
-      artifacts: [makeArtifact({ baseUrl: '/sub', operationName: 'Users' })],
+      artifacts: [makeArtifact({ baseUrl: '/sub' })],
       meta: {
         path: '/other',
         operationType: 'subscription',
@@ -29,7 +30,7 @@ describe('matchGraphqlTransportWsRequestArtifacts', () => {
 
   it('Should return empty when operationType is not subscription', () => {
     const matched = matchGraphqlTransportWsRequestArtifacts({
-      artifacts: [makeArtifact({ operationName: 'Users' })],
+      artifacts: [makeArtifact({ identifier: 'Users' })],
       meta: {
         path: '/',
         operationType: 'query',
@@ -41,11 +42,23 @@ describe('matchGraphqlTransportWsRequestArtifacts', () => {
 
   it('Should match equivalent queries with different insignificant whitespace', () => {
     const matched = matchGraphqlTransportWsRequestArtifacts({
-      artifacts: [makeArtifact({ query: 'subscription Users { id }' })],
+      artifacts: [makeArtifact({ identifier: 'subscription Users { id }' })],
       meta: {
         path: '/',
         operationType: 'subscription',
-        query: `subscription  Users  {  id  }`
+        query: 'subscription  Users  {  id  }'
+      }
+    });
+    expect(matched).toHaveLength(1);
+  });
+
+  it('Should match query by regexp identifier', () => {
+    const matched = matchGraphqlTransportWsRequestArtifacts({
+      artifacts: [makeArtifact({ identifier: /^subscription.*Users\{id\}$/ })],
+      meta: {
+        path: '/',
+        operationType: 'subscription',
+        query: 'subscription  Users  {  id  }'
       }
     });
     expect(matched).toHaveLength(1);
@@ -53,7 +66,7 @@ describe('matchGraphqlTransportWsRequestArtifacts', () => {
 
   it('Should match operation name string', () => {
     const matched = matchGraphqlTransportWsRequestArtifacts({
-      artifacts: [makeArtifact({ operationName: 'Users' })],
+      artifacts: [makeArtifact({ identifier: 'Users' })],
       meta: {
         path: '/',
         operationType: 'subscription',
@@ -63,9 +76,22 @@ describe('matchGraphqlTransportWsRequestArtifacts', () => {
     expect(matched).toHaveLength(1);
   });
 
+  it('Should match operation name string when query exists', () => {
+    const matched = matchGraphqlTransportWsRequestArtifacts({
+      artifacts: [makeArtifact({ identifier: 'Users' })],
+      meta: {
+        path: '/',
+        operationType: 'subscription',
+        query: 'subscription Users { id }',
+        operationName: 'Users'
+      }
+    });
+    expect(matched).toHaveLength(1);
+  });
+
   it('Should match operation name regexp', () => {
     const matched = matchGraphqlTransportWsRequestArtifacts({
-      artifacts: [makeArtifact({ operationName: /^users$/g })],
+      artifacts: [makeArtifact({ identifier: /^users$/g })],
       meta: {
         path: '/',
         operationType: 'subscription',
@@ -75,128 +101,48 @@ describe('matchGraphqlTransportWsRequestArtifacts', () => {
     expect(matched).toHaveLength(1);
   });
 
-  it('Should match operation name regexp with case-insensitive flag', () => {
+  it('Should match event name', () => {
     const matched = matchGraphqlTransportWsRequestArtifacts({
-      artifacts: [makeArtifact({ operationName: /^users$/i })],
+      artifacts: [makeArtifact({ identifier: 'users:created' })],
       meta: {
         path: '/',
         operationType: 'subscription',
-        operationName: 'Users'
+        eventName: 'users:created'
       }
     });
     expect(matched).toHaveLength(1);
   });
 
-  it('Should match event name string', () => {
+  it('Should match event name string when query exists', () => {
     const matched = matchGraphqlTransportWsRequestArtifacts({
-      artifacts: [makeArtifact({ eventName: 'users' })],
+      artifacts: [makeArtifact({ identifier: 'users' })],
       meta: {
         path: '/',
         operationType: 'subscription',
+        query: 'subscription UsersSub { users { id } }',
         eventName: 'users'
       }
     });
     expect(matched).toHaveLength(1);
   });
 
-  it('Should match event name regexp', () => {
-    const matched = matchGraphqlTransportWsRequestArtifacts({
-      artifacts: [makeArtifact({ eventName: /^users$/g })],
-      meta: {
-        path: '/',
-        operationType: 'subscription',
-        eventName: 'users'
-      }
-    });
-    expect(matched).toHaveLength(1);
-  });
-
-  it('Should match event name regexp with case-insensitive flag', () => {
-    const matched = matchGraphqlTransportWsRequestArtifacts({
-      artifacts: [makeArtifact({ eventName: /^users$/i })],
-      meta: {
-        path: '/',
-        operationType: 'subscription',
-        eventName: 'Users'
-      }
-    });
-    expect(matched).toHaveLength(1);
-  });
-
-  it('Should correctly prioritize matching artifacts', () => {
-    const queryMatched = matchGraphqlTransportWsRequestArtifacts({
-      artifacts: [
-        makeArtifact({
-          query: 'subscription Users { users { id } }',
-          eventName: 'users',
-          operationName: 'Users'
-        })
-      ],
-      meta: {
-        path: '/',
-        operationType: 'subscription',
-        query: 'subscription Users { users { id } }',
-        eventName: 'users',
-        operationName: 'Users'
-      }
-    });
-
-    expect(queryMatched).toHaveLength(1);
-
-    const eventNameMatched = matchGraphqlTransportWsRequestArtifacts({
-      artifacts: [
-        makeArtifact({
-          eventName: 'users',
-          operationName: 'Users'
-        })
-      ],
-      meta: {
-        path: '/',
-        operationType: 'subscription',
-        eventName: 'users',
-        operationName: 'Users'
-      }
-    });
-
-    expect(eventNameMatched).toHaveLength(1);
-
-    const operationNameMatched = matchGraphqlTransportWsRequestArtifacts({
-      artifacts: [
-        makeArtifact({
-          operationName: 'Users'
-        })
-      ],
-      meta: {
-        path: '/',
-        operationType: 'subscription',
-        operationName: 'Users'
-      }
-    });
-
-    expect(operationNameMatched).toHaveLength(1);
-  });
-
-  it('Should warn and skip artifact without data', () => {
+  it('Should return empty and warn when no match found', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
+    const artifact = makeArtifact({ identifier: 'Users' });
     const matched = matchGraphqlTransportWsRequestArtifacts({
-      artifacts: [
-        makeArtifact({
-          operationName: undefined,
-          query: undefined,
-          eventName: undefined
-        }) as GraphqlTransportWsRequestArtifact
-      ],
+      artifacts: [artifact],
       meta: {
         path: '/',
         operationType: 'subscription',
-        operationName: 'Users',
-        eventName: 'Users'
+        operationName: 'Other',
+        eventName: 'users:created'
       }
     });
-
     expect(matched).toHaveLength(0);
-    expect(warnSpy).toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      `[mock-config] GraphQL artifact was skipped: ${JSON.stringify(artifact)}`
+    );
     warnSpy.mockRestore();
   });
 });

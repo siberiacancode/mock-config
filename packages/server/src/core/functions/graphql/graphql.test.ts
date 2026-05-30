@@ -7,7 +7,7 @@ describe('graphql', () => {
     const result = graphql.query('GetUsers', { ok: true }, { delay: 25, status: 201 });
 
     expect(result).toStrictEqual({
-      operationName: 'GetUsers',
+      identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {
@@ -34,7 +34,7 @@ describe('graphql', () => {
     );
 
     expect(result).toStrictEqual({
-      operationName: 'GetUsers',
+      identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {
@@ -54,7 +54,7 @@ describe('graphql', () => {
     const result = graphql.query('GetUsers', { response: { ok: true } });
 
     expect(result).toStrictEqual({
-      operationName: 'GetUsers',
+      identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {
@@ -71,7 +71,7 @@ describe('graphql', () => {
     const result = graphql.query('GetUsers', handler, { delay: 30 });
 
     expect(result).toStrictEqual({
-      operationName: 'GetUsers',
+      identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {
@@ -99,7 +99,7 @@ describe('graphql', () => {
     );
 
     expect(result).toStrictEqual({
-      operationName: 'GetUsers',
+      identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {
@@ -134,7 +134,7 @@ describe('graphql', () => {
     );
 
     expect(result).toStrictEqual({
-      operationName: 'GetUsers',
+      identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {
@@ -154,44 +154,7 @@ describe('graphql', () => {
     const result = graphql.mutation('CreateUser', { ok: true });
 
     expect(result).toStrictEqual({
-      operationName: 'CreateUser',
-      operationType: 'mutation',
-      routes: [
-        {
-          data: { ok: true },
-          entities: {},
-          settings: {}
-        }
-      ]
-    });
-  });
-
-  it('Should build raw config with default operation type', () => {
-    const result = graphql.raw('query { users { id } }', { ok: true });
-
-    expect(result).toStrictEqual({
-      query: 'query { users { id } }',
-      operationType: 'query',
-      routes: [
-        {
-          data: { ok: true },
-          entities: {},
-          settings: {}
-        }
-      ]
-    });
-  });
-
-  it('Should build raw config with explicit operation type', () => {
-    const result = graphql.raw(
-      'mutation { createUser { id } }',
-      { ok: true },
-      undefined,
-      'mutation'
-    );
-
-    expect(result).toStrictEqual({
-      query: 'mutation { createUser { id } }',
+      identifier: 'CreateUser',
       operationType: 'mutation',
       routes: [
         {
@@ -211,7 +174,7 @@ describe('graphql', () => {
     );
 
     expect(result).toStrictEqual({
-      operationName: 'GetUsers',
+      identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {
@@ -227,7 +190,7 @@ describe('graphql', () => {
     const result = graphql.subscription('OnUsers', { key: 'value' });
 
     expect(result).toStrictEqual({
-      operationName: 'OnUsers',
+      identifier: 'OnUsers',
       operationType: 'subscription',
       routes: [
         {
@@ -242,7 +205,7 @@ describe('graphql', () => {
     const result = graphql.subscription('OnUsers', () => ({ ok: true }));
 
     expect(result).toStrictEqual({
-      operationName: 'OnUsers',
+      identifier: 'OnUsers',
       operationType: 'subscription',
       routes: [
         {
@@ -262,7 +225,7 @@ describe('graphql', () => {
     });
 
     expect(result).toStrictEqual({
-      operationName: 'OnUsers',
+      identifier: 'OnUsers',
       operationType: 'subscription',
       routes: [
         {
@@ -284,7 +247,7 @@ describe('graphql', () => {
     });
 
     expect(result).toStrictEqual({
-      operationName: 'OnUsers',
+      identifier: 'OnUsers',
       operationType: 'subscription',
       routes: [
         {
@@ -313,7 +276,7 @@ describe('graphql', () => {
     });
 
     expect(result).toStrictEqual({
-      operationName: 'GetUsers',
+      identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {

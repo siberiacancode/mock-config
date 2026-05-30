@@ -2,6 +2,7 @@ import type { Request } from 'express';
 
 import type { BodyPlainEntity, MappedEntity } from './entities';
 import type { Interceptors } from './interceptors';
+import type { MaybePromise } from './utils';
 import type { Data } from './values';
 
 export type RestMethod = 'delete' | 'get' | 'options' | 'patch' | 'post' | 'put';
@@ -26,7 +27,7 @@ interface RestSettings {
 }
 
 export type RestDataResponse<Method extends RestMethod = RestMethod> =
-  | ((request: Request, entities: RestEntitiesByEntityName<Method>) => Data | Promise<Data>)
+  | ((request: Request, entities: RestEntitiesByEntityName<Method>) => MaybePromise<Data>)
   | Data;
 
 export type RestFileResponse = string;

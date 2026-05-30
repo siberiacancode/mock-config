@@ -10,3 +10,5 @@ export type Entries<T extends Array<any> | PlainObject> = ValueOf<{
 export type NestedObjectOrArray<T> =
   | Array<NestedObjectOrArray<T> | T>
   | { [key: string]: NestedObjectOrArray<T> | T };
+
+export type MaybePromise<T> = Promise<T> | T;

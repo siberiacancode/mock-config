@@ -1,9 +1,9 @@
 import type { RawData, WebSocket } from 'ws';
 
 import type { VariablesEntity } from './entities';
-import type { GraphQLOperationName } from './graphql';
+import type { GraphQLIdentifier } from './graphql';
+import type { MaybePromise } from './utils';
 import type { Data, PlainObject } from './values';
-import type { GraphqlTransportWsEventName } from './ws';
 
 export interface GraphqlTransportWsMessage {
   id?: string;
@@ -32,7 +32,7 @@ export interface GraphqlTransportWsParams {
 }
 
 export type GraphqlTransportWsDataResponse =
-  | ((params: GraphqlTransportWsParams) => Data | Promise<Data>)
+  | ((params: GraphqlTransportWsParams) => MaybePromise<Data>)
   | Data;
 
 export interface GraphqlTransportWsSettings {
@@ -48,11 +48,9 @@ export interface GraphqlTransportWsRouteConfig {
 export type GraphqlTransportWsOperationType = 'subscription';
 
 export interface GraphqlTransportWsRequestConfig {
-  eventName?: GraphqlTransportWsEventName;
+  identifier: GraphQLIdentifier;
   interceptors?: GraphqlTransportWsRequestInterceptors;
-  operationName?: GraphQLOperationName;
   operationType: GraphqlTransportWsOperationType;
-  query?: string;
   routes: GraphqlTransportWsRouteConfig[];
 }
 
@@ -63,7 +61,7 @@ export interface GraphqlTransportWsRequestInterceptors {
 
 export type GraphqlTransportWsRequestInterceptor = (
   params: GraphqlTransportWsParams
-) => Promise<void> | void;
+) => MaybePromise<void>;
 
 export type GraphqlTransportWsResponseInterceptor = (
   data: Data,
