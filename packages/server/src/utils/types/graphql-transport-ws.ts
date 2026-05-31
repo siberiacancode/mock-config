@@ -1,19 +1,85 @@
+import type { ExecutionResult, GraphQLError } from 'graphql';
 import type { RawData, WebSocket } from 'ws';
 
 import type { VariablesEntity } from './entities';
 import type { GraphQLIdentifier } from './graphql';
 import type { MaybePromise } from './utils';
-import type { Data, PlainObject } from './values';
+import type { PlainObject } from './values';
 
-export interface GraphqlTransportWsMessage {
-  id?: string;
-  payload?: {
-    query?: string;
-    operationName?: string;
-    variables?: PlainObject;
-  };
-  type: 'connection_init' | 'ping' | 'subscribe';
+export type GraphqlTransportWsOperationId = string;
+export type GraphqlTransportWsMessagePayload = Record<string, unknown> | null;
+
+export interface GraphqlTransportWsConnectionInitMessage {
+  payload?: GraphqlTransportWsMessagePayload;
+  type: 'connection_init';
 }
+
+export interface GraphqlTransportWsConnectionAckMessage {
+  payload?: GraphqlTransportWsMessagePayload;
+  type: 'connection_ack';
+}
+
+export interface GraphqlTransportWsPingMessage {
+  payload?: GraphqlTransportWsMessagePayload;
+  type: 'ping';
+}
+
+export interface GraphqlTransportWsPongMessage {
+  payload?: GraphqlTransportWsMessagePayload;
+  type: 'pong';
+}
+
+export interface GraphqlTransportWsSubscribeMessage {
+  id: GraphqlTransportWsOperationId;
+  payload: {
+    query: string;
+    operationName?: string | null;
+    variables?: PlainObject | null;
+    extensions?: PlainObject | null;
+  };
+  type: 'subscribe';
+}
+
+export type GraphqlTransportWsExecutionResult = ExecutionResult<
+  Record<string, unknown>,
+  PlainObject
+>;
+
+export interface GraphqlTransportWsNextMessage {
+  id: GraphqlTransportWsOperationId;
+  payload: GraphqlTransportWsExecutionResult;
+  type: 'next';
+}
+
+export interface GraphqlTransportWsErrorMessage {
+  id: GraphqlTransportWsOperationId;
+  payload: ReadonlyArray<GraphQLError>;
+  type: 'error';
+}
+
+export interface GraphqlTransportWsCompleteMessage {
+  id: GraphqlTransportWsOperationId;
+  type: 'complete';
+}
+
+export type GraphqlTransportWsClientMessage =
+  | GraphqlTransportWsCompleteMessage
+  | GraphqlTransportWsConnectionInitMessage
+  | GraphqlTransportWsPingMessage
+  | GraphqlTransportWsPongMessage
+  | GraphqlTransportWsSubscribeMessage;
+
+export type GraphqlTransportWsServerMessage =
+  | GraphqlTransportWsCompleteMessage
+  | GraphqlTransportWsConnectionAckMessage
+  | GraphqlTransportWsErrorMessage
+  | GraphqlTransportWsNextMessage
+  | GraphqlTransportWsPingMessage
+  | GraphqlTransportWsPongMessage;
+
+export type GraphqlTransportWsMessage =
+  | GraphqlTransportWsClientMessage
+  | GraphqlTransportWsServerMessage;
 
 export interface GraphqlTransportWsEntitiesByEntityName {
   variables?: VariablesEntity;
@@ -27,13 +93,14 @@ export interface GraphqlTransportWsParams {
   raw: RawData;
   socket: WebSocket;
   variables?: PlainObject;
-  next: (payload?: Data) => void;
+  complete: () => void;
+  next: (payload: GraphqlTransportWsExecutionResult) => void;
   setDelay: (delay: number) => Promise<void>;
 }
 
 export type GraphqlTransportWsDataResponse =
-  | ((params: GraphqlTransportWsParams) => MaybePromise<Data>)
-  | Data;
+  | ((params: GraphqlTransportWsParams) => MaybePromise<GraphqlTransportWsExecutionResult>)
+  | GraphqlTransportWsExecutionResult;
 
 export interface GraphqlTransportWsSettings {
   readonly delay?: number;
@@ -49,7 +116,6 @@ export type GraphqlTransportWsOperationType = 'subscription';
 
 export interface GraphqlTransportWsRequestConfig {
   identifier: GraphQLIdentifier;
-  interceptors?: GraphqlTransportWsRequestInterceptors;
   operationType: GraphqlTransportWsOperationType;
   routes: GraphqlTransportWsRouteConfig[];
 }
@@ -64,6 +130,6 @@ export type GraphqlTransportWsRequestInterceptor = (
 ) => MaybePromise<void>;
 
 export type GraphqlTransportWsResponseInterceptor = (
-  data: Data,
+  data: GraphqlTransportWsExecutionResult,
   params: GraphqlTransportWsParams
-) => Data;
+) => GraphqlTransportWsExecutionResult;

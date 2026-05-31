@@ -4,11 +4,50 @@ import { once } from 'node:events';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WebSocket, WebSocketServer } from 'ws';
 
-import type { BaseServerConfig, WsConfig, WsDataResponse, WsRequestArtifact } from '@/utils/types';
+import type {
+  BaseServerConfig,
+  BaseUrl,
+  GraphQLIdentifier,
+  GraphqlTransportWsOperationType,
+  GraphqlTransportWsRouteConfig,
+  Interceptors,
+  WsConnectionRouteConfig,
+  WsDataResponse,
+  WsRawRouteConfig,
+  WsRequestArtifact
+} from '@/utils/types';
 
 import { urlJoin } from '@/utils/helpers';
 
 import { createWsRoute } from './createWsRoute';
+
+export interface WsRawRequestConfig {
+  routes: WsRawRouteConfig[];
+  type: 'raw';
+}
+
+export interface WsConnectionRequestConfig {
+  routes: WsConnectionRouteConfig[];
+  type: 'connection';
+}
+
+export interface WsGraphqlTransportWsRequestConfig {
+  identifier: GraphQLIdentifier;
+  operationType: GraphqlTransportWsOperationType;
+  routes: GraphqlTransportWsRouteConfig[];
+  type: 'graphql-ws';
+}
+
+export type WsRequestConfig =
+  | WsConnectionRequestConfig
+  | WsGraphqlTransportWsRequestConfig
+  | WsRawRequestConfig;
+
+export interface WsConfig {
+  baseUrl?: BaseUrl;
+  configs: WsRequestConfig[];
+  interceptors?: Interceptors<'rest'>;
+}
 
 const clients: WebSocket[] = [];
 const servers: WebSocketServer[] = [];
@@ -374,7 +413,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
               type: 'graphql-ws',
               operationType: 'subscription',
               identifier: /^Users$/,
-              routes: [{ data: { ok: true } }]
+              routes: [{ data: { data: { ok: true } } }]
             }
           ]
         }
@@ -395,7 +434,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
               type: 'graphql-ws',
               operationType: 'subscription',
               identifier: /^Users$/,
-              routes: [{ data: { ok: true } }]
+              routes: [{ data: { data: { ok: true } } }]
             }
           ]
         }
@@ -419,7 +458,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
               type: 'graphql-ws',
               operationType: 'subscription',
               identifier: /^UsersByBaseUrl$/,
-              routes: [{ data: { source: 'baseUrl' } }]
+              routes: [{ data: { data: { source: 'baseUrl' } } }]
             }
           ]
         }
@@ -453,7 +492,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
               type: 'graphql-ws',
               operationType: 'subscription',
               identifier: 'UsersByOperation',
-              routes: [{ data: { source: 'operationName' } }]
+              routes: [{ data: { data: { source: 'operationName' } } }]
             }
           ]
         }
@@ -487,7 +526,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
               type: 'graphql-ws',
               operationType: 'subscription',
               identifier: 'subscription UsersByQuery { users { id } }',
-              routes: [{ data: { source: 'query' } }]
+              routes: [{ data: { data: { source: 'query' } } }]
             }
           ]
         }
@@ -521,7 +560,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
               type: 'graphql-ws',
               operationType: 'subscription',
               identifier: /^subscription\s+UsersByQuery\{users\{id\}\}$/,
-              routes: [{ data: { source: 'queryRegExp' } }]
+              routes: [{ data: { data: { source: 'queryRegExp' } } }]
             }
           ]
         }
@@ -555,7 +594,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
               type: 'graphql-ws',
               operationType: 'subscription',
               identifier: /^UsersBy(.+)$/g,
-              routes: [{ data: { source: 'operationNameRegExp' } }]
+              routes: [{ data: { data: { source: 'operationNameRegExp' } } }]
             }
           ]
         }
@@ -607,7 +646,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
               type: 'graphql-ws',
               operationType: 'subscription',
               identifier: 'subscription UsersByQuery { users { id } }',
-              routes: [{ data: { source: 'query' } }]
+              routes: [{ data: { data: { source: 'query' } } }]
             }
           ]
         }
@@ -641,7 +680,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
               type: 'graphql-ws',
               operationType: 'subscription',
               identifier: 'users',
-              routes: [{ data: { source: 'eventName' } }]
+              routes: [{ data: { data: { source: 'eventName' } } }]
             }
           ]
         }
@@ -675,7 +714,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
               type: 'graphql-ws',
               operationType: 'subscription',
               identifier: /^us(.+?)s$/,
-              routes: [{ data: { source: 'eventNameRegExp' } }]
+              routes: [{ data: { data: { source: 'eventNameRegExp' } } }]
             }
           ]
         }
@@ -714,8 +753,8 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
               routes: [
                 {
                   data: ({ next }) => {
-                    next({ source: 'push' });
-                    return undefined;
+                    next({ data: { source: 'push' } });
+                    return { data: { source: 'push' } };
                   }
                 }
               ]
@@ -756,7 +795,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
                   entities: {
                     variables: { room: 'public' }
                   },
-                  data: { ok: true }
+                  data: { data: { ok: true } }
                 }
               ]
             }
@@ -799,7 +838,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
               routes: [
                 {
                   settings: { delay },
-                  data: { ok: true }
+                  data: { data: { ok: true } }
                 }
               ]
             }

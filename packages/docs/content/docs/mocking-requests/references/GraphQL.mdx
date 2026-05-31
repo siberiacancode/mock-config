@@ -76,7 +76,7 @@ You can pass a `queue` field with an array of timed responses (for polling/queue
     },
     queue: {
       description: 'Sequence of timed responses (for polling/queues)',
-      type: 'Array<{ time?: number; data: GraphqlDataResponse }>',
+      type: 'Array<{ time?: number; data: GraphQLDataResponse }>',
       required: true
     },
     entities: {
@@ -103,8 +103,8 @@ Or you can specify a single response with the `data` field:
     },
     data: {
       description: 'Static or dynamic response data (function or value)',
-      type: 'GraphqlDataResponse',
-      typeDescriptionLink: '#GraphqlDataResponse',
+      type: 'GraphQLDataResponse',
+      typeDescriptionLink: '#GraphQLDataResponse',
       required: true
     },
     entities: {
@@ -120,12 +120,12 @@ Or you can specify a single response with the `data` field:
   }}
 />
 
-<a id='GraphqlDataResponse'></a>
-## GraphqlDataResponse
+<a id='GraphQLDataResponse'></a>
+## GraphQLDataResponse
 
 <TypeTable
   type={{
-    GraphqlDataResponse: {
+    GraphQLDataResponse: {
       description: 'Either a static Data value or a function producing Data (sync or async)',
       type: 'Data | (request: Request, entities: GraphQLEntitiesByEntityName) => Data | Promise<Data>'
     }

@@ -8,6 +8,7 @@ import type {
   ConnectionWsRequestArtifact,
   Entries,
   GraphQLEntitiesByEntityName,
+  GraphqlTransportWsExecutionResult,
   GraphqlTransportWsParams,
   GraphqlTransportWsRequestArtifact,
   RawWsRequestArtifact,
@@ -34,9 +35,17 @@ interface CreateWsRouteParams {
   wsRequestArtifacts: WsRequestArtifact[];
 }
 
-const sendGraphqlTransportWsData = (socket: WebSocket, id: string, payload: unknown) => {
+const sendGraphqlTransportWsData = (
+  socket: WebSocket,
+  id: string,
+  payload: GraphqlTransportWsExecutionResult
+) => {
   if (payload === undefined) return;
   socket.send(JSON.stringify({ id, type: 'next', payload }));
+};
+
+const sendGraphqlTransportWsComplete = (socket: WebSocket, id: string) => {
+  socket.send(JSON.stringify({ id, type: 'complete' }));
 };
 
 const sendWsData = (socket: WebSocket, data: unknown) => {
@@ -77,6 +86,8 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         cookies: Record<string, string>;
       }
     ) => {
+      const completedSubscriptionIds = new Set<string>();
+
       const [requestPathname] = request.url!.split('?');
       const matchedRequestArtifacts = wsRequestArtifacts.filter((artifact) => {
         if (artifact.baseUrl === '/') return true;
@@ -200,6 +211,11 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
         const graphqlSubscriptionInput = getGraphqlTransportWsInput(frame.raw.toString());
 
+        if (!graphqlSubscriptionInput) {
+          console.warn('[mock-config] Error parsing graphQL subscription input');
+          return;
+        }
+
         if (graphqlSubscriptionInput.type === 'connection_init') {
           socket.send(JSON.stringify({ type: 'connection_ack' }));
           return;
@@ -210,6 +226,11 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           return;
         }
 
+        if (graphqlSubscriptionInput.type === 'complete') {
+          completedSubscriptionIds.add(graphqlSubscriptionInput.id);
+          return;
+        }
+
         if (graphqlSubscriptionInput.type !== 'subscribe') {
           console.warn(
             'Unsupported graphQL subscription input type',
@@ -217,6 +238,9 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           );
           return;
         }
+
+        const operationId = graphqlSubscriptionInput.id;
+        completedSubscriptionIds.delete(operationId);
 
         const query = parseGraphQLQuery(graphqlSubscriptionInput.payload?.query ?? '');
         if (!query) return;
@@ -274,11 +298,16 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         }
 
         const graphqlTransportWsParams: GraphqlTransportWsParams = {
+          complete: () => {
+            if (completedSubscriptionIds.has(operationId)) return;
+            completedSubscriptionIds.add(operationId);
+            sendGraphqlTransportWsComplete(socket, operationId);
+          },
           entities: matchedRouteConfig.config.entities ?? {},
           eventName: query.eventName,
           next: (payload) => {
-            if (graphqlSubscriptionInput.id)
-              sendGraphqlTransportWsData(socket, graphqlSubscriptionInput.id, payload);
+            if (completedSubscriptionIds.has(operationId)) return;
+            sendGraphqlTransportWsData(socket, operationId, payload);
           },
           operationName: query.operationName,
           query: graphqlSubscriptionInput.payload?.query,
@@ -299,8 +328,9 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           await sleep(matchedRouteConfig.config.settings.delay);
         }
 
-        if (graphqlSubscriptionInput.id)
-          sendGraphqlTransportWsData(socket, graphqlSubscriptionInput.id, resolvedData);
+        if (completedSubscriptionIds.has(operationId)) return;
+
+        sendGraphqlTransportWsData(socket, operationId, resolvedData);
       });
     }
   );

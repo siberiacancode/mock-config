@@ -1,10 +1,11 @@
 import type { CookieOptions, Response as ExpressResponse, Request } from 'express';
+import type { ExecutionResult } from 'graphql';
 
 import type { MappedEntity, VariablesEntity } from './entities';
 import type { Interceptors } from './interceptors';
 import type { BaseUrl } from './server';
 import type { MaybePromise } from './utils';
-import type { Data } from './values';
+import type { PlainObject } from './values';
 
 export type GraphQLEntityName = 'cookies' | 'headers' | 'queries' | 'variables';
 
@@ -25,6 +26,8 @@ export interface GraphQLSettings {
 
 type GraphQLCookieValue = string | undefined;
 type GraphQLHeaderValue = number | string | string[] | undefined;
+
+export type GraphQLExecutionResult = ExecutionResult<Record<string, unknown>, PlainObject>;
 
 export interface GraphQLParams<
   Query = Record<string, unknown>,
@@ -51,27 +54,24 @@ export interface GraphQLParams<
   setStatusCode: (statusCode: number) => void;
 }
 
-export type GraphqlDataResponseFunction = (params: GraphQLParams) => MaybePromise<Data>;
-export type GraphqlDataResponse = Data | GraphqlDataResponseFunction;
+export type GraphQLDataResponseFunction = (
+  params: GraphQLParams
+) => MaybePromise<GraphQLExecutionResult>;
+export type GraphQLDataResponse = GraphQLDataResponseFunction | GraphQLExecutionResult;
 
 export interface GraphQLRouteConfig {
-  data: GraphqlDataResponse;
+  data: GraphQLDataResponse;
   entities?: GraphQLEntitiesByEntityName;
   interceptors?: Interceptors<'graphql'>;
   settings?: GraphQLSettings;
 }
 
-interface BaseGraphQLRequestConfig {
+export interface GraphQLRequestConfig {
+  identifier: GraphQLIdentifier;
   interceptors?: Interceptors<'graphql'>;
   operationType: GraphQLOperationType;
   routes: GraphQLRouteConfig[];
 }
-
-export interface OperationNameGraphQLRequestConfig extends BaseGraphQLRequestConfig {
-  identifier: GraphQLIdentifier;
-}
-
-export type GraphQLRequestConfig = OperationNameGraphQLRequestConfig;
 
 export interface GraphQLRequestArtifact {
   baseUrl: BaseUrl;
