@@ -480,7 +480,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
       expect(JSON.parse(response.toString())).toStrictEqual({
         id: 'sub-base-url',
         type: 'next',
-        payload: { source: 'baseUrl' }
+        payload: { data: { source: 'baseUrl' } }
       });
     });
 
@@ -514,7 +514,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
       expect(JSON.parse(response.toString())).toStrictEqual({
         id: 'sub-operation-name',
         type: 'next',
-        payload: { source: 'operationName' }
+        payload: { data: { source: 'operationName' } }
       });
     });
 
@@ -548,7 +548,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
       expect(JSON.parse(response.toString())).toStrictEqual({
         id: 'sub-query',
         type: 'next',
-        payload: { source: 'query' }
+        payload: { data: { source: 'query' } }
       });
     });
 
@@ -582,7 +582,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
       expect(JSON.parse(response.toString())).toStrictEqual({
         id: 'sub-query-regexp',
         type: 'next',
-        payload: { source: 'queryRegExp' }
+        payload: { data: { source: 'queryRegExp' } }
       });
     });
 
@@ -616,7 +616,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
       expect(JSON.parse(firstResponse.toString())).toStrictEqual({
         id: 'sub-operation-name-regexp-1',
         type: 'next',
-        payload: { source: 'operationNameRegExp' }
+        payload: { data: { source: 'operationNameRegExp' } }
       });
 
       client.send(
@@ -634,7 +634,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
       expect(JSON.parse(secondResponse.toString())).toStrictEqual({
         id: 'sub-operation-name-regexp-2',
         type: 'next',
-        payload: { source: 'operationNameRegExp' }
+        payload: { data: { source: 'operationNameRegExp' } }
       });
     });
 
@@ -668,7 +668,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
       expect(JSON.parse(response.toString())).toStrictEqual({
         id: 'sub-query',
         type: 'next',
-        payload: { source: 'query' }
+        payload: { data: { source: 'query' } }
       });
     });
 
@@ -702,7 +702,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
       expect(JSON.parse(response.toString())).toStrictEqual({
         id: 'sub-event-name',
         type: 'next',
-        payload: { source: 'eventName' }
+        payload: { data: { source: 'eventName' } }
       });
     });
 
@@ -736,7 +736,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
       expect(JSON.parse(response.toString())).toStrictEqual({
         id: 'sub-event-name-regexp',
         type: 'next',
-        payload: { source: 'eventNameRegExp' }
+        payload: { data: { source: 'eventNameRegExp' } }
       });
     });
   });
@@ -776,7 +776,44 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
       expect(JSON.parse(response.toString())).toStrictEqual({
         id: 'sub-next',
         type: 'next',
-        payload: { source: 'push' }
+        payload: { data: { source: 'push' } }
+      });
+    });
+
+    it('Should support params.complete from graphql subscription handler', async () => {
+      const { port } = await createServer({
+        ws: {
+          configs: [
+            {
+              type: 'graphql-ws',
+              operationType: 'subscription',
+              identifier: /^Users$/,
+              routes: [
+                {
+                  data: ({ complete }) => {
+                    complete();
+                    return { data: { source: 'should-not-send-next' } };
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      });
+      const client = await connectClient(`ws://127.0.0.1:${port}/`);
+
+      client.send(
+        JSON.stringify({
+          id: 'sub-server-complete',
+          type: 'subscribe',
+          payload: { query: 'subscription Users { users { id } }', operationName: 'Users' }
+        })
+      );
+      const [response] = await once(client, 'message');
+
+      expect(JSON.parse(response.toString())).toStrictEqual({
+        id: 'sub-server-complete',
+        type: 'complete'
       });
     });
   });
@@ -820,7 +857,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
       expect(JSON.parse(response.toString())).toStrictEqual({
         id: 'sub-entities',
         type: 'next',
-        payload: { ok: true }
+        payload: { data: { ok: true } }
       });
     });
   });
@@ -862,7 +899,7 @@ describe('createWsRoute: ws.graphql-transport-ws', () => {
       expect(JSON.parse(response.toString())).toStrictEqual({
         id: 'sub-delay',
         type: 'next',
-        payload: { ok: true }
+        payload: { data: { ok: true } }
       });
     });
   });
