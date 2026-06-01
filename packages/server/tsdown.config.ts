@@ -3,7 +3,7 @@ import { defineConfig } from 'tsdown';
 export default defineConfig([
   {
     entry: ['index.ts', 'bin/bin.ts'],
-    format: 'cjs',
+    format: 'esm',
     fixedExtension: false,
     unbundle: true,
     outDir: 'dist',

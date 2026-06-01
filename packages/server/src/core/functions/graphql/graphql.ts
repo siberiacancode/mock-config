@@ -300,5 +300,3 @@ export const graphql = {
   mutation: createGraphQLFactory('mutation'),
   subscription: createGraphqlTransportWsFactory()
 };
-
-graphql.subscription('Users', () => ({ data: { ok: true } }));

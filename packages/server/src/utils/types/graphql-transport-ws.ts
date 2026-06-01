@@ -62,24 +62,12 @@ export interface GraphqlTransportWsCompleteMessage {
   type: 'complete';
 }
 
-export type GraphqlTransportWsClientMessage =
+export type GraphqlTransportWsMessage =
   | GraphqlTransportWsCompleteMessage
   | GraphqlTransportWsConnectionInitMessage
   | GraphqlTransportWsPingMessage
   | GraphqlTransportWsPongMessage
   | GraphqlTransportWsSubscribeMessage;
-
-export type GraphqlTransportWsServerMessage =
-  | GraphqlTransportWsCompleteMessage
-  | GraphqlTransportWsConnectionAckMessage
-  | GraphqlTransportWsErrorMessage
-  | GraphqlTransportWsNextMessage
-  | GraphqlTransportWsPingMessage
-  | GraphqlTransportWsPongMessage;
-
-export type GraphqlTransportWsMessage =
-  | GraphqlTransportWsClientMessage
-  | GraphqlTransportWsServerMessage;
 
 export interface GraphqlTransportWsEntitiesByEntityName {
   variables?: VariablesEntity;
@@ -119,17 +107,3 @@ export interface GraphqlTransportWsRequestConfig {
   operationType: GraphqlTransportWsOperationType;
   routes: GraphqlTransportWsRouteConfig[];
 }
-
-export interface GraphqlTransportWsRequestInterceptors {
-  request?: GraphqlTransportWsRequestInterceptor;
-  response?: GraphqlTransportWsResponseInterceptor;
-}
-
-export type GraphqlTransportWsRequestInterceptor = (
-  params: GraphqlTransportWsParams
-) => MaybePromise<void>;
-
-export type GraphqlTransportWsResponseInterceptor = (
-  data: GraphqlTransportWsExecutionResult,
-  params: GraphqlTransportWsParams
-) => GraphqlTransportWsExecutionResult;
