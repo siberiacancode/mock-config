@@ -15,7 +15,7 @@ export const createQueueHandler = (
     queueIndex = queue.length - 1 === queueIndex ? 0 : queueIndex + 1;
   };
 
-  return async (params) => {
+  return (params) => {
     if (!queue.length) {
       throw next();
     }

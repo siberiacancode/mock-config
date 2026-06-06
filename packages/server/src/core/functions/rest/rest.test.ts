@@ -1,3 +1,5 @@
+import type { NativeRestParams } from 'src/server/createNativeMockServer/types';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import { rest } from './rest';
@@ -277,23 +279,19 @@ describe('rest', () => {
       client.close();
     });
 
-    const [route] = result.routes as [{ data: (params: any) => unknown }];
+    const [route] = result.routes as [{ data: (params: Partial<NativeRestParams>) => Response }];
     const routeData = route.data;
     const setHeader = vi.fn();
-    const write = vi.fn();
-    const end = vi.fn();
 
-    await routeData({
-      setHeader,
-      response: { write, end }
+    const response = routeData({
+      setHeader
     });
 
     expect(setHeader).toHaveBeenCalledTimes(3);
     expect(setHeader).toHaveBeenNthCalledWith(1, 'connection', 'keep-alive');
     expect(setHeader).toHaveBeenNthCalledWith(2, 'content-type', 'text/event-stream');
-    expect(setHeader).toHaveBeenNthCalledWith(3, 'cache-control', 'no-cache');
-    expect(write).toHaveBeenCalledWith('data: hello\n\n');
-    expect(end).toHaveBeenCalledTimes(1);
+    expect(setHeader).toHaveBeenNthCalledWith(3, 'cache-control', 'no-store');
+    expect(await response.text()).toBe('data: hello\n\n');
   });
 
   it('Should send SSE payload with meta fields', async () => {
@@ -306,18 +304,15 @@ describe('rest', () => {
       client.close();
     });
 
-    const [route] = result.routes as [{ data: (params: any) => unknown }];
+    const [route] = result.routes as [{ data: (params: Partial<NativeRestParams>) => Response }];
     const routeData = route.data;
     const setHeader = vi.fn();
-    const write = vi.fn();
-    const end = vi.fn();
 
-    await routeData({
-      setHeader,
-      response: { write, end }
+    const response = routeData({
+      setHeader
     });
 
-    expect(write).toHaveBeenCalledWith('id: id-1\nevent: user.created\nretry: 1500\ndata: msg\n\n');
+    expect(await response.text()).toBe('id: id-1\nevent: user.created\nretry: 1500\ndata: msg\n\n');
   });
 
   it('Should type handler params with all typed fields', () => {

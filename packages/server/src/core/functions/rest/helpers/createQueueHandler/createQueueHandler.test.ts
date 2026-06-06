@@ -1,31 +1,22 @@
+import type { NativeRestParams } from 'src/server/createNativeMockServer/types';
+
+import { next } from 'src/server/createNativeMockServer/helpers/routes';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createQueueHandler } from './createQueueHandler';
 
-const createParams = () =>
-  ({
-    response: {
-      send: vi.fn()
-    },
-    setStatusCode: vi.fn(),
-    next: vi.fn(() => null)
-  }) as any;
+const createParams = () => ({}) satisfies Partial<NativeRestParams> as any;
 
 describe('createQueueHandler', () => {
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it('Should return 404 when queue is empty', async () => {
+  it('Should throw next error when queue is empty', async () => {
     const queueHandler = createQueueHandler([]);
     const params = createParams();
 
-    const result = await queueHandler(params);
-
-    expect(params.next).toHaveBeenCalledTimes(1);
-    expect(params.setStatusCode).not.toHaveBeenCalled();
-    expect(params.response.send).not.toHaveBeenCalled();
-    expect(result).toBeNull();
+    expect(() => queueHandler(params)).toThrowError(next());
   });
 
   it('Should cycle through queue items without time', async () => {
