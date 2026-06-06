@@ -23,7 +23,7 @@ export const build = async (argv: MockServerCliArgv) => {
     write: false,
     metafile: false,
     logLevel: 'info',
-    format: 'cjs',
+    format: 'esm',
     plugins: [] as Plugin[]
   } satisfies BuildOptions;
 

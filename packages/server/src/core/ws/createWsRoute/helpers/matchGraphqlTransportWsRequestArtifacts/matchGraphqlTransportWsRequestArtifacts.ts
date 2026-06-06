@@ -15,11 +15,11 @@ const normalizeGraphQLDocument = (value: string) => {
 interface MatchGraphqlTransportWsRequestArtifactsParams {
   artifacts: GraphqlTransportWsRequestArtifact[];
   meta: {
+    query?: string;
+    operationName?: string;
     eventName?: string;
     path: string;
     operationType: string;
-    query?: string;
-    operationName?: string;
   };
 }
 
