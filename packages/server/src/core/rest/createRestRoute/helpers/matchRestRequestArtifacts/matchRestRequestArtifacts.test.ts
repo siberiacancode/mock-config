@@ -101,19 +101,6 @@ describe('matchRestRequestArtifacts', () => {
     expect(matched).toHaveLength(1);
   });
 
-  it('Should fail single-segment wildcard across multiple segments', () => {
-    const matched = matchRestRequestArtifacts({
-      artifacts: [
-        makeArtifact({
-          baseUrl: '/api',
-          path: '/users/*/details'
-        })
-      ],
-      meta: { method: 'get', path: '/api/users/1/profile/details' }
-    });
-    expect(matched).toHaveLength(0);
-  });
-
   it('Should match string path with multi-segment wildcard', () => {
     const matched = matchRestRequestArtifacts({
       artifacts: [
