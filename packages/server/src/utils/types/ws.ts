@@ -8,7 +8,6 @@ import type {
   GraphqlTransportWsOperationType,
   GraphqlTransportWsRouteConfig
 } from './graphql-transport-ws';
-import type { Interceptors } from './interceptors';
 import type { BaseUrl } from './server';
 import type { MaybePromise } from './utils';
 import type { Data } from './values';
@@ -71,23 +70,7 @@ export interface WsConnectionRequestConfig {
   type: 'connection';
 }
 
-export interface WsGraphqlTransportWsRequestConfig {
-  identifier: GraphQLIdentifier;
-  operationType: GraphqlTransportWsOperationType;
-  routes: GraphqlTransportWsRouteConfig[];
-  type: 'graphql-ws';
-}
-
-export type WsRequestConfig =
-  | WsConnectionRequestConfig
-  | WsGraphqlTransportWsRequestConfig
-  | WsRawRequestConfig;
-
-export interface WsConfig {
-  baseUrl?: BaseUrl;
-  configs: WsRequestConfig[];
-  interceptors?: Interceptors<'rest'>;
-}
+export type WsRequestConfig = WsConnectionRequestConfig | WsRawRequestConfig;
 
 interface BaseWsRequestArtifact {
   baseUrl: BaseUrl;

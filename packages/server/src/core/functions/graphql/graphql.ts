@@ -1,6 +1,6 @@
 import type {
-  Data,
   GraphQLEntitiesByEntityName,
+  GraphQLExecutionResult,
   GraphQLIdentifier,
   GraphQLOperationType,
   GraphQLParams,
@@ -8,6 +8,7 @@ import type {
   GraphQLRouteConfig,
   GraphQLSettings,
   GraphqlTransportWsEntitiesByEntityName,
+  GraphqlTransportWsExecutionResult,
   GraphqlTransportWsParams,
   GraphqlTransportWsRequestConfig,
   GraphqlTransportWsRouteConfig,
@@ -20,21 +21,21 @@ interface GraphQLRequestInput {
   body?: unknown;
   params?: unknown;
   query?: unknown;
-  response?: Data;
+  response: GraphQLExecutionResult;
 }
 
 type ReservedGraphQLConfigKeys = {
   [K in 'handler' | 'match' | 'queue' | 'response']?: never;
 };
 
-type GraphQLInlineResponse<Response> =
-  Response extends Record<string, unknown> ? Response & ReservedGraphQLConfigKeys : Response;
+type GraphQLInlineResponse<Response extends GraphQLExecutionResult> = Response &
+  ReservedGraphQLConfigKeys;
 
 type GraphQLFunction<Options extends GraphQLRequestInput> = (
   params: GraphQLParams<Options['query'], Options['body'], Options['params'], Options['response']>
 ) => MaybePromise<Options['response']>;
 
-interface GraphQLResponseObject<Response> {
+interface GraphQLResponseObject<Response extends GraphQLExecutionResult> {
   match?: GraphQLEntitiesByEntityName;
   response: Response;
 }
@@ -86,14 +87,14 @@ const createConfigResolver = <Options extends GraphQLRequestInput>(
 
     case 'data': {
       return {
-        data: resolvedConfig.config.response,
+        data: resolvedConfig.config.response!,
         entities: resolvedConfig.config.match ?? {},
         settings
       };
     }
 
     case 'queue': {
-      const normalizedQueue = resolvedConfig.config.queue.map((item) => {
+      const normalizedQueue = resolvedConfig.config.queue!.map((item) => {
         if ('handler' in item) {
           return { data: item.handler, time: item.time };
         }
@@ -114,7 +115,7 @@ const createConfigResolver = <Options extends GraphQLRequestInput>(
 
     case 'handler': {
       return {
-        data: resolvedConfig.config.handler,
+        data: resolvedConfig.config.handler!,
         entities: resolvedConfig.config.match ?? {},
         settings
       };
@@ -129,37 +130,37 @@ const createConfigResolver = <Options extends GraphQLRequestInput>(
 const createGraphQLFactory = <OperationType extends GraphQLOperationType>(
   operationType: OperationType
 ) => {
-  function createRequestConfig<Options extends GraphQLRequestInput = Partial<GraphQLRequestInput>>(
+  function createRequestConfig<Options extends GraphQLRequestInput = GraphQLRequestInput>(
     identifier: GraphQLIdentifier,
     config: GraphQLResponseObject<Options['response']>,
     settings?: GraphQLSettings
   ): GraphQLRequestConfig;
 
-  function createRequestConfig<Options extends GraphQLRequestInput = Partial<GraphQLRequestInput>>(
+  function createRequestConfig<Options extends GraphQLRequestInput = GraphQLRequestInput>(
     identifier: GraphQLIdentifier,
     config: GraphQLHandlerObject<Options>,
     settings?: GraphQLSettings
   ): GraphQLRequestConfig;
 
-  function createRequestConfig<Options extends GraphQLRequestInput = Partial<GraphQLRequestInput>>(
+  function createRequestConfig<Options extends GraphQLRequestInput = GraphQLRequestInput>(
     identifier: GraphQLIdentifier,
     config: GraphQLFunction<Options>,
     settings?: GraphQLSettings
   ): GraphQLRequestConfig;
 
-  function createRequestConfig<Options extends GraphQLRequestInput = Partial<GraphQLRequestInput>>(
+  function createRequestConfig<Options extends GraphQLRequestInput = GraphQLRequestInput>(
     identifier: GraphQLIdentifier,
     config: GraphQLQueueObject<Options>,
     settings?: GraphQLSettings
   ): GraphQLRequestConfig;
 
-  function createRequestConfig<Options extends GraphQLRequestInput = Partial<GraphQLRequestInput>>(
+  function createRequestConfig<Options extends GraphQLRequestInput = GraphQLRequestInput>(
     identifier: GraphQLIdentifier,
     config: GraphQLInlineResponse<Options['response']>,
     settings?: GraphQLSettings
   ): GraphQLRequestConfig;
 
-  function createRequestConfig<Options extends GraphQLRequestInput = Partial<GraphQLRequestInput>>(
+  function createRequestConfig<Options extends GraphQLRequestInput = GraphQLRequestInput>(
     identifier: GraphQLIdentifier,
     config: GraphQLConfig<Options>,
     settings?: GraphQLSettings
@@ -175,40 +176,38 @@ const createGraphQLFactory = <OperationType extends GraphQLOperationType>(
 };
 
 interface GraphqlTransportWsRequestInput {
-  response?: Data;
+  response: GraphqlTransportWsExecutionResult;
 }
 
 type ReservedGraphqlTransportWsConfigKeys = {
-  [K in 'handler' | 'match']?: never;
+  [K in 'handler' | 'match' | 'response']?: never;
 };
 
-type GraphqlTransportWsInlineResponse<Response> =
-  Response extends Record<string, unknown>
-    ? Response & ReservedGraphqlTransportWsConfigKeys
-    : Response;
+type GraphqlTransportWsInlineResponse<Response extends GraphqlTransportWsExecutionResult> =
+  Response & ReservedGraphqlTransportWsConfigKeys;
 
-type GraphqlTransportWsSugarFunction<Options extends GraphqlTransportWsRequestInput> = (
+type GraphqlTransportWsFunction<Options extends GraphqlTransportWsRequestInput> = (
   params: GraphqlTransportWsParams
 ) => MaybePromise<Options['response']>;
 
-interface GraphqlTransportWsSugarResponseObject<Response> {
+interface GraphqlTransportWsResponseObject<Response extends GraphqlTransportWsExecutionResult> {
   match?: GraphqlTransportWsEntitiesByEntityName;
   response: Response;
 }
 
-interface GraphqlTransportWsSugarHandlerObject<Options extends GraphqlTransportWsRequestInput> {
-  handler: GraphqlTransportWsSugarFunction<Options>;
+interface GraphqlTransportWsHandlerObject<Options extends GraphqlTransportWsRequestInput> {
+  handler: GraphqlTransportWsFunction<Options>;
   match?: GraphqlTransportWsEntitiesByEntityName;
 }
 
-type GraphqlTransportWsSugarConfig<Options extends GraphqlTransportWsRequestInput> =
+type GraphqlTransportWsConfig<Options extends GraphqlTransportWsRequestInput> =
+  | GraphqlTransportWsFunction<Options>
+  | GraphqlTransportWsHandlerObject<Options>
   | GraphqlTransportWsInlineResponse<Options['response']>
-  | GraphqlTransportWsSugarFunction<Options>
-  | GraphqlTransportWsSugarHandlerObject<Options>
-  | GraphqlTransportWsSugarResponseObject<Options['response']>;
+  | GraphqlTransportWsResponseObject<Options['response']>;
 
-const resolveSubscriptionSugarConfigType = <Options extends GraphqlTransportWsRequestInput>(
-  config: GraphqlTransportWsSugarConfig<Options>
+const resolveSubscriptionConfigType = <Options extends GraphqlTransportWsRequestInput>(
+  config: GraphqlTransportWsConfig<Options>
 ) => {
   if (typeof config === 'function') return { type: 'inlineHandler' as const, config };
   if (typeof config !== 'object' || config === null)
@@ -219,9 +218,9 @@ const resolveSubscriptionSugarConfigType = <Options extends GraphqlTransportWsRe
 };
 
 const createSubscriptionRouteConfig = <Options extends GraphqlTransportWsRequestInput>(
-  config: GraphqlTransportWsSugarConfig<Options>
+  config: GraphqlTransportWsConfig<Options>
 ): GraphqlTransportWsRouteConfig => {
-  const resolvedConfig = resolveSubscriptionSugarConfigType(config);
+  const resolvedConfig = resolveSubscriptionConfigType(config);
 
   switch (resolvedConfig.type) {
     case 'inlineHandler':
@@ -233,13 +232,13 @@ const createSubscriptionRouteConfig = <Options extends GraphqlTransportWsRequest
 
     case 'data':
       return {
-        data: resolvedConfig.config.response,
+        data: resolvedConfig.config.response!,
         entities: resolvedConfig.config.match ?? {}
       };
 
     case 'handler':
       return {
-        data: resolvedConfig.config.handler,
+        data: resolvedConfig.config.handler!,
         entities: resolvedConfig.config.match ?? {}
       };
 
@@ -253,38 +252,38 @@ const createSubscriptionRouteConfig = <Options extends GraphqlTransportWsRequest
 
 const createGraphqlTransportWsFactory = () => {
   function createRequestConfig<
-    Options extends GraphqlTransportWsRequestInput = Partial<GraphqlTransportWsRequestInput>
+    Options extends GraphqlTransportWsRequestInput = GraphqlTransportWsRequestInput
   >(
     identifier: GraphQLIdentifier,
-    config: GraphqlTransportWsSugarFunction<Options>
+    config: GraphqlTransportWsFunction<Options>
   ): GraphqlTransportWsRequestConfig;
 
   function createRequestConfig<
-    Options extends GraphqlTransportWsRequestInput = Partial<GraphqlTransportWsRequestInput>
+    Options extends GraphqlTransportWsRequestInput = GraphqlTransportWsRequestInput
   >(
     identifier: GraphQLIdentifier,
-    config: GraphqlTransportWsSugarHandlerObject<Options>
+    config: GraphqlTransportWsHandlerObject<Options>
   ): GraphqlTransportWsRequestConfig;
 
   function createRequestConfig<
-    Options extends GraphqlTransportWsRequestInput = Partial<GraphqlTransportWsRequestInput>
+    Options extends GraphqlTransportWsRequestInput = GraphqlTransportWsRequestInput
   >(
     identifier: GraphQLIdentifier,
     config: GraphqlTransportWsInlineResponse<Options['response']>
   ): GraphqlTransportWsRequestConfig;
 
   function createRequestConfig<
-    Options extends GraphqlTransportWsRequestInput = Partial<GraphqlTransportWsRequestInput>
+    Options extends GraphqlTransportWsRequestInput = GraphqlTransportWsRequestInput
   >(
     identifier: GraphQLIdentifier,
-    config: GraphqlTransportWsSugarResponseObject<Options['response']>
+    config: GraphqlTransportWsResponseObject<Options['response']>
   ): GraphqlTransportWsRequestConfig;
 
   function createRequestConfig<
-    Options extends GraphqlTransportWsRequestInput = Partial<GraphqlTransportWsRequestInput>
+    Options extends GraphqlTransportWsRequestInput = GraphqlTransportWsRequestInput
   >(
     identifier: GraphQLIdentifier,
-    config: GraphqlTransportWsSugarConfig<Options>
+    config: GraphqlTransportWsConfig<Options>
   ): GraphqlTransportWsRequestConfig {
     return {
       identifier,

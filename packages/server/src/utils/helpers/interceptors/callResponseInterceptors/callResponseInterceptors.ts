@@ -3,7 +3,7 @@ import type { Request, Response } from 'express';
 import type { Data, ResponseInterceptor, ResponseInterceptorParams } from '@/utils/types';
 
 import { callResponseLogger } from '../../logger';
-import { setDelay } from '../helpers/setDelay';
+import { sleep } from '../../sleep';
 
 interface CallResponseInterceptorsParams {
   data: Data;
@@ -58,6 +58,10 @@ export const callResponseInterceptors = async (params: CallResponseInterceptorsP
 
   const log: ResponseInterceptorParams['log'] = (logger) =>
     callResponseLogger({ logger, data, request, response });
+
+  const setDelay: ResponseInterceptorParams['setDelay'] = async (delay) => {
+    await sleep(delay);
+  };
 
   const responseInterceptorParams: ResponseInterceptorParams = {
     request,

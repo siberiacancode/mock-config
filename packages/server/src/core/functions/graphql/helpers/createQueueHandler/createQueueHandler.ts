@@ -1,8 +1,8 @@
-import type { GraphqlDataResponse, GraphqlDataResponseFunction } from '@/utils/types';
+import type { GraphQLDataResponse, GraphQLDataResponseFunction } from '@/utils/types';
 
 export const createQueueHandler = (
-  normalizedQueue: { data: GraphqlDataResponse; time?: number }[]
-): GraphqlDataResponseFunction => {
+  normalizedQueue: { data: GraphQLDataResponse; time?: number }[]
+): GraphQLDataResponseFunction => {
   let queueIndex = 0;
   let timeoutInProgress = false;
 
@@ -12,7 +12,7 @@ export const createQueueHandler = (
 
   return async (params) => {
     if (!normalizedQueue.length) {
-      return params.next();
+      return params.next() as any;
     }
 
     const queueItem = normalizedQueue[queueIndex];

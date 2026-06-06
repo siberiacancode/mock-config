@@ -23,7 +23,7 @@ interface GraphQLSettings {
   readonly status?: number;
 }
 
-export type GraphqlDataResponse =
+export type GraphQLDataResponse =
   | ((request: Request, entities: GraphQLEntitiesByEntityName) => MaybePromise<Data>)
   | Data;
 
@@ -32,12 +32,12 @@ export type GraphQLRouteConfig = (
       settings: GraphQLSettings & { polling: true };
       queue: Array<{
         time?: number;
-        data: GraphqlDataResponse;
+        data: GraphQLDataResponse;
       }>;
     }
   | {
       settings?: GraphQLSettings & { polling?: false };
-      data: GraphqlDataResponse;
+      data: GraphQLDataResponse;
     }
 ) & { entities?: GraphQLEntitiesByEntityName; interceptors?: Interceptors<'graphql'> };
 

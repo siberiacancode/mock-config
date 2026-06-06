@@ -4,14 +4,14 @@ import { graphql } from './graphql';
 
 describe('graphql', () => {
   it('Should build config for inline response', () => {
-    const result = graphql.query('GetUsers', { ok: true }, { delay: 25, status: 201 });
+    const result = graphql.query('GetUsers', { data: { ok: true } }, { delay: 25, status: 201 });
 
     expect(result).toStrictEqual({
       identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {
-          data: { ok: true },
+          data: { data: { ok: true } },
           entities: {},
           settings: { delay: 25, status: 201 }
         }
@@ -28,7 +28,7 @@ describe('graphql', () => {
             key: 'value'
           }
         },
-        response: { ok: true }
+        response: { data: { ok: true } }
       },
       { delay: 20, status: 205 }
     );
@@ -38,7 +38,7 @@ describe('graphql', () => {
       operationType: 'query',
       routes: [
         {
-          data: { ok: true },
+          data: { data: { ok: true } },
           entities: {
             headers: {
               key: 'value'
@@ -51,14 +51,14 @@ describe('graphql', () => {
   });
 
   it('Should use empty entities for response object without match', () => {
-    const result = graphql.query('GetUsers', { response: { ok: true } });
+    const result = graphql.query('GetUsers', { response: { data: { ok: true } } });
 
     expect(result).toStrictEqual({
       identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {
-          data: { ok: true },
+          data: { data: { ok: true } },
           entities: {},
           settings: {}
         }
@@ -67,7 +67,7 @@ describe('graphql', () => {
   });
 
   it('Should build config for inline handler', () => {
-    const handler = vi.fn().mockResolvedValue({ ok: true });
+    const handler = vi.fn().mockResolvedValue({ data: { ok: true } });
     const result = graphql.query('GetUsers', handler, { delay: 30 });
 
     expect(result).toStrictEqual({
@@ -84,7 +84,7 @@ describe('graphql', () => {
   });
 
   it('Should build config for handler object with match', () => {
-    const handler = vi.fn().mockResolvedValue({ ok: true });
+    const handler = vi.fn().mockResolvedValue({ data: { ok: true } });
     const result = graphql.query(
       'GetUsers',
       {
@@ -116,7 +116,7 @@ describe('graphql', () => {
   });
 
   it('Should build config for queue object as data handler', () => {
-    const queueHandler = vi.fn().mockResolvedValue({ ok: 'handler' });
+    const queueHandler = vi.fn().mockResolvedValue({ data: { ok: 'handler' } });
     const result = graphql.query(
       'GetUsers',
       {
@@ -127,7 +127,7 @@ describe('graphql', () => {
         },
         queue: [
           { handler: queueHandler, time: 100 },
-          { response: { ok: 'response' }, time: 200 }
+          { response: { data: { ok: 'response' } }, time: 200 }
         ]
       },
       { delay: 50, status: 207 }
@@ -151,14 +151,14 @@ describe('graphql', () => {
   });
 
   it('Should build mutation config with operationName and mode type', () => {
-    const result = graphql.mutation('CreateUser', { ok: true });
+    const result = graphql.mutation('CreateUser', { data: { ok: true } });
 
     expect(result).toStrictEqual({
       identifier: 'CreateUser',
       operationType: 'mutation',
       routes: [
         {
-          data: { ok: true },
+          data: { data: { ok: true } },
           entities: {},
           settings: {}
         }
@@ -169,7 +169,7 @@ describe('graphql', () => {
   it('Should keep provided settings for request', () => {
     const result = graphql.query(
       'GetUsers',
-      { response: { ok: true } },
+      { response: { data: { ok: true } } },
       { delay: 150, status: 200 }
     );
 
@@ -178,7 +178,7 @@ describe('graphql', () => {
       operationType: 'query',
       routes: [
         {
-          data: { ok: true },
+          data: { data: { ok: true } },
           entities: {},
           settings: { delay: 150, status: 200 }
         }
@@ -187,14 +187,14 @@ describe('graphql', () => {
   });
 
   it('Should build subscription config for inline response only', () => {
-    const result = graphql.subscription('OnUsers', { key: 'value' });
+    const result = graphql.subscription('OnUsers', { data: { key: 'value' } });
 
     expect(result).toStrictEqual({
       identifier: 'OnUsers',
       operationType: 'subscription',
       routes: [
         {
-          data: { key: 'value' },
+          data: { data: { key: 'value' } },
           entities: {}
         }
       ]
@@ -202,7 +202,7 @@ describe('graphql', () => {
   });
 
   it('Should build subscription config for handler function only', () => {
-    const result = graphql.subscription('OnUsers', () => ({ ok: true }));
+    const result = graphql.subscription('OnUsers', () => ({ data: { ok: true } }));
 
     expect(result).toStrictEqual({
       identifier: 'OnUsers',
@@ -221,7 +221,7 @@ describe('graphql', () => {
       match: {
         variables: { key: 'value' }
       },
-      response: { key: 'value' }
+      response: { data: { key: 'value' } }
     });
 
     expect(result).toStrictEqual({
@@ -229,7 +229,7 @@ describe('graphql', () => {
       operationType: 'subscription',
       routes: [
         {
-          data: { key: 'value' },
+          data: { data: { key: 'value' } },
           entities: {
             variables: { key: 'value' }
           }
@@ -240,7 +240,7 @@ describe('graphql', () => {
 
   it('Should build subscription config for handler object with match', () => {
     const result = graphql.subscription('OnUsers', {
-      handler: () => ({ count: 1 }),
+      handler: () => ({ data: { count: 1 } }),
       match: {
         variables: { key: 'value' }
       }
@@ -265,14 +265,14 @@ describe('graphql', () => {
       query: { query: string };
       body: { body: string };
       params: { params: string };
-      response: { response: string };
+      response: { data: { response: string } };
     }>('GetUsers', (params) => {
       const query = params.request.query.query;
       const body = params.request.body.body;
       const path = params.request.params.params;
       console.log(query, body, path);
 
-      return { response: 'value' };
+      return { data: { response: 'value' } };
     });
 
     expect(result).toStrictEqual({

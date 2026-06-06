@@ -50,4 +50,50 @@ describe('getGraphqlTransportWsInput', () => {
       type: 'subscribe'
     });
   });
+
+  it('Should parse complete message', () => {
+    expect(
+      getGraphqlTransportWsInput(`
+        {
+          "id": "1",
+          "type": "complete"
+        }
+      `)
+    ).toStrictEqual({
+      id: '1',
+      type: 'complete'
+    });
+  });
+
+  it('Should parse next and error messages', () => {
+    expect(
+      getGraphqlTransportWsInput(`
+        {
+          "id": "1",
+          "type": "next",
+          "payload": { "data": { "ok": true } }
+        }
+      `)
+    ).toStrictEqual({
+      id: '1',
+      type: 'next',
+      payload: { data: { ok: true } }
+    });
+
+    expect(
+      getGraphqlTransportWsInput(`
+        {
+          "id": "1",
+          "type": "error",
+          "payload": [
+            { "message": "fail" }
+          ]
+        }
+      `)
+    ).toStrictEqual({
+      id: '1',
+      type: 'error',
+      payload: [{ message: 'fail' }]
+    });
+  });
 });

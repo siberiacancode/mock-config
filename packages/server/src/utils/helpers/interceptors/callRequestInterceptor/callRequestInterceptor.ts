@@ -3,7 +3,7 @@ import type { Request } from 'express';
 import type { RequestInterceptor, RequestInterceptorParams } from '@/utils/types';
 
 import { callRequestLogger } from '../../logger';
-import { setDelay } from '../helpers/setDelay';
+import { sleep } from '../../sleep';
 
 interface CallRequestInterceptorParams {
   interceptor: RequestInterceptor;
@@ -19,6 +19,10 @@ export const callRequestInterceptor = async (params: CallRequestInterceptorParam
   const getCookie: RequestInterceptorParams['getCookie'] = (name) => request.cookies[name];
 
   const log: RequestInterceptorParams['log'] = (logger) => callRequestLogger({ logger, request });
+
+  const setDelay: RequestInterceptorParams['setDelay'] = async (delay) => {
+    await sleep(delay);
+  };
 
   const requestInterceptorParams: RequestInterceptorParams = {
     request,

@@ -27,11 +27,11 @@
     "config",
     "data"
   ],
-  "main": "dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "bin": {
-    "mock-config-server": "dist/bin/bin.js",
-    "mcs": "dist/bin/bin.js"
+    "mock-config-server": "dist/bin/bin.mjs",
+    "mcs": "dist/bin/bin.mjs"
   },
   "files": [
     "dist"
@@ -44,7 +44,7 @@
     "lint-staged": "lint-staged",
     "prepare": "husky && pnpm build",
     "build": "tsdown",
-    "start": "pnpm build && node ./dist/bin/bin.js",
+    "start": "pnpm build && node ./dist/bin/bin.mjs",
     "dev": "nodemon --watch src --watch bin --watch mock-server.config.* -e js,ts --exec \"pnpm start\"",
     "type": "tsc --noEmit",
     "unit-test": "vitest",
@@ -73,16 +73,14 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@siberiacancode/vitest": "^1.2.4",
-    "@types/supertest": "^6.0.2",
+    "@siberiacancode/vitest": "^2.4.1",
+    "@types/supertest": "^6.0.3",
     "@types/ws": "^8.18.1",
-    "husky": "^9.1.7",
-    "lint-staged": "^15.3.0",
-    "nodemon": "^3.1.9",
-    "shx": "^0.3.4",
-    "supertest": "^7.0.0",
-    "tsdown": "^0.21.10",
-    "vitest": "^3.2.4"
+    "nodemon": "^3.1.14",
+    "shx": "^0.4.0",
+    "supertest": "^7.2.2",
+    "tsdown": "^0.22.2",
+    "vitest": "^4.1.8"
   },
   "lint-staged": {
     "*.js": [

@@ -78,7 +78,7 @@ describe('createGraphQLRoute: routing', () => {
             operationType: 'query',
             routes: [
               {
-                data: { name: 'John', surname: 'Doe' }
+                data: { data: { name: 'John', surname: 'Doe' } }
               }
             ]
           }
@@ -90,13 +90,13 @@ describe('createGraphQLRoute: routing', () => {
       .post('/')
       .send({ query: 'query {\n User {\n  name\n  }\n}\n' });
     expect(postResponse.statusCode).toBe(200);
-    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(postResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
 
     const getResponse = await request(server).get('/').query({
       query: 'query {\n User {\n  name\n  }\n}\n'
     });
     expect(getResponse.statusCode).toBe(200);
-    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(getResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
   });
 
   it('Should match config with query regExp', async () => {
@@ -108,7 +108,7 @@ describe('createGraphQLRoute: routing', () => {
             operationType: 'query',
             routes: [
               {
-                data: { name: 'John', surname: 'Doe' }
+                data: { data: { name: 'John', surname: 'Doe' } }
               }
             ]
           }
@@ -120,13 +120,13 @@ describe('createGraphQLRoute: routing', () => {
       .post('/')
       .send({ query: 'query {\n User {\n  name\n  }\n}\n' });
     expect(postResponse.statusCode).toBe(200);
-    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(postResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
 
     const getResponse = await request(server).get('/').query({
       query: 'query {\n User {\n  name\n  }\n}\n'
     });
     expect(getResponse.statusCode).toBe(200);
-    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(getResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
   });
 
   it('Should match config with query independent of spaces and new lines', async () => {
@@ -138,7 +138,7 @@ describe('createGraphQLRoute: routing', () => {
             operationType: 'query',
             routes: [
               {
-                data: { name: 'John', surname: 'Doe' }
+                data: { data: { name: 'John', surname: 'Doe' } }
               }
             ]
           }
@@ -150,13 +150,13 @@ describe('createGraphQLRoute: routing', () => {
       .post('/')
       .send({ query: 'query {\n User {\n  name\n  }\n}\n' });
     expect(postResponse.statusCode).toBe(200);
-    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(postResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
 
     const getResponse = await request(server).get('/').query({
       query: 'query {\n User {\n  name\n  }\n}\n'
     });
     expect(getResponse.statusCode).toBe(200);
-    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(getResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
   });
 
   it('Should match config with operation name', async () => {
@@ -168,7 +168,7 @@ describe('createGraphQLRoute: routing', () => {
             operationType: 'query',
             routes: [
               {
-                data: { name: 'John', surname: 'Doe' }
+                data: { data: { name: 'John', surname: 'Doe' } }
               }
             ]
           }
@@ -180,13 +180,13 @@ describe('createGraphQLRoute: routing', () => {
       .post('/')
       .send({ query: 'query GetUsers { users { name } }' });
     expect(postResponse.statusCode).toBe(200);
-    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(postResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
 
     const getResponse = await request(server).get('/').query({
       query: 'query GetUsers { users { name } }'
     });
     expect(getResponse.statusCode).toBe(200);
-    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(getResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
   });
 
   it('Should match config with operation name regExp', async () => {
@@ -198,7 +198,7 @@ describe('createGraphQLRoute: routing', () => {
             operationType: 'query',
             routes: [
               {
-                data: { name: 'John', surname: 'Doe' }
+                data: { data: { name: 'John', surname: 'Doe' } }
               }
             ]
           }
@@ -211,8 +211,10 @@ describe('createGraphQLRoute: routing', () => {
       .send({ query: 'query GetUsers { users { name } }' });
     expect(firstPostResponse.statusCode).toBe(200);
     expect(firstPostResponse.body).toStrictEqual({
-      name: 'John',
-      surname: 'Doe'
+      data: {
+        name: 'John',
+        surname: 'Doe'
+      }
     });
 
     const firstGetResponse = await request(server).get('/').query({
@@ -220,8 +222,10 @@ describe('createGraphQLRoute: routing', () => {
     });
     expect(firstGetResponse.statusCode).toBe(200);
     expect(firstGetResponse.body).toStrictEqual({
-      name: 'John',
-      surname: 'Doe'
+      data: {
+        name: 'John',
+        surname: 'Doe'
+      }
     });
 
     const secondPostResponse = await request(server)
@@ -229,8 +233,10 @@ describe('createGraphQLRoute: routing', () => {
       .send({ query: 'query GetAnotherUsers { users { name } }' });
     expect(secondPostResponse.statusCode).toBe(200);
     expect(secondPostResponse.body).toStrictEqual({
-      name: 'John',
-      surname: 'Doe'
+      data: {
+        name: 'John',
+        surname: 'Doe'
+      }
     });
 
     const secondGetResponse = await request(server).get('/').query({
@@ -238,8 +244,10 @@ describe('createGraphQLRoute: routing', () => {
     });
     expect(secondGetResponse.statusCode).toBe(200);
     expect(secondGetResponse.body).toStrictEqual({
-      name: 'John',
-      surname: 'Doe'
+      data: {
+        name: 'John',
+        surname: 'Doe'
+      }
     });
   });
 
@@ -252,7 +260,7 @@ describe('createGraphQLRoute: routing', () => {
             operationType: 'query',
             routes: [
               {
-                data: { name: 'John', surname: 'Doe' }
+                data: { data: { name: 'John', surname: 'Doe' } }
               }
             ]
           }
@@ -264,13 +272,13 @@ describe('createGraphQLRoute: routing', () => {
       .post('/')
       .send({ query: 'query GetUsers { users { name } }' });
     expect(postResponse.statusCode).toBe(200);
-    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(postResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
 
     const getResponse = await request(server).get('/').query({
       query: 'query GetUsers { users { name } }'
     });
     expect(getResponse.statusCode).toBe(200);
-    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(getResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
   });
 
   it('Should match config with event name regExp', async () => {
@@ -282,7 +290,7 @@ describe('createGraphQLRoute: routing', () => {
             operationType: 'query',
             routes: [
               {
-                data: { name: 'John', surname: 'Doe' }
+                data: { data: { name: 'John', surname: 'Doe' } }
               }
             ]
           }
@@ -294,13 +302,13 @@ describe('createGraphQLRoute: routing', () => {
       .post('/')
       .send({ query: 'query GetUsers { users { name } }' });
     expect(postResponse.statusCode).toBe(200);
-    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(postResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
 
     const getResponse = await request(server).get('/').query({
       query: 'query GetUsers { users { name } }'
     });
     expect(getResponse.statusCode).toBe(200);
-    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(getResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
   });
 
   it('Should return 404 for no matched request configs', async () => {
@@ -317,7 +325,7 @@ describe('createGraphQLRoute: routing', () => {
                     key1: 'value1'
                   }
                 },
-                data: { name: 'John', surname: 'Doe' }
+                data: { data: { name: 'John', surname: 'Doe' } }
               }
             ]
           }
@@ -346,7 +354,7 @@ describe('createGraphQLRoute: routing', () => {
           {
             identifier: 'GetUsers',
             operationType: 'query',
-            routes: [{ data: { name: 'John', surname: 'Doe' } }]
+            routes: [{ data: { data: { name: 'John', surname: 'Doe' } } }]
           }
         ]
       }
@@ -374,7 +382,7 @@ describe('createGraphQLRoute: routing', () => {
             {
               identifier: 'GetUsers',
               operationType: operationTypeWithoutCacheControlHeader,
-              routes: [{ data: { name: 'John', surname: 'Doe' } }]
+              routes: [{ data: { data: { name: 'John', surname: 'Doe' } } }]
             }
           ]
         }
@@ -408,7 +416,7 @@ describe('createGraphQLRoute: content', () => {
                     key1: 'value1'
                   }
                 },
-                data: { source: 'less-specific' }
+                data: { data: { source: 'less-specific' } }
               }
             ]
           },
@@ -423,7 +431,7 @@ describe('createGraphQLRoute: content', () => {
                     key2: 'value2'
                   }
                 },
-                data: { source: 'more-specific' }
+                data: { data: { source: 'more-specific' } }
               }
             ]
           }
@@ -437,7 +445,7 @@ describe('createGraphQLRoute: content', () => {
       .send({ query: 'query GetUsers { users { name } }' });
 
     expect(response.statusCode).toBe(200);
-    expect(response.body).toStrictEqual({ source: 'more-specific' });
+    expect(response.body).toStrictEqual({ data: { source: 'more-specific' } });
   });
 
   it('Should skip requests with unsupported method', async () => {
@@ -447,7 +455,7 @@ describe('createGraphQLRoute: content', () => {
           {
             identifier: 'GetUsers',
             operationType: 'query',
-            routes: [{ data: { name: 'John', surname: 'Doe' } }]
+            routes: [{ data: { data: { name: 'John', surname: 'Doe' } } }]
           }
         ]
       }
@@ -476,8 +484,10 @@ describe('createGraphQLRoute: content', () => {
                   }
                 },
                 data: ({ request, entities }) => ({
-                  url: request.url,
-                  query: entities.queries
+                  data: {
+                    url: request.url,
+                    query: entities.queries
+                  }
                 })
               }
             ]
@@ -493,9 +503,11 @@ describe('createGraphQLRoute: content', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({
-      url: `/?query=${encodeURIComponent('query GetUsers { users { name } }')}&key1=value1`,
-      query: {
-        key1: 'value1'
+      data: {
+        url: `/?query=${encodeURIComponent('query GetUsers { users { name } }')}&key1=value1`,
+        query: {
+          key1: 'value1'
+        }
       }
     });
   });
@@ -513,7 +525,7 @@ describe('createGraphQLRoute: settings', () => {
             routes: [
               {
                 settings: { delay },
-                data: { name: 'John', surname: 'Doe' }
+                data: { data: { name: 'John', surname: 'Doe' } }
               }
             ]
           }
@@ -529,7 +541,7 @@ describe('createGraphQLRoute: settings', () => {
     const endTime = performance.now();
 
     expect(endTime - startTime).toBeGreaterThanOrEqual(delay);
-    expect(response.body).toEqual({ name: 'John', surname: 'Doe' });
+    expect(response.body).toEqual({ data: { name: 'John', surname: 'Doe' } });
   });
 
   it('Should correctly set status code of response based on status setting', async () => {
@@ -542,7 +554,7 @@ describe('createGraphQLRoute: settings', () => {
             routes: [
               {
                 settings: { status: 500 },
-                data: { name: 'John', surname: 'Doe' }
+                data: { data: { name: 'John', surname: 'Doe' } }
               }
             ]
           }
@@ -556,7 +568,7 @@ describe('createGraphQLRoute: settings', () => {
 
     const response = await request(server).get('/').query(query);
     expect(response.statusCode).toBe(500);
-    expect(response.body).toEqual({ name: 'John', surname: 'Doe' });
+    expect(response.body).toEqual({ data: { name: 'John', surname: 'Doe' } });
   });
 });
 
@@ -579,7 +591,7 @@ describe('createGraphQLRoute: entities', () => {
                     key1: 'value1'
                   }
                 },
-                data: { name: 'John', surname: 'Doe' }
+                data: { data: { name: 'John', surname: 'Doe' } }
               }
             ]
           }
@@ -594,7 +606,7 @@ describe('createGraphQLRoute: entities', () => {
       .query({ key1: 'value1', key2: 'value2' });
 
     expect(postResponse.statusCode).toBe(200);
-    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(postResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
 
     const getResponse = await request(server)
       .get('/')
@@ -606,7 +618,7 @@ describe('createGraphQLRoute: entities', () => {
       });
 
     expect(getResponse.statusCode).toBe(200);
-    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(getResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
   });
 
   it('Should prioritize more specific route configuration when multiple matches exist', async () => {
@@ -627,7 +639,7 @@ describe('createGraphQLRoute: entities', () => {
                     key1: 'value1'
                   }
                 },
-                data: { name: 'John', surname: 'Doe' }
+                data: { data: { name: 'John', surname: 'Doe' } }
               },
               {
                 entities: {
@@ -640,7 +652,7 @@ describe('createGraphQLRoute: entities', () => {
                     key2: 'value2'
                   }
                 },
-                data: { name: 'John', surname: 'Smith' }
+                data: { data: { name: 'John', surname: 'Smith' } }
               }
             ]
           }
@@ -655,7 +667,7 @@ describe('createGraphQLRoute: entities', () => {
       .query({ key1: 'value1', key2: 'value2' });
 
     expect(postResponse.statusCode).toBe(200);
-    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Smith' });
+    expect(postResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Smith' } });
 
     const getResponse = await request(server)
       .get('/')
@@ -667,7 +679,7 @@ describe('createGraphQLRoute: entities', () => {
       });
 
     expect(getResponse.statusCode).toBe(200);
-    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Smith' });
+    expect(getResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Smith' } });
   });
 
   it('Should correctly resolve flat object variables with nested key matching', async () => {
@@ -685,7 +697,7 @@ describe('createGraphQLRoute: entities', () => {
                     'key2.nestedKey2': 'nestedValue2'
                   }
                 },
-                data: { name: 'John', surname: 'Doe' }
+                data: { data: { name: 'John', surname: 'Doe' } }
               }
             ]
           }
@@ -705,7 +717,7 @@ describe('createGraphQLRoute: entities', () => {
       });
 
     expect(postResponse.statusCode).toBe(200);
-    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(postResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
 
     const getResponse = await request(server)
       .get('/')
@@ -717,7 +729,7 @@ describe('createGraphQLRoute: entities', () => {
       });
 
     expect(getResponse.statusCode).toBe(200);
-    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(getResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
   });
 
   it('Should be case-insensitive for header keys', async () => {
@@ -735,7 +747,7 @@ describe('createGraphQLRoute: entities', () => {
                     UPPERCASE: 'UPPERCASE'
                   }
                 },
-                data: { name: 'John', surname: 'Doe' }
+                data: { data: { name: 'John', surname: 'Doe' } }
               }
             ]
           }
@@ -749,7 +761,7 @@ describe('createGraphQLRoute: entities', () => {
       .set({ LowerCase: 'lowercase', upperCase: 'UPPERCASE' });
 
     expect(postResponse.statusCode).toBe(200);
-    expect(postResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(postResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
 
     const getResponse = await request(server)
       .get('/')
@@ -757,7 +769,7 @@ describe('createGraphQLRoute: entities', () => {
       .query({ query: 'query GetUsers { users { name } }' });
 
     expect(getResponse.statusCode).toBe(200);
-    expect(getResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+    expect(getResponse.body).toStrictEqual({ data: { name: 'John', surname: 'Doe' } });
   });
 });
 
@@ -780,7 +792,7 @@ describe('createGraphQLRoute: interceptors', () => {
                     key2: 'value2'
                   }
                 },
-                data: { name: 'John', surname: 'Doe' },
+                data: { data: { name: 'John', surname: 'Doe' } },
                 interceptors: { request: routeInterceptor }
               }
             ],
@@ -796,7 +808,7 @@ describe('createGraphQLRoute: interceptors', () => {
                     name: 'John'
                   }
                 },
-                data: { name: 'John', surname: 'Smith' }
+                data: { data: { name: 'John', surname: 'Smith' } }
               }
             ]
           }

@@ -151,7 +151,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
           response.cookie(name, value);
         },
         setDelay: async (delay) => {
-          await sleep(delay === Infinity ? 99999999 : delay);
+          await sleep(delay);
         },
         setHeader: (field, value) => {
           response.set(field, value);

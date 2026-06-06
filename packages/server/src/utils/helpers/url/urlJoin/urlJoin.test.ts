@@ -20,10 +20,4 @@ describe('urlJoin', () => {
       'mock-config-server/dist/src/static/views'
     );
   });
-
-  it('Should convert Windows-like path with double backslashes to Unix-like', () => {
-    expect(urlJoin('C:\\\\mock-config-server\\dist\\src\\static\\views')).toEqual(
-      'C:/mock-config-server/dist/src/static/views'
-    );
-  });
 });

@@ -8,6 +8,7 @@ import type {
   ConnectionWsRequestArtifact,
   Entries,
   GraphQLEntitiesByEntityName,
+  GraphqlTransportWsExecutionResult,
   GraphqlTransportWsParams,
   GraphqlTransportWsRequestArtifact,
   RawWsRequestArtifact,
@@ -34,9 +35,17 @@ interface CreateWsRouteParams {
   wsRequestArtifacts: WsRequestArtifact[];
 }
 
-const sendGraphqlTransportWsData = (socket: WebSocket, id: string, payload: unknown) => {
+const sendGraphqlTransportWsData = (
+  socket: WebSocket,
+  id: string,
+  payload: GraphqlTransportWsExecutionResult
+) => {
   if (payload === undefined) return;
   socket.send(JSON.stringify({ id, type: 'next', payload }));
+};
+
+const sendGraphqlTransportWsComplete = (socket: WebSocket, id: string) => {
+  socket.send(JSON.stringify({ id, type: 'complete' }));
 };
 
 const sendWsData = (socket: WebSocket, data: unknown) => {
@@ -77,6 +86,8 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         cookies: Record<string, string>;
       }
     ) => {
+      const completedSubscriptionIds = new Set<string>();
+
       const [requestPathname] = request.url!.split('?');
       const matchedRequestArtifacts = wsRequestArtifacts.filter((artifact) => {
         if (artifact.baseUrl === '/') return true;
@@ -148,7 +159,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           socket,
           send: (data: unknown) => sendWsData(socket, data),
           setDelay: async (delay: number) => {
-            await sleep(delay === Infinity ? 99999999 : delay);
+            await sleep(delay);
           }
         };
 
@@ -167,7 +178,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           socket,
           send: (data: unknown) => sendWsData(socket, data),
           setDelay: async (delay) => {
-            await sleep(delay === Infinity ? 99999999 : delay);
+            await sleep(delay);
           }
         };
 
@@ -200,6 +211,11 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
         const graphqlSubscriptionInput = getGraphqlTransportWsInput(frame.raw.toString());
 
+        if (!graphqlSubscriptionInput) {
+          console.warn('[mock-config] Error parsing graphQL subscription input');
+          return;
+        }
+
         if (graphqlSubscriptionInput.type === 'connection_init') {
           socket.send(JSON.stringify({ type: 'connection_ack' }));
           return;
@@ -210,6 +226,11 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           return;
         }
 
+        if (graphqlSubscriptionInput.type === 'complete') {
+          completedSubscriptionIds.add(graphqlSubscriptionInput.id);
+          return;
+        }
+
         if (graphqlSubscriptionInput.type !== 'subscribe') {
           console.warn(
             'Unsupported graphQL subscription input type',
@@ -217,6 +238,9 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           );
           return;
         }
+
+        const operationId = graphqlSubscriptionInput.id;
+        completedSubscriptionIds.delete(operationId);
 
         const query = parseGraphQLQuery(graphqlSubscriptionInput.payload?.query ?? '');
         if (!query) return;
@@ -232,7 +256,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           }
         });
 
-        const matchedRouteConfig = matchedGraphqlTransportWsRequestArtifacts.find(({ config }) => {
+        const matchedArtifact = matchedGraphqlTransportWsRequestArtifacts.find(({ config }) => {
           if (!config.entities) return true;
 
           const entityEntries = Object.entries(config.entities) as Entries<
@@ -252,55 +276,42 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           });
         });
 
-        if (!matchedRouteConfig) return;
-
-        const entities = matchedRouteConfig.config.entities;
-        if (entities) {
-          const entityEntries = Object.entries(entities) as Entries<Required<typeof entities>>;
-
-          const isMatchedByEntities = entityEntries.every(([_, valueOrComparator]) => {
-            const actualEntity = graphqlSubscriptionInput.payload?.variables;
-
-            if (isComparator(valueOrComparator)) {
-              const comparator = valueOrComparator;
-              return resolveEntityValues({ actual: actualEntity, comparator });
-            }
-
-            const comparator = equals(valueOrComparator);
-            return resolveEntityValues({ actual: actualEntity, comparator });
-          });
-
-          if (!isMatchedByEntities) return;
-        }
+        if (!matchedArtifact) return;
 
         const graphqlTransportWsParams: GraphqlTransportWsParams = {
-          entities: matchedRouteConfig.config.entities ?? {},
+          complete: () => {
+            if (completedSubscriptionIds.has(operationId)) return;
+            completedSubscriptionIds.add(operationId);
+            sendGraphqlTransportWsComplete(socket, operationId);
+          },
+          entities: matchedArtifact.config.entities ?? {},
           eventName: query.eventName,
           next: (payload) => {
-            if (graphqlSubscriptionInput.id)
-              sendGraphqlTransportWsData(socket, graphqlSubscriptionInput.id, payload);
+            if (completedSubscriptionIds.has(operationId)) return;
+            sendGraphqlTransportWsData(socket, operationId, payload);
           },
           operationName: query.operationName,
           query: graphqlSubscriptionInput.payload?.query,
           raw,
           setDelay: async (delay) => {
-            await sleep(delay === Infinity ? 99999999 : delay);
+            await sleep(delay);
           },
           socket,
           variables: graphqlSubscriptionInput.payload?.variables ?? {}
         };
 
         const resolvedData =
-          typeof matchedRouteConfig.config.data === 'function'
-            ? await matchedRouteConfig.config.data(graphqlTransportWsParams)
-            : matchedRouteConfig.config.data;
+          typeof matchedArtifact.config.data === 'function'
+            ? await matchedArtifact.config.data(graphqlTransportWsParams)
+            : matchedArtifact.config.data;
 
-        if (matchedRouteConfig.config.settings?.delay) {
-          await sleep(matchedRouteConfig.config.settings.delay);
+        if (matchedArtifact.config.settings?.delay) {
+          await sleep(matchedArtifact.config.settings.delay);
         }
 
-        if (graphqlSubscriptionInput.id)
-          sendGraphqlTransportWsData(socket, graphqlSubscriptionInput.id, resolvedData);
+        if (completedSubscriptionIds.has(operationId)) return;
+
+        sendGraphqlTransportWsData(socket, operationId, resolvedData);
       });
     }
   );
