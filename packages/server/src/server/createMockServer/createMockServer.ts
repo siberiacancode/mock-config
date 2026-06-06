@@ -33,7 +33,11 @@ import {
   createRestRoute,
   prepareRestRequestArtifacts
 } from '@/core/rest';
-import { createWsRoute } from '@/core/ws';
+import {
+  calculateGraphqlTransportWsRouteConfigWeight,
+  createWsRoute,
+  prepareWsRequestArtifacts
+} from '@/core/ws';
 import { urlJoin } from '@/utils/helpers';
 import { validateMockServerConfig } from '@/utils/validate';
 
@@ -120,14 +124,13 @@ export const createMockServer = (
           });
         }
 
-        const isGraphql = 'operationType' in config;
+        const isGraphql = 'operationType' in config && config.operationType !== 'subscription';
         if (isGraphql) {
           config.routes.forEach((route) => {
             acc.graphQLRequestArtifacts.push({
               baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
               operationType: config.operationType,
-              operationName: 'operationName' in config ? config.operationName : undefined,
-              query: 'query' in config ? config.query : undefined,
+              identifier: config.identifier,
               config: route,
               weight: calculateGraphQLRouteConfigWeight(route),
               serverResponseInterceptor: interceptors?.response,
@@ -138,6 +141,21 @@ export const createMockServer = (
               componentRequestInterceptor: component.interceptors?.request,
               routeResponseInterceptor: route.interceptors?.response,
               routeRequestInterceptor: route.interceptors?.request
+            });
+          });
+        }
+
+        const isGraphqlSubscription =
+          'operationType' in config && config.operationType === 'subscription';
+        if (isGraphqlSubscription) {
+          config.routes.forEach((route) => {
+            acc.wsRequestArtifacts.push({
+              type: 'graphql-ws',
+              baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
+              weight: calculateGraphqlTransportWsRouteConfigWeight(route),
+              operationType: config.operationType,
+              identifier: config.identifier,
+              config: route
             });
           });
         }
@@ -207,7 +225,7 @@ export const createMockServer = (
   if (wsRequestArtifacts.length) {
     createWsRoute({
       server: ws,
-      wsRequestArtifacts
+      wsRequestArtifacts: prepareWsRequestArtifacts(wsRequestArtifacts)
     });
   }
 

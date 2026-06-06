@@ -3,6 +3,7 @@ import type { CookieOptions, Response as ExpressResponse, Request } from 'expres
 import type { BodyEntity, MappedEntity } from './entities';
 import type { Interceptors } from './interceptors';
 import type { BaseUrl } from './server';
+import type { MaybePromise } from './utils';
 import type { Data } from './values';
 
 export type RestMethod = 'delete' | 'get' | 'options' | 'patch' | 'post' | 'put';
@@ -56,7 +57,7 @@ export interface RestParams<
 
 export type RestDataResponseFunction<Method extends RestMethod = RestMethod> = (
   params: RestParams<Method>
-) => Data | Promise<Data>;
+) => MaybePromise<Data>;
 export type RestDataResponse<Method extends RestMethod = RestMethod> =
   | Data
   | RestDataResponseFunction<Method>;

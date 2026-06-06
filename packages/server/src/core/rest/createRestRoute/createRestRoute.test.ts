@@ -6,15 +6,22 @@ import { describe, expect, it, vi } from 'vitest';
 import type {
   BaseServerConfig,
   BaseUrl,
-  RestConfig,
+  Interceptors,
   RestMethod,
-  RestRequestArtifact
+  RestRequestArtifact,
+  RestRequestConfig
 } from '@/utils/types';
 
 import { urlJoin } from '@/utils/helpers';
 
 import { createRestRoute } from './createRestRoute';
 import { calculateRestRouteConfigWeight, prepareRestRequestArtifacts } from './helpers';
+
+interface RestConfig {
+  baseUrl?: BaseUrl;
+  configs: RestRequestConfig[];
+  interceptors?: Interceptors<'rest'>;
+}
 
 const createServer = (
   mockServerConfig: Pick<BaseServerConfig, 'baseUrl' | 'interceptors'> & {

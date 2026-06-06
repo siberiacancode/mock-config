@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import type { BaseUrl, RestRequestArtifact } from '@/utils/types';
+import type { RestRequestArtifact } from '@/utils/types';
 
 import { matchRestRequestArtifacts } from './matchRestRequestArtifacts';
 
 const makeArtifact = (overrides: Partial<RestRequestArtifact>): RestRequestArtifact =>
   ({
-    baseUrl: '/' as BaseUrl,
+    baseUrl: '/',
     method: 'get',
     path: '/users',
     config: { data: { ok: true } },

@@ -4,16 +4,49 @@ import type { RawData, WebSocketServer } from 'ws';
 import { Buffer } from 'node:buffer';
 import { WebSocket } from 'ws';
 
-import type { Entries, WsFrame, WsParams, WsRequestArtifact } from '@/utils/types';
+import type {
+  ConnectionWsRequestArtifact,
+  Entries,
+  GraphQLEntitiesByEntityName,
+  GraphqlTransportWsExecutionResult,
+  GraphqlTransportWsParams,
+  GraphqlTransportWsRequestArtifact,
+  RawWsRequestArtifact,
+  WsFrame,
+  WsParams,
+  WsRequestArtifact
+} from '@/utils/types';
 
-import { isComparator, parseCookie, parseQuery, resolveEntityValues, sleep } from '@/utils/helpers';
+import {
+  getGraphqlTransportWsInput,
+  isComparator,
+  parseCookie,
+  parseGraphQLQuery,
+  parseQuery,
+  resolveEntityValues,
+  sleep
+} from '@/utils/helpers';
 
 import { equals } from '../../entities';
+import { matchGraphqlTransportWsRequestArtifacts, matchRawRequestArtifacts } from './helpers';
 
 interface CreateWsRouteParams {
   server: WebSocketServer;
   wsRequestArtifacts: WsRequestArtifact[];
 }
+
+const sendGraphqlTransportWsData = (
+  socket: WebSocket,
+  id: string,
+  payload: GraphqlTransportWsExecutionResult
+) => {
+  if (payload === undefined) return;
+  socket.send(JSON.stringify({ id, type: 'next', payload }));
+};
+
+const sendGraphqlTransportWsComplete = (socket: WebSocket, id: string) => {
+  socket.send(JSON.stringify({ id, type: 'complete' }));
+};
 
 const sendWsData = (socket: WebSocket, data: unknown) => {
   if (data === undefined) return;
@@ -53,6 +86,8 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         cookies: Record<string, string>;
       }
     ) => {
+      const completedSubscriptionIds = new Set<string>();
+
       const [requestPathname] = request.url!.split('?');
       const matchedRequestArtifacts = wsRequestArtifacts.filter((artifact) => {
         if (artifact.baseUrl === '/') return true;
@@ -61,10 +96,22 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         );
       });
 
-      const connectionArtifacts = matchedRequestArtifacts.filter(
-        (artifact) => artifact.type === 'connection'
-      );
-      const rawArtifacts = matchedRequestArtifacts.filter((artifact) => artifact.type === 'raw');
+      const { connectionArtifacts, graphqlTransportWsRequestArtifacts, rawWsRequestArtifacts } =
+        matchedRequestArtifacts.reduce(
+          (acc, artifact) => {
+            if (artifact.type === 'connection') acc.connectionArtifacts.push(artifact);
+            if (artifact.type === 'graphql-ws')
+              acc.graphqlTransportWsRequestArtifacts.push(artifact);
+            if (artifact.type === 'raw') acc.rawWsRequestArtifacts.push(artifact);
+
+            return acc;
+          },
+          {
+            connectionArtifacts: [] as ConnectionWsRequestArtifact[],
+            graphqlTransportWsRequestArtifacts: [] as GraphqlTransportWsRequestArtifact[],
+            rawWsRequestArtifacts: [] as RawWsRequestArtifact[]
+          }
+        );
 
       request.queries = parseQuery(request.url!);
       request.cookies = parseCookie(request.headers.cookie ?? '');
@@ -112,7 +159,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           socket,
           send: (data: unknown) => sendWsData(socket, data),
           setDelay: async (delay: number) => {
-            await sleep(delay === Infinity ? 99999999 : delay);
+            await sleep(delay);
           }
         };
 
@@ -125,30 +172,146 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         const frame: WsFrame = isBinary
           ? { isBinary: true, raw: raw as Buffer }
           : { isBinary: false, raw: raw.toString() };
-
-        const params: WsParams = {
+        const wsParams: WsParams = {
           ...frame,
           broadcast: (data: unknown) => broadcastWsData(server, data),
           socket,
           send: (data: unknown) => sendWsData(socket, data),
           setDelay: async (delay) => {
-            await sleep(delay === Infinity ? 99999999 : delay);
+            await sleep(delay);
           }
         };
 
-        for (const artifact of rawArtifacts) {
+        const matchedRawArtifacts = matchRawRequestArtifacts({
+          artifacts: rawWsRequestArtifacts,
+          meta: {
+            path: requestPathname
+          }
+        });
+
+        for (const artifact of matchedRawArtifacts) {
           if (artifact.componentRequestInterceptor) {
-            await artifact.componentRequestInterceptor(params);
+            await artifact.componentRequestInterceptor(wsParams);
           }
 
-          const resolvedData = await artifact.config.data(params);
+          const resolvedData = await artifact.config.data(wsParams);
 
           const data = artifact.componentResponseInterceptor
-            ? artifact.componentResponseInterceptor(resolvedData, params)
+            ? artifact.componentResponseInterceptor(resolvedData, wsParams)
             : resolvedData;
+
+          if (artifact.config.settings?.delay) {
+            await sleep(artifact.config.settings.delay);
+          }
 
           sendWsData(socket, data);
         }
+
+        if (frame.isBinary) return;
+
+        const graphqlSubscriptionInput = getGraphqlTransportWsInput(frame.raw.toString());
+
+        if (!graphqlSubscriptionInput) {
+          console.warn('[mock-config] Error parsing graphQL subscription input');
+          return;
+        }
+
+        if (graphqlSubscriptionInput.type === 'connection_init') {
+          socket.send(JSON.stringify({ type: 'connection_ack' }));
+          return;
+        }
+
+        if (graphqlSubscriptionInput.type === 'ping') {
+          socket.send(JSON.stringify({ type: 'pong' }));
+          return;
+        }
+
+        if (graphqlSubscriptionInput.type === 'complete') {
+          completedSubscriptionIds.add(graphqlSubscriptionInput.id);
+          return;
+        }
+
+        if (graphqlSubscriptionInput.type !== 'subscribe') {
+          console.warn(
+            'Unsupported graphQL subscription input type',
+            graphqlSubscriptionInput.type
+          );
+          return;
+        }
+
+        const operationId = graphqlSubscriptionInput.id;
+        completedSubscriptionIds.delete(operationId);
+
+        const query = parseGraphQLQuery(graphqlSubscriptionInput.payload?.query ?? '');
+        if (!query) return;
+
+        const matchedGraphqlTransportWsRequestArtifacts = matchGraphqlTransportWsRequestArtifacts({
+          artifacts: graphqlTransportWsRequestArtifacts,
+          meta: {
+            path: requestPathname,
+            eventName: query.eventName,
+            query: graphqlSubscriptionInput.payload?.query,
+            operationType: query.operationType,
+            operationName: query.operationName
+          }
+        });
+
+        const matchedArtifact = matchedGraphqlTransportWsRequestArtifacts.find(({ config }) => {
+          if (!config.entities) return true;
+
+          const entityEntries = Object.entries(config.entities) as Entries<
+            Required<GraphQLEntitiesByEntityName>
+          >;
+
+          return entityEntries.every(([_, valueOrComparator]) => {
+            const actualEntity = graphqlSubscriptionInput.payload?.variables;
+
+            if (isComparator(valueOrComparator)) {
+              const comparator = valueOrComparator;
+              return resolveEntityValues({ actual: actualEntity, comparator });
+            }
+
+            const comparator = equals(valueOrComparator);
+            return resolveEntityValues({ actual: actualEntity, comparator });
+          });
+        });
+
+        if (!matchedArtifact) return;
+
+        const graphqlTransportWsParams: GraphqlTransportWsParams = {
+          complete: () => {
+            if (completedSubscriptionIds.has(operationId)) return;
+            completedSubscriptionIds.add(operationId);
+            sendGraphqlTransportWsComplete(socket, operationId);
+          },
+          entities: matchedArtifact.config.entities ?? {},
+          eventName: query.eventName,
+          next: (payload) => {
+            if (completedSubscriptionIds.has(operationId)) return;
+            sendGraphqlTransportWsData(socket, operationId, payload);
+          },
+          operationName: query.operationName,
+          query: graphqlSubscriptionInput.payload?.query,
+          raw,
+          setDelay: async (delay) => {
+            await sleep(delay);
+          },
+          socket,
+          variables: graphqlSubscriptionInput.payload?.variables ?? {}
+        };
+
+        const resolvedData =
+          typeof matchedArtifact.config.data === 'function'
+            ? await matchedArtifact.config.data(graphqlTransportWsParams)
+            : matchedArtifact.config.data;
+
+        if (matchedArtifact.config.settings?.delay) {
+          await sleep(matchedArtifact.config.settings.delay);
+        }
+
+        if (completedSubscriptionIds.has(operationId)) return;
+
+        sendGraphqlTransportWsData(socket, operationId, resolvedData);
       });
     }
   );

@@ -1,5 +1,7 @@
 import type { MockServerConfig } from '@/utils/types';
 
+import { APP_PATH } from '@/utils/constants';
+
 import { resolveExportsFromSourceCode } from './resolveExportsFromSourceCode';
 
 export const resolveConfigFile = (configSourceCode: string): MockServerConfig => {
@@ -7,7 +9,7 @@ export const resolveConfigFile = (configSourceCode: string): MockServerConfig =>
     throw new Error('Cannot handle source code of mock-server.config.(ts|js)');
   }
 
-  const mockServerConfigExports = resolveExportsFromSourceCode(configSourceCode);
+  const mockServerConfigExports = resolveExportsFromSourceCode(configSourceCode, APP_PATH);
 
   const mockServerConfig: MockServerConfig = mockServerConfigExports.default;
 

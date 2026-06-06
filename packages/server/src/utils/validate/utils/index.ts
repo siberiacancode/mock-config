@@ -1,4 +1,3 @@
 export * from './entitiesSchema/entitiesSchema';
-export * from './nestedObjectOrArraySchema/nestedObjectOrArraySchema';
 export * from './plainObjectSchema/plainObjectSchema';
 export * from './sharedSchema/sharedSchema';

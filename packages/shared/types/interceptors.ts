@@ -3,6 +3,7 @@ import type { CookieOptions, Request, Response } from 'express';
 import type { Database, Orm } from './database';
 import type { Logger, LoggerTokens } from './logger';
 import type { ApiType } from './shared';
+import type { MaybePromise } from './utils';
 
 type InterceptorCookieValue = string | undefined;
 type InterceptorHeaderValue = number | string | string[] | undefined;
@@ -19,7 +20,7 @@ export interface RequestInterceptorParams<Api extends ApiType = ApiType> {
 
 export type RequestInterceptor<Api extends ApiType = ApiType> = (
   params: RequestInterceptorParams<Api>
-) => Promise<void> | void;
+) => MaybePromise<void>;
 
 export interface ResponseInterceptorParams<Api extends ApiType = ApiType> {
   orm: Orm<Database>;

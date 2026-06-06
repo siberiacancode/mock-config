@@ -4,14 +4,14 @@ import { graphql } from './graphql';
 
 describe('graphql', () => {
   it('Should build config for inline response', () => {
-    const result = graphql.query('GetUsers', { ok: true }, { delay: 25, status: 201 });
+    const result = graphql.query('GetUsers', { data: { ok: true } }, { delay: 25, status: 201 });
 
     expect(result).toStrictEqual({
-      operationName: 'GetUsers',
+      identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {
-          data: { ok: true },
+          data: { data: { ok: true } },
           entities: {},
           settings: { delay: 25, status: 201 }
         }
@@ -28,17 +28,17 @@ describe('graphql', () => {
             key: 'value'
           }
         },
-        response: { ok: true }
+        response: { data: { ok: true } }
       },
       { delay: 20, status: 205 }
     );
 
     expect(result).toStrictEqual({
-      operationName: 'GetUsers',
+      identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {
-          data: { ok: true },
+          data: { data: { ok: true } },
           entities: {
             headers: {
               key: 'value'
@@ -51,14 +51,14 @@ describe('graphql', () => {
   });
 
   it('Should use empty entities for response object without match', () => {
-    const result = graphql.query('GetUsers', { response: { ok: true } });
+    const result = graphql.query('GetUsers', { response: { data: { ok: true } } });
 
     expect(result).toStrictEqual({
-      operationName: 'GetUsers',
+      identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {
-          data: { ok: true },
+          data: { data: { ok: true } },
           entities: {},
           settings: {}
         }
@@ -67,11 +67,11 @@ describe('graphql', () => {
   });
 
   it('Should build config for inline handler', () => {
-    const handler = vi.fn().mockResolvedValue({ ok: true });
+    const handler = vi.fn().mockResolvedValue({ data: { ok: true } });
     const result = graphql.query('GetUsers', handler, { delay: 30 });
 
     expect(result).toStrictEqual({
-      operationName: 'GetUsers',
+      identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {
@@ -84,7 +84,7 @@ describe('graphql', () => {
   });
 
   it('Should build config for handler object with match', () => {
-    const handler = vi.fn().mockResolvedValue({ ok: true });
+    const handler = vi.fn().mockResolvedValue({ data: { ok: true } });
     const result = graphql.query(
       'GetUsers',
       {
@@ -99,7 +99,7 @@ describe('graphql', () => {
     );
 
     expect(result).toStrictEqual({
-      operationName: 'GetUsers',
+      identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {
@@ -116,7 +116,7 @@ describe('graphql', () => {
   });
 
   it('Should build config for queue object as data handler', () => {
-    const queueHandler = vi.fn().mockResolvedValue({ ok: 'handler' });
+    const queueHandler = vi.fn().mockResolvedValue({ data: { ok: 'handler' } });
     const result = graphql.query(
       'GetUsers',
       {
@@ -127,14 +127,14 @@ describe('graphql', () => {
         },
         queue: [
           { handler: queueHandler, time: 100 },
-          { response: { ok: 'response' }, time: 200 }
+          { response: { data: { ok: 'response' } }, time: 200 }
         ]
       },
       { delay: 50, status: 207 }
     );
 
     expect(result).toStrictEqual({
-      operationName: 'GetUsers',
+      identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {
@@ -151,51 +151,14 @@ describe('graphql', () => {
   });
 
   it('Should build mutation config with operationName and mode type', () => {
-    const result = graphql.mutation('CreateUser', { ok: true });
+    const result = graphql.mutation('CreateUser', { data: { ok: true } });
 
     expect(result).toStrictEqual({
-      operationName: 'CreateUser',
+      identifier: 'CreateUser',
       operationType: 'mutation',
       routes: [
         {
-          data: { ok: true },
-          entities: {},
-          settings: {}
-        }
-      ]
-    });
-  });
-
-  it('Should build raw config with default operation type', () => {
-    const result = graphql.raw('query { users { id } }', { ok: true });
-
-    expect(result).toStrictEqual({
-      query: 'query { users { id } }',
-      operationType: 'query',
-      routes: [
-        {
-          data: { ok: true },
-          entities: {},
-          settings: {}
-        }
-      ]
-    });
-  });
-
-  it('Should build raw config with explicit operation type', () => {
-    const result = graphql.raw(
-      'mutation { createUser { id } }',
-      { ok: true },
-      undefined,
-      'mutation'
-    );
-
-    expect(result).toStrictEqual({
-      query: 'mutation { createUser { id } }',
-      operationType: 'mutation',
-      routes: [
-        {
-          data: { ok: true },
+          data: { data: { ok: true } },
           entities: {},
           settings: {}
         }
@@ -206,18 +169,92 @@ describe('graphql', () => {
   it('Should keep provided settings for request', () => {
     const result = graphql.query(
       'GetUsers',
-      { response: { ok: true } },
+      { response: { data: { ok: true } } },
       { delay: 150, status: 200 }
     );
 
     expect(result).toStrictEqual({
-      operationName: 'GetUsers',
+      identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {
-          data: { ok: true },
+          data: { data: { ok: true } },
           entities: {},
           settings: { delay: 150, status: 200 }
+        }
+      ]
+    });
+  });
+
+  it('Should build subscription config for inline response only', () => {
+    const result = graphql.subscription('OnUsers', { data: { key: 'value' } });
+
+    expect(result).toStrictEqual({
+      identifier: 'OnUsers',
+      operationType: 'subscription',
+      routes: [
+        {
+          data: { data: { key: 'value' } },
+          entities: {}
+        }
+      ]
+    });
+  });
+
+  it('Should build subscription config for handler function only', () => {
+    const result = graphql.subscription('OnUsers', () => ({ data: { ok: true } }));
+
+    expect(result).toStrictEqual({
+      identifier: 'OnUsers',
+      operationType: 'subscription',
+      routes: [
+        {
+          data: expect.any(Function),
+          entities: {}
+        }
+      ]
+    });
+  });
+
+  it('Should build subscription config for response object with match (e.g. variables)', () => {
+    const result = graphql.subscription('OnUsers', {
+      match: {
+        variables: { key: 'value' }
+      },
+      response: { data: { key: 'value' } }
+    });
+
+    expect(result).toStrictEqual({
+      identifier: 'OnUsers',
+      operationType: 'subscription',
+      routes: [
+        {
+          data: { data: { key: 'value' } },
+          entities: {
+            variables: { key: 'value' }
+          }
+        }
+      ]
+    });
+  });
+
+  it('Should build subscription config for handler object with match', () => {
+    const result = graphql.subscription('OnUsers', {
+      handler: () => ({ data: { count: 1 } }),
+      match: {
+        variables: { key: 'value' }
+      }
+    });
+
+    expect(result).toStrictEqual({
+      identifier: 'OnUsers',
+      operationType: 'subscription',
+      routes: [
+        {
+          data: expect.any(Function),
+          entities: {
+            variables: { key: 'value' }
+          }
         }
       ]
     });
@@ -228,18 +265,18 @@ describe('graphql', () => {
       query: { query: string };
       body: { body: string };
       params: { params: string };
-      response: { response: string };
+      response: { data: { response: string } };
     }>('GetUsers', (params) => {
       const query = params.request.query.query;
       const body = params.request.body.body;
       const path = params.request.params.params;
       console.log(query, body, path);
 
-      return { response: 'value' };
+      return { data: { response: 'value' } };
     });
 
     expect(result).toStrictEqual({
-      operationName: 'GetUsers',
+      identifier: 'GetUsers',
       operationType: 'query',
       routes: [
         {

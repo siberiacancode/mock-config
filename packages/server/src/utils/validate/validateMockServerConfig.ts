@@ -7,10 +7,11 @@ import { corsSchema } from './corsSchema/corsSchema';
 import { databaseConfigSchema } from './databaseConfigSchema/databaseConfigSchema';
 import { getMostSpecificPathFromError } from './getMostSpecificPathFromError';
 import { getValidationMessageFromPath } from './getValidationMessageFromPath';
-import { graphqlRequestConfigSchema } from './graphqlConfigSchema/graphqlConfigSchema';
+import { graphqlRequestConfigSchema } from './graphqlRequestConfigSchema/graphqlRequestConfigSchema';
+import { graphqlSubscriptionRequestConfigSchema } from './graphqlSubscriptionConfigSchema/graphqlSubscriptionConfigSchema';
 import { interceptorsSchema } from './interceptorsSchema/interceptorsSchema';
 import { portSchema } from './portSchema/portSchema';
-import { restRequestConfigSchema } from './restConfigSchema/restConfigSchema';
+import { restRequestConfigSchema } from './restRequestConfigSchema/restRequestConfigSchema';
 import { staticPathSchema } from './staticPathSchema/staticPathSchema';
 import { plainObjectSchema } from './utils';
 import { wsRequestConfigSchema } from './wsConfigSchema/wsConfigSchema';
@@ -36,7 +37,12 @@ export const validateMockServerConfig = (mockServerConfig: PlainObject) => {
     baseUrl: baseUrlSchema.optional(),
     interceptors: plainObjectSchema(interceptorsSchema).optional(),
     configs: z.array(
-      z.union([restRequestConfigSchema, graphqlRequestConfigSchema, wsRequestConfigSchema])
+      z.union([
+        restRequestConfigSchema,
+        graphqlRequestConfigSchema,
+        graphqlSubscriptionRequestConfigSchema,
+        wsRequestConfigSchema
+      ])
     )
   });
 

@@ -4,13 +4,22 @@ import type { GraphQLRequestArtifact } from '@/utils/types';
 
 import { normalizeUrl } from '@/utils/helpers';
 
+const normalizeGraphQLDocument = (value: string) => {
+  try {
+    return stripIgnoredCharacters(print(parse(value)));
+  } catch {
+    return '';
+  }
+};
+
 interface MatchGraphQLRequestArtifactsParams {
   artifacts: GraphQLRequestArtifact[];
   meta: {
-    path: string;
-    operationType: string;
     query?: string;
     operationName?: string;
+    eventName?: string;
+    path: string;
+    operationType: string;
   };
 }
 
@@ -25,25 +34,34 @@ export const matchGraphQLRequestArtifacts = ({
 
     if (artifact.operationType !== meta.operationType) return false;
 
-    if (artifact.query) {
-      if (!meta.query) return false;
-      return (
-        stripIgnoredCharacters(print(parse(artifact.query))) ===
-        stripIgnoredCharacters(print(parse(meta.query)))
-      );
-    }
+    if (
+      typeof artifact.identifier === 'string' &&
+      meta.query &&
+      normalizeGraphQLDocument(artifact.identifier) === normalizeGraphQLDocument(meta.query)
+    )
+      return true;
 
-    if (artifact.operationName) {
-      if (!meta.operationName) return false;
-      return artifact.operationName instanceof RegExp
-        ? new RegExp(artifact.operationName).test(meta.operationName)
-        : artifact.operationName === meta.operationName;
-    }
+    if (
+      artifact.identifier instanceof RegExp &&
+      meta.query &&
+      new RegExp(artifact.identifier).test(normalizeGraphQLDocument(meta.query))
+    )
+      return true;
 
-    console.warn(
-      `[mock-config] GraphQL artifact with no query or operationName was skipped: ${JSON.stringify(
-        artifact
-      )}`
-    );
+    if (
+      meta.operationName && artifact.identifier instanceof RegExp
+        ? new RegExp(artifact.identifier).test(meta.operationName)
+        : artifact.identifier === meta.operationName
+    )
+      return true;
+
+    if (
+      meta.eventName && artifact.identifier instanceof RegExp
+        ? new RegExp(artifact.identifier).test(meta.eventName)
+        : artifact.identifier === meta.eventName
+    )
+      return true;
+
+    console.warn(`[mock-config] GraphQL artifact was skipped: ${JSON.stringify(artifact)}`);
     return false;
   });

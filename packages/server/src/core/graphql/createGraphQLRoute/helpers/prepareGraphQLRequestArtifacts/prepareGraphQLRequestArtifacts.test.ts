@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import type { BaseUrl, GraphQLRequestArtifact } from '@/utils/types';
+import type { GraphQLRequestArtifact } from '@/utils/types';
 
 import { prepareGraphQLRequestArtifacts } from './prepareGraphQLRequestArtifacts';
 
 const makeArtifact = (overrides: Partial<GraphQLRequestArtifact>): GraphQLRequestArtifact =>
   ({
-    baseUrl: '/' as BaseUrl,
+    baseUrl: '/',
     operationType: 'query',
-    operationName: 'Query',
+    identifier: 'Query',
     config: { data: { ok: true } },
     weight: 0,
     ...overrides

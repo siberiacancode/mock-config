@@ -3,7 +3,13 @@ import type { IncomingMessage } from 'node:http';
 import type { WebSocket } from 'ws';
 
 import type { MappedEntity } from './entities';
+import type { GraphQLIdentifier } from './graphql';
+import type {
+  GraphqlTransportWsOperationType,
+  GraphqlTransportWsRouteConfig
+} from './graphql-transport-ws';
 import type { BaseUrl } from './server';
+import type { MaybePromise } from './utils';
 import type { Data } from './values';
 
 export interface WsFrameBinary {
@@ -23,10 +29,15 @@ export type WsParams = WsFrame & {
   setDelay: (delay: number) => Promise<void>;
 };
 
-export type WsDataResponse = (params: WsParams) => Data | Promise<Data>;
+export type WsDataResponse = (params: WsParams) => MaybePromise<Data>;
+
+export interface WsSettings {
+  readonly delay?: number;
+}
 
 export interface WsRawRouteConfig {
   data: WsDataResponse;
+  settings?: WsSettings;
 }
 
 export interface WsConnectionParams {
@@ -42,7 +53,7 @@ export type WsConnectionEntitiesByEntityName = {
   [EntityName in WsConnectionEntityName]?: MappedEntity;
 };
 
-export type WsConnectionDataResponse = (params: WsConnectionParams) => Data | Promise<Data>;
+export type WsConnectionDataResponse = (params: WsConnectionParams) => MaybePromise<Data>;
 
 export interface WsConnectionRouteConfig {
   data: WsConnectionDataResponse;
@@ -78,4 +89,14 @@ export interface ConnectionWsRequestArtifact extends BaseWsRequestArtifact {
   type: 'connection';
 }
 
-export type WsRequestArtifact = ConnectionWsRequestArtifact | RawWsRequestArtifact;
+export interface GraphqlTransportWsRequestArtifact extends BaseWsRequestArtifact {
+  config: GraphqlTransportWsRouteConfig;
+  identifier: GraphQLIdentifier;
+  operationType: GraphqlTransportWsOperationType;
+  type: 'graphql-ws';
+}
+
+export type WsRequestArtifact =
+  | ConnectionWsRequestArtifact
+  | GraphqlTransportWsRequestArtifact
+  | RawWsRequestArtifact;

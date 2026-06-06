@@ -10,6 +10,7 @@ import type {
 } from './graphql';
 import type { Interceptors } from './interceptors';
 import type { RestMethod, RestRequestConfig } from './rest';
+import type { MaybePromise } from './utils';
 
 interface StaticPathObject {
   path: `/${string}`;
@@ -25,7 +26,7 @@ export interface Cors {
   exposedHeaders?: CorsHeader[];
   maxAge?: number;
   methods?: Uppercase<RestMethod>[];
-  origin: ((request: Request) => CorsOrigin | Promise<CorsOrigin>) | CorsOrigin;
+  origin: ((request: Request) => MaybePromise<CorsOrigin>) | CorsOrigin;
 }
 
 export type Port = number;

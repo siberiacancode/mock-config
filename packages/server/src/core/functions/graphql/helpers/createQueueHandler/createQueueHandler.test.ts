@@ -30,8 +30,8 @@ describe('createQueueHandler', () => {
 
   it('Should cycle through queue items without time', async () => {
     const queueHandler = createQueueHandler([
-      { data: { value: 'first' } },
-      { data: { value: 'second' } }
+      { data: { data: { value: 'first' } } },
+      { data: { data: { value: 'second' } } }
     ]);
     const params = createParams();
 
@@ -39,16 +39,16 @@ describe('createQueueHandler', () => {
     const secondResult = await queueHandler(params);
     const thirdResult = await queueHandler(params);
 
-    expect(firstResult).toStrictEqual({ value: 'first' });
-    expect(secondResult).toStrictEqual({ value: 'second' });
-    expect(thirdResult).toStrictEqual({ value: 'first' });
+    expect(firstResult).toStrictEqual({ data: { value: 'first' } });
+    expect(secondResult).toStrictEqual({ data: { value: 'second' } });
+    expect(thirdResult).toStrictEqual({ data: { value: 'first' } });
   });
 
   it('Should return the same timed item until timeout elapses', async () => {
     vi.useFakeTimers();
     const queueHandler = createQueueHandler([
-      { data: { value: 'first' }, time: 2000 },
-      { data: { value: 'second' } }
+      { data: { data: { value: 'first' } }, time: 2000 },
+      { data: { data: { value: 'second' } } }
     ]);
     const params = createParams();
 
@@ -60,17 +60,17 @@ describe('createQueueHandler', () => {
     vi.advanceTimersByTime(1000);
     const thirdResult = await queueHandler(params);
 
-    expect(firstResult).toStrictEqual({ value: 'first' });
-    expect(secondResult).toStrictEqual({ value: 'first' });
-    expect(thirdResult).toStrictEqual({ value: 'second' });
+    expect(firstResult).toStrictEqual({ data: { value: 'first' } });
+    expect(secondResult).toStrictEqual({ data: { value: 'first' } });
+    expect(thirdResult).toStrictEqual({ data: { value: 'second' } });
   });
 
   it('Should not advance queue multiple times during one timeout window', async () => {
     vi.useFakeTimers();
     const queueHandler = createQueueHandler([
-      { data: { value: 'first' }, time: 1000 },
-      { data: { value: 'second' } },
-      { data: { value: 'third' } }
+      { data: { data: { value: 'first' } }, time: 1000 },
+      { data: { data: { value: 'second' } } },
+      { data: { data: { value: 'third' } } }
     ]);
     const params = createParams();
 
@@ -82,11 +82,11 @@ describe('createQueueHandler', () => {
     const fourthResult = await queueHandler(params);
     const fifthResult = await queueHandler(params);
 
-    expect(firstResult).toStrictEqual({ value: 'first' });
-    expect(secondResult).toStrictEqual({ value: 'first' });
-    expect(thirdResult).toStrictEqual({ value: 'first' });
-    expect(fourthResult).toStrictEqual({ value: 'second' });
-    expect(fifthResult).toStrictEqual({ value: 'third' });
+    expect(firstResult).toStrictEqual({ data: { value: 'first' } });
+    expect(secondResult).toStrictEqual({ data: { value: 'first' } });
+    expect(thirdResult).toStrictEqual({ data: { value: 'first' } });
+    expect(fourthResult).toStrictEqual({ data: { value: 'second' } });
+    expect(fifthResult).toStrictEqual({ data: { value: 'third' } });
   });
 
   it('Should call function queue item with params and return its result', async () => {
