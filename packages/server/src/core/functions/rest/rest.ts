@@ -1,10 +1,11 @@
+import type { NativeRestParams } from 'src/server/createNativeMockServer/types';
+
 import type {
   BaseRestRequestConfig,
   Data,
   RestEntitiesByEntityName,
   RestFileResponse,
   RestMethod,
-  RestParams,
   RestRequestConfig,
   RestRouteConfig,
   RestSettings
@@ -26,19 +27,8 @@ type ReservedRestConfigKeys = {
 type RestInlineResponse<Response> =
   Response extends Record<string, unknown> ? Response & ReservedRestConfigKeys : Response;
 
-type RestFunction<
-  Method extends RestMethod,
-  Options extends RestRequestInput,
-  AdditionalParams = {}
-> = (
-  params: RestParams<
-    Method,
-    Options['query'],
-    Options['body'],
-    Options['params'],
-    Options['response']
-  > &
-    AdditionalParams
+type RestFunction<Options extends RestRequestInput, AdditionalParams = {}> = (
+  params: NativeRestParams<Options['query'], Options['body'], Options['params']> & AdditionalParams
 ) => Options['response'] | Promise<Options['response']>;
 
 interface RestResponseObject<Method extends RestMethod, Response> {
@@ -47,7 +37,7 @@ interface RestResponseObject<Method extends RestMethod, Response> {
 }
 
 interface RestHandlerObject<Method extends RestMethod, Options extends RestRequestInput> {
-  handler: RestFunction<Method, Options>;
+  handler: RestFunction<Options>;
   match?: RestEntitiesByEntityName<Method>;
 }
 
@@ -60,14 +50,14 @@ interface RestQueueObject<Method extends RestMethod, Options extends RestRequest
   match?: RestEntitiesByEntityName<Method>;
   queue: Array<
     | { file: RestFileResponse; time?: number }
-    | { handler: RestFunction<Method, Options>; time?: number }
+    | { handler: RestFunction<Options>; time?: number }
     | { response: Options['response']; time?: number }
   >;
 }
 
 type RestConfig<Method extends RestMethod, Options extends RestRequestInput> =
   | RestFileObject<Method>
-  | RestFunction<Method, Options>
+  | RestFunction<Options>
   | RestHandlerObject<Method, Options>
   | RestInlineResponse<Options['response']>
   | RestQueueObject<Method, Options>
@@ -109,7 +99,7 @@ const createConfigResolver = <Method extends RestMethod, Options extends RestReq
 
     case 'file': {
       return {
-        data: createFileHandler<Method>(resolvedConfig.config.file),
+        data: createFileHandler(resolvedConfig.config.file),
         entities: resolvedConfig.config.match,
         settings
       };
@@ -127,7 +117,7 @@ const createConfigResolver = <Method extends RestMethod, Options extends RestReq
 
         if ('file' in item) {
           return {
-            data: createFileHandler<Method>(item.file),
+            data: createFileHandler(item.file),
             time: item.time
           };
         }
@@ -183,7 +173,7 @@ const createRestFactory = <Method extends RestMethod>(method: Method) => {
 
   function createRequestConfig<Options extends RestRequestInput = Partial<RestRequestInput>>(
     path: RestRequestConfig['path'],
-    config: RestFunction<Method, Options>,
+    config: RestFunction<Options>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method>;
 
@@ -231,7 +221,7 @@ interface SseRestHandlerObject<
   Options extends RestRequestInput,
   Response extends string
 > {
-  handler: RestFunction<Method, Options, { client: RestSseClient<Response> }>;
+  handler: RestFunction<Options, { client: RestSseClient<Response> }>;
   match?: RestEntitiesByEntityName<Method>;
 }
 
@@ -250,7 +240,7 @@ const createSseRestFactory = <Method extends 'get' | 'post'>(method: Method) => 
     Response extends string = string
   >(
     path: RestRequestConfig['path'],
-    config: RestFunction<Method, Options, { client: RestSseClient<Response> }>,
+    config: RestFunction<Options, { client: RestSseClient<Response> }>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method>;
 
@@ -260,30 +250,40 @@ const createSseRestFactory = <Method extends 'get' | 'post'>(method: Method) => 
   >(
     path: RestRequestConfig['path'],
     config:
-      | RestFunction<Method, Options, { client: RestSseClient<Response> }>
+      | RestFunction<Options, { client: RestSseClient<Response> }>
       | SseRestHandlerObject<Method, Options, Response>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method> {
     const normalizedConfig: SseRestHandlerObject<Method, Options, Response> =
       typeof config === 'function' ? { handler: config } : config;
 
-    const wrapperHandler: RestFunction<Method, Options> = (params) => {
+    const wrapperHandler: RestFunction<Options> = (params) => {
       params.setHeader('connection', 'keep-alive');
       params.setHeader('content-type', 'text/event-stream');
-      params.setHeader('cache-control', 'no-cache');
+      params.setHeader('cache-control', 'no-store');
 
-      const client: RestSseClient<Response> = {
-        send(message, meta) {
-          const payload = formatSsePayload(message, meta);
-          params.response.write(payload);
-        },
+      const stream = new ReadableStream({
+        start: (controller) => {
+          const textEncoder = new TextEncoder();
 
-        close() {
-          params.response.end();
+          const client: RestSseClient<Response> = {
+            send(message, meta) {
+              const payload = formatSsePayload(message, meta);
+              controller.enqueue(textEncoder.encode(payload));
+            },
+
+            close() {
+              controller.close();
+            }
+          };
+
+          Promise.resolve(normalizedConfig.handler({ ...params, client })).catch(() =>
+            controller.error()
+          );
         }
-      };
+      });
 
-      return normalizedConfig.handler({ ...params, client });
+      return new Response(stream);
     };
 
     return {

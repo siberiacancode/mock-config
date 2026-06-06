@@ -1,8 +1,6 @@
 import type { ServerResponse } from 'node:http';
 
-import { Buffer } from 'node:buffer';
-
-// TODO check streams and cookie handling
+import { once } from 'node:events';
 
 export const sendFetchResponse = async (
   serverResponse: ServerResponse,
@@ -11,6 +9,32 @@ export const sendFetchResponse = async (
   serverResponse.statusCode = fetchResponse.status;
   serverResponse.setHeaders(fetchResponse.headers);
 
-  serverResponse.write(Buffer.from(await fetchResponse.arrayBuffer()));
+  if (!fetchResponse.body) {
+    serverResponse.end();
+    return;
+  }
+
+  serverResponse.flushHeaders();
+
+  const reader = fetchResponse.body.getReader();
+
+  // what about BYOB reader?
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) break;
+
+      // ✅ important:
+      // Handle end-to-end backpressure
+      const isBufferWritable = serverResponse.write(value);
+      if (!isBufferWritable) {
+        await once(serverResponse, 'drain');
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
   serverResponse.end();
 };

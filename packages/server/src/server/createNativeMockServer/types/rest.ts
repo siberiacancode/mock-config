@@ -4,9 +4,12 @@ import type { BaseUrl, Data, RestMethod, RestPathString } from '@/utils/types';
 
 import type { NativeInterceptors } from './interceptors';
 
-export interface NativeRestParams<Method extends RestMethod = RestMethod> {
-  method?: Method;
-  request: MockServerRequest;
+export interface NativeRestParams<
+  Query = Record<string, string | string[]>,
+  Body = any,
+  Params = Record<string, string>
+> {
+  request: MockServerRequest<Query, Body, Params>;
   appendHeader: (name: string, value: string) => void;
   clearCookie: (name: string) => void;
   getCookie: (name: string) => string | undefined;
@@ -18,16 +21,14 @@ export interface NativeRestParams<Method extends RestMethod = RestMethod> {
   setStatusCode: (statusCode: number) => void;
 }
 
-export type NativeRestDataResponseFunction<Method extends RestMethod = RestMethod> = (
-  params: NativeRestParams<Method>
+export type NativeRestDataResponseFunction = (
+  params: NativeRestParams
 ) => Promise<Response> | Response;
 
-export type NativeRestDataResponse<Method extends RestMethod = RestMethod> =
-  | Data
-  | NativeRestDataResponseFunction<Method>;
+export type NativeRestDataResponse = Data | NativeRestDataResponseFunction;
 
-export interface NativeRestRouteConfig<Method extends RestMethod = RestMethod> {
-  data: NativeRestDataResponse<Method>;
+export interface NativeRestRouteConfig {
+  data: NativeRestDataResponse;
   entities?: Record<string, unknown>;
   interceptors?: NativeInterceptors;
   settings?: {
@@ -40,7 +41,7 @@ export interface NativeRestRequestArtifact {
   baseUrl: BaseUrl;
   componentRequestInterceptor?: NativeInterceptors['request'];
   componentResponseInterceptor?: NativeInterceptors['response'];
-  config: NativeRestRouteConfig<RestMethod>;
+  config: NativeRestRouteConfig;
   method: RestMethod;
   path: RegExp | RestPathString;
   requestRequestInterceptor?: NativeInterceptors['request'];

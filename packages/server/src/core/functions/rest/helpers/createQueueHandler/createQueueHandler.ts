@@ -1,8 +1,13 @@
-import type { RestDataResponse, RestDataResponseFunction, RestMethod } from '@/utils/types';
+import type {
+  NativeRestDataResponse,
+  NativeRestDataResponseFunction
+} from 'src/server/createNativeMockServer/types';
 
-export const createQueueHandler = <Method extends RestMethod>(
-  queue: { data: RestDataResponse<Method>; time?: number }[]
-): RestDataResponseFunction<Method> => {
+import { next } from 'src/server/createNativeMockServer/helpers/routes';
+
+export const createQueueHandler = (
+  queue: { data: NativeRestDataResponse; time?: number }[]
+): NativeRestDataResponseFunction => {
   let queueIndex = 0;
   let timeoutInProgress = false;
 
@@ -12,7 +17,7 @@ export const createQueueHandler = <Method extends RestMethod>(
 
   return async (params) => {
     if (!queue.length) {
-      return params.next();
+      throw next();
     }
 
     const queueItem = queue[queueIndex];

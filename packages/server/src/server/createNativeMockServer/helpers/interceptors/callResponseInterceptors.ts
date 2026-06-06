@@ -26,6 +26,7 @@ export const callResponseInterceptors = async (params: CallNativeResponseInterce
 
   const responseInterceptorParams: NativeResponseInterceptorParams = {
     request,
+    response,
     appendHeader: (name, value) => {
       responseState.headers.append(name, value);
     },

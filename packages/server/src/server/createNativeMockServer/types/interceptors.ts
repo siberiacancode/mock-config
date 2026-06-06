@@ -14,6 +14,7 @@ export type NativeRequestInterceptor = (
 
 export interface NativeResponseInterceptorParams {
   request: MockServerRequest;
+  response: Response;
   appendHeader: (name: string, value: string) => void;
   clearCookie: (name: string) => void;
   getCookie: (name: string) => string | undefined;

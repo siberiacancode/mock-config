@@ -1,23 +1,42 @@
+import type { NativeRestDataResponseFunction } from 'src/server/createNativeMockServer/types';
+
 import fs from 'node:fs';
 import path from 'node:path';
+import { next } from 'src/server/createNativeMockServer/helpers/routes';
 
-import type { RestDataResponseFunction, RestFileResponse, RestMethod } from '@/utils/types';
+import type { RestFileResponse } from '@/utils/types';
 
 import { isFilePathValid } from '@/utils/helpers';
 
+const MIME_TYPES: Record<string, string> = {
+  '.json': 'application/json; charset=utf-8',
+  '.html': 'text/html; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8',
+  '.csv': 'text/csv; charset=utf-8',
+  '.pdf': 'application/pdf',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+  '.zip': 'application/zip'
+};
+
 export const createFileHandler =
-  <Method extends RestMethod>(filePath: RestFileResponse): RestDataResponseFunction<Method> =>
-  ({ response, setHeader, next }) => {
+  (filePath: RestFileResponse): NativeRestDataResponseFunction =>
+  ({ setHeader }) => {
     if (!isFilePathValid(filePath)) {
-      return next();
+      throw next();
     }
 
     const buffer = fs.readFileSync(path.resolve(filePath));
-    const fileName = filePath.replaceAll('\\', '/').split('/').at(-1)!;
-    const fileExtension = fileName.split('.').at(-1)!;
+    // ✅ important:
+    // path.win32 treats both '/' and '\' — so it works both for Windows and Linux style
+    const fileName = path.win32.basename(filePath);
+    const fileExtension = path.win32.extname(filePath);
 
-    response.type(fileExtension);
+    const contentType = MIME_TYPES[fileExtension.toLowerCase()] ?? 'application/octet-stream';
+    setHeader('Content-Type', contentType);
     setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
 
-    return buffer;
+    return new Response(buffer);
   };

@@ -32,7 +32,7 @@ describe('createFileHandler', () => {
   it('Should return 404 when file path is invalid', () => {
     const notExistedFilePath = path.join(tmpDirPath, './missing.json');
     const params = createParams();
-    const fileHandler = createFileHandler<'get'>(notExistedFilePath);
+    const fileHandler = createFileHandler(notExistedFilePath);
 
     const result = fileHandler(params);
 
@@ -50,7 +50,7 @@ describe('createFileHandler', () => {
     fs.writeFileSync(existedFilePath, fileContent);
 
     const params = createParams();
-    const fileHandler = createFileHandler<'get'>(existedFilePath);
+    const fileHandler = createFileHandler(existedFilePath);
 
     const result = fileHandler(params);
 
@@ -65,7 +65,7 @@ describe('createFileHandler', () => {
     fs.writeFileSync(existedFilePath, 'content');
 
     const params = createParams();
-    const fileHandler = createFileHandler<'get'>(existedFilePath);
+    const fileHandler = createFileHandler(existedFilePath);
 
     fileHandler(params);
 

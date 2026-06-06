@@ -17,7 +17,7 @@ describe('createQueueHandler', () => {
   });
 
   it('Should return 404 when queue is empty', async () => {
-    const queueHandler = createQueueHandler<'get'>([]);
+    const queueHandler = createQueueHandler([]);
     const params = createParams();
 
     const result = await queueHandler(params);
@@ -29,7 +29,7 @@ describe('createQueueHandler', () => {
   });
 
   it('Should cycle through queue items without time', async () => {
-    const queueHandler = createQueueHandler<'get'>([
+    const queueHandler = createQueueHandler([
       { data: { value: 'first' } },
       { data: { value: 'second' } }
     ]);
@@ -46,7 +46,7 @@ describe('createQueueHandler', () => {
 
   it('Should return the same timed item until timeout elapses', async () => {
     vi.useFakeTimers();
-    const queueHandler = createQueueHandler<'get'>([
+    const queueHandler = createQueueHandler([
       { data: { value: 'first' }, time: 2000 },
       { data: { value: 'second' } }
     ]);
@@ -67,7 +67,7 @@ describe('createQueueHandler', () => {
 
   it('Should not advance queue multiple times during one timeout window', async () => {
     vi.useFakeTimers();
-    const queueHandler = createQueueHandler<'get'>([
+    const queueHandler = createQueueHandler([
       { data: { value: 'first' }, time: 1000 },
       { data: { value: 'second' } },
       { data: { value: 'third' } }
@@ -91,7 +91,7 @@ describe('createQueueHandler', () => {
 
   it('Should call function queue item with params and return its result', async () => {
     const queueItemHandler = vi.fn().mockReturnValue({ value: 'handler' });
-    const queueHandler = createQueueHandler<'get'>([
+    const queueHandler = createQueueHandler([
       {
         data: queueItemHandler
       }

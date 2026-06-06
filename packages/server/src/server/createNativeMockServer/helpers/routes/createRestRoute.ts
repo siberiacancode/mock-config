@@ -24,22 +24,16 @@ interface CopyResponseWithParams {
   body?: BodyInit | null;
   headers?: HeadersInit;
   status?: number;
-  statusText?: string;
 }
 
 const copyResponseWith = (
   originalResponse: Response,
-  { body, status, statusText, headers }: CopyResponseWithParams = {}
-) => {
-  const copiedHeaders = new Headers(headers ?? originalResponse.headers);
-  const copiedBody = body === undefined ? originalResponse.clone().body : body;
-
-  return new Response(copiedBody, {
+  { body, status, headers }: CopyResponseWithParams = {}
+) =>
+  new Response(body ?? originalResponse.body, {
     status: status ?? originalResponse.status,
-    statusText: statusText ?? originalResponse.statusText,
-    headers: copiedHeaders
+    headers: new Headers(headers ?? originalResponse.headers)
   });
-};
 
 const extractPathParams = (artifact: NativeRestRequestArtifact, path: string) => {
   if (artifact.path instanceof RegExp) return {};
@@ -70,6 +64,7 @@ export const createRestRoute =
         method: requestMethod,
         path: normalizeUrl(requestPath)
       }
+      // TODO: why did i narrow type?
     }) as unknown as NativeRestRequestArtifact[];
     if (!matchedRequestArtifacts.length) {
       throw next();
@@ -137,6 +132,7 @@ export const createRestRoute =
       });
     }
 
+    // TODO: may be move it into file?
     const responseState: ResponseInterceptorsState = {
       headers: new Headers(),
       statusCode: undefined
@@ -144,7 +140,6 @@ export const createRestRoute =
 
     const params: NativeRestParams = {
       request,
-      method: requestMethod,
       appendHeader: (name, value) => {
         responseState.headers.append(name, value);
       },
