@@ -122,12 +122,12 @@ describe('createRestRoutes: routing', () => {
     expect(response.statusCode).toBe(404);
   });
 
-  it('Should match wildcard path', async () => {
+  it('Should match multi-segment wildcard path', async () => {
     const server = createServer({
       rest: {
         configs: [
           {
-            path: '/users/*',
+            path: '/users/**',
             method: 'get',
             routes: [
               {

@@ -1,37 +1,43 @@
 import type { RestRequestArtifact } from '@/utils/types';
 
+const getPathPartPriority = (part: string) => {
+  if (part.includes('*')) return 2;
+  if (part.startsWith(':')) return 1;
+  return 0;
+};
+
 export const prepareRestRequestArtifacts = (requestArtifacts: RestRequestArtifact[]) => {
   const sortedByPathRequestArtifacts = requestArtifacts
     .toSorted((first, second) => second.weight - first.weight)
     .toSorted(({ path: firstPath }, { path: secondPath }) => {
       // ✅ important:
-      // do not compare RegExp paths and non-parameterized paths
+      // do not compare RegExp paths with string paths
       if (firstPath instanceof RegExp || secondPath instanceof RegExp) return 0;
-      if (!firstPath.includes('/:') && !secondPath.includes('/:')) return 0;
 
       const firstPathParts = firstPath.split('/');
       const secondPathParts = secondPath.split('/');
       const minimalPathPartsLength = Math.min(firstPathParts.length, secondPathParts.length);
 
       // ✅ important:
-      // need to find the leftmost parameter/non-parameter pair and give priority to non-parameter one
+      // prioritize more specific path parts: static segment > route parameter > wildcard
       for (let i = 0; i < minimalPathPartsLength; i += 1) {
         const firstPathPart = firstPathParts[i];
         const secondPathPart = secondPathParts[i];
 
-        const isFirstPathPartParameter = firstPathPart.startsWith(':');
-        const isSecondPathPartParameter = secondPathPart.startsWith(':');
+        if (firstPathPart === secondPathPart) continue;
 
-        if (!isFirstPathPartParameter && !isSecondPathPartParameter) {
-          if (firstPathPart === secondPathPart) continue;
-          return 0;
+        const firstPathPartPriority = getPathPartPriority(firstPathPart);
+        const secondPathPartPriority = getPathPartPriority(secondPathPart);
+
+        if (firstPathPartPriority !== secondPathPartPriority) {
+          return firstPathPartPriority - secondPathPartPriority;
         }
 
-        if (isFirstPathPartParameter && isSecondPathPartParameter) continue;
-
-        return +isFirstPathPartParameter - +isSecondPathPartParameter;
+        return 0;
       }
+
       return 0;
     });
+
   return sortedByPathRequestArtifacts;
 };

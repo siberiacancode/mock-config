@@ -8,8 +8,13 @@ export const generatePathRegex = (path: string) =>
       .split('/')
       .map((part) => {
         if (part.startsWith(':')) return '([^/]+)';
+        if (part === '*') return '([^/]+)';
+        if (part === '**') return '(.*)';
 
-        return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\*/g, '.*');
+        return part
+          .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          .replace(/\\\*\\\*/g, '.*')
+          .replace(/\\\*/g, '[^/]*');
       })
       .join('/')}$`
   );

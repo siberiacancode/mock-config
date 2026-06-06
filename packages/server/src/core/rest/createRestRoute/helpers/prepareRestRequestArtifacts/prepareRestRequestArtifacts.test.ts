@@ -50,6 +50,24 @@ describe('prepareRestRequestArtifacts', () => {
     expect(prepared[1].path).toBe('/second');
   });
 
+  it('Should prefer parameter over wildcard at first differing segment', () => {
+    const prepared = prepareRestRequestArtifacts([
+      makeArtifact({ path: '/users/*' }),
+      makeArtifact({ path: '/users/:id' })
+    ]);
+    expect(prepared[0].path).toBe('/users/:id');
+    expect(prepared[1].path).toBe('/users/*');
+  });
+
+  it('Should prefer static segment over wildcard at first differing segment', () => {
+    const prepared = prepareRestRequestArtifacts([
+      makeArtifact({ path: '/users/**' }),
+      makeArtifact({ path: '/users/me' })
+    ]);
+    expect(prepared[0].path).toBe('/users/me');
+    expect(prepared[1].path).toBe('/users/**');
+  });
+
   it('Should not reorder regexp paths', () => {
     const prepared = prepareRestRequestArtifacts([
       makeArtifact({ path: /^\/x$/ }),
