@@ -1,6 +1,7 @@
 import type { BuildOptions, Plugin } from 'esbuild';
 
 import { context, build as esBuild } from 'esbuild';
+import path from 'node:path';
 
 import type { MockServerCliArgv } from '@/utils/types';
 
@@ -24,6 +25,9 @@ export const build = async (argv: MockServerCliArgv) => {
     metafile: false,
     logLevel: 'info',
     format: 'esm',
+    banner: {
+      js: 'import { createRequire as __mcsCreateRequire } from "node:module"; const require = __mcsCreateRequire(import.meta.url);'
+    },
     plugins: [] as Plugin[]
   } satisfies BuildOptions;
 
@@ -37,9 +41,12 @@ export const build = async (argv: MockServerCliArgv) => {
           instance?.destroy();
         });
 
-        build.onEnd((result) => {
+        build.onEnd(async (result) => {
           if (!result.errors.length) {
-            const mockConfig = resolveConfigFile(result.outputFiles![0].text);
+            const mockConfig = await resolveConfigFile(
+              result.outputFiles![0].text,
+              path.dirname(configFilePath)
+            );
             instance = run(mockConfig, argv);
           }
         });
@@ -56,6 +63,6 @@ export const build = async (argv: MockServerCliArgv) => {
 
   const { outputFiles } = await esBuild(buildOptions);
 
-  const mockConfig = resolveConfigFile(outputFiles[0].text);
+  const mockConfig = await resolveConfigFile(outputFiles[0].text, path.dirname(configFilePath));
   return run(mockConfig, argv);
 };
