@@ -20,7 +20,7 @@ import { calculateRestRouteConfigWeight, prepareRestRequestArtifacts } from './h
 interface RestConfig {
   baseUrl?: BaseUrl;
   configs: RestRequestConfig[];
-  interceptors?: Interceptors<'rest'>;
+  interceptors?: Interceptors;
 }
 
 const createServer = (

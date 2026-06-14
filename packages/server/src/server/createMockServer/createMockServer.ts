@@ -25,7 +25,7 @@ import {
   corsMiddleware,
   errorMiddleware,
   noCorsMiddleware,
-  requestInterceptorMiddleware,
+  serverRequestInterceptorsMiddleware,
   staticMiddleware
 } from '@/core/middlewares';
 import {
@@ -57,7 +57,7 @@ export const createMockServer = (
   const {
     cors,
     staticPath,
-    interceptors,
+    interceptors: serverInterceptors,
     baseUrl: serverBaseUrl = '/',
     database
   } = mockServerSettings ?? {};
@@ -73,11 +73,10 @@ export const createMockServer = (
 
   cookieParseMiddleware(server);
 
-  const serverRequestInterceptor = interceptors?.request;
-  if (serverRequestInterceptor) {
-    requestInterceptorMiddleware({
+  if (serverInterceptors) {
+    serverRequestInterceptorsMiddleware({
       server,
-      interceptor: serverRequestInterceptor
+      interceptors: serverInterceptors
     });
   }
 
@@ -112,14 +111,8 @@ export const createMockServer = (
               path: config.path,
               config: route,
               weight: calculateRestRouteConfigWeight(route),
-              serverResponseInterceptor: interceptors?.response,
-              serverRequestInterceptor: interceptors?.request,
-              requestResponseInterceptor: config.interceptors?.response,
-              requestRequestInterceptor: config.interceptors?.request,
-              componentResponseInterceptor: component.interceptors?.response,
-              componentRequestInterceptor: component.interceptors?.request,
-              routeResponseInterceptor: route.interceptors?.response,
-              routeRequestInterceptor: route.interceptors?.request
+              serverInterceptors,
+              componentInterceptors: component.interceptors
             });
           });
         }
@@ -133,14 +126,8 @@ export const createMockServer = (
               identifier: config.identifier,
               config: route,
               weight: calculateGraphQLRouteConfigWeight(route),
-              serverResponseInterceptor: interceptors?.response,
-              serverRequestInterceptor: interceptors?.request,
-              requestResponseInterceptor: config.interceptors?.response,
-              requestRequestInterceptor: config.interceptors?.request,
-              componentResponseInterceptor: component.interceptors?.response,
-              componentRequestInterceptor: component.interceptors?.request,
-              routeResponseInterceptor: route.interceptors?.response,
-              routeRequestInterceptor: route.interceptors?.request
+              serverInterceptors,
+              componentInterceptors: component.interceptors
             });
           });
         }
@@ -169,8 +156,7 @@ export const createMockServer = (
               type: config.type,
               config: route,
               weight: 0,
-              componentRequestInterceptor: component.interceptors?.request,
-              componentResponseInterceptor: component.interceptors?.response
+              componentInterceptors: component.interceptors
             } as WsRequestArtifact);
           });
         }
@@ -190,6 +176,7 @@ export const createMockServer = (
   server.listen = ((...args: any[]) => {
     const httpServer = originalListen(...args);
     httpServer.on('upgrade', (request, socket, head) => {
+      // TODO: call request
       const [requestPathname] = request.url!.split('?');
       const shouldHandleUpgrade = [...wsBaseUrls].some((baseUrl) => {
         if (baseUrl === '/') return true;

@@ -8,7 +8,7 @@ import type {
   BaseServerConfig,
   BaseUrl,
   GraphQLIdentifier,
-  GraphqlTransportWsOperationType,
+  GraphQLTransportWsOperationType,
   GraphqlTransportWsRouteConfig,
   Interceptors,
   WsConnectionRouteConfig,
@@ -33,7 +33,7 @@ export interface WsConnectionRequestConfig {
 
 export interface WsGraphqlTransportWsRequestConfig {
   identifier: GraphQLIdentifier;
-  operationType: GraphqlTransportWsOperationType;
+  operationType: GraphQLTransportWsOperationType;
   routes: GraphqlTransportWsRouteConfig[];
   type: 'graphql-ws';
 }
@@ -46,7 +46,7 @@ export type WsRequestConfig =
 export interface WsConfig {
   baseUrl?: BaseUrl;
   configs: WsRequestConfig[];
-  interceptors?: Interceptors<'rest'>;
+  interceptors?: Interceptors;
 }
 
 const clients: WebSocket[] = [];

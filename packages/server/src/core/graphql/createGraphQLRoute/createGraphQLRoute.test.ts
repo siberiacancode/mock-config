@@ -20,7 +20,7 @@ import { calculateGraphQLRouteConfigWeight, prepareGraphQLRequestArtifacts } fro
 interface GraphqlConfig {
   baseUrl?: BaseUrl;
   configs: GraphQLRequestConfig[];
-  interceptors?: Interceptors<'graphql'>;
+  interceptors?: Interceptors;
 }
 
 const createServer = (

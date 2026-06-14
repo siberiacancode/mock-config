@@ -8,3 +8,11 @@ export type Entries<T extends Array<any> | PlainObject> = ValueOf<{
 }>[];
 
 export type MaybePromise<T> = Promise<T> | T;
+
+export type LeafKeys<T> = {
+  [K in keyof T & string]: T[K] extends (...args: any[]) => any
+    ? K
+    : T[K] extends object
+      ? `${K}.${LeafKeys<T[K]>}`
+      : K;
+}[keyof T & string];

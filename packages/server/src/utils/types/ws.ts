@@ -4,11 +4,9 @@ import type { WebSocket } from 'ws';
 
 import type { MappedEntity } from './entities';
 import type { GraphQLIdentifier } from './graphql';
-import type {
-  GraphqlTransportWsOperationType,
-  GraphqlTransportWsRouteConfig
-} from './graphql-transport-ws';
+import type { GraphqlTransportWsRouteConfig } from './graphql-transport-ws';
 import type { BaseUrl } from './server';
+import type { GraphQLTransportWsOperationType } from './shared';
 import type { MaybePromise } from './utils';
 import type { Data } from './values';
 
@@ -22,6 +20,7 @@ export interface WsFrameText {
 }
 export type WsFrame = WsFrameBinary | WsFrameText;
 
+// TODO: WsMessageParams
 export type WsParams = WsFrame & {
   broadcast: <Response = unknown>(response: Response) => void;
   socket: WebSocket;
@@ -40,6 +39,7 @@ export interface WsRawRouteConfig {
   settings?: WsSettings;
 }
 
+// wsIncoming wsOut
 export interface WsConnectionParams {
   request: IncomingMessage;
   socket: WebSocket;
@@ -74,8 +74,8 @@ export type WsRequestConfig = WsConnectionRequestConfig | WsRawRequestConfig;
 
 interface BaseWsRequestArtifact {
   baseUrl: BaseUrl;
-  componentRequestInterceptor?: any;
-  componentResponseInterceptor?: any;
+  // TODO: add interceptors for ws
+  componentInterceptors?: any;
   weight: number;
 }
 
@@ -92,7 +92,7 @@ export interface ConnectionWsRequestArtifact extends BaseWsRequestArtifact {
 export interface GraphqlTransportWsRequestArtifact extends BaseWsRequestArtifact {
   config: GraphqlTransportWsRouteConfig;
   identifier: GraphQLIdentifier;
-  operationType: GraphqlTransportWsOperationType;
+  operationType: GraphQLTransportWsOperationType;
   type: 'graphql-ws';
 }
 

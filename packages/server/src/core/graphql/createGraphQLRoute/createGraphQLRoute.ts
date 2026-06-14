@@ -9,7 +9,7 @@ import type {
 
 import {
   asyncHandler,
-  callRequestInterceptor,
+  callRequestInterceptors,
   callResponseInterceptors,
   getGraphQLInput,
   isComparator,
@@ -100,27 +100,17 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
 
       if (!matchedRouteConfig) return next();
 
-      if (matchedRouteConfig.componentRequestInterceptor) {
-        await callRequestInterceptor({
+      if (matchedRouteConfig.componentInterceptors) {
+        await callRequestInterceptors({
           request,
-          interceptor: matchedRouteConfig.componentRequestInterceptor
+          interceptors: matchedRouteConfig.componentInterceptors,
+          interceptorNames: [
+            'http.request.all',
+            'graphql.request.all',
+            `graphql.request.${request.graphQL!.operationType}`
+          ]
         });
       }
-
-      if (matchedRouteConfig.requestRequestInterceptor) {
-        await callRequestInterceptor({
-          request,
-          interceptor: matchedRouteConfig.requestRequestInterceptor
-        });
-      }
-
-      if (matchedRouteConfig.routeRequestInterceptor) {
-        await callRequestInterceptor({
-          request,
-          interceptor: matchedRouteConfig.routeRequestInterceptor
-        });
-      }
-
       const params: GraphQLParams = {
         request,
         response,
@@ -182,12 +172,13 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
         data: resolvedData,
         request,
         response,
-        interceptors: {
-          routeInterceptor: matchedRouteConfig.routeResponseInterceptor,
-          componentInterceptor: matchedRouteConfig.componentResponseInterceptor,
-          requestInterceptor: matchedRouteConfig.requestResponseInterceptor,
-          serverInterceptor: matchedRouteConfig.serverResponseInterceptor
-        }
+        componentInterceptors: matchedRouteConfig.componentInterceptors,
+        serverInterceptors: matchedRouteConfig.serverInterceptors,
+        interceptorNames: [
+          'http.response.all',
+          'graphql.response.all',
+          `graphql.response.${request.graphQL!.operationType}`
+        ]
       });
 
       if (matchedRouteConfig.config.settings?.delay) {

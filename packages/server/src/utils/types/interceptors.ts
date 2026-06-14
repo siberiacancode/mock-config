@@ -2,27 +2,24 @@ import type { CookieOptions, Request, Response } from 'express';
 
 import type { Database, Orm } from './database';
 import type { Logger, LoggerTokens } from './logger';
-import type { ApiType } from './shared';
 import type { MaybePromise } from './utils';
 
 type InterceptorCookieValue = string | undefined;
 type InterceptorHeaderValue = number | string | string[] | undefined;
 
-export interface RequestInterceptorParams<Api extends ApiType = ApiType> {
+export interface RequestInterceptorFnParams {
   orm: Orm<Database>;
   request: Request;
   getCookie: (name: string) => InterceptorCookieValue;
   getHeader: (field: string) => InterceptorHeaderValue;
   getHeaders: () => Record<string, InterceptorHeaderValue>;
-  log: (logger?: Logger<'request', Api>) => Partial<LoggerTokens>;
+  log: (logger?: Logger<'request'>) => Partial<LoggerTokens>;
   setDelay: (delay: number) => Promise<void>;
 }
 
-export type RequestInterceptor<Api extends ApiType = ApiType> = (
-  params: RequestInterceptorParams<Api>
-) => MaybePromise<void>;
+export type RequestInterceptorFn = (params: RequestInterceptorFnParams) => MaybePromise<void>;
 
-export interface ResponseInterceptorParams<Api extends ApiType = ApiType> {
+export interface ResponseInterceptorFnParams {
   orm: Orm<Database>;
   request: Request;
   response: Response;
@@ -34,19 +31,23 @@ export interface ResponseInterceptorParams<Api extends ApiType = ApiType> {
   getRequestHeaders: () => Record<string, InterceptorHeaderValue>;
   getResponseHeader: (field: string) => InterceptorHeaderValue;
   getResponseHeaders: () => Record<string, InterceptorHeaderValue>;
-  log: (logger?: Logger<'response', Api>) => Partial<LoggerTokens>;
+  log: (logger?: Logger<'response'>) => Partial<LoggerTokens>;
   setCookie: (name: string, value: string, options?: CookieOptions) => void;
   setDelay: (delay: number) => Promise<void>;
   setHeader: (field: string, value?: string | string[]) => void;
   setStatusCode: (statusCode: number) => void;
 }
 
-export type ResponseInterceptor<Data = any, Api extends ApiType = ApiType> = (
+export type ResponseInterceptorFn<Data = any> = (
   data: Data,
-  params: ResponseInterceptorParams<Api>
+  params: ResponseInterceptorFnParams
 ) => any;
 
-export interface Interceptors<Api extends ApiType = ApiType> {
-  request?: RequestInterceptor<Api>;
-  response?: ResponseInterceptor<any, Api>;
-}
+export type {
+  InterceptorName,
+  Interceptors,
+  RequestInterceptor,
+  RequestInterceptorName,
+  ResponseInterceptor,
+  ResponseInterceptorName
+} from '../../core/interceptors';

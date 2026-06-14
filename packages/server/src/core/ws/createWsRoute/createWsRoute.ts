@@ -169,6 +169,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       }
 
       socket.on('message', async (raw: RawData, isBinary: boolean) => {
+        console.log('@MESSAGE');
         const frame: WsFrame = isBinary
           ? { isBinary: true, raw: raw as Buffer }
           : { isBinary: false, raw: raw.toString() };
@@ -190,15 +191,17 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         });
 
         for (const artifact of matchedRawArtifacts) {
-          if (artifact.componentRequestInterceptor) {
-            await artifact.componentRequestInterceptor(wsParams);
-          }
+          // TODO: add interceptors for ws
+          // if (artifact.componentRequestInterceptor) {
+          //   await artifact.componentRequestInterceptor(wsParams);
+          // }
 
           const resolvedData = await artifact.config.data(wsParams);
-
-          const data = artifact.componentResponseInterceptor
-            ? artifact.componentResponseInterceptor(resolvedData, wsParams)
-            : resolvedData;
+          // TODO: add interceptors for ws
+          // const data = artifact.componentResponseInterceptor
+          //   ? artifact.componentResponseInterceptor(resolvedData, wsParams)
+          //   : resolvedData;
+          const data = resolvedData;
 
           if (artifact.config.settings?.delay) {
             await sleep(artifact.config.settings.delay);

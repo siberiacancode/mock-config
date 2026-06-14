@@ -3,13 +3,14 @@ import type { Express } from 'express';
 import type {
   Entries,
   RestEntitiesByEntityName,
+  RestMethod,
   RestParams,
   RestRequestArtifact
 } from '@/utils/types';
 
 import {
   asyncHandler,
-  callRequestInterceptor,
+  callRequestInterceptors,
   callResponseInterceptors,
   isComparator,
   normalizeUrl,
@@ -112,24 +113,15 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         return next();
       }
 
-      if (matchedRouteConfig.componentRequestInterceptor) {
-        await callRequestInterceptor({
+      if (matchedRouteConfig.componentInterceptors) {
+        await callRequestInterceptors({
           request,
-          interceptor: matchedRouteConfig.componentRequestInterceptor
-        });
-      }
-
-      if (matchedRouteConfig.requestRequestInterceptor) {
-        await callRequestInterceptor({
-          request,
-          interceptor: matchedRouteConfig.requestRequestInterceptor
-        });
-      }
-
-      if (matchedRouteConfig.routeRequestInterceptor) {
-        await callRequestInterceptor({
-          request,
-          interceptor: matchedRouteConfig.routeRequestInterceptor
+          interceptors: matchedRouteConfig.componentInterceptors,
+          interceptorNames: [
+            'http.request.all',
+            'rest.request.all',
+            `rest.request.${request.method.toLowerCase() as RestMethod}`
+          ]
         });
       }
 
@@ -195,12 +187,13 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         data: resolvedData,
         request,
         response,
-        interceptors: {
-          routeInterceptor: matchedRouteConfig.routeResponseInterceptor,
-          requestInterceptor: matchedRouteConfig.requestResponseInterceptor,
-          componentInterceptor: matchedRouteConfig.componentResponseInterceptor,
-          serverInterceptor: matchedRouteConfig.serverResponseInterceptor
-        }
+        componentInterceptors: matchedRouteConfig.componentInterceptors,
+        serverInterceptors: matchedRouteConfig.serverInterceptors,
+        interceptorNames: [
+          'http.response.all',
+          'rest.response.all',
+          `rest.response.${request.method.toLowerCase() as RestMethod}`
+        ]
       });
 
       if (matchedRouteConfig.config.settings?.delay) {

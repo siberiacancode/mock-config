@@ -3,6 +3,7 @@ import type { RawData, WebSocket } from 'ws';
 
 import type { VariablesEntity } from './entities';
 import type { GraphQLIdentifier } from './graphql';
+import type { GraphQLTransportWsOperationType } from './shared';
 import type { MaybePromise } from './utils';
 import type { PlainObject } from './values';
 
@@ -100,10 +101,8 @@ export interface GraphqlTransportWsRouteConfig {
   settings?: GraphqlTransportWsSettings;
 }
 
-export type GraphqlTransportWsOperationType = 'subscription';
-
 export interface GraphqlTransportWsRequestConfig {
   identifier: GraphQLIdentifier;
-  operationType: GraphqlTransportWsOperationType;
+  operationType: GraphQLTransportWsOperationType;
   routes: GraphqlTransportWsRouteConfig[];
 }
