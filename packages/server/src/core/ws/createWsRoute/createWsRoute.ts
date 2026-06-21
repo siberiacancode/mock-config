@@ -1,4 +1,4 @@
-import type { IncomingMessage } from 'node:http';
+import type { Express } from 'express';
 import type { RawData, WebSocketServer } from 'ws';
 
 import { Buffer } from 'node:buffer';
@@ -12,12 +12,15 @@ import type {
   GraphqlTransportWsParams,
   GraphqlTransportWsRequestArtifact,
   RawWsRequestArtifact,
+  WsConnectionParams,
   WsFrame,
-  WsParams,
+  WsMessageParams,
   WsRequestArtifact
 } from '@/utils/types';
 
 import {
+  callRequestInterceptors,
+  callResponseInterceptors,
   getGraphqlTransportWsInput,
   isComparator,
   parseCookie,
@@ -81,11 +84,12 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
     'connection',
     async (
       socket,
-      request: IncomingMessage & {
+      request: Express['request'] & {
         queries: Record<string, string | string[]>;
         cookies: Record<string, string>;
       }
     ) => {
+      console.log('WS.OPEN', request.id, request.api);
       const completedSubscriptionIds = new Set<string>();
 
       const [requestPathname] = request.url!.split('?');
@@ -152,8 +156,15 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
           if (!isMatchedByEntities) continue;
         }
+        console.log('artifact.componentInterceptors=', artifact.componentInterceptors);
+        if (artifact.componentInterceptors) {
+          await callRequestInterceptors({
+            request,
+            interceptors: artifact.componentInterceptors
+          });
+        }
 
-        const params = {
+        const params: WsConnectionParams = {
           broadcast: (data: unknown) => broadcastWsData(server, data),
           request,
           socket,
@@ -165,15 +176,24 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
         const resolvedData = await artifact.config.data(params);
 
-        sendWsData(socket, resolvedData);
+        const data = await callResponseInterceptors({
+          data: resolvedData,
+          request,
+          // @ts-ignore
+          response: {},
+          componentInterceptors: artifact.componentInterceptors,
+          serverInterceptors: artifact.serverInterceptors
+        });
+
+        sendWsData(socket, data);
       }
 
       socket.on('message', async (raw: RawData, isBinary: boolean) => {
-        console.log('@MESSAGE');
+        console.log('WS.MESSAGE', request.id, request.api);
         const frame: WsFrame = isBinary
           ? { isBinary: true, raw: raw as Buffer }
           : { isBinary: false, raw: raw.toString() };
-        const wsParams: WsParams = {
+        const wsParams: WsMessageParams = {
           ...frame,
           broadcast: (data: unknown) => broadcastWsData(server, data),
           socket,
@@ -191,17 +211,23 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         });
 
         for (const artifact of matchedRawArtifacts) {
-          // TODO: add interceptors for ws
-          // if (artifact.componentRequestInterceptor) {
-          //   await artifact.componentRequestInterceptor(wsParams);
-          // }
+          if (artifact.componentInterceptors) {
+            await callRequestInterceptors({
+              request,
+              interceptors: artifact.componentInterceptors
+            });
+          }
 
           const resolvedData = await artifact.config.data(wsParams);
-          // TODO: add interceptors for ws
-          // const data = artifact.componentResponseInterceptor
-          //   ? artifact.componentResponseInterceptor(resolvedData, wsParams)
-          //   : resolvedData;
-          const data = resolvedData;
+
+          const data = await callResponseInterceptors({
+            data: resolvedData,
+            request,
+            // @ts-ignore
+            response: {},
+            componentInterceptors: artifact.componentInterceptors,
+            serverInterceptors: artifact.serverInterceptors
+          });
 
           if (artifact.config.settings?.delay) {
             await sleep(artifact.config.settings.delay);
@@ -315,6 +341,13 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         if (completedSubscriptionIds.has(operationId)) return;
 
         sendGraphqlTransportWsData(socket, operationId, resolvedData);
+      });
+
+      socket.on('close', async () => {
+        console.log('WS.CLOSE', request.id, request.api);
+      });
+      socket.on('error', async () => {
+        console.log('WS.ERROR', request.id, request.api);
       });
     }
   );

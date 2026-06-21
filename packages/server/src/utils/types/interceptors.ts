@@ -7,7 +7,7 @@ import type { MaybePromise } from './utils';
 type InterceptorCookieValue = string | undefined;
 type InterceptorHeaderValue = number | string | string[] | undefined;
 
-export interface RequestInterceptorFnParams {
+export interface HttpRequestInterceptorFnParams {
   orm: Orm<Database>;
   request: Request;
   getCookie: (name: string) => InterceptorCookieValue;
@@ -17,9 +17,11 @@ export interface RequestInterceptorFnParams {
   setDelay: (delay: number) => Promise<void>;
 }
 
-export type RequestInterceptorFn = (params: RequestInterceptorFnParams) => MaybePromise<void>;
+export type HttpRequestInterceptorFn = (
+  params: HttpRequestInterceptorFnParams
+) => MaybePromise<void>;
 
-export interface ResponseInterceptorFnParams {
+export interface HttpResponseInterceptorFnParams {
   orm: Orm<Database>;
   request: Request;
   response: Response;
@@ -38,16 +40,39 @@ export interface ResponseInterceptorFnParams {
   setStatusCode: (statusCode: number) => void;
 }
 
-export type ResponseInterceptorFn<Data = any> = (
+export type HttpResponseInterceptorFn<Data = any> = (
   data: Data,
-  params: ResponseInterceptorFnParams
+  params: HttpResponseInterceptorFnParams
+) => any;
+
+export interface WsRequestInterceptorFnParams {
+  // socket: WebSocket;
+  // broadcast: <Response = unknown>(response: Response) => void;
+  // send: <Response = unknown>(response: Response) => void;
+  setDelay: (delay: number) => Promise<void>;
+}
+
+export type WsRequestInterceptorFn = (params: WsRequestInterceptorFnParams) => MaybePromise<void>;
+
+export interface WsResponseInterceptorFnParams {
+  // socket: WebSocket;
+  // broadcast: <Response = unknown>(response: Response) => void;
+  // send: <Response = unknown>(response: Response) => void;
+  setDelay: (delay: number) => Promise<void>;
+}
+
+export type WsResponseInterceptorFn<Data = any> = (
+  data: Data,
+  params: WsResponseInterceptorFnParams
 ) => any;
 
 export type {
+  HttpRequestInterceptor,
+  HttpResponseInterceptor,
   Interceptor,
   InterceptorName,
-  RequestInterceptor,
   RequestInterceptorName,
-  ResponseInterceptor,
-  ResponseInterceptorName
+  ResponseInterceptorName,
+  WsRequestInterceptor,
+  WsResponseInterceptor
 } from '../../core/interceptors';

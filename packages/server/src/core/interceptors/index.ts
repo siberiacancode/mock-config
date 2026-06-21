@@ -1,68 +1,79 @@
 import type { INTERCEPTOR_NAME } from '@/utils/constants';
-import type { LeafKeys, RequestInterceptorFn, ResponseInterceptorFn } from '@/utils/types';
+import type {
+  HttpRequestInterceptorFn,
+  HttpResponseInterceptorFn,
+  LeafKeys,
+  WsRequestInterceptorFn,
+  WsResponseInterceptorFn
+} from '@/utils/types';
 
 import { createInterceptor } from '@/utils/helpers';
 
 export const http = {
   request: {
-    all: (interceptor: RequestInterceptorFn) => createInterceptor('http.request.all', interceptor)
+    all: (interceptor: HttpRequestInterceptorFn) =>
+      createInterceptor('http.request.all', interceptor)
   },
   response: {
-    all: (interceptor: ResponseInterceptorFn) => createInterceptor('http.response.all', interceptor)
+    all: (interceptor: HttpResponseInterceptorFn) =>
+      createInterceptor('http.response.all', interceptor)
   }
 };
 
 export const rest = {
   request: {
-    all: (interceptor: RequestInterceptorFn) => createInterceptor('rest.request.all', interceptor),
-    get: (interceptor: RequestInterceptorFn) => createInterceptor('rest.request.get', interceptor),
-    post: (interceptor: RequestInterceptorFn) =>
+    all: (interceptor: HttpRequestInterceptorFn) =>
+      createInterceptor('rest.request.all', interceptor),
+    get: (interceptor: HttpRequestInterceptorFn) =>
+      createInterceptor('rest.request.get', interceptor),
+    post: (interceptor: HttpRequestInterceptorFn) =>
       createInterceptor('rest.request.post', interceptor),
-    put: (interceptor: RequestInterceptorFn) => createInterceptor('rest.request.put', interceptor),
-    patch: (interceptor: RequestInterceptorFn) =>
+    put: (interceptor: HttpRequestInterceptorFn) =>
+      createInterceptor('rest.request.put', interceptor),
+    patch: (interceptor: HttpRequestInterceptorFn) =>
       createInterceptor('rest.request.patch', interceptor),
-    delete: (interceptor: RequestInterceptorFn) =>
+    delete: (interceptor: HttpRequestInterceptorFn) =>
       createInterceptor('rest.request.delete', interceptor),
-    options: (interceptor: RequestInterceptorFn) =>
+    options: (interceptor: HttpRequestInterceptorFn) =>
       createInterceptor('rest.request.options', interceptor)
   },
   response: {
-    all: (interceptor: ResponseInterceptorFn) =>
+    all: (interceptor: HttpResponseInterceptorFn) =>
       createInterceptor('rest.response.all', interceptor),
-    get: (interceptor: ResponseInterceptorFn) =>
+    get: (interceptor: HttpResponseInterceptorFn) =>
       createInterceptor('rest.response.get', interceptor),
-    post: (interceptor: ResponseInterceptorFn) =>
+    post: (interceptor: HttpResponseInterceptorFn) =>
       createInterceptor('rest.response.post', interceptor),
-    put: (interceptor: ResponseInterceptorFn) =>
+    put: (interceptor: HttpResponseInterceptorFn) =>
       createInterceptor('rest.response.put', interceptor),
-    patch: (interceptor: ResponseInterceptorFn) =>
+    patch: (interceptor: HttpResponseInterceptorFn) =>
       createInterceptor('rest.response.patch', interceptor),
-    delete: (interceptor: ResponseInterceptorFn) =>
+    delete: (interceptor: HttpResponseInterceptorFn) =>
       createInterceptor('rest.response.delete', interceptor),
-    options: (interceptor: ResponseInterceptorFn) =>
+    options: (interceptor: HttpResponseInterceptorFn) =>
       createInterceptor('rest.response.options', interceptor)
   }
 };
 
 export const graphql = {
   request: {
-    all: (interceptor: RequestInterceptorFn) =>
+    all: (interceptor: HttpRequestInterceptorFn) =>
       createInterceptor('graphql.request.all', interceptor),
-    query: (interceptor: RequestInterceptorFn) =>
+    query: (interceptor: HttpRequestInterceptorFn) =>
       createInterceptor('graphql.request.query', interceptor),
-    mutation: (interceptor: RequestInterceptorFn) =>
+    mutation: (interceptor: HttpRequestInterceptorFn) =>
       createInterceptor('graphql.request.mutation', interceptor),
-    subscription: (interceptor: RequestInterceptorFn) =>
+    subscription: (interceptor: HttpRequestInterceptorFn) =>
       createInterceptor('graphql.request.subscription', interceptor)
   },
   response: {
-    all: (interceptor: ResponseInterceptorFn) =>
+    all: (interceptor: HttpResponseInterceptorFn) =>
       createInterceptor('graphql.response.all', interceptor),
-    query: (interceptor: ResponseInterceptorFn) =>
+    query: (interceptor: HttpResponseInterceptorFn) =>
       createInterceptor('graphql.response.query', interceptor),
-    mutation: (interceptor: ResponseInterceptorFn) =>
+    mutation: (interceptor: HttpResponseInterceptorFn) =>
       createInterceptor('graphql.response.mutation', interceptor),
-    subscription: (interceptor: ResponseInterceptorFn) =>
+    subscription: (interceptor: HttpResponseInterceptorFn) =>
       createInterceptor('graphql.response.subscription', interceptor)
   }
 };
@@ -70,21 +81,30 @@ export const graphql = {
 // TODO: make RequestWsInterceptor and disconnect
 export const ws = {
   request: {
-    all: (interceptor: RequestInterceptorFn) => createInterceptor('ws.request.all', interceptor),
-    connection: (interceptor: RequestInterceptorFn) =>
-      createInterceptor('ws.request.connection', interceptor),
-    graphql: (interceptor: RequestInterceptorFn) =>
+    all: (interceptor: WsRequestInterceptorFn) => createInterceptor('ws.request.all', interceptor),
+    open: (interceptor: WsRequestInterceptorFn) =>
+      createInterceptor('ws.request.open', interceptor),
+    close: (interceptor: WsRequestInterceptorFn) =>
+      createInterceptor('ws.request.close', interceptor),
+    error: (interceptor: WsRequestInterceptorFn) =>
+      createInterceptor('ws.request.error', interceptor),
+    graphql: (interceptor: WsRequestInterceptorFn) =>
       createInterceptor('ws.request.graphql', interceptor),
-    message: (interceptor: RequestInterceptorFn) =>
+    message: (interceptor: WsRequestInterceptorFn) =>
       createInterceptor('ws.request.message', interceptor)
   },
   response: {
-    all: (interceptor: ResponseInterceptorFn) => createInterceptor('ws.response.all', interceptor),
-    connection: (interceptor: ResponseInterceptorFn) =>
-      createInterceptor('ws.response.connection', interceptor),
-    graphql: (interceptor: ResponseInterceptorFn) =>
+    all: (interceptor: WsResponseInterceptorFn) =>
+      createInterceptor('ws.response.all', interceptor),
+    open: (interceptor: WsResponseInterceptorFn) =>
+      createInterceptor('ws.response.open', interceptor),
+    close: (interceptor: WsResponseInterceptorFn) =>
+      createInterceptor('ws.response.close', interceptor),
+    error: (interceptor: WsResponseInterceptorFn) =>
+      createInterceptor('ws.response.error', interceptor),
+    graphql: (interceptor: WsResponseInterceptorFn) =>
       createInterceptor('ws.response.graphql', interceptor),
-    message: (interceptor: ResponseInterceptorFn) =>
+    message: (interceptor: WsResponseInterceptorFn) =>
       createInterceptor('ws.response.message', interceptor)
   }
 };
@@ -99,12 +119,22 @@ export type InterceptorName = LeafKeys<{
 export type RequestInterceptorName = Extract<InterceptorName, `${string}.request.${string}`>;
 export type ResponseInterceptorName = Extract<InterceptorName, `${string}.response.${string}`>;
 
-export type RequestInterceptor = RequestInterceptorFn & {
+export type HttpRequestInterceptor = HttpRequestInterceptorFn & {
+  [INTERCEPTOR_NAME]: RequestInterceptorName;
+};
+export type WsRequestInterceptor = WsRequestInterceptorFn & {
   [INTERCEPTOR_NAME]: RequestInterceptorName;
 };
 
-export type ResponseInterceptor = ResponseInterceptorFn & {
+export type HttpResponseInterceptor = HttpResponseInterceptorFn & {
+  [INTERCEPTOR_NAME]: ResponseInterceptorName;
+};
+export type WsResponseInterceptor = WsResponseInterceptorFn & {
   [INTERCEPTOR_NAME]: ResponseInterceptorName;
 };
 
-export type Interceptor = RequestInterceptor | ResponseInterceptor;
+export type Interceptor =
+  | HttpRequestInterceptor
+  | HttpResponseInterceptor
+  | WsRequestInterceptor
+  | WsResponseInterceptor;

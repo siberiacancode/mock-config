@@ -2,6 +2,7 @@ import type { Buffer } from 'node:buffer';
 import type { IncomingMessage } from 'node:http';
 import type { WebSocket } from 'ws';
 
+import type { Interceptor } from '../../core/interceptors';
 import type { MappedEntity } from './entities';
 import type { GraphQLIdentifier } from './graphql';
 import type { GraphqlTransportWsRouteConfig } from './graphql-transport-ws';
@@ -20,15 +21,14 @@ export interface WsFrameText {
 }
 export type WsFrame = WsFrameBinary | WsFrameText;
 
-// TODO: WsMessageParams
-export type WsParams = WsFrame & {
+export type WsMessageParams = WsFrame & {
   broadcast: <Response = unknown>(response: Response) => void;
   socket: WebSocket;
   send: <Response = unknown>(response: Response) => void;
   setDelay: (delay: number) => Promise<void>;
 };
 
-export type WsDataResponse = (params: WsParams) => MaybePromise<Data>;
+export type WsDataResponse = (params: WsMessageParams) => MaybePromise<Data>;
 
 export interface WsSettings {
   readonly delay?: number;
@@ -74,8 +74,8 @@ export type WsRequestConfig = WsConnectionRequestConfig | WsRawRequestConfig;
 
 interface BaseWsRequestArtifact {
   baseUrl: BaseUrl;
-  // TODO: add interceptors for ws
-  componentInterceptors?: any;
+  componentInterceptors?: Interceptor[];
+  serverInterceptors?: Interceptor[];
   weight: number;
 }
 

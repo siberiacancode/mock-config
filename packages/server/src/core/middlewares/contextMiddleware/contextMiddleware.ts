@@ -9,17 +9,34 @@ import type { ApiType, DatabaseConfig, GraphQLEntity, GraphQLOperationType } fro
 import { createOrm, createStorage } from '@/core/database';
 import { getGraphQLInput, parseGraphQLQuery } from '@/utils/helpers';
 
-type ApiContext =
-  | { type: Exclude<ApiType, 'graphql'>; graphQL: null }
-  | {
-      type: Extract<ApiType, 'graphql'>;
-      graphQL: {
-        operationName?: string;
-        operationType: GraphQLOperationType;
-        query: string;
-        variables?: GraphQLEntity<'variables'>;
-      };
-    };
+type WsEvent = 'close' | 'error' | 'message' | 'open' | 'ping' | 'pong';
+
+interface RestContext {
+  graphQL: null;
+  type: Extract<ApiType, 'rest'>;
+  ws: null;
+}
+
+interface GraphqlContext {
+  graphQL: {
+    operationName?: string;
+    operationType: GraphQLOperationType;
+    query: string;
+    variables?: GraphQLEntity<'variables'>;
+  };
+  type: Extract<ApiType, 'graphql'>;
+  ws: null;
+}
+
+interface WsContext {
+  graphQL: null;
+  type: Extract<ApiType, 'ws'>;
+  ws: {
+    event: WsEvent;
+  };
+}
+
+type ApiContext = GraphqlContext | RestContext | WsContext;
 
 declare global {
   namespace Express {
@@ -72,7 +89,7 @@ export const contextMiddleware = (
     context.orm = orm;
   }
 
-  const decorate = (request: Express['request']) => {
+  const addContext = (request: Express['request']) => {
     requestId += 1;
     request.id = requestId;
     request.timestamp = Date.now();
@@ -80,7 +97,7 @@ export const contextMiddleware = (
   };
 
   server.use((request, _response, next) => {
-    decorate(request);
+    addContext(request);
 
     if (request.method === 'GET' || request.method === 'POST') {
       const graphQLInput = getGraphQLInput(request);
@@ -88,7 +105,8 @@ export const contextMiddleware = (
 
       request.api = {
         type: 'rest',
-        graphQL: null
+        graphQL: null,
+        ws: null
       };
 
       if (graphQLInput.query && graphQLQuery) {
@@ -99,7 +117,8 @@ export const contextMiddleware = (
             operationName: graphQLQuery.operationName,
             query: graphQLInput.query,
             variables: graphQLInput.variables
-          }
+          },
+          ws: null
         };
       }
     }
@@ -111,16 +130,16 @@ export const contextMiddleware = (
   ws.on('connection', (socket, incomingMessage) => {
     const request = incomingMessage as Express['request'];
 
-    const decorateWs = () => {
-      decorate(request);
-      request.api = { type: 'ws', graphQL: null };
+    const getAddWsContextFn = (event: WsEvent) => () => {
+      addContext(request);
+      request.api = { type: 'ws', graphQL: null, ws: { event } };
     };
 
-    decorateWs();
-    socket.on('message', decorateWs);
-    socket.on('ping', decorateWs);
-    socket.on('pong', decorateWs);
-    socket.on('close', decorateWs);
-    socket.on('error', decorateWs);
+    getAddWsContextFn('open')();
+    socket.on('message', getAddWsContextFn('message'));
+    socket.on('ping', getAddWsContextFn('ping'));
+    socket.on('pong', getAddWsContextFn('pong'));
+    socket.on('close', getAddWsContextFn('close'));
+    socket.on('error', getAddWsContextFn('error'));
   });
 };

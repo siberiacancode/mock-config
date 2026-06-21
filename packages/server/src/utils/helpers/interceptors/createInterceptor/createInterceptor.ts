@@ -1,28 +1,48 @@
 import type {
-  RequestInterceptor,
-  RequestInterceptorFn,
+  HttpRequestInterceptor,
+  HttpRequestInterceptorFn,
+  HttpResponseInterceptor,
+  HttpResponseInterceptorFn,
+  Interceptor,
+  InterceptorName,
   RequestInterceptorName,
-  ResponseInterceptor,
-  ResponseInterceptorFn,
-  ResponseInterceptorName
+  ResponseInterceptorName,
+  WsRequestInterceptor,
+  WsRequestInterceptorFn,
+  WsResponseInterceptor,
+  WsResponseInterceptorFn
 } from '@/utils/types';
 
 import { INTERCEPTOR_NAME } from '@/utils/constants';
 
 export function createInterceptor(
   name: RequestInterceptorName,
-  interceptor: RequestInterceptorFn
-): RequestInterceptor;
+  interceptor: WsRequestInterceptorFn
+): WsRequestInterceptor;
+
+export function createInterceptor(
+  name: RequestInterceptorName,
+  interceptor: HttpRequestInterceptorFn
+): HttpRequestInterceptor;
 
 export function createInterceptor(
   name: ResponseInterceptorName,
-  interceptor: ResponseInterceptorFn
-): ResponseInterceptor;
+  interceptor: HttpResponseInterceptorFn
+): HttpResponseInterceptor;
 
 export function createInterceptor(
-  name: RequestInterceptorName | ResponseInterceptorName,
-  interceptorFn: RequestInterceptorFn | ResponseInterceptorFn
+  name: ResponseInterceptorName,
+  interceptor: WsResponseInterceptorFn
+): WsResponseInterceptor;
+
+export function createInterceptor(
+  name: InterceptorName,
+  interceptorFn:
+    | HttpRequestInterceptorFn
+    | HttpResponseInterceptorFn
+    | WsRequestInterceptorFn
+    | WsResponseInterceptorFn
 ) {
-  (interceptorFn as RequestInterceptor | ResponseInterceptor)[INTERCEPTOR_NAME] = name;
+  (interceptorFn as Interceptor)[INTERCEPTOR_NAME] = name;
   return interceptorFn;
 }
