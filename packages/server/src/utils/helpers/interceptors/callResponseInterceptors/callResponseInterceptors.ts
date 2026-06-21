@@ -2,10 +2,10 @@ import type { Request, Response } from 'express';
 
 import type {
   Data,
-  Interceptors,
+  Interceptor,
   ResponseInterceptor,
   ResponseInterceptorFnParams,
-  ResponseInterceptorName
+  RestMethod
 } from '@/utils/types';
 
 import { INTERCEPTOR_NAME } from '@/utils/constants';
@@ -14,23 +14,15 @@ import { callResponseLogger } from '../../logger';
 import { sleep } from '../../sleep';
 
 interface CallResponseInterceptorsParams {
-  componentInterceptors?: Interceptors;
+  componentInterceptors?: Interceptor[];
   data: Data;
-  interceptorNames: ResponseInterceptorName[];
   request: Request;
   response: Response;
-  serverInterceptors?: Interceptors;
+  serverInterceptors?: Interceptor[];
 }
 
 export const callResponseInterceptors = async (params: CallResponseInterceptorsParams) => {
-  const {
-    data,
-    request,
-    response,
-    componentInterceptors = [],
-    serverInterceptors = [],
-    interceptorNames
-  } = params;
+  const { data, request, response, componentInterceptors = [], serverInterceptors = [] } = params;
 
   const getRequestHeader: ResponseInterceptorFnParams['getRequestHeader'] = (field: string) =>
     request.headers[field];
@@ -95,6 +87,19 @@ export const callResponseInterceptors = async (params: CallResponseInterceptorsP
   };
 
   let updatedData = data;
+
+  const interceptorNames =
+    request.api.type === 'graphql'
+      ? [
+          'http.response.all',
+          'graphql.response.all',
+          `graphql.response.${request.api.graphQL.operationType}`
+        ]
+      : [
+          'http.response.all',
+          'rest.response.all',
+          `rest.response.${request.method.toLowerCase() as RestMethod}`
+        ];
 
   const responseInterceptors = [...componentInterceptors, ...serverInterceptors].filter(
     (interceptor): interceptor is ResponseInterceptor =>

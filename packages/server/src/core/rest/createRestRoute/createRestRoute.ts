@@ -3,7 +3,6 @@ import type { Express } from 'express';
 import type {
   Entries,
   RestEntitiesByEntityName,
-  RestMethod,
   RestParams,
   RestRequestArtifact
 } from '@/utils/types';
@@ -116,12 +115,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
       if (matchedRouteConfig.componentInterceptors) {
         await callRequestInterceptors({
           request,
-          interceptors: matchedRouteConfig.componentInterceptors,
-          interceptorNames: [
-            'http.request.all',
-            'rest.request.all',
-            `rest.request.${request.method.toLowerCase() as RestMethod}`
-          ]
+          interceptors: matchedRouteConfig.componentInterceptors
         });
       }
 
@@ -188,12 +182,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         request,
         response,
         componentInterceptors: matchedRouteConfig.componentInterceptors,
-        serverInterceptors: matchedRouteConfig.serverInterceptors,
-        interceptorNames: [
-          'http.response.all',
-          'rest.response.all',
-          `rest.response.${request.method.toLowerCase() as RestMethod}`
-        ]
+        serverInterceptors: matchedRouteConfig.serverInterceptors
       });
 
       if (matchedRouteConfig.config.settings?.delay) {

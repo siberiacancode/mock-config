@@ -1,10 +1,10 @@
 import type { Request } from 'express';
 
 import type {
-  Interceptors,
+  Interceptor,
   RequestInterceptor,
   RequestInterceptorFnParams,
-  RequestInterceptorName
+  RestMethod
 } from '@/utils/types';
 
 import { INTERCEPTOR_NAME } from '@/utils/constants';
@@ -13,13 +13,11 @@ import { callRequestLogger } from '../../logger';
 import { sleep } from '../../sleep';
 
 interface CallRequestInterceptorsParams {
-  interceptorNames: RequestInterceptorName[];
-  interceptors: Interceptors;
+  interceptors: Interceptor[];
   request: Request;
 }
 
 export const callRequestInterceptors = async ({
-  interceptorNames,
   interceptors,
   request
 }: CallRequestInterceptorsParams) => {
@@ -43,6 +41,19 @@ export const callRequestInterceptors = async ({
     log,
     orm: request.context.orm
   };
+
+  const interceptorNames =
+    request.api.type === 'graphql'
+      ? [
+          'http.request.all',
+          'graphql.request.all',
+          `graphql.request.${request.api.graphQL.operationType}`
+        ]
+      : [
+          'http.request.all',
+          'rest.request.all',
+          `rest.request.${request.method.toLowerCase() as RestMethod}`
+        ];
 
   const requestInterceptors = interceptors.filter(
     (interceptor): interceptor is RequestInterceptor =>

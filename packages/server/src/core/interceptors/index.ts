@@ -107,4 +107,4 @@ export type ResponseInterceptor = ResponseInterceptorFn & {
   [INTERCEPTOR_NAME]: ResponseInterceptorName;
 };
 
-export type Interceptors = (RequestInterceptor | ResponseInterceptor)[];
+export type Interceptor = RequestInterceptor | ResponseInterceptor;

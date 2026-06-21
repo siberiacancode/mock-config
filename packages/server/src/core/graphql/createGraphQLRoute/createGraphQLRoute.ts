@@ -103,12 +103,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
       if (matchedRouteConfig.componentInterceptors) {
         await callRequestInterceptors({
           request,
-          interceptors: matchedRouteConfig.componentInterceptors,
-          interceptorNames: [
-            'http.request.all',
-            'graphql.request.all',
-            `graphql.request.${request.graphQL!.operationType}`
-          ]
+          interceptors: matchedRouteConfig.componentInterceptors
         });
       }
       const params: GraphQLParams = {
@@ -173,12 +168,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
         request,
         response,
         componentInterceptors: matchedRouteConfig.componentInterceptors,
-        serverInterceptors: matchedRouteConfig.serverInterceptors,
-        interceptorNames: [
-          'http.response.all',
-          'graphql.response.all',
-          `graphql.response.${request.graphQL!.operationType}`
-        ]
+        serverInterceptors: matchedRouteConfig.serverInterceptors
       });
 
       if (matchedRouteConfig.config.settings?.delay) {

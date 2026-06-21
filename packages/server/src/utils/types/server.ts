@@ -5,7 +5,7 @@ import type { Cors } from './cors';
 import type { Database, DatabaseConfig, Orm } from './database';
 import type { GraphQLRequestConfig } from './graphql';
 import type { GraphqlTransportWsRequestConfig } from './graphql-transport-ws';
-import type { Interceptors } from './interceptors';
+import type { Interceptor } from './interceptors';
 import type { RestRequestConfig } from './rest';
 import type { WsRequestConfig } from './ws';
 
@@ -21,7 +21,7 @@ export type BaseUrl = `/${string}`;
 export interface BaseServerConfig {
   baseUrl?: BaseUrl;
   cors?: Cors;
-  interceptors?: Interceptors;
+  interceptors?: Interceptor[];
   port?: Port;
   staticPath?: StaticPath;
 }
@@ -53,7 +53,7 @@ export interface MockServerComponent {
   configs: Array<
     GraphQLRequestConfig | GraphqlTransportWsRequestConfig | RestRequestConfig | WsRequestConfig
   >;
-  interceptors?: Interceptors;
+  interceptors?: Interceptor[];
   name?: string;
 }
 
@@ -61,7 +61,7 @@ export interface MockServerSettings {
   baseUrl?: BaseUrl;
   cors?: Cors;
   database?: DatabaseConfig;
-  interceptors?: Interceptors;
+  interceptors?: Interceptor[];
   port?: Port;
   staticPath?: StaticPath;
 }

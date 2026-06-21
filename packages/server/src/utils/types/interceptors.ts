@@ -44,8 +44,8 @@ export type ResponseInterceptorFn<Data = any> = (
 ) => any;
 
 export type {
+  Interceptor,
   InterceptorName,
-  Interceptors,
   RequestInterceptor,
   RequestInterceptorName,
   ResponseInterceptor,

@@ -1,3 +1,5 @@
+export type ApiType = 'graphql' | 'rest' | 'ws';
+
 export type RestMethod = 'delete' | 'get' | 'options' | 'patch' | 'post' | 'put';
 
 export type GraphQLOperationType = 'mutation' | 'query';

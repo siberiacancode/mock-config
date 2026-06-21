@@ -2,7 +2,7 @@ import type { CookieOptions, Response as ExpressResponse, Request } from 'expres
 import type { ExecutionResult } from 'graphql';
 
 import type { MappedEntity, VariablesEntity } from './entities';
-import type { Interceptors } from './interceptors';
+import type { Interceptor } from './interceptors';
 import type { BaseUrl } from './server';
 import type { GraphQLOperationType } from './shared';
 import type { MaybePromise } from './utils';
@@ -73,10 +73,10 @@ export interface GraphQLRequestConfig {
 
 export interface GraphQLRequestArtifact {
   baseUrl: BaseUrl;
-  componentInterceptors?: Interceptors;
+  componentInterceptors?: Interceptor[];
   config: GraphQLRouteConfig;
   identifier: GraphQLIdentifier;
   operationType: GraphQLOperationType;
-  serverInterceptors?: Interceptors;
+  serverInterceptors?: Interceptor[];
   weight: number;
 }

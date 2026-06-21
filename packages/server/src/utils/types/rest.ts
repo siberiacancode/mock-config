@@ -1,7 +1,7 @@
 import type { CookieOptions, Response as ExpressResponse, Request } from 'express';
 
 import type { BodyEntity, MappedEntity } from './entities';
-import type { Interceptors } from './interceptors';
+import type { Interceptor } from './interceptors';
 import type { BaseUrl } from './server';
 import type { RestMethod } from './shared';
 import type { MaybePromise } from './utils';
@@ -94,10 +94,10 @@ export type RestRequestConfig =
 
 export interface RestRequestArtifact {
   baseUrl: BaseUrl;
-  componentInterceptors?: Interceptors;
+  componentInterceptors?: Interceptor[];
   config: RestRouteConfig<RestMethod>;
   method: RestMethod;
   path: RegExp | RestPathString;
-  serverInterceptors?: Interceptors;
+  serverInterceptors?: Interceptor[];
   weight: number;
 }
