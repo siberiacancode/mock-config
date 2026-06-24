@@ -9,8 +9,8 @@ import type {
 
 import {
   asyncHandler,
-  callRequestInterceptors,
-  callResponseInterceptors,
+  callHttpRequestInterceptors,
+  callHttpResponseInterceptors,
   getGraphQLInput,
   isComparator,
   normalizeUrl,
@@ -101,7 +101,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
       if (!matchedRouteConfig) return next();
 
       if (matchedRouteConfig.componentInterceptors) {
-        await callRequestInterceptors({
+        await callHttpRequestInterceptors({
           request,
           interceptors: matchedRouteConfig.componentInterceptors
         });
@@ -163,7 +163,7 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
         response.set('Cache-control', 'no-cache');
       }
 
-      const data = await callResponseInterceptors({
+      const data = await callHttpResponseInterceptors({
         data: resolvedData,
         request,
         response,

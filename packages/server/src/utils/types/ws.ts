@@ -70,8 +70,6 @@ export interface WsConnectionRequestConfig {
   type: 'connection';
 }
 
-export type WsRequestConfig = WsConnectionRequestConfig | WsRawRequestConfig;
-
 interface BaseWsRequestArtifact {
   baseUrl: BaseUrl;
   componentInterceptors?: Interceptor[];
@@ -96,7 +94,68 @@ export interface GraphqlTransportWsRequestArtifact extends BaseWsRequestArtifact
   type: 'graphql-ws';
 }
 
+export interface WsCloseParams {
+  code: number;
+  reason: string;
+  request: IncomingMessage;
+  socket: WebSocket;
+  broadcast: <Response = unknown>(response: Response) => void;
+  setDelay: (delay: number) => Promise<void>;
+}
+
+export interface WsErrorParams {
+  error: Error;
+  request: IncomingMessage;
+  socket: WebSocket;
+  broadcast: <Response = unknown>(response: Response) => void;
+  send: <Response = unknown>(response: Response) => void;
+  setDelay: (delay: number) => Promise<void>;
+}
+
+export type WsCloseDataResponse = (params: WsCloseParams) => MaybePromise<Data>;
+export type WsErrorDataResponse = (params: WsErrorParams) => MaybePromise<Data>;
+
+export interface WsCloseRouteConfig {
+  data?: WsCloseDataResponse;
+  entities?: WsConnectionEntitiesByEntityName;
+  settings?: WsSettings;
+}
+
+export interface WsErrorRouteConfig {
+  data?: WsErrorDataResponse;
+  entities?: WsConnectionEntitiesByEntityName;
+  settings?: WsSettings;
+}
+
+export interface WsCloseRequestConfig {
+  routes: WsCloseRouteConfig[];
+  type: 'close';
+}
+
+export interface WsErrorRequestConfig {
+  routes: WsErrorRouteConfig[];
+  type: 'error';
+}
+
+export type WsRequestConfig =
+  | WsCloseRequestConfig
+  | WsConnectionRequestConfig
+  | WsErrorRequestConfig
+  | WsRawRequestConfig;
+
+export interface CloseWsRequestArtifact extends BaseWsRequestArtifact {
+  config: WsCloseRouteConfig;
+  type: 'close';
+}
+
+export interface ErrorWsRequestArtifact extends BaseWsRequestArtifact {
+  config: WsErrorRouteConfig;
+  type: 'error';
+}
+
 export type WsRequestArtifact =
+  | CloseWsRequestArtifact
   | ConnectionWsRequestArtifact
+  | ErrorWsRequestArtifact
   | GraphqlTransportWsRequestArtifact
   | RawWsRequestArtifact;

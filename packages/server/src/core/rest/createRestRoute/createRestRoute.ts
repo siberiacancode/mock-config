@@ -9,8 +9,8 @@ import type {
 
 import {
   asyncHandler,
-  callRequestInterceptors,
-  callResponseInterceptors,
+  callHttpRequestInterceptors,
+  callHttpResponseInterceptors,
   isComparator,
   normalizeUrl,
   resolveEntityValues,
@@ -113,7 +113,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
       }
 
       if (matchedRouteConfig.componentInterceptors) {
-        await callRequestInterceptors({
+        await callHttpRequestInterceptors({
           request,
           interceptors: matchedRouteConfig.componentInterceptors
         });
@@ -177,7 +177,7 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         return;
       }
 
-      const data = await callResponseInterceptors({
+      const data = await callHttpResponseInterceptors({
         data: resolvedData,
         request,
         response,

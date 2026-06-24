@@ -1,4 +1,5 @@
 import type { CookieOptions, Request, Response } from 'express';
+import type { WebSocket } from 'ws';
 
 import type { Database, Orm } from './database';
 import type { Logger, LoggerTokens } from './logger';
@@ -46,18 +47,18 @@ export type HttpResponseInterceptorFn<Data = any> = (
 ) => any;
 
 export interface WsRequestInterceptorFnParams {
-  // socket: WebSocket;
-  // broadcast: <Response = unknown>(response: Response) => void;
-  // send: <Response = unknown>(response: Response) => void;
+  socket: WebSocket;
+  broadcast: <Response = unknown>(response: Response) => void;
+  send: <Response = unknown>(response: Response) => void;
   setDelay: (delay: number) => Promise<void>;
 }
 
 export type WsRequestInterceptorFn = (params: WsRequestInterceptorFnParams) => MaybePromise<void>;
 
 export interface WsResponseInterceptorFnParams {
-  // socket: WebSocket;
-  // broadcast: <Response = unknown>(response: Response) => void;
-  // send: <Response = unknown>(response: Response) => void;
+  socket: WebSocket;
+  broadcast: <Response = unknown>(response: Response) => void;
+  send: <Response = unknown>(response: Response) => void;
   setDelay: (delay: number) => Promise<void>;
 }
 

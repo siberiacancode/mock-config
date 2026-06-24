@@ -2,7 +2,7 @@ import type { Express } from 'express';
 
 import type { Interceptor } from '@/utils/types';
 
-import { asyncHandler, callRequestInterceptors } from '@/utils/helpers';
+import { asyncHandler, callHttpRequestInterceptors } from '@/utils/helpers';
 
 interface ServerRequestInterceptorsMiddlewareParams {
   interceptors: Interceptor[];
@@ -14,11 +14,11 @@ export const serverRequestInterceptorsMiddleware = ({
   server,
   path = '*',
   interceptors
-}: ServerRequestInterceptorsMiddlewareParams) => {
+}: ServerRequestInterceptorsMiddlewareParams) =>
   server.use(
     path,
     asyncHandler(async (request, _response, next) => {
-      await callRequestInterceptors({
+      await callHttpRequestInterceptors({
         request,
         interceptors
       });
@@ -26,4 +26,3 @@ export const serverRequestInterceptorsMiddleware = ({
       return next();
     })
   );
-};

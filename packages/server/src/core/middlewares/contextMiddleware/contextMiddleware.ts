@@ -9,7 +9,7 @@ import type { ApiType, DatabaseConfig, GraphQLEntity, GraphQLOperationType } fro
 import { createOrm, createStorage } from '@/core/database';
 import { getGraphQLInput, parseGraphQLQuery } from '@/utils/helpers';
 
-type WsEvent = 'close' | 'error' | 'message' | 'open' | 'ping' | 'pong';
+type WsEvent = 'close' | 'error' | 'message' | 'open';
 
 interface RestContext {
   graphQL: null;
@@ -137,8 +137,6 @@ export const contextMiddleware = (
 
     getAddWsContextFn('open')();
     socket.on('message', getAddWsContextFn('message'));
-    socket.on('ping', getAddWsContextFn('ping'));
-    socket.on('pong', getAddWsContextFn('pong'));
     socket.on('close', getAddWsContextFn('close'));
     socket.on('error', getAddWsContextFn('error'));
   });
