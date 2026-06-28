@@ -270,7 +270,7 @@ describe('graphql', () => {
       const query = params.request.query.query;
       const body = params.request.body.body;
       const path = params.request.params.params;
-      console.log(query, body, path);
+      console.info(query, body, path);
 
       return { data: { response: 'value' } };
     });

@@ -10,6 +10,7 @@ import type {
   Entries,
   ErrorWsRequestArtifact,
   GraphQLEntitiesByEntityName,
+  GraphqlTransportWsExecutionResult,
   GraphqlTransportWsParams,
   GraphqlTransportWsRequestArtifact,
   RawWsRequestArtifact,
@@ -105,7 +106,10 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
         if (artifact.componentInterceptors) {
           await callWsRequestInterceptors({
-            request,
+            meta: {
+              type: 'ws',
+              event: 'open'
+            },
             interceptors: artifact.componentInterceptors,
             socket,
             broadcast,
@@ -127,7 +131,10 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
         const data = await callWsResponseInterceptors({
           data: resolvedData,
-          request,
+          meta: {
+            type: 'ws',
+            event: 'open'
+          },
           componentInterceptors: artifact.componentInterceptors,
           serverInterceptors: artifact.serverInterceptors,
           socket,
@@ -165,7 +172,11 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         for (const artifact of matchedRawArtifacts) {
           if (artifact.componentInterceptors) {
             await callWsRequestInterceptors({
-              request,
+              meta: {
+                type: 'ws',
+                event: 'message',
+                messageType: 'raw'
+              },
               interceptors: artifact.componentInterceptors,
               socket,
               broadcast,
@@ -177,7 +188,11 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
           const data = await callWsResponseInterceptors({
             data: resolvedData,
-            request,
+            meta: {
+              type: 'ws',
+              event: 'message',
+              messageType: 'raw'
+            },
             componentInterceptors: artifact.componentInterceptors,
             serverInterceptors: artifact.serverInterceptors,
             socket,
@@ -194,6 +209,9 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
         if (frame.isBinary) return;
 
+        // maybe move ws subscription logic in createGraphQLRoute
+        // to achieve matching graphql component operationTypes (query, mutation, subscription)
+        // with corresponding interceptors (graphql.request.query, graphql.request.mutation, graphql.request.subscription)
         const graphqlSubscriptionInput = getGraphqlTransportWsInput(frame.raw.toString());
 
         if (!graphqlSubscriptionInput) {
@@ -263,6 +281,20 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
         if (!matchedArtifact) return;
 
+        if (matchedArtifact.componentInterceptors) {
+          await callWsRequestInterceptors({
+            meta: {
+              type: 'ws',
+              event: 'message',
+              messageType: 'graphql-ws'
+            },
+            interceptors: matchedArtifact.componentInterceptors,
+            socket,
+            broadcast,
+            send
+          });
+        }
+
         const graphqlTransportWsParams: GraphqlTransportWsParams = {
           complete: () => {
             if (completedSubscriptionIds.has(operationId)) return;
@@ -290,13 +322,27 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
             ? await matchedArtifact.config.data(graphqlTransportWsParams)
             : matchedArtifact.config.data;
 
+        const data = await callWsResponseInterceptors({
+          data: resolvedData,
+          meta: {
+            type: 'ws',
+            event: 'message',
+            messageType: 'graphql-ws'
+          },
+          componentInterceptors: matchedArtifact.componentInterceptors,
+          serverInterceptors: matchedArtifact.serverInterceptors,
+          socket,
+          broadcast,
+          send
+        });
+
         if (matchedArtifact.config.settings?.delay) {
           await sleep(matchedArtifact.config.settings.delay);
         }
 
         if (completedSubscriptionIds.has(operationId)) return;
 
-        sendGraphqlTransportWsData(socket, operationId, resolvedData);
+        sendGraphqlTransportWsData(socket, operationId, data as GraphqlTransportWsExecutionResult);
       });
 
       socket.on('close', async (code: number, reason: Buffer) => {
@@ -308,7 +354,10 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
           if (artifact.componentInterceptors) {
             await callWsRequestInterceptors({
-              request,
+              meta: {
+                type: 'ws',
+                event: 'close'
+              },
               interceptors: artifact.componentInterceptors,
               socket,
               broadcast,
@@ -331,7 +380,10 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
           const data = await callWsResponseInterceptors({
             data: resolvedData,
-            request,
+            meta: {
+              type: 'ws',
+              event: 'close'
+            },
             componentInterceptors: artifact.componentInterceptors,
             serverInterceptors: artifact.serverInterceptors,
             socket,
@@ -343,7 +395,6 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
             await sleep(artifact.config.settings.delay);
           }
 
-          // сокет уже закрыт — результат уходит остальным клиентам
           broadcastWsData(server, data);
         }
       });
@@ -356,7 +407,10 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
           if (artifact.componentInterceptors) {
             await callWsRequestInterceptors({
-              request,
+              meta: {
+                type: 'ws',
+                event: 'error'
+              },
               interceptors: artifact.componentInterceptors,
               socket,
               broadcast,
@@ -379,7 +433,10 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
           const data = await callWsResponseInterceptors({
             data: resolvedData,
-            request,
+            meta: {
+              type: 'ws',
+              event: 'error'
+            },
             componentInterceptors: artifact.componentInterceptors,
             serverInterceptors: artifact.serverInterceptors,
             socket,
@@ -391,7 +448,6 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
             await sleep(artifact.config.settings.delay);
           }
 
-          // сокет может быть ещё жив — отвечаем ему, иначе остальным
           if (socket.readyState === WebSocket.OPEN) {
             sendWsData(socket, data);
           } else {

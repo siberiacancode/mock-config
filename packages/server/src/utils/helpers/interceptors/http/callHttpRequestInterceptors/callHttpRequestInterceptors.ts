@@ -1,10 +1,10 @@
 import type { Request } from 'express';
 
 import type {
+  HttpInterceptorMeta,
   HttpRequestInterceptor,
   HttpRequestInterceptorFnParams,
-  Interceptor,
-  RestMethod
+  Interceptor
 } from '@/utils/types';
 
 import { INTERCEPTOR_NAME } from '@/utils/constants';
@@ -14,11 +14,13 @@ import { sleep } from '../../../sleep';
 
 interface CallHttpRequestInterceptorsParams {
   interceptors: Interceptor[];
+  meta: HttpInterceptorMeta;
   request: Request;
 }
 
 export const callHttpRequestInterceptors = async ({
   interceptors,
+  meta,
   request
 }: CallHttpRequestInterceptorsParams) => {
   const getHeader: HttpRequestInterceptorFnParams['getHeader'] = (field) => request.headers[field];
@@ -44,17 +46,9 @@ export const callHttpRequestInterceptors = async ({
   };
 
   const interceptorNames =
-    request.api.type === 'graphql'
-      ? [
-          'http.request.all',
-          'graphql.request.all',
-          `graphql.request.${request.api.graphQL.operationType}`
-        ]
-      : [
-          'http.request.all',
-          'rest.request.all',
-          `rest.request.${request.method.toLowerCase() as RestMethod}`
-        ];
+    meta.type === 'graphql'
+      ? ['http.request.all', 'graphql.request.all', `graphql.request.${meta.operationType}`]
+      : ['http.request.all', 'rest.request.all', `rest.request.${meta.method}`];
 
   const requestInterceptors = interceptors.filter(
     (interceptor): interceptor is HttpRequestInterceptor =>

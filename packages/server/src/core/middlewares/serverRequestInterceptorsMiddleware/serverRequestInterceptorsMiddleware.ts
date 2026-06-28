@@ -18,9 +18,21 @@ export const serverRequestInterceptorsMiddleware = ({
   server.use(
     path,
     asyncHandler(async (request, _response, next) => {
+      if (request.api.type === 'ws') return next();
+
       await callHttpRequestInterceptors({
         request,
-        interceptors
+        interceptors,
+        meta:
+          request.api.type === 'rest'
+            ? {
+                type: request.api.type,
+                method: request.api.method
+              }
+            : {
+                type: request.api.type,
+                operationType: request.api.operationType
+              }
       });
 
       return next();

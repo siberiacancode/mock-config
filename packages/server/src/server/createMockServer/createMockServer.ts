@@ -142,7 +142,9 @@ export const createMockServer = (
               weight: calculateGraphqlTransportWsRouteConfigWeight(route),
               operationType: config.operationType,
               identifier: config.identifier,
-              config: route
+              config: route,
+              serverInterceptors,
+              componentInterceptors: component.interceptors
             });
           });
         }

@@ -78,7 +78,6 @@ export const graphql = {
   }
 };
 
-// TODO: make RequestWsInterceptor and disconnect
 export const ws = {
   request: {
     all: (interceptor: WsRequestInterceptorFn) => createInterceptor('ws.request.all', interceptor),
@@ -88,8 +87,6 @@ export const ws = {
       createInterceptor('ws.request.close', interceptor),
     error: (interceptor: WsRequestInterceptorFn) =>
       createInterceptor('ws.request.error', interceptor),
-    graphql: (interceptor: WsRequestInterceptorFn) =>
-      createInterceptor('ws.request.graphql', interceptor),
     message: (interceptor: WsRequestInterceptorFn) =>
       createInterceptor('ws.request.message', interceptor)
   },
@@ -102,8 +99,6 @@ export const ws = {
       createInterceptor('ws.response.close', interceptor),
     error: (interceptor: WsResponseInterceptorFn) =>
       createInterceptor('ws.response.error', interceptor),
-    graphql: (interceptor: WsResponseInterceptorFn) =>
-      createInterceptor('ws.response.graphql', interceptor),
     message: (interceptor: WsResponseInterceptorFn) =>
       createInterceptor('ws.response.message', interceptor)
   }

@@ -2,10 +2,10 @@ import type { Request, Response } from 'express';
 
 import type {
   Data,
+  HttpInterceptorMeta,
   HttpResponseInterceptor,
   HttpResponseInterceptorFnParams,
-  Interceptor,
-  RestMethod
+  Interceptor
 } from '@/utils/types';
 
 import { INTERCEPTOR_NAME } from '@/utils/constants';
@@ -16,14 +16,20 @@ import { sleep } from '../../../sleep';
 interface CallHttpResponseInterceptorsParams {
   componentInterceptors?: Interceptor[];
   data: Data;
+  meta: HttpInterceptorMeta;
   request: Request;
   response: Response;
   serverInterceptors?: Interceptor[];
 }
 
-export const callHttpResponseInterceptors = async (params: CallHttpResponseInterceptorsParams) => {
-  const { data, request, response, componentInterceptors = [], serverInterceptors = [] } = params;
-
+export const callHttpResponseInterceptors = async ({
+  data,
+  meta,
+  request,
+  response,
+  componentInterceptors = [],
+  serverInterceptors = []
+}: CallHttpResponseInterceptorsParams) => {
   const getRequestHeader: HttpResponseInterceptorFnParams['getRequestHeader'] = (field: string) =>
     request.headers[field];
   const getRequestHeaders: HttpResponseInterceptorFnParams['getRequestHeaders'] = () =>
@@ -90,17 +96,9 @@ export const callHttpResponseInterceptors = async (params: CallHttpResponseInter
   let updatedData = data;
 
   const interceptorNames =
-    request.api.type === 'graphql'
-      ? [
-          'http.response.all',
-          'graphql.response.all',
-          `graphql.response.${request.api.graphQL.operationType}`
-        ]
-      : [
-          'http.response.all',
-          'rest.response.all',
-          `rest.response.${request.method.toLowerCase() as RestMethod}`
-        ];
+    meta.type === 'graphql'
+      ? ['http.response.all', 'graphql.response.all', `graphql.response.${meta.operationType}`]
+      : ['http.response.all', 'rest.response.all', `rest.response.${meta.method}`];
 
   const responseInterceptors = [...componentInterceptors, ...serverInterceptors].filter(
     (interceptor): interceptor is HttpResponseInterceptor =>

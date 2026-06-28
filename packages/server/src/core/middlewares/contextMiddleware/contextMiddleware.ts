@@ -4,39 +4,16 @@ import type { WebSocketServer } from 'ws';
 import { Buffer } from 'node:buffer';
 import { WebSocket } from 'ws';
 
-import type { ApiType, DatabaseConfig, GraphQLEntity, GraphQLOperationType } from '@/utils/types';
+import type {
+  ApiContext,
+  DatabaseConfig,
+  GraphQLOperationType,
+  RestMethod,
+  WsEvent
+} from '@/utils/types';
 
 import { createOrm, createStorage } from '@/core/database';
 import { getGraphQLInput, parseGraphQLQuery } from '@/utils/helpers';
-
-type WsEvent = 'close' | 'error' | 'message' | 'open';
-
-interface RestContext {
-  graphQL: null;
-  type: Extract<ApiType, 'rest'>;
-  ws: null;
-}
-
-interface GraphqlContext {
-  graphQL: {
-    operationName?: string;
-    operationType: GraphQLOperationType;
-    query: string;
-    variables?: GraphQLEntity<'variables'>;
-  };
-  type: Extract<ApiType, 'graphql'>;
-  ws: null;
-}
-
-interface WsContext {
-  graphQL: null;
-  type: Extract<ApiType, 'ws'>;
-  ws: {
-    event: WsEvent;
-  };
-}
-
-type ApiContext = GraphqlContext | RestContext | WsContext;
 
 declare global {
   namespace Express {
@@ -105,20 +82,16 @@ export const contextMiddleware = (
 
       request.api = {
         type: 'rest',
-        graphQL: null,
-        ws: null
+        method: request.method.toLowerCase() as RestMethod
       };
 
       if (graphQLInput.query && graphQLQuery) {
         request.api = {
           type: 'graphql',
-          graphQL: {
-            operationType: graphQLQuery.operationType as GraphQLOperationType,
-            operationName: graphQLQuery.operationName,
-            query: graphQLInput.query,
-            variables: graphQLInput.variables
-          },
-          ws: null
+          operationType: graphQLQuery.operationType as GraphQLOperationType,
+          operationName: graphQLQuery.operationName,
+          query: graphQLInput.query,
+          variables: graphQLInput.variables
         };
       }
     }
@@ -132,7 +105,7 @@ export const contextMiddleware = (
 
     const getAddWsContextFn = (event: WsEvent) => () => {
       addContext(request);
-      request.api = { type: 'ws', graphQL: null, ws: { event } };
+      request.api = { type: 'ws', event };
     };
 
     getAddWsContextFn('open')();

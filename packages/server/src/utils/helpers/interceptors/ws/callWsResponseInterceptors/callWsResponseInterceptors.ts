@@ -1,10 +1,10 @@
-import type { Request } from 'express';
 import type { WebSocket } from 'ws';
 
 import type {
   Data,
   HttpResponseInterceptorFnParams,
   Interceptor,
+  WsInterceptorMeta,
   WsResponseInterceptor,
   WsResponseInterceptorFnParams
 } from '@/utils/types';
@@ -16,7 +16,7 @@ import { sleep } from '../../../sleep';
 interface CallWsResponseInterceptorsParams {
   componentInterceptors?: Interceptor[];
   data: Data;
-  request: Request;
+  meta: WsInterceptorMeta;
   serverInterceptors?: Interceptor[];
   socket: WebSocket;
   broadcast: (data: unknown) => void;
@@ -24,9 +24,9 @@ interface CallWsResponseInterceptorsParams {
 }
 
 export const callWsResponseInterceptors = async ({
-  data,
-  request,
   componentInterceptors = [],
+  data,
+  meta,
   serverInterceptors = [],
   socket,
   broadcast,
@@ -45,7 +45,13 @@ export const callWsResponseInterceptors = async ({
 
   let updatedData = data;
 
-  const interceptorNames = ['ws.response.all', `ws.response.${request.api.ws!.event}`];
+  const interceptorNames = ['ws.response.all', `ws.response.${meta.event}`];
+  if (meta.event === 'message' && meta.messageType === 'raw') {
+    interceptorNames.push(`ws.response.raw`);
+  }
+  if (meta.event === 'message' && meta.messageType === 'graphql-ws') {
+    interceptorNames.push('graphql.response.subscription');
+  }
 
   const responseInterceptors = [...componentInterceptors, ...serverInterceptors].filter(
     (interceptor): interceptor is WsResponseInterceptor =>

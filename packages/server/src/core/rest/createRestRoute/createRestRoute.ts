@@ -3,6 +3,7 @@ import type { Express } from 'express';
 import type {
   Entries,
   RestEntitiesByEntityName,
+  RestMethod,
   RestParams,
   RestRequestArtifact
 } from '@/utils/types';
@@ -46,7 +47,7 @@ const extractPathParams = (artifact: RestRequestArtifact, path: string) => {
 export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRoutesParams) =>
   server.use(
     asyncHandler(async (request, response, next) => {
-      const requestMethod = request.method.toLowerCase();
+      const requestMethod = request.method.toLowerCase() as RestMethod;
 
       request.queries = request.query;
 
@@ -115,7 +116,11 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
       if (matchedRouteConfig.componentInterceptors) {
         await callHttpRequestInterceptors({
           request,
-          interceptors: matchedRouteConfig.componentInterceptors
+          interceptors: matchedRouteConfig.componentInterceptors,
+          meta: {
+            type: 'rest',
+            method: requestMethod
+          }
         });
       }
 
@@ -182,7 +187,11 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         request,
         response,
         componentInterceptors: matchedRouteConfig.componentInterceptors,
-        serverInterceptors: matchedRouteConfig.serverInterceptors
+        serverInterceptors: matchedRouteConfig.serverInterceptors,
+        meta: {
+          type: 'rest',
+          method: requestMethod
+        }
       });
 
       if (matchedRouteConfig.config.settings?.delay) {

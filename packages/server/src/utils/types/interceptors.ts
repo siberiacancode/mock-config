@@ -3,6 +3,7 @@ import type { WebSocket } from 'ws';
 
 import type { Database, Orm } from './database';
 import type { Logger, LoggerTokens } from './logger';
+import type { ApiType, GraphQLOperationType, RestMethod, WsEvent, WsMessageType } from './shared';
 import type { MaybePromise } from './utils';
 
 type InterceptorCookieValue = string | undefined;
@@ -66,6 +67,29 @@ export type WsResponseInterceptorFn<Data = any> = (
   data: Data,
   params: WsResponseInterceptorFnParams
 ) => any;
+
+interface RestInterceptorMeta {
+  method: RestMethod;
+  type: Extract<ApiType, 'rest'>;
+}
+
+interface GraphqlInterceptorMeta {
+  operationType: GraphQLOperationType;
+  type: Extract<ApiType, 'graphql'>;
+}
+
+export type HttpInterceptorMeta = GraphqlInterceptorMeta | RestInterceptorMeta;
+
+export type WsInterceptorMeta =
+  | {
+      type: Extract<ApiType, 'ws'>;
+      event: Exclude<WsEvent, 'message'>;
+    }
+  | {
+      type: Extract<ApiType, 'ws'>;
+      event: Extract<WsEvent, 'message'>;
+      messageType: WsMessageType;
+    };
 
 export type {
   HttpRequestInterceptor,

@@ -1,8 +1,8 @@
-import type { Request } from 'express';
 import type { WebSocket } from 'ws';
 
 import type {
   Interceptor,
+  WsInterceptorMeta,
   WsRequestInterceptor,
   WsRequestInterceptorFnParams
 } from '@/utils/types';
@@ -13,7 +13,7 @@ import { sleep } from '../../../sleep';
 
 interface CallWsRequestInterceptorsParams {
   interceptors: Interceptor[];
-  request: Request;
+  meta: WsInterceptorMeta;
   socket: WebSocket;
   broadcast: (data: unknown) => void;
   send: (data: unknown) => void;
@@ -21,7 +21,7 @@ interface CallWsRequestInterceptorsParams {
 
 export const callWsRequestInterceptors = async ({
   interceptors,
-  request,
+  meta,
   socket,
   broadcast,
   send
@@ -29,18 +29,21 @@ export const callWsRequestInterceptors = async ({
   const setDelay: WsRequestInterceptorFnParams['setDelay'] = async (delay) => {
     await sleep(delay);
   };
-  // const frame: WsFrame = isBinary
-  //   ? { isBinary: true, raw: raw as Buffer }
-  //   : { isBinary: false, raw: raw.toString() };
+
   const requestInterceptorFnParams: WsRequestInterceptorFnParams = {
-    // ...frame,
     broadcast,
     socket,
     send,
     setDelay
   };
 
-  const interceptorNames = ['ws.request.all', `ws.request.${request.api.ws!.event}`];
+  const interceptorNames = ['ws.request.all', `ws.request.${meta.event}`];
+  if (meta.event === 'message' && meta.messageType === 'raw') {
+    interceptorNames.push('ws.request.raw');
+  }
+  if (meta.event === 'message' && meta.messageType === 'graphql-ws') {
+    interceptorNames.push('graphql.request.subscription');
+  }
 
   const requestInterceptors = interceptors.filter(
     (interceptor): interceptor is WsRequestInterceptor =>

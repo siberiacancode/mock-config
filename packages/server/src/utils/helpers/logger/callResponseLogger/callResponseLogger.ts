@@ -34,10 +34,19 @@ export const callResponseLogger = ({
     timestamp: Date.now(),
     method: request.method.toLowerCase() as RestMethod,
     url: decodeURI(`${request.protocol}://${request.get('host')}${request.originalUrl}`),
-    graphQLOperationType: request.api.graphQL?.operationType ?? null,
-    graphQLOperationName: request.api.graphQL?.operationName ?? null,
-    graphQLQuery: request.api.graphQL?.query ?? null,
-    variables: request.api.graphQL?.variables ?? null,
+    ...(request.api.type === 'graphql'
+      ? {
+          graphQLOperationType: request.api.operationType,
+          graphQLOperationName: request.api.operationName ?? null,
+          graphQLQuery: request.api.query,
+          variables: request.api.variables ?? null
+        }
+      : {
+          graphQLOperationType: null,
+          graphQLOperationName: null,
+          graphQLQuery: null,
+          variables: null
+        }),
     statusCode: response.statusCode,
     headers: request.headers,
     cookies: request.cookies,

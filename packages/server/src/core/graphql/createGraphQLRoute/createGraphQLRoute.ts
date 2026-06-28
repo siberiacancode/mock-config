@@ -3,6 +3,7 @@ import type { Express } from 'express';
 import type {
   Entries,
   GraphQLEntitiesByEntityName,
+  GraphQLOperationType,
   GraphQLParams,
   GraphQLRequestArtifact
 } from '@/utils/types';
@@ -103,7 +104,11 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
       if (matchedRouteConfig.componentInterceptors) {
         await callHttpRequestInterceptors({
           request,
-          interceptors: matchedRouteConfig.componentInterceptors
+          interceptors: matchedRouteConfig.componentInterceptors,
+          meta: {
+            type: 'graphql',
+            operationType: query.operationType as GraphQLOperationType
+          }
         });
       }
       const params: GraphQLParams = {
@@ -165,6 +170,10 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
 
       const data = await callHttpResponseInterceptors({
         data: resolvedData,
+        meta: {
+          type: 'graphql',
+          operationType: query.operationType as GraphQLOperationType
+        },
         request,
         response,
         componentInterceptors: matchedRouteConfig.componentInterceptors,
