@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
 import {
+  closeRouteConfigSchema,
   connectionRouteConfigSchema,
+  errorRouteConfigSchema,
   rawRouteConfigSchema
 } from './routeConfigSchema/routeConfigSchema';
 
@@ -14,13 +16,12 @@ export const wsRequestConfigSchema = z.union([
     type: z.literal('connection'),
     routes: z.array(connectionRouteConfigSchema)
   }),
-  // TODO: add validation schemas
   z.strictObject({
     type: z.literal('close'),
-    routes: z.array(z.any())
+    routes: z.array(closeRouteConfigSchema)
   }),
   z.strictObject({
     type: z.literal('error'),
-    routes: z.array(z.any())
+    routes: z.array(errorRouteConfigSchema)
   })
 ]);

@@ -4,6 +4,6 @@ import type { HttpRequestInterceptor, HttpResponseInterceptor } from '@/utils/ty
 
 import { isInterceptor } from '@/utils/helpers';
 
-export const interceptorsSchema = z
-  .array(z.custom<HttpRequestInterceptor | HttpResponseInterceptor>(isInterceptor))
-  .optional();
+export const interceptorsSchema = z.array(
+  z.custom<HttpRequestInterceptor | HttpResponseInterceptor>(isInterceptor)
+);

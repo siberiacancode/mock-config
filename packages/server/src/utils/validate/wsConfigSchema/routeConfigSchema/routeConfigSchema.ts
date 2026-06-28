@@ -19,6 +19,14 @@ export const connectionRouteConfigSchema = z.strictObject({
   ).optional()
 });
 
+export const closeRouteConfigSchema = z.strictObject({
+  data: z.function()
+});
+
+export const errorRouteConfigSchema = z.strictObject({
+  data: z.function()
+});
+
 export const routeConfigSchema = z
   .custom((value) => isPlainObject(value) && 'data' in value)
   .pipe(rawRouteConfigSchema);

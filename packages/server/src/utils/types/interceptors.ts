@@ -1,7 +1,6 @@
 import type { CookieOptions, Request, Response } from 'express';
 import type { WebSocket } from 'ws';
 
-import type { Database, Orm } from './database';
 import type { Logger, LoggerTokens } from './logger';
 import type { ApiType, GraphQLOperationType, RestMethod, WsEvent, WsMessageType } from './shared';
 import type { MaybePromise } from './utils';
@@ -10,7 +9,6 @@ type InterceptorCookieValue = string | undefined;
 type InterceptorHeaderValue = number | string | string[] | undefined;
 
 export interface HttpRequestInterceptorFnParams {
-  orm: Orm<Database>;
   request: Request;
   getCookie: (name: string) => InterceptorCookieValue;
   getHeader: (field: string) => InterceptorHeaderValue;
@@ -24,7 +22,6 @@ export type HttpRequestInterceptorFn = (
 ) => MaybePromise<void>;
 
 export interface HttpResponseInterceptorFnParams {
-  orm: Orm<Database>;
   request: Request;
   response: Response;
   appendHeader: (field: string, value?: string | string[]) => void;

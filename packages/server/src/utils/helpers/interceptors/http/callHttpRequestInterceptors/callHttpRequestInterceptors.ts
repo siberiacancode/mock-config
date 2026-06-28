@@ -41,8 +41,7 @@ export const callHttpRequestInterceptors = async ({
     getHeader,
     getHeaders,
     getCookie,
-    log,
-    orm: request.context.orm
+    log
   };
 
   const interceptorNames =
