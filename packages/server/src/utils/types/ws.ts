@@ -62,11 +62,13 @@ export interface WsConnectionRouteConfig {
 
 export interface WsRawRequestConfig {
   routes: WsRawRouteConfig[];
+  transportType: 'ws';
   type: 'raw';
 }
 
 export interface WsConnectionRequestConfig {
   routes: WsConnectionRouteConfig[];
+  transportType: 'ws';
   type: 'connection';
 }
 

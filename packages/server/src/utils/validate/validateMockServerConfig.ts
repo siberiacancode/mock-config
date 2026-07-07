@@ -12,6 +12,7 @@ import { graphqlSubscriptionRequestConfigSchema } from './graphqlSubscriptionCon
 import { interceptorsSchema } from './interceptorsSchema/interceptorsSchema';
 import { portSchema } from './portSchema/portSchema';
 import { restRequestConfigSchema } from './restRequestConfigSchema/restRequestConfigSchema';
+import { socketIoRequestConfigSchema } from './socketIoConfigSchema/socketIoConfigSchema';
 import { staticPathSchema } from './staticPathSchema/staticPathSchema';
 import { plainObjectSchema } from './utils';
 import { wsRequestConfigSchema } from './wsConfigSchema/wsConfigSchema';
@@ -41,7 +42,8 @@ export const validateMockServerConfig = (mockServerConfig: PlainObject) => {
         restRequestConfigSchema,
         graphqlRequestConfigSchema,
         graphqlSubscriptionRequestConfigSchema,
-        wsRequestConfigSchema
+        wsRequestConfigSchema,
+        socketIoRequestConfigSchema
       ])
     )
   });

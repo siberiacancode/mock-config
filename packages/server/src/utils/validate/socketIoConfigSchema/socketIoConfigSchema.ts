@@ -5,15 +5,15 @@ import {
   rawRouteConfigSchema
 } from './routeConfigSchema/routeConfigSchema';
 
-export const wsRequestConfigSchema = z.union([
+export const socketIoRequestConfigSchema = z.union([
   z.strictObject({
-    type: z.literal('raw'),
-    transportType: z.literal('ws'),
+    type: z.literal('message'),
+    transportType: z.literal('socket.io'),
     routes: z.array(rawRouteConfigSchema)
   }),
   z.strictObject({
     type: z.literal('connection'),
-    transportType: z.literal('ws'),
+    transportType: z.literal('socket.io'),
     routes: z.array(connectionRouteConfigSchema)
   })
 ]);

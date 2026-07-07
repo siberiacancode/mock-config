@@ -7,6 +7,7 @@ describe('rest', () => {
     const result = rest.get('/users', 'value');
 
     expect(result).toStrictEqual({
+      transportType: 'rest',
       method: 'get',
       path: '/users',
       routes: [
@@ -29,6 +30,7 @@ describe('rest', () => {
     });
 
     expect(result).toStrictEqual({
+      transportType: 'rest',
       method: 'get',
       path: '/users',
       routes: [
@@ -56,6 +58,7 @@ describe('rest', () => {
     });
 
     expect(result).toStrictEqual({
+      transportType: 'rest',
       method: 'get',
       path: '/users',
       routes: [
@@ -77,6 +80,7 @@ describe('rest', () => {
     const result = rest.get('/users', handler);
 
     expect(result).toStrictEqual({
+      transportType: 'rest',
       method: 'get',
       path: '/users',
       routes: [
@@ -100,6 +104,7 @@ describe('rest', () => {
     });
 
     expect(result).toStrictEqual({
+      transportType: 'rest',
       method: 'get',
       path: '/users',
       routes: [
@@ -132,6 +137,7 @@ describe('rest', () => {
     });
 
     expect(result).toStrictEqual({
+      transportType: 'rest',
       method: 'get',
       path: '/users',
       routes: [
@@ -155,6 +161,7 @@ describe('rest', () => {
       const result = rest[method]('/users', { ok: true } as any);
 
       expect(result).toStrictEqual({
+        transportType: 'rest',
         method,
         path: '/users',
         routes: [
@@ -171,6 +178,7 @@ describe('rest', () => {
     const result = rest.get('/users', { response: { ok: true } }, { delay: 150, status: 200 });
 
     expect(result).toStrictEqual({
+      transportType: 'rest',
       method: 'get',
       path: '/users',
       routes: [
@@ -187,6 +195,7 @@ describe('rest', () => {
     const result = rest.sse('/users/stream', () => undefined);
 
     expect(result).toStrictEqual({
+      transportType: 'rest',
       method: 'get',
       path: '/users/stream',
       routes: [
@@ -211,6 +220,7 @@ describe('rest', () => {
     });
 
     expect(result).toStrictEqual({
+      transportType: 'rest',
       method: 'get',
       path: '/users/stream',
       routes: [
@@ -231,6 +241,7 @@ describe('rest', () => {
     const result = rest.stream('/users/stream', () => undefined);
 
     expect(result).toStrictEqual({
+      transportType: 'rest',
       method: 'post',
       path: '/users/stream',
       routes: [
@@ -255,6 +266,7 @@ describe('rest', () => {
     });
 
     expect(result).toStrictEqual({
+      transportType: 'rest',
       method: 'post',
       path: '/users/stream',
       routes: [
@@ -329,6 +341,7 @@ describe('rest', () => {
     }>('/users/:id', () => ({ response: 'value' }));
 
     expect(result).toStrictEqual({
+      transportType: 'rest',
       method: 'post',
       path: '/users/:id',
       routes: [

@@ -78,6 +78,7 @@ export interface BaseRestRequestConfig<Method extends RestMethod> {
   method: Method;
   path: RegExp | RestPathString;
   routes: RestRouteConfig<Method>[];
+  transportType: 'rest';
 }
 
 type RestGetRequestConfig = BaseRestRequestConfig<'get'>;

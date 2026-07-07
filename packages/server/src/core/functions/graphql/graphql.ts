@@ -166,6 +166,7 @@ const createGraphQLFactory = <OperationType extends GraphQLOperationType>(
     settings?: GraphQLSettings
   ): GraphQLRequestConfig {
     return {
+      transportType: 'graphQL',
       identifier,
       operationType,
       routes: [createConfigResolver(config, settings)]
@@ -286,6 +287,7 @@ const createGraphqlTransportWsFactory = () => {
     config: GraphqlTransportWsConfig<Options>
   ): GraphqlTransportWsRequestConfig {
     return {
+      transportType: 'graphQLSubscription',
       identifier,
       operationType: 'subscription',
       routes: [createSubscriptionRouteConfig(config)]

@@ -7,6 +7,7 @@ import type { GraphQLRequestConfig } from './graphql';
 import type { GraphqlTransportWsRequestConfig } from './graphql-transport-ws';
 import type { Interceptors } from './interceptors';
 import type { RestRequestConfig } from './rest';
+import type { SocketIoRequestConfig } from './socketio';
 import type { WsRequestConfig } from './ws';
 
 interface StaticPathObject {
@@ -51,7 +52,11 @@ declare global {
 export interface MockServerComponent {
   baseUrl?: BaseUrl;
   configs: Array<
-    GraphQLRequestConfig | GraphqlTransportWsRequestConfig | RestRequestConfig | WsRequestConfig
+    | GraphQLRequestConfig
+    | GraphqlTransportWsRequestConfig
+    | RestRequestConfig
+    | SocketIoRequestConfig
+    | WsRequestConfig
   >;
   interceptors?: Interceptors;
   name?: string;

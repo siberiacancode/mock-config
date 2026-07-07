@@ -76,6 +76,7 @@ describe('createGraphQLRoute: routing', () => {
           {
             identifier: 'query{User{name}}',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 data: { data: { name: 'John', surname: 'Doe' } }
@@ -106,6 +107,7 @@ describe('createGraphQLRoute: routing', () => {
           {
             identifier: /^\{User\{name\}\}$/,
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 data: { data: { name: 'John', surname: 'Doe' } }
@@ -136,6 +138,7 @@ describe('createGraphQLRoute: routing', () => {
           {
             identifier: 'query{User{name}}',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 data: { data: { name: 'John', surname: 'Doe' } }
@@ -166,6 +169,7 @@ describe('createGraphQLRoute: routing', () => {
           {
             identifier: 'GetUsers',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 data: { data: { name: 'John', surname: 'Doe' } }
@@ -196,6 +200,7 @@ describe('createGraphQLRoute: routing', () => {
           {
             identifier: /^Get(.+?)sers$/g,
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 data: { data: { name: 'John', surname: 'Doe' } }
@@ -258,6 +263,7 @@ describe('createGraphQLRoute: routing', () => {
           {
             identifier: 'users',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 data: { data: { name: 'John', surname: 'Doe' } }
@@ -288,6 +294,7 @@ describe('createGraphQLRoute: routing', () => {
           {
             identifier: /^users$/,
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 data: { data: { name: 'John', surname: 'Doe' } }
@@ -318,6 +325,7 @@ describe('createGraphQLRoute: routing', () => {
           {
             identifier: 'GetUsers',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 entities: {
@@ -354,6 +362,7 @@ describe('createGraphQLRoute: routing', () => {
           {
             identifier: 'GetUsers',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [{ data: { data: { name: 'John', surname: 'Doe' } } }]
           }
         ]
@@ -381,6 +390,7 @@ describe('createGraphQLRoute: routing', () => {
           configs: [
             {
               identifier: 'GetUsers',
+              transportType: 'graphQL',
               operationType: operationTypeWithoutCacheControlHeader,
               routes: [{ data: { data: { name: 'John', surname: 'Doe' } } }]
             }
@@ -409,6 +419,7 @@ describe('createGraphQLRoute: content', () => {
           {
             identifier: 'GetUsers',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 entities: {
@@ -423,6 +434,7 @@ describe('createGraphQLRoute: content', () => {
           {
             identifier: 'GetUsers',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 entities: {
@@ -455,6 +467,7 @@ describe('createGraphQLRoute: content', () => {
           {
             identifier: 'GetUsers',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [{ data: { data: { name: 'John', surname: 'Doe' } } }]
           }
         ]
@@ -476,6 +489,7 @@ describe('createGraphQLRoute: content', () => {
           {
             identifier: 'GetUsers',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 entities: {
@@ -522,6 +536,7 @@ describe('createGraphQLRoute: settings', () => {
           {
             identifier: 'GetUsers',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 settings: { delay },
@@ -551,6 +566,7 @@ describe('createGraphQLRoute: settings', () => {
           {
             identifier: 'GetUsers',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 settings: { status: 500 },
@@ -580,6 +596,7 @@ describe('createGraphQLRoute: entities', () => {
           {
             identifier: 'GetUsers',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 entities: {
@@ -628,6 +645,7 @@ describe('createGraphQLRoute: entities', () => {
           {
             identifier: 'GetUsers',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 entities: {
@@ -689,6 +707,7 @@ describe('createGraphQLRoute: entities', () => {
           {
             identifier: 'GetUsers',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 entities: {
@@ -739,6 +758,7 @@ describe('createGraphQLRoute: entities', () => {
           {
             identifier: 'GetUsers',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 entities: {
@@ -784,6 +804,7 @@ describe('createGraphQLRoute: interceptors', () => {
           {
             identifier: 'GetUsers',
             operationType: 'query',
+            transportType: 'graphQL',
             routes: [
               {
                 entities: {
@@ -801,6 +822,7 @@ describe('createGraphQLRoute: interceptors', () => {
           {
             identifier: 'CreateUser',
             operationType: 'mutation',
+            transportType: 'graphQL',
             routes: [
               {
                 entities: {

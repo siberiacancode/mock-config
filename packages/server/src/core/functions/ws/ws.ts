@@ -33,6 +33,7 @@ const createConnectionRouteConfig = (
 
 export const createWsMessageRequestConfig = (handler: WsMessageHandler): WsRequestConfig => ({
   type: 'raw',
+  transportType: 'ws',
   routes: [
     {
       data: handler
@@ -46,6 +47,7 @@ export function createWsConnectionRequestConfig(
   config: WsConnectionHandler | WsConnectionHandlerObject
 ): WsRequestConfig {
   return {
+    transportType: 'ws',
     type: 'connection',
     routes: [createConnectionRouteConfig(config)]
   };

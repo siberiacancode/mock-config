@@ -106,4 +106,5 @@ export interface GraphqlTransportWsRequestConfig {
   identifier: GraphQLIdentifier;
   operationType: GraphqlTransportWsOperationType;
   routes: GraphqlTransportWsRouteConfig[];
+  transportType: 'graphQLSubscription';
 }

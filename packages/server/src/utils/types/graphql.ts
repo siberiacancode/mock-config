@@ -71,6 +71,7 @@ export interface GraphQLRequestConfig {
   interceptors?: Interceptors<'graphql'>;
   operationType: GraphQLOperationType;
   routes: GraphQLRouteConfig[];
+  transportType: 'graphQL';
 }
 
 export interface GraphQLRequestArtifact {
