@@ -1,35 +1,59 @@
-import type { GraphQLDataResponse, GraphQLDataResponseFunction } from '@/utils/types';
+import type {
+  GraphQLDataResponseFunction,
+  GraphQLPollingHandler,
+  GraphQLPollingItem
+} from '@/utils/types';
 
-export const createQueueHandler = (
-  normalizedQueue: { data: GraphQLDataResponse; time?: number }[]
-): GraphQLDataResponseFunction => {
+type GraphQLPolling = GraphQLPollingHandler | GraphQLPollingItem[];
+
+export const createPollingHandler = (polling: GraphQLPolling): GraphQLDataResponseFunction => {
+  let dynamicIterator: ReturnType<GraphQLPollingHandler> | null = null;
+  let latestQueueItem: GraphQLPollingItem | undefined;
   let queueIndex = 0;
   let timeoutInProgress = false;
 
   const updateQueueIndex = () => {
-    queueIndex = normalizedQueue.length - 1 === queueIndex ? 0 : queueIndex + 1;
+    queueIndex = polling.length - 1 === queueIndex ? 0 : queueIndex + 1;
   };
 
   return async (params) => {
-    if (!normalizedQueue.length) {
+    if (Array.isArray(polling) && !polling.length) {
       return params.next() as any;
     }
 
-    const queueItem = normalizedQueue[queueIndex];
-    const { time } = queueItem;
+    if (Array.isArray(polling)) {
+      const queueItem = polling[queueIndex];
 
-    if (time && !timeoutInProgress) {
-      timeoutInProgress = true;
-      setTimeout(() => {
-        timeoutInProgress = false;
+      if (queueItem.time && !timeoutInProgress) {
+        timeoutInProgress = true;
+        setTimeout(() => {
+          timeoutInProgress = false;
+          updateQueueIndex();
+        }, queueItem.time);
+      }
+
+      if (!queueItem.time) {
         updateQueueIndex();
-      }, time);
+      }
+
+      return typeof queueItem.data === 'function' ? queueItem.data(params) : queueItem.data;
     }
 
-    if (!time) {
-      updateQueueIndex();
+    if (!dynamicIterator) {
+      dynamicIterator = polling(params);
     }
 
-    return typeof queueItem.data === 'function' ? queueItem.data(params) : queueItem.data;
+    const iteration = dynamicIterator.next(params);
+    if (iteration.done) dynamicIterator = null;
+
+    const queueItem = iteration.done ? (iteration.value ?? latestQueueItem) : iteration.value;
+
+    if (!queueItem) {
+      return params.next();
+    }
+
+    latestQueueItem = queueItem;
+
+    return queueItem;
   };
 };

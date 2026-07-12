@@ -115,8 +115,8 @@ describe('graphql', () => {
     });
   });
 
-  it('Should build config for queue object as data handler', () => {
-    const queueHandler = vi.fn().mockResolvedValue({ data: { ok: 'handler' } });
+  it('Should build config for polling object as data handler', () => {
+    const pollingHandler = vi.fn().mockResolvedValue({ data: { ok: 'handler' } });
     const result = graphql.query(
       'GetUsers',
       {
@@ -125,8 +125,8 @@ describe('graphql', () => {
             key: 'value'
           }
         },
-        queue: [
-          { handler: queueHandler, time: 100 },
+        polling: [
+          { handler: pollingHandler, time: 100 },
           { response: { data: { ok: 'response' } }, time: 200 }
         ]
       },
@@ -145,6 +145,67 @@ describe('graphql', () => {
             }
           },
           settings: { delay: 50, status: 207 }
+        }
+      ]
+    });
+  });
+
+  it('Should build config for generator polling object as data handler', () => {
+    const result = graphql.query('GetUsers', {
+      match: {
+        headers: {
+          key: 'value'
+        }
+      },
+      *polling() {
+        yield { data: { count: 1 } };
+        return { data: { count: 2 } };
+      }
+    });
+
+    expect(result).toStrictEqual({
+      identifier: 'GetUsers',
+      operationType: 'query',
+      routes: [
+        {
+          data: expect.any(Function),
+          entities: {
+            headers: {
+              key: 'value'
+            }
+          },
+          settings: {}
+        }
+      ]
+    });
+  });
+
+  it('Should type generator polling params with full graphql resolver context', () => {
+    const result = graphql.query<{
+      query: { query: string };
+      body: { body: string };
+      params: { params: string };
+      response: { data: { response: string } };
+    }>('GetUsers', {
+      *polling(params) {
+        const query = params.request.query.query;
+        const body = params.request.body.body;
+        const path = params.request.params.params;
+        params.setStatusCode(200);
+        console.log(query, body, path);
+
+        yield { data: { response: 'value' } };
+      }
+    });
+
+    expect(result).toStrictEqual({
+      identifier: 'GetUsers',
+      operationType: 'query',
+      routes: [
+        {
+          data: expect.any(Function),
+          entities: {},
+          settings: {}
         }
       ]
     });

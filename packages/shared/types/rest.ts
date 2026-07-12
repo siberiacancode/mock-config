@@ -26,6 +26,22 @@ interface RestSettings {
   readonly status?: number;
 }
 
+interface PollingQueueItem<Data> {
+  data: Data;
+  time?: number;
+}
+
+interface PollingFileQueueItem {
+  file: RestFileResponse;
+  time?: number;
+}
+
+type PollingGenerator<Data> = Generator<
+  PollingFileQueueItem | PollingQueueItem<Data>,
+  PollingFileQueueItem | PollingQueueItem<Data> | void,
+  unknown
+>;
+
 export type RestDataResponse<Method extends RestMethod = RestMethod> =
   | ((request: Request, entities: RestEntitiesByEntityName<Method>) => MaybePromise<Data>)
   | Data;
@@ -35,16 +51,9 @@ export type RestFileResponse = string;
 export type RestRouteConfig<Method extends RestMethod> = (
   | {
       settings: RestSettings & { polling: true };
-      queue: Array<
-        | {
-            time?: number;
-            data: RestDataResponse<Method>;
-          }
-        | {
-            time?: number;
-            file: RestFileResponse;
-          }
-      >;
+      polling:
+        | Array<PollingFileQueueItem | PollingQueueItem<RestDataResponse<Method>>>
+        | PollingGenerator<RestDataResponse<Method>>;
     }
   | {
       settings?: RestSettings & { polling?: false };

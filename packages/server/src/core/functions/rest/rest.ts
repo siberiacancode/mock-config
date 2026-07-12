@@ -11,7 +11,7 @@ import type {
   RestSettings
 } from '@/utils/types';
 
-import { createFileHandler, createQueueHandler, formatSsePayload } from './helpers';
+import { createFileHandler, createPollingHandler, formatSsePayload } from './helpers';
 
 interface RestRequestInput {
   body?: unknown;
@@ -21,7 +21,7 @@ interface RestRequestInput {
 }
 
 type ReservedRestConfigKeys = {
-  [K in 'file' | 'handler' | 'match' | 'queue' | 'response']?: never;
+  [K in 'file' | 'handler' | 'match' | 'polling' | 'response']?: never;
 };
 
 type RestInlineResponse<Response> =
@@ -57,13 +57,30 @@ interface RestFileObject<Method extends RestMethod> {
   match?: RestEntitiesByEntityName<Method>;
 }
 
-interface RestQueueObject<Method extends RestMethod, Options extends RestRequestInput> {
+type RestPollingItem<Method extends RestMethod, Options extends RestRequestInput> =
+  | { file: RestFileResponse; time?: number }
+  | { handler: RestFunction<Method, Options>; time?: number }
+  | { response: Options['response']; time?: number };
+
+type RestPolling<Method extends RestMethod, Options extends RestRequestInput> =
+  | ((
+      params: RestParams<
+        Method,
+        Options['query'],
+        Options['body'],
+        Options['params'],
+        Options['response']
+      >
+    ) => Generator<
+      Options['response'],
+      Options['response'] | void,
+      RestParams<Method, Options['query'], Options['body'], Options['params'], Options['response']>
+    >)
+  | RestPollingItem<Method, Options>[];
+
+interface RestPollingObject<Method extends RestMethod, Options extends RestRequestInput> {
   match?: RestEntitiesByEntityName<Method>;
-  queue: Array<
-    | { file: RestFileResponse; time?: number }
-    | { handler: RestFunction<Method, Options>; time?: number }
-    | { response: Options['response']; time?: number }
-  >;
+  polling: RestPolling<Method, Options>;
 }
 
 type RestConfig<Method extends RestMethod, Options extends RestRequestInput> =
@@ -71,7 +88,7 @@ type RestConfig<Method extends RestMethod, Options extends RestRequestInput> =
   | RestFunction<Method, Options>
   | RestHandlerObject<Method, Options>
   | RestInlineResponse<Options['response']>
-  | RestQueueObject<Method, Options>
+  | RestPollingObject<Method, Options>
   | RestResponseObject<Method, Options['response']>;
 
 const resolveConfigType = <Method extends RestMethod, Options extends RestRequestInput>(
@@ -80,7 +97,7 @@ const resolveConfigType = <Method extends RestMethod, Options extends RestReques
   if (typeof config === 'function') return { type: 'inlineHandler' as const, config };
   if (typeof config !== 'object' || config === null)
     return { type: 'inlineResponse' as const, config };
-  if ('queue' in config) return { type: 'queue' as const, config };
+  if ('polling' in config) return { type: 'polling' as const, config };
   if ('file' in config) return { type: 'file' as const, config };
   if ('response' in config) return { type: 'data' as const, config };
   if ('handler' in config) return { type: 'handler' as const, config };
@@ -117,8 +134,16 @@ const createConfigResolver = <Method extends RestMethod, Options extends RestReq
       };
     }
 
-    case 'queue': {
-      const normalizedQueue = resolvedConfig.config.queue.map((item) => {
+    case 'polling': {
+      const polling = resolvedConfig.config.polling!;
+      if (!Array.isArray(polling))
+        return {
+          data: createPollingHandler(polling),
+          entities: resolvedConfig.config.match ?? {},
+          settings
+        };
+
+      const normalizedPolling = polling.map((item) => {
         if ('handler' in item) {
           return { data: item.handler, time: item.time };
         }
@@ -127,19 +152,12 @@ const createConfigResolver = <Method extends RestMethod, Options extends RestReq
           return { data: item.response, time: item.time };
         }
 
-        if ('file' in item) {
-          return {
-            data: createFileHandler<Method>(item.file),
-            time: item.time
-          };
-        }
-
-        throw new Error(`Unexpected queue item kind: ${JSON.stringify(item, null, 2)}`);
+        throw new Error(`Unexpected polling item kind: ${JSON.stringify(item, null, 2)}`);
       });
 
       return {
-        data: createQueueHandler(normalizedQueue),
-        entities: resolvedConfig.config.match,
+        data: createPollingHandler(normalizedPolling),
+        entities: resolvedConfig.config.match ?? {},
         settings
       };
     }
@@ -185,7 +203,7 @@ const createRestFactory = <Method extends RestMethod>(method: Method) => {
 
   function createRequestConfig<Options extends RestRequestInput = Partial<RestRequestInput>>(
     path: RestRequestConfig['path'],
-    config: RestQueueObject<Method, Options>,
+    config: RestPollingObject<Method, Options>,
     settings?: RestSettings
   ): BaseRestRequestConfig<Method>;
 

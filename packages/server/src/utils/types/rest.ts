@@ -55,6 +55,21 @@ export interface RestParams<
   setStatusCode: (statusCode: number) => void;
 }
 
+export interface RestPollingItem<Method extends RestMethod = RestMethod> {
+  data: RestDataResponse<Method>;
+  time?: number;
+}
+
+export type RestPollingHandler<
+  Method extends RestMethod = RestMethod,
+  Query = Record<string, unknown>,
+  Body = Record<string, unknown>,
+  Params = Record<string, unknown>,
+  Response = any
+> = (
+  params: RestParams<Method, Query, Body, Params, Response>
+) => Generator<Response, Response | void, RestParams<Method, Query, Body, Params, Response>>;
+
 export type RestDataResponseFunction<Method extends RestMethod = RestMethod> = (
   params: RestParams<Method>
 ) => MaybePromise<Data>;

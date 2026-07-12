@@ -116,16 +116,16 @@ describe('rest', () => {
     });
   });
 
-  it('Should build config for queue object as data handler', async () => {
-    const queueHandler = vi.fn();
+  it('Should build config for polling object as data handler', async () => {
+    const pollingHandler = vi.fn();
     const result = rest.get('/users', {
       match: {
         headers: {
           key: 'value'
         }
       },
-      queue: [
-        { handler: queueHandler, time: 100 },
+      polling: [
+        { handler: pollingHandler, time: 100 },
         { response: { ok: 'response' }, time: 200 },
         { file: '/tmp/user.json', time: 300 }
       ]
@@ -142,6 +142,67 @@ describe('rest', () => {
               key: 'value'
             }
           },
+          settings: {}
+        }
+      ]
+    });
+  });
+
+  it('Should build config for generator polling', () => {
+    const result = rest.get('/users', {
+      match: {
+        headers: {
+          key: 'value'
+        }
+      },
+      *polling() {
+        yield { count: 1 };
+        return { count: 2 };
+      }
+    });
+
+    expect(result).toStrictEqual({
+      method: 'get',
+      path: '/users',
+      routes: [
+        {
+          data: expect.any(Function),
+          entities: {
+            headers: {
+              key: 'value'
+            }
+          },
+          settings: {}
+        }
+      ]
+    });
+  });
+
+  it('Should type generator polling params with full rest resolver context', () => {
+    const result = rest.post<{
+      query: { query: string };
+      body: { body: string };
+      params: { params: string };
+      response: { response: string };
+    }>('/users/:id', {
+      *polling(params) {
+        const query = params.request.query.query;
+        const body = params.request.body.body;
+        const path = params.request.params.params;
+        params.setStatusCode(200);
+        console.log(query, body, path);
+
+        yield { response: 'value' };
+      }
+    });
+
+    expect(result).toStrictEqual({
+      method: 'post',
+      path: '/users/:id',
+      routes: [
+        {
+          data: expect.any(Function),
+          entities: undefined,
           settings: {}
         }
       ]

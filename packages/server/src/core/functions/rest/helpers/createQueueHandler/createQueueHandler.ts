@@ -1,35 +1,64 @@
-import type { RestDataResponse, RestDataResponseFunction, RestMethod } from '@/utils/types';
+import type {
+  RestDataResponseFunction,
+  RestMethod,
+  RestPollingHandler,
+  RestPollingItem
+} from '@/utils/types';
 
-export const createQueueHandler = <Method extends RestMethod>(
-  queue: { data: RestDataResponse<Method>; time?: number }[]
+type RestPolling<Method extends RestMethod> =
+  | RestPollingHandler<Method>
+  | RestPollingItem<Method>[];
+
+export const createPollingHandler = <Method extends RestMethod>(
+  polling: RestPolling<Method>
 ): RestDataResponseFunction<Method> => {
+  let dynamicIterator: ReturnType<RestPollingHandler<Method>> | null = null;
+  let latestPolling: RestPollingItem<Method> | undefined;
   let queueIndex = 0;
   let timeoutInProgress = false;
 
   const updateQueueIndex = () => {
-    queueIndex = queue.length - 1 === queueIndex ? 0 : queueIndex + 1;
+    queueIndex = polling.length - 1 === queueIndex ? 0 : queueIndex + 1;
   };
 
   return async (params) => {
-    if (!queue.length) {
+    if (Array.isArray(polling) && !polling.length) {
       return params.next();
     }
 
-    const queueItem = queue[queueIndex];
-    const { time } = queueItem;
+    if (Array.isArray(polling)) {
+      const queueItem = polling[queueIndex];
 
-    if (time && !timeoutInProgress) {
-      timeoutInProgress = true;
-      setTimeout(() => {
-        timeoutInProgress = false;
+      if (queueItem.time && !timeoutInProgress) {
+        timeoutInProgress = true;
+        setTimeout(() => {
+          timeoutInProgress = false;
+          updateQueueIndex();
+        }, queueItem.time);
+      }
+
+      if (!queueItem.time) {
         updateQueueIndex();
-      }, time);
+      }
+
+      return typeof queueItem.data === 'function' ? queueItem.data(params) : queueItem.data;
     }
 
-    if (!time) {
-      updateQueueIndex();
+    if (!dynamicIterator) {
+      dynamicIterator = polling(params);
     }
 
-    return typeof queueItem.data === 'function' ? queueItem.data(params) : queueItem.data;
+    const iteration = dynamicIterator.next(params);
+    if (iteration.done) dynamicIterator = null;
+
+    const item = iteration.done ? (iteration.value ?? latestPolling) : iteration.value;
+
+    if (!item) {
+      return params.next();
+    }
+
+    latestPolling = item;
+
+    return item;
   };
 };

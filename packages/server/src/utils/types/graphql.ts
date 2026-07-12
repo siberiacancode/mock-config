@@ -54,6 +54,20 @@ export interface GraphQLParams<
   setStatusCode: (statusCode: number) => void;
 }
 
+export interface GraphQLPollingItem {
+  data: GraphQLDataResponse;
+  time?: number;
+}
+
+export type GraphQLPollingHandler<
+  Query = Record<string, unknown>,
+  Body = Record<string, unknown>,
+  Params = Record<string, unknown>,
+  Response = any
+> = (
+  params: GraphQLParams<Query, Body, Params, Response>
+) => Generator<Response, Response | void, GraphQLParams<Query, Body, Params, Response>>;
+
 export type GraphQLDataResponseFunction = (
   params: GraphQLParams
 ) => MaybePromise<GraphQLExecutionResult>;

@@ -15,7 +15,7 @@ import type {
   MaybePromise
 } from '@/utils/types';
 
-import { createQueueHandler } from './helpers';
+import { createPollingHandler } from './helpers';
 
 interface GraphQLRequestInput {
   body?: unknown;
@@ -25,7 +25,7 @@ interface GraphQLRequestInput {
 }
 
 type ReservedGraphQLConfigKeys = {
-  [K in 'handler' | 'match' | 'queue' | 'response']?: never;
+  [K in 'handler' | 'match' | 'polling' | 'response']?: never;
 };
 
 type GraphQLInlineResponse<Response extends GraphQLExecutionResult> = Response &
@@ -45,26 +45,42 @@ interface GraphQLHandlerObject<Options extends GraphQLRequestInput> {
   match?: GraphQLEntitiesByEntityName;
 }
 
-interface GraphQLQueueObject<Options extends GraphQLRequestInput> {
+type GraphQLPollingItem<Options extends GraphQLRequestInput> =
+  | { handler: GraphQLFunction<Options>; time?: number }
+  | { response: Options['response']; time?: number };
+
+type GraphQLPolling<Options extends GraphQLRequestInput> =
+  | ((
+      params: GraphQLParams<
+        Options['query'],
+        Options['body'],
+        Options['params'],
+        Options['response']
+      >
+    ) => Generator<
+      Options['response'],
+      Options['response'] | void,
+      GraphQLParams<Options['query'], Options['body'], Options['params'], Options['response']>
+    >)
+  | GraphQLPollingItem<Options>[];
+
+interface GraphQLPollingObject<Options extends GraphQLRequestInput> {
   match?: GraphQLEntitiesByEntityName;
-  queue: Array<
-    | { handler: GraphQLFunction<Options>; time?: number }
-    | { response: Options['response']; time?: number }
-  >;
+  polling: GraphQLPolling<Options>;
 }
 
 type GraphQLConfig<Options extends GraphQLRequestInput> =
   | GraphQLFunction<Options>
   | GraphQLHandlerObject<Options>
   | GraphQLInlineResponse<Options['response']>
-  | GraphQLQueueObject<Options>
+  | GraphQLPollingObject<Options>
   | GraphQLResponseObject<Options['response']>;
 
 const resolveConfigType = <Options extends GraphQLRequestInput>(config: GraphQLConfig<Options>) => {
   if (typeof config === 'function') return { type: 'inlineHandler' as const, config };
   if (typeof config !== 'object' || config === null)
     return { type: 'inlineResponse' as const, config };
-  if ('queue' in config) return { type: 'queue' as const, config };
+  if ('polling' in config) return { type: 'polling' as const, config };
   if ('response' in config) return { type: 'data' as const, config };
   if ('handler' in config) return { type: 'handler' as const, config };
   return { type: 'inlineResponse' as const, config };
@@ -93,8 +109,16 @@ const createConfigResolver = <Options extends GraphQLRequestInput>(
       };
     }
 
-    case 'queue': {
-      const normalizedQueue = resolvedConfig.config.queue!.map((item) => {
+    case 'polling': {
+      const polling = resolvedConfig.config.polling!;
+      if (!Array.isArray(polling))
+        return {
+          data: createPollingHandler(polling),
+          entities: resolvedConfig.config.match ?? {},
+          settings
+        };
+
+      const normalizedPolling = polling.map((item) => {
         if ('handler' in item) {
           return { data: item.handler, time: item.time };
         }
@@ -103,11 +127,11 @@ const createConfigResolver = <Options extends GraphQLRequestInput>(
           return { data: item.response, time: item.time };
         }
 
-        throw new Error(`Unexpected queue item kind: ${JSON.stringify(item, null, 2)}`);
+        throw new Error(`Unexpected polling item kind: ${JSON.stringify(item, null, 2)}`);
       });
 
       return {
-        data: createQueueHandler(normalizedQueue),
+        data: createPollingHandler(normalizedPolling),
         entities: resolvedConfig.config.match ?? {},
         settings
       };
@@ -150,7 +174,7 @@ const createGraphQLFactory = <OperationType extends GraphQLOperationType>(
 
   function createRequestConfig<Options extends GraphQLRequestInput = GraphQLRequestInput>(
     identifier: GraphQLIdentifier,
-    config: GraphQLQueueObject<Options>,
+    config: GraphQLPollingObject<Options>,
     settings?: GraphQLSettings
   ): GraphQLRequestConfig;
 
