@@ -313,16 +313,3 @@ There are two different behaviors:
 - `ws.connection` and `ws.message` do not use an extra specificity weight, so declaration order matters more
 
 For connection matchers, put the most specific scenario first.
-
-## Summary
-
-Use matchers when one endpoint or event channel must emulate more than one scenario.
-
-They help you:
-
-- keep real paths and operation names
-- describe scenarios faster
-- search and maintain configs more easily
-- model UI states without inventing fake endpoints
-
-If you need to reshape request or response data after matching, continue with [Interceptors](/docs/mocking-requests/references/Interceptors).

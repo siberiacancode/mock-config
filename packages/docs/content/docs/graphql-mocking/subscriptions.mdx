@@ -30,12 +30,10 @@ The subscription remains open until `complete()` is called or the client disconn
 For a single-event subscription, return a response directly or use the inline object form:
 
 ```ts
-//[JAVA_COMMENT_REDACTED_f5aaf19d]
 graphql.subscription('OnUserCreated', {
   data: { userCreated: { id: 1, name: 'John' } }
 });
 
-//[JAVA_COMMENT_REDACTED_e59c71bb]
 graphql.subscription('OnUserCreated', {
   response: { data: { userCreated: { id: 1, name: 'John' } } }
 });

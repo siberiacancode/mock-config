@@ -1,0 +1,62 @@
+---
+title: Request cookies
+description: Read and match request cookies in GraphQL handlers in Mock Config.
+---
+
+Cookies let you describe GraphQL scenarios based on HTTP cookies sent by the client — for example, a session token or a locale preference. In Mock Config, request cookies are available via `getCookie` inside your handler.
+
+## Read A Cookie
+
+Use `getCookie` to access a single cookie value:
+
+```ts
+import { graphql } from 'mock-config-server';
+
+graphql.query('GetProfile', ({ getCookie }) => {
+  const session = getCookie('session');
+
+  if (!session) {
+    return { errors: [{ message: 'Unauthorized' }] };
+  }
+
+  return { data: { profile: { session } } };
+});
+```
+
+## Cookies In Matchers
+
+To return different responses based on a cookie value, use `cookies` in the route matcher:
+
+```ts
+import { exists, graphql } from 'mock-config-server';
+
+graphql.query('GetProfile', {
+  match: {
+    cookies: { session: exists() }
+  },
+  response: { data: { profile: { id: 1 } } }
+});
+
+graphql.query(
+  'GetProfile',
+  {
+    errors: [{ message: 'Unauthorized' }]
+  },
+  { status: 401 }
+);
+```
+
+A request with a `session` cookie matches the first stub. Every other `GetProfile` request falls back to the `401` error.
+
+## Matching A Specific Value
+
+Match against the exact cookie value using a string:
+
+```ts
+graphql.query('GetProfile', {
+  match: {
+    cookies: { role: 'admin' }
+  },
+  response: { data: { profile: { role: 'admin' } } }
+});
+```

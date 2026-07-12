@@ -5,7 +5,6 @@
   "pages": [
     "introduction",
     "operations",
-    "matching",
     "intercepting-operations",
     "stub-response",
     "request-settings",

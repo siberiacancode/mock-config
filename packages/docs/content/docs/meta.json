@@ -5,6 +5,8 @@
     "...introduction",
     "---[PlugZap]Integrations---",
     "...integrations",
+    "---[Blocks]Mock Server---",
+    "...mocking-requests",
     "---[Server]REST Mocking---",
     "...rest-mocking",
     "---[Braces]GraphQL Mocking---",

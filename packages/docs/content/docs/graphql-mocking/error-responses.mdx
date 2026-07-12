@@ -50,10 +50,8 @@ graphql.query('GetUser', ({ entities }) => {
 To simulate a transport-level failure — such as a `500` server error or a `401` unauthorized response — set the status code through `settings` or `setStatusCode`.
 
 ```ts
-//[JAVA_COMMENT_REDACTED_e4bb0d13]
 graphql.query('GetUsers', { errors: [{ message: 'Internal Server Error' }] }, { status: 500 });
 
-//[JAVA_COMMENT_REDACTED_93f24eb5]
 graphql.query('GetUsers', ({ setStatusCode }) => {
   setStatusCode(401);
   return { errors: [{ message: 'Unauthorized' }] };

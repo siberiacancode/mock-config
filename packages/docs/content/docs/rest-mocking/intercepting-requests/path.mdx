@@ -1,0 +1,62 @@
+---
+title: Path
+description: Match REST requests by route path in Mock Config.
+---
+
+The path is the first thing Mock Config checks when deciding whether an incoming request matches a route. It is provided as the first argument to any `rest.*` method.
+
+## String Path
+
+Provide a string path to match requests by their pathname:
+
+```ts
+rest.get('/users', { data: { users: [] } });
+```
+
+This matches any `GET` request whose pathname is exactly `/users`. Query parameters are not part of path matching — `/users?role=admin` still matches `/users`.
+
+## Path Parameters
+
+Use `:name` to capture dynamic segments of the path:
+
+```ts
+rest.get('/users/:id', ({ request }) => ({
+  id: Number(request.params.id),
+  name: 'John'
+}));
+```
+
+The captured segment is available on `request.params.id` as a string. See [Path parameters](/docs/rest-mocking/intercepting-requests/path-parameters) for more.
+
+## Wildcards
+
+Use `*` to match any single path segment:
+
+```ts
+rest.get('/files/*', { data: null });
+```
+
+This matches `/files/report`, `/files/image.png`, and any other single-segment path under `/files/`.
+
+## Regular Expression
+
+Provide a regular expression when you need more control over which paths match:
+
+```ts
+rest.get(/\/settings\/(profile|billing)/, { data: {} });
+```
+
+This matches `/settings/profile` and `/settings/billing` but nothing else under `/settings/`.
+
+## Priority
+
+When multiple routes share the same path pattern, more specific routes — those with a `match` condition — take priority over less specific ones. Among routes with equal specificity, the one declared first is preferred.
+
+```ts
+rest.get('/users', {
+  match: { queries: { role: 'admin' } },
+  response: [{ id: 1, name: 'John', role: 'admin' }]
+});
+
+rest.get('/users', { data: { users: [] } });
+```

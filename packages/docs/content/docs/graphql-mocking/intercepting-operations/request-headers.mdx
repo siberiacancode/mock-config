@@ -1,0 +1,69 @@
+---
+title: Request headers
+description: Read and match request headers in GraphQL handlers in Mock Config.
+---
+
+Request headers let you describe GraphQL scenarios based on HTTP headers sent by the client — for example, an authorization token or a locale. In Mock Config, headers are available on `getRequestHeader` inside your handler.
+
+## Read A Header
+
+Use `getRequestHeader` to access a single header value:
+
+```ts
+import { graphql } from 'mock-config-server';
+
+graphql.query('GetUsers', ({ getRequestHeader }) => {
+  const token = getRequestHeader('authorization');
+
+  return {
+    data: { users: [{ id: 1, name: 'John', token }] }
+  };
+});
+```
+
+Use `getRequestHeaders` to read all headers at once:
+
+```ts
+graphql.query('GetUsers', ({ getRequestHeaders }) => {
+  const headers = getRequestHeaders();
+  return { data: { headers } };
+});
+```
+
+## Headers In Matchers
+
+To return different responses based on a header value, use `headers` in the route matcher:
+
+```ts
+import { exists, graphql } from 'mock-config-server';
+
+graphql.query('GetUsers', {
+  match: {
+    headers: { authorization: exists() }
+  },
+  response: { data: { users: [{ id: 1, name: 'John' }] } }
+});
+
+graphql.query(
+  'GetUsers',
+  {
+    errors: [{ message: 'Unauthorized' }]
+  },
+  { status: 401 }
+);
+```
+
+A request with an `authorization` header matches the first stub. Every other `GetUsers` request falls back to the `401` error.
+
+## Matching A Specific Value
+
+Match against the exact header value using a string:
+
+```ts
+graphql.query('GetUsers', {
+  match: {
+    headers: { 'x-locale': 'en' }
+  },
+  response: { data: { users: [] } }
+});
+```

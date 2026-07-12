@@ -175,3 +175,12 @@ graphql.query('GetUsers', ({ entities, next }) => {
   return { data: { users: [] } };
 });
 ```
+
+---
+
+<Callout type='info'>
+  The params described on this page apply to `graphql.query` and `graphql.mutation` handlers only.
+  Subscriptions run over WebSocket and have a different set of params — `next`, `complete`,
+  `setDelay`, `variables`, and `socket`. See [Subscriptions](/docs/graphql-mocking/subscriptions)
+  for the full details.
+</Callout>

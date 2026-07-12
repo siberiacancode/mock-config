@@ -1,5 +1,5 @@
 {
   "title": "Intercepting requests",
   "pagesIndex": "index",
-  "pages": ["path-parameters", "query-parameters", "request-cookies", "request-body"]
+  "pages": ["path", "path-parameters", "query-parameters", "request-cookies", "request-body"]
 }

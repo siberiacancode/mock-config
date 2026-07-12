@@ -1,85 +1,25 @@
 ---
 title: Methods
-description: Overview of HTTP methods available in the rest namespace.
+description: HTTP methods available in the rest namespace.
 ---
 
-The `rest` namespace exposes a method for each supported HTTP verb. Every method follows the same call signature — the only difference is the HTTP method it intercepts and whether a request body is available.
-
-## rest.get
-
-Intercepts `GET` requests. No request body.
+The `rest` namespace exposes a method for each supported HTTP verb plus two streaming variants. Every method follows the same call signature — the only difference is the HTTP method it intercepts and whether a request body is available.
 
 ```ts
-rest.get('/users', { data: { users: [] } });
+rest.get(path, config, settings?)
+rest.post(path, config, settings?)
+rest.put(path, config, settings?)
+rest.patch(path, config, settings?)
+rest.delete(path, config, settings?)
+rest.options(path, config, settings?)
+
+rest.sse(path, config, settings?)
+rest.stream(path, config, settings?)
 ```
 
-## rest.post
+`body` is available in resolvers and matchers for `post`, `put`, and `patch`. It is not available for `get`, `delete`, and `options`.
 
-Intercepts `POST` requests. `body` is available in the resolver and matcher.
-
-```ts
-rest.post('/users', ({ request }) => ({
-  data: { id: 1, name: request.body.name }
-}));
-```
-
-## rest.put
-
-Intercepts `PUT` requests. `body` is available.
-
-```ts
-rest.put('/users/:id', ({ request }) => ({
-  data: { id: request.params.id, ...request.body }
-}));
-```
-
-## rest.patch
-
-Intercepts `PATCH` requests. `body` is available.
-
-```ts
-rest.patch('/users/:id', ({ request }) => ({
-  data: { id: request.params.id, ...request.body }
-}));
-```
-
-## rest.delete
-
-Intercepts `DELETE` requests. No request body.
-
-```ts
-rest.delete('/users/:id', ({ setStatusCode }) => {
-  setStatusCode(204);
-});
-```
-
-## rest.options
-
-Intercepts `OPTIONS` requests. No request body. Typically used for CORS preflight.
-
-```ts
-rest.options('/users', { data: null });
-```
-
-## rest.sse
-
-Intercepts `GET` requests and opens a persistent Server-Sent Events stream. The resolver receives a `client` object with `send` and `close` instead of returning a response value.
-
-```ts
-rest.sse('/events', ({ client }) => {
-  client.send('Hello', { event: 'message' });
-  client.close();
-});
-```
-
-## rest.stream
-
-Intercepts `POST` requests and opens a persistent SSE stream. Use this when the client sends a body alongside the streaming request (for example, an AI chat prompt).
-
-```ts
-rest.stream('/chat', ({ request, client }) => {
-  const tokens = ['Hello', ' world'];
-  tokens.forEach((token) => client.send(token));
-  client.close();
-});
-```
+<Callout type='info'>
+  For the full parameter descriptions, config variants, and types see the [REST API
+  Reference](/docs/api/rest).
+</Callout>
