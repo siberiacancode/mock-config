@@ -11,7 +11,7 @@ describe('formatTokens', () => {
     const result = formatTokens(tokens);
 
     expect(result).toStrictEqual({
-      timestamp: '31.12.2024, 12:34:56,789',
+      timestamp: '31.12.2024, 05:34:56,789',
       method: 'GET',
       statusCode: 200
     });

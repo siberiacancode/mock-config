@@ -5,7 +5,11 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     ...vitest,
-    environment: 'node'
+    environment: 'node',
+    pool: 'forks',
+    env: {
+      TZ: 'UTC'
+    }
   },
   resolve: {
     alias: {
