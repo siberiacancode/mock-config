@@ -1,0 +1,152 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: rgb(228 229 239 / 100%);
+  --background-secondary: rgb(255 255 255 / 75%);
+  --foreground: rgb(52 52 52 / 100%);
+  --foreground-secondary: rgb(153 153 161 / 100%);
+  --card: rgb(255 255 255 / 75%);
+  --accent: rgb(138 143 232 / 100%);
+  --accent-secondary: rgb(138 143 232 / 30%);
+  --success: 122, 39%, 49%;
+  --warning: 39, 86%, 59%;
+  --fail: 5, 100%, 69%;
+  --tag-1-o: 122, 39%, 49%, 0.5;
+  --tag-2-o: 39, 86%, 59%, 0.5;
+  --tag-3-o: 24, 75%, 59%, 0.5;
+  --tag-4-o: 193, 95%, 70%, 0.5;
+  --tag-5-o: 5, 100%, 69%, 0.5;
+  --tag-1: 5, 100%, 69%;
+  --tag-2: 39, 86%, 59%;
+  --tag-3: 24, 75%, 59%;
+  --tag-4: 122, 39%, 49%;
+  --tag-5: 193, 95%, 70%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 3.9%;
+  --primary: 0 0% 9%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 0 0% 96.1%;
+  --secondary-foreground: 0 0% 9%;
+  --muted: 0 0% 96.1%;
+  --muted-foreground: 0 0% 45.1%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0, 0%, 0%, 0.25;
+  --input: 0 0% 89.8%;
+  --ring: 0 0% 3.9%;
+  --box-shadow: 0 4px 10px 0px rgb(0 0 0 / 10%);
+  --box-shadow-light: 0 4px 10px 0px rgb(0 0 0 / 5%);
+}
+
+.dark {
+  --background: rgb(54 57 66 / 100%);
+  --background-secondary: rgb(0 0 0 / 20%);
+  --foreground: rgb(227 230 241 / 100%);
+  --foreground-secondary: rgb(167 174 190 / 100%);
+  --card: rgb(68 72 81 / 100%);
+  --accent: rgb(105 114 255 / 100%);
+  --accent-secondary: rgb(105 114 255 / 30%);
+  --success: 122, 39%, 49%;
+  --warning: 39, 86%, 59%;
+  --fail: 5, 100%, 69%;
+  --tag-1-o: 122, 39%, 49%, 0.5;
+  --tag-2-o: 39, 86%, 59%, 0.5;
+  --tag-3-o: 24, 75%, 59%, 0.5;
+  --tag-4-o: 193, 95%, 70%, 0.5;
+  --tag-5-o: 5, 100%, 69%, 0.5;
+  --tag-1: 5, 100%, 69%;
+  --tag-2: 39, 86%, 59%;
+  --tag-3: 24, 75%, 59%;
+  --tag-4: 122, 39%, 49%;
+  --tag-5: 193, 95%, 70%;
+  --popover: 0 0% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 9%;
+  --secondary: 0 0% 14.9%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 0 0% 14.9%;
+  --muted-foreground: 0 0% 63.9%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 14.9%;
+  --input: 0 0% 14.9%;
+  --ring: 0 0% 83.1%;
+  --box-shadow: 0 4px 10px 0px rgb(0 0 0 / 25%);
+  --box-shadow-light: 0 4px 10px 0px rgb(0 0 0 / 10%);
+}
+
+@theme inline {
+  --font-sans: Inter, sans-serif;
+  --font-code: 'Fira Code', 'Roboto Mono', monospace;
+
+  --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
+  --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
+  --color-card: var(--card);
+  --color-accent: var(--accent);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-additional-success: hsl(var(--success));
+  --color-additional-warning: hsl(var(--warning));
+  --color-additional-fail: hsl(var(--fail));
+  --color-tag-1: hsl(var(--tag-1));
+  --color-tag-2: hsl(var(--tag-2));
+  --color-tag-3: hsl(var(--tag-3));
+  --color-tag-4: hsl(var(--tag-4));
+  --color-tag-5: hsl(var(--tag-5));
+  --color-tag-1-t: hsl(var(--tag-1-o));
+  --color-tag-2-t: hsl(var(--tag-2-o));
+  --color-tag-3-t: hsl(var(--tag-3-o));
+  --color-tag-4-t: hsl(var(--tag-4-o));
+  --color-tag-5-t: hsl(var(--tag-5-o));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --shadow: var(--box-shadow);
+  --shadow-light: var(--box-shadow-light);
+
+  --radius: 0.625rem;
+  --radius-sm: 0.3rem;
+
+  --spacing-xl: 1.5rem;
+  --spacing-l: 1rem;
+  --spacing-m: 0.625rem;
+  --spacing-s: 0.3rem;
+  --spacing-page: 50rem;
+  --spacing-icon-l: 1.25rem;
+  --spacing-icon-m: 1rem;
+  --spacing-button: 2rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* scheme toggle: circle reveal is animated manually on ::view-transition-new(root),
+   the default cross-fade would fight with it */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
