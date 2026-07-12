@@ -3,26 +3,10 @@ import { DatabaseIcon, LayoutGridIcon, ListIcon, SettingsIcon, WorkflowIcon } fr
 import { useState } from 'react';
 
 import { cn } from '@/lib/utils';
-
-import type { Method } from '../MethodBadge/MethodBadge';
+import { getConfigLabel, getConfigMethod } from '@/utils/helpers';
 
 import { MethodBadge } from '../MethodBadge/MethodBadge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui';
-
-type ConfigEntry = MockServerComponent['configs'][number];
-
-const getConfigMethod = (config: ConfigEntry): Method => {
-  if ('method' in config) return config.method;
-  if ('operationType' in config) return config.operationType;
-  return 'ws';
-};
-
-const getConfigLabel = (config: ConfigEntry) => {
-  if ('path' in config) return String(config.path);
-  if ('operationName' in config && config.operationName) return String(config.operationName);
-  if ('operationType' in config) return String(config.operationType);
-  return 'connection';
-};
 
 const NAV_LABEL_CLASS =
   'px-3 pt-2.5 pb-1.5 text-xs font-medium uppercase tracking-wider text-foreground-secondary';

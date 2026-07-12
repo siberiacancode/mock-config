@@ -1,3 +1,4 @@
+export * from './ComponentCard/ComponentCard';
 export * from './Header/Header';
 export * from './icons';
 export * from './MethodBadge/MethodBadge';
