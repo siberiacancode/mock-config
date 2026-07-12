@@ -1,0 +1,74 @@
+---
+title: Streaming
+description: Stream server events to the client for chats and live updates.
+---
+
+For long-lived responses — AI chat tokens, live feeds, progress updates — Mock Config gives you two dedicated factories: `rest.sse` for `GET` and `rest.stream` for `POST`. Both open a persistent connection and hand your resolver a `client` you push messages to over time, instead of returning a single response.
+
+The required event-stream headers are set for you, so you only deal with sending data.
+
+## Server-Sent Events
+
+Use `rest.sse` to stream over a `GET` request. The resolver receives a `client` with `send` and `close`.
+
+```ts
+rest.sse('/chat', ({ client }) => {
+  client.send('Hello');
+  client.send('world');
+  client.close();
+});
+```
+
+Each `send` pushes one message to the client. Call `close` when the stream is done.
+
+## Streaming Over POST
+
+Use `rest.stream` when the client opens the stream with a `POST` request — for example, an AI chat that sends a prompt in the body and streams the answer back.
+
+```ts
+rest.stream<{ body: { prompt: string } }>('/chat', ({ request, client }) => {
+  const words = ['Hello', 'from', 'the', 'mock'];
+
+  words.forEach((word) => client.send(word));
+  client.close();
+});
+```
+
+The request body is available on `request`, so the streamed output can depend on the incoming prompt.
+
+## Streaming With Latency
+
+To imitate tokens arriving over time, space out the `send` calls with `setDelay`. It returns a promise, so await it between messages.
+
+```ts
+rest.stream('/chat', async ({ client, setDelay }) => {
+  const tokens = ['Hello', ' ', 'world'];
+
+  for (const token of tokens) {
+    client.send(token);
+    await setDelay(200);
+  }
+
+  client.close();
+});
+```
+
+Here each token is sent 200ms apart, similar to how an AI model streams its answer.
+
+## Event Metadata
+
+`send` accepts an optional second argument to set the SSE `event`, `id`, and `retry` fields.
+
+```ts
+rest.sse('/notifications', ({ client }) => {
+  client.send('New message', {
+    event: 'message',
+    id: '1',
+    retry: 3000
+  });
+
+  client.close();
+});
+```
+
+Use `event` to name the event type the client listens for, `id` to label the message, and `retry` to suggest a reconnection delay in milliseconds.

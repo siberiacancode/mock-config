@@ -1,4 +1,7 @@
 {
+  "title": "References",
+  "icon": "Files",
+  "defaultOpen": true,
   "pages": [
     "MockServerSettings.mdx",
     "MockServerComponent.mdx",

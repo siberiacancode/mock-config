@@ -1,11 +1,14 @@
 {
+  "title": "Mocking Requests",
+  "icon": "Blocks",
+  "defaultOpen": true,
   "pages": [
     "introducing.mdx",
+    "matcher.mdx",
     "settings.mdx",
     "logger.mdx",
     "cors.mdx",
     "database-orm.mdx",
-    "static-files.mdx",
-    "references"
+    "static-files.mdx"
   ]
 }

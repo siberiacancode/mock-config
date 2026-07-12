@@ -1,0 +1,5 @@
+{
+  "title": "Intercepting requests",
+  "pagesIndex": "index",
+  "pages": ["path-parameters", "query-parameters", "request-cookies", "request-body"]
+}

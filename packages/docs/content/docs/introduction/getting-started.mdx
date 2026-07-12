@@ -9,56 +9,128 @@ Install the core package using your preferred package manager:
 mock-config-server
 ```
 
-Create a `mock-server.config.ts` file with server configuration and export it as default. This is the default file path, but you can [change it](/docs/cli/run).
+Mock Config can mock REST, GraphQL, and WebSocket flows with the same config, so you can keep one predictable setup for local development and tests.
 
-<Tabs groupId="type" items={['REST', 'GraphQL']}>
+## 1. Create your config
+
+Create a `mock-server.config.ts` file and export the server configuration as default. The `mock(...)` helper keeps the config compact and typed. This is the default file path, but you can [change it](/docs/cli/run).
+
+<Tabs groupId="transport-config" items={['REST', 'GraphQL', 'WebSocket']}>
   <Tab value='REST'>
 
-```typescript
-import { MockServerConfig, rest } from 'mock-config-server';
+```typescript title="mock-server.config.ts"
+import { mock, rest } from 'mock-config-server';
 
-export default [
+type User = {
+  id: number;
+  name: string;
+  role: 'admin' | 'developer' | 'qa';
+};
+
+export default mock(
   {
+    port: 7777,
     baseUrl: '/api'
   },
   {
+    name: 'rest',
     configs: [
-      rest.get('user', {
-        response: {
-          emoji: '🧊',
-          name: 'Siberia can code'
-        }
-      })
+      rest.get<{ response: User[] }>('/users', {
+        response: [
+          { id: 1, name: 'John', role: 'admin' },
+          { id: 2, name: 'Jane', role: 'developer' }
+        ]
+      }),
+      rest.get<{ params: { id: string }; response: User }>('/users/:id', ({ request }) => ({
+        id: Number(request.params.id),
+        name: 'John',
+        role: 'admin'
+      }))
     ]
   }
-] satisfies MockServerConfig;
+);
 ```
 
   </Tab>
 
-<Tab value='GraphQL'>
+  <Tab value='GraphQL'>
 
-```typescript
-import { MockServerConfig, graphql } from 'mock-config-server';
+```typescript title="mock-server.config.ts"
+import { graphql, mock } from 'mock-config-server';
 
-export default [
+type User = {
+  id: number;
+  name: string;
+  role: 'admin' | 'developer' | 'qa';
+};
+
+export default mock(
   {
+    port: 7777,
     baseUrl: '/graphql'
   },
   {
+    name: 'graphql',
     configs: [
-      graphql.query('GetUser', {
-        response: { emoji: '🧊', name: 'Siberia can code' }
+      graphql.query<{ response: { data: { users: User[] } } }>('GetUsers', {
+        response: {
+          data: {
+            users: [
+              { id: 1, name: 'John', role: 'admin' },
+              { id: 2, name: 'Jane', role: 'developer' }
+            ]
+          }
+        }
       })
     ]
   }
-] satisfies MockServerConfig;
+);
+```
+
+  </Tab>
+
+  <Tab value='WebSocket'>
+
+```typescript title="mock-server.config.ts"
+import { mock, ws } from 'mock-config-server';
+
+type ClientMessage = { type: 'echo'; payload: string };
+type ServerMessage = { type: 'connected' } | { type: 'echo'; payload: string };
+
+export default mock(
+  {
+    port: 7777
+  },
+  {
+    name: 'websocket',
+    baseUrl: '/ws/users',
+    configs: [
+      ws.connection(
+        (): ServerMessage => ({
+          type: 'connected'
+        })
+      ),
+      ws.message(({ raw }) => {
+        const message = JSON.parse(raw) as ClientMessage;
+
+        const response: ServerMessage = {
+          type: 'echo',
+          payload: message.payload
+        };
+
+        return response;
+      })
+    ]
+  }
+);
 ```
 
   </Tab>
 </Tabs>
 
-Start the mock server:
+## 2. Start the mock server
+
+Run the CLI and your mocks will be available on `http://localhost:7777`:
 
 ```bash
 npx mock-config-server
@@ -66,75 +138,187 @@ npx mock-config-server
 
 > If the package is already installed, you can use the short command `mcs`
 
-Now you can make a request:
+## 3. Try your mocks
 
-<Tabs groupId="type" items={['REST', 'GraphQL']}>
+### Run a request
+
+Use one of the examples below to make a request and confirm that the mock server responds with your configured data.
+
+<Tabs groupId="transport-request" items={['REST', 'GraphQL', 'WebSocket']}>
   <Tab value='REST'>
+
 ```typescript
-fetch('http://localhost:31299/api/user')
-  .then((res) => res.json())
-  .then((data) => console.log(data));
+const users = await fetch('http://localhost:7777/api/users').then((response) => response.json());
+
+console.log(users);
 ```
+
   </Tab>
 
-<Tab value='GraphQL'>
+  <Tab value='GraphQL'>
 
 ```typescript
-const body = JSON.stringify({
-  query: 'query GetUser { name }'
-});
-
-fetch('http://localhost:31299/graphql', {
+const users = await fetch('http://localhost:7777/graphql', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json'
   },
-  body
-})
-  .then((response) => response.json())
-  .then((data) => console.log(data));
+  body: JSON.stringify({
+    query: `
+      query GetUsers {
+        users {
+          id
+          name
+          role
+        }
+      }
+    `
+  })
+}).then((response) => response.json());
+
+console.log(users);
+```
+
+  </Tab>
+
+  <Tab value='WebSocket'>
+
+```typescript
+type ClientMessage = { type: 'echo'; payload: string };
+type ServerMessage = { type: 'connected' } | { type: 'echo'; payload: string };
+
+const socket = new WebSocket('ws://localhost:7777/ws/users');
+
+socket.addEventListener('message', (event) => {
+  console.log(JSON.parse(event.data) as ServerMessage);
+});
+
+socket.addEventListener('open', () => {
+  socket.send(
+    JSON.stringify({
+      type: 'echo',
+      payload: 'hello'
+    } satisfies ClientMessage)
+  );
+});
 ```
 
   </Tab>
 </Tabs>
 
+## 4. Test your mocks
+
+Like any good quick start, it helps to prove the setup in a test runner right away.
+
+### Start the server
+
+Keep the mock server running while your test makes requests to the endpoint.
+
+```bash
+npx mock-config-server
+```
+
+### Write a test
+
+Create a small Vitest test that calls the running mock server and checks the response.
+
+```typescript title="tests/example.test.ts"
+import { expect, test } from 'vitest';
+
+test('returns mocked users', async () => {
+  const response = await fetch('http://localhost:7777/api/users');
+  const data = await response.json();
+
+  expect(data).toEqual([
+    { id: 1, name: 'John', role: 'admin' },
+    { id: 2, name: 'Jane', role: 'developer' }
+  ]);
+});
+```
+
+### Run test
+
+Run the test file.
+
+```bash
+npx vitest
+```
+
+### Expected output
+
+If everything is configured correctly, you should see a passing result like this:
+
+```text
++ test/example.test.ts (1 test) 1ms
+  + responds with the user 0ms
+
+Test Files  1 passed (1)
+     Tests  1 passed (1)
+  Start at  06:03:11
+  Duration  166ms (transform 19ms, setup 0ms, collect 7ms, tests 1ms, environment 0ms, prepare 43ms)
+```
+
 ## Next Steps
 
-This guide is a good starting point, but you can do so much more with mock-config-server. We highly encourage you to explore this documentation to learn more about the capabilities of Mock Config. Here are some great topics to follow up on:
+This guide is a good starting point, but you can do much more with Mock Config.
+
+### Continue learning
 
 <Cards>
   <Card
     title='Introducing'
-    href='/docs/server/introducing'
-    description='Learn about the core concepts of mock-config-server'
+    href='/docs/mocking-requests/introducing'
+    description='Learn the core ideas behind Mock Config'
   />
-<Card
-  title="REST"
-  href="/docs/server/rest"
-  description="Build REST API mocks with ease"
-/>
+  <Card
+    title='Philosophy'
+    href='/docs/introduction/philosophy'
+    description='Understand the principles behind realistic and maintainable mocks'
+  />
+  <Card
+    title='Comparison'
+    href='/docs/introduction/comparison'
+    description='Compare Mock Config with other mocking tools'
+  />
+  <Card
+    title='Defaults'
+    href='/docs/introduction/defaults'
+    description='Learn the default behaviors behind request and event handling'
+  />
+</Cards>
 
-<Card
-  title='GraphQL'
-  href='/docs/server/graphql'
-  description='Create GraphQL API mocks and queries'
-/>
+### Core functionality
 
-<Card
-  title='CORS'
-  href='/docs/server/cors'
-  description='Enable and configure CORS for your mocks'
-/>
-
-<Card
-  title='Database & ORM'
-  href='/docs/server/database-orm'
-  description='Mock database queries and ORM interactions'
-/>
+<Cards>
+  <Card
+    title='Rest'
+    href='/docs/rest-mocking/introduction'
+    description='Add real-time flows with connection and message handlers'
+  />
+  <Card
+    title='Graphql'
+    href='/docs/graphql'
+    description='Add real-time flows with connection and message handlers'
+  />
 
   <Card
-    title="Logger"
-    href="/docs/server/logger"
-    description="Debug and monitor requests with detailed logging"
+    title='WebSocket'
+    href='/docs/websocket'
+    description='Add real-time flows with connection and message handlers'
+  />
+  <Card
+    title='Matcher'
+    href='/docs/mocking-requests/matcher'
+    description='Learn how matching chooses the right scenario for each request or event'
+  />
+  <Card
+    title='Interceptors'
+    href='/docs/mocking-requests/references/Interceptors'
+    description='Transform requests and responses before they reach the client'
+  />
+  <Card
+    title='Logger'
+    href='/docs/mocking-requests/logger'
+    description='Debug and inspect mocked traffic in detail'
   />
 </Cards>

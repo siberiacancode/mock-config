@@ -1,0 +1,77 @@
+---
+title: Error responses
+description: Simulate server error responses.
+---
+
+An error response is just a response with a `4xx` or `5xx` status code and, optionally, an error payload. In Mock Config you can describe one either statically through `settings`, or dynamically from a resolver.
+
+## Error As A Stub
+
+For a route that should always fail, set the status code through the third `settings` argument and return the error payload as the response.
+
+```ts
+rest.get(
+  '/users/1',
+  {
+    error: 'Not Found'
+  },
+  {
+    status: 404
+  }
+);
+```
+
+Every `GET /users/1` request receives the payload with a `404` status code. This is the simplest way to describe a known error scenario.
+
+## Error From A Resolver
+
+When whether the request fails depends on its data, decide inside a resolver and set the status code with `setStatusCode`.
+
+```ts
+rest.get<{ params: { id: string } }>('/users/:id', ({ request, setStatusCode }) => {
+  if (request.params.id === '1') {
+    setStatusCode(404);
+
+    return {
+      error: 'Not Found'
+    };
+  }
+
+  return {
+    id: request.params.id,
+    name: 'John'
+  };
+});
+```
+
+Here `GET /users/1` responds with a `404`, while any other id returns a normal user. The resolver reads the request, sets the status code, and returns the matching payload.
+
+## Errors And Matchers
+
+You can also describe an error as its own scenario with a [Matcher](/docs/mocking-requests/matcher), keeping each response static. This pairs well with a default success stub.
+
+```ts
+import { exists, rest } from 'mock-config-server';
+
+const routes = [
+  rest.get('/users', {
+    match: {
+      headers: {
+        authorization: exists()
+      }
+    },
+    response: [{ id: 1, name: 'John' }]
+  }),
+  rest.get(
+    '/users',
+    {
+      error: 'Unauthorized'
+    },
+    {
+      status: 401
+    }
+  )
+];
+```
+
+Here a request with an `authorization` header matches the first, more specific stub, while every other `GET /users` falls back to the `401` error.

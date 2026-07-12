@@ -1,0 +1,108 @@
+---
+title: Node.js
+description: Use Mock Config directly in Node.js with the built-in runtime API.
+---
+
+Mock Config can be started directly from Node.js without the CLI. This is useful when you want to bootstrap mocks from code, run them inside automated tests, or attach them to an existing server process.
+
+At the moment, the Node.js integration uses the built-in Express-based runtime. Dedicated framework adapters are not available yet, so `Node.js` is the current integration layer for custom setups.
+
+## Start A Mock Server
+
+The simplest option is [`startMockServer`](/docs/api/start-mock-server). It creates the app, starts listening, and returns a server instance with a `destroy()` method for cleanup.
+
+```typescript title="server.ts"
+import mockServerConfig from './mock-server.config';
+import { startMockServer } from 'mock-config-server';
+
+const server = startMockServer(mockServerConfig);
+
+process.on('SIGTERM', () => {
+  server.destroy();
+});
+```
+
+This works well when you want to launch Mock Config from a script instead of running `npx mock-config-server`.
+
+## Create An App Instance
+
+If you need more control, use [`createMockServer`](/docs/api/create-mock-server). It returns the configured Express app, so you can decide how and when to start it.
+
+```typescript title="server.ts"
+import mockServerConfig from './mock-server.config';
+import { createMockServer } from 'mock-config-server';
+
+const app = createMockServer(mockServerConfig);
+
+app.listen(7777, () => {
+  console.log('Mock Config is running on http://localhost:7777');
+});
+```
+
+This is useful when the mock app must be created in code before listening, or when you want to compose startup logic around it.
+
+## Reuse An Existing Express App
+
+Because the current Node.js runtime is Express-based, you can also pass your own Express instance.
+
+```typescript title="server.ts"
+import express from 'express';
+
+import mockServerConfig from './mock-server.config';
+import { createMockServer } from 'mock-config-server';
+
+const app = express();
+
+createMockServer(mockServerConfig, app);
+
+app.listen(7777);
+```
+
+This can be helpful if you need to share middleware, ports, or application lifecycle with the rest of your Node.js setup.
+
+## Use In Tests
+
+One of the most common Node.js integrations is automated testing.
+
+There are three key steps:
+
+1. Start mocking before tests run.
+2. Run your test suite against the mocked endpoints.
+3. Stop the server after the tests finish.
+
+```typescript title="tests/setup.ts"
+import { afterAll, beforeAll } from 'vitest';
+
+import mockServerConfig from '../mock-server.config';
+import { startMockServer } from 'mock-config-server';
+
+let server: ReturnType<typeof startMockServer>;
+
+beforeAll(() => {
+  server = startMockServer(mockServerConfig);
+});
+
+afterAll(() => {
+  server.destroy();
+});
+```
+
+## Confirmation
+
+To confirm the setup works, start the server in Node.js and make a request to one of your mocked endpoints.
+
+```typescript title="confirm.ts"
+import mockServerConfig from './mock-server.config';
+import { startMockServer } from 'mock-config-server';
+
+const server = startMockServer(mockServerConfig);
+
+const response = await fetch('http://localhost:7777/api/users');
+const users = await response.json();
+
+console.log(users);
+
+server.destroy();
+```
+
+If the terminal prints your mocked response, the Node.js integration is working correctly.

@@ -1,0 +1,121 @@
+---
+title: Request body
+description: Read and match REST request bodies in Mock Config.
+---
+
+Request bodies let you describe REST scenarios based on the payload the client sends. In Mock Config, request bodies are available on `request.body` inside your handler.
+
+## Read The Request Body
+
+Use `request.body` to access the incoming payload:
+
+```ts
+import { rest } from 'mock-config-server';
+
+type CreateUserBody = {
+  name: string;
+  role: 'admin' | 'developer';
+};
+
+const route = rest.post<{
+  body: CreateUserBody;
+}>('/users', ({ request }) => {
+  const body = request.body;
+
+  return {
+    id: 1,
+    name: body.name,
+    role: body.role
+  };
+});
+```
+
+This is useful when the response depends on submitted form data, mutations, or command-like requests.
+
+## Body In Matchers
+
+If you want to return different responses based on the request body, use `body` in the route matcher.
+
+<Tabs items={['Matcher', 'Resolver']}>
+<Tab value="Matcher">
+
+```ts
+import { rest } from 'mock-config-server';
+
+const routes = [
+  rest.post('/users', {
+    match: {
+      body: {
+        role: 'admin'
+      }
+    },
+    response: {
+      ok: true,
+      source: 'admin'
+    }
+  })
+];
+```
+
+</Tab>
+<Tab value="Resolver">
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.post<{ body: { role: string } }>('/users', (request) => {
+  if (request.body.role === 'admin') {
+    return {
+      ok: true,
+      source: 'admin'
+    };
+  }
+  // ...
+});
+```
+
+</Tab>
+</Tabs>
+
+This lets you keep one real route while describing multiple scenarios for different payload shapes.
+
+## Flat Body Matching
+
+Mock Config also supports flat matching for nested body fields. That means you can match nested values using dot notation instead of repeating the full object structure.
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.post('/users', {
+  match: {
+    body: {
+      'profile.role': 'admin'
+    }
+  },
+  response: {
+    ok: true
+  }
+});
+```
+
+Dot notation also works with arrays. Use the index to reach into a specific element:
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.post('/users', {
+  match: {
+    body: {
+      'users.0.role': 'admin'
+    }
+  },
+  response: {
+    ok: true
+  }
+});
+```
+
+Flat matching is useful when:
+
+- the body is deeply nested
+- you want to match only a few nested fields

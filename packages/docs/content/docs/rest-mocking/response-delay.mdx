@@ -1,0 +1,29 @@
+---
+title: Response delay
+description: Control how long a route takes to respond.
+---
+
+You can control how long a route takes to respond either statically, through the third `settings` argument, or dynamically from a resolver with `setDelay`. Both hold the response for the given number of milliseconds before it is sent.
+
+## Delay As A Setting
+
+For a fixed delay on the whole route, set `delay` in [settings](/docs/mocking-requests/request-settings).
+
+```ts
+rest.get('/users', [{ id: 1, name: 'John' }], {
+  delay: 500
+});
+```
+
+Here every `GET /users` request takes at least 500ms to respond. This is the simplest way to describe a consistently slow route.
+
+## Delay From A Resolver
+
+When the delay depends on the request, call `setDelay` inside a resolver. It returns a promise, so await it before responding.
+
+```ts
+rest.get('/users', async ({ setDelay }) => {
+  await setDelay(500);
+  return [{ id: 1, name: 'John' }];
+});
+```

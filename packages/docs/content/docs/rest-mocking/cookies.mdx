@@ -1,0 +1,59 @@
+---
+title: Cookies
+description: Set and clear response cookies from a resolver.
+---
+
+Response cookies let a route persist state on the client, such as an auth token or a locale. Inside a resolver you manage them with `setCookie` and `clearCookie` — no manual `Set-Cookie` header handling required.
+
+## Set A Cookie
+
+Use `setCookie` to attach a cookie to the response.
+
+```ts
+rest.post('/login', ({ setCookie }) => {
+  setCookie('auth', 'token');
+  return { ok: true };
+});
+```
+
+Every `POST /login` request responds with the `auth` cookie set on the client.
+
+## Cookie Options
+
+`setCookie` accepts an options object to control path, expiration, domain, and flags like `httpOnly` and `secure`.
+
+```ts
+rest.post('/login', ({ setCookie }) => {
+  setCookie('auth', 'token', {
+    httpOnly: true,
+    secure: true,
+    maxAge: 3600,
+    path: '/'
+  });
+
+  return { ok: true };
+});
+```
+
+## Clear A Cookie
+
+Use `clearCookie` to remove a cookie from the client.
+
+```ts
+rest.post('/logout', ({ clearCookie }) => {
+  clearCookie('auth');
+  return { ok: true };
+});
+```
+
+## Reading A Request Cookie
+
+Cookies sent by the client are available through `getCookie`. This pairs naturally with setting one — read the incoming session, then respond accordingly.
+
+```ts
+rest.get('/profile', ({ getCookie }) => {
+  const token = getCookie('token');
+  if (!token) return { error: 'Unauthorized' };
+  return { ok: true };
+});
+```

@@ -1,0 +1,13 @@
+{
+  "title": "Mock Config",
+  "pages": [
+    "---[BookOpen]Introduction---",
+    "...introduction",
+    "---[PlugZap]Integrations---",
+    "...integrations",
+    "---[Server]REST Mocking---",
+    "...rest-mocking",
+    "---[Terminal]CLI---",
+    "...cli"
+  ]
+}

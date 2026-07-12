@@ -1,0 +1,114 @@
+---
+title: Query parameters
+description: Read and match REST query parameters in Mock Config.
+---
+
+Query parameters let you pass filtering, search, pagination, and other request state in the URL. In Mock Config, query parameters are available on `request.queries` inside your handler.
+
+## Read A Single Query Parameter
+
+Use `request.queries` to access a query parameter:
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.get<{ queries: { id?: string } }>('/product', ({ request }) => {
+  const productId = request.queries.id;
+
+  if (!productId) {
+    return {
+      error: 'Product not found'
+    };
+  }
+
+  return {
+    id: Number(productId)
+  };
+});
+```
+
+Given a request like `/product?id=1`, the `productId` value will be the string `'1'`.
+
+## Read Multiple Query Parameters
+
+You can type and read multiple query parameters at the same time.
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.get<{
+  queries: {
+    page?: string;
+    search?: string;
+  };
+}>('/products', ({ request }) => {
+  const page = request.queries.page ?? 1;
+  const search = request.queries.search ?? '';
+
+  return {
+    page,
+    search
+  };
+});
+```
+
+This is useful for filters, search inputs, pagination state, and similar REST request variations.
+
+## Query Parameters In Matchers
+
+If you want to return different responses based on query values, use `queries` in the route matcher.
+
+<Tabs items={['Matcher', 'Resolver', 'Path']}>
+<Tab value="Matcher">
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.get('/products', {
+  match: {
+    queries: {
+      search: 'john'
+    }
+  },
+  response: [{ id: 1, name: 'John' }]
+});
+```
+
+</Tab>
+<Tab value="Resolver">
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.get<{ queries: { search: string } }>('/products', (request) => {
+  if (request.queries.search === 'john') {
+    return [{ id: 1, name: 'John' }];
+  }
+
+  return [];
+});
+```
+
+</Tab>
+<Tab value="Path">
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.get('/products?search=john', [{ id: 1, name: 'John' }]);
+```
+
+</Tab>
+</Tabs>
+
+This lets you keep one real route while describing multiple scenarios for different query combinations.
+
+## Why Query Parameters Stay Strings
+
+Query parameters come from the URL, so they are received as strings by default. If your application expects numbers, convert them explicitly in the handler:
+
+```ts
+const page = Number(request.queries.page ?? '1');
+```
+
+This keeps the mock behavior aligned with real HTTP request handling and makes type conversions explicit.

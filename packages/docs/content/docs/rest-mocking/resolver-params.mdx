@@ -1,0 +1,196 @@
+---
+title: Resolver params
+description: Read the request and shape the response from inside a resolver.
+---
+
+When you pass a function as the route config, it becomes a **resolver**. It receives a single argument with everything you need to read the incoming request and shape the outgoing response. Destructure only the fields you use.
+
+```ts
+rest.get('/users', () => {});
+```
+
+## request
+
+The parsed incoming request — `params`, `queries`, `body`, `headers`, and `method`.
+
+```ts
+rest.get<{ params: { id: string } }>('/users/:id', ({ request }) => ({
+  id: request.params.id,
+  name: 'John'
+}));
+```
+
+## entities
+
+The request entities resolved for the matched route — `params`, `queries`, `headers`, `cookies`, and `body`.
+
+```ts
+rest.get<{ queries: { role: string } }>('/users', ({ entities }) => [
+  { id: 1, name: 'John', role: entities.queries.role }
+]);
+```
+
+## response
+
+The underlying response object. Most routes never touch it directly — prefer the helpers below — but it is available for advanced cases such as writing a stream manually.
+
+```ts
+rest.get('/stream', ({ response }) => {
+  response.write('chunk');
+  response.end();
+});
+```
+
+## setStatusCode
+
+Sets the HTTP status code of the response.
+
+```ts
+rest.post('/users', ({ setStatusCode }) => {
+  setStatusCode(201);
+  return { id: 1, name: 'John' };
+});
+```
+
+## setDelay
+
+Holds the response for a number of milliseconds. Returns a promise, so you can await it.
+
+```ts
+rest.get('/users', async ({ setDelay }) => {
+  await setDelay(1000);
+  return [{ id: 1, name: 'John' }];
+});
+```
+
+## setHeader
+
+Sets a response header.
+
+```ts
+rest.get('/users', ({ setHeader }) => {
+  setHeader('x-powered-by', 'mock-config-server');
+  return [{ id: 1, name: 'John' }];
+});
+```
+
+## appendHeader
+
+Appends a value to an existing response header.
+
+```ts
+rest.get('/users', ({ appendHeader }) => {
+  appendHeader('vary', 'accept-encoding');
+  return [{ id: 1, name: 'John' }];
+});
+```
+
+## getRequestHeader
+
+Reads a single incoming request header.
+
+```ts
+rest.get('/users', ({ getRequestHeader }) => {
+  const token = getRequestHeader('authorization');
+  return [{ id: 1, name: 'John', token }];
+});
+```
+
+## getRequestHeaders
+
+Reads all incoming request headers.
+
+```ts
+rest.get('/users', ({ getRequestHeaders }) => {
+  const headers = getRequestHeaders();
+  return { headers };
+});
+```
+
+## getResponseHeader
+
+Reads a single response header that was already set.
+
+```ts
+rest.get('/users', ({ setHeader, getResponseHeader }) => {
+  setHeader('x-powered-by', 'mock-config-server');
+  return { poweredBy: getResponseHeader('x-powered-by') };
+});
+```
+
+## getResponseHeaders
+
+Reads all response headers that were already set.
+
+```ts
+rest.get('/users', ({ getResponseHeaders }) => {
+  const headers = getResponseHeaders();
+  return { headers };
+});
+```
+
+## getCookie
+
+Reads a request cookie.
+
+```ts
+rest.get('/profile', ({ getCookie }) => {
+  const session = getCookie('session');
+  return { session };
+});
+```
+
+## setCookie
+
+Sets a response cookie.
+
+```ts
+rest.get('/profile', ({ setCookie }) => {
+  setCookie('locale', 'en', { httpOnly: true });
+  return { ok: true };
+});
+```
+
+## clearCookie
+
+Removes a response cookie.
+
+```ts
+rest.post('/logout', ({ clearCookie }) => {
+  clearCookie('session');
+  return { ok: true };
+});
+```
+
+## attachment
+
+Sends the response as a downloadable file with the given filename.
+
+```ts
+rest.get('/report', ({ attachment }) => {
+  attachment('report.csv');
+  return 'id,name\n1,John';
+});
+```
+
+## broadcast
+
+Sends a response to connected clients.
+
+```ts
+rest.post('/notify', ({ broadcast }) => {
+  broadcast({ event: 'ping' });
+  return { ok: true };
+});
+```
+
+## next
+
+Stops handling in the current resolver and passes control to the next matching route.
+
+```ts
+rest.get('/users', ({ request, next }) => {
+  if (!request.queries.debug) return next();
+  console.log('debug request', request.url);
+});
+```

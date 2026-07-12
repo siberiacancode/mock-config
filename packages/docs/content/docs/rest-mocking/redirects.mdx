@@ -1,0 +1,17 @@
+---
+title: Redirects
+description: Send a redirect response from a resolver.
+---
+
+A redirect is a response with a `3xx` status code and a `location` header pointing to the destination. In a resolver you build one with `setStatusCode` and `setHeader`.
+
+## Redirect A Request
+
+```ts
+rest.get('/users', ({ setStatusCode, setHeader }) => {
+  setStatusCode(301);
+  setHeader('location', '/people');
+});
+```
+
+Here `GET /users` is redirected to `/people`. The redirected route is unhandled in this example — you can define a route for it too, and it will be matched as usual.

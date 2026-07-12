@@ -1,0 +1,47 @@
+---
+title: Request settings
+description: Quickly configure common response behavior.
+---
+
+Every `rest.*` factory accepts an optional third argument — `settings`. It is a quick way to configure common response behavior for a route without writing any resolver logic.
+
+```ts
+rest.get(path, config, settings);
+```
+
+Settings support two options:
+
+| Option   | Type     | Description                                         |
+| -------- | -------- | --------------------------------------------------- |
+| `delay`  | `number` | Delay before the response is sent, in milliseconds. |
+| `status` | `number` | HTTP status code of the response.                   |
+
+## Delay
+
+Use `delay` to simulate a slow network. The response is held for the given number of milliseconds before it is sent.
+
+```ts
+rest.get('/users', [{ id: 1, name: 'John' }], {
+  delay: 1000
+});
+```
+
+Here every `GET /users` request resolves after a one-second delay. This is useful for testing loading states, spinners, and race conditions.
+
+## Status
+
+Use `status` to control the HTTP status code of the response. By default a mocked response is sent with `200`, but you can override it to describe errors or other outcomes.
+
+```ts
+rest.get(
+  '/users',
+  {
+    error: 'Not Found'
+  },
+  {
+    status: 404
+  }
+);
+```
+
+Here the route still returns the given payload, but the client receives it with a `404` status code.

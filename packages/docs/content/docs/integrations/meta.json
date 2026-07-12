@@ -1,0 +1,6 @@
+{
+  "title": "Integrations",
+  "icon": "PlugZap",
+  "defaultOpen": true,
+  "pages": ["nodejs"]
+}

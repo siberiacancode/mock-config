@@ -2,3 +2,33 @@
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
 @import 'fumadocs-twoslash/twoslash.css';
+
+@theme {
+  --color-fd-primary: oklch(0.84 0.17 92);
+}
+
+:root {
+  --color-fd-primary-foreground: hsl(0 0% 8%);
+  --color-fd-accent: oklch(0.97 0.04 95);
+  --color-fd-accent-foreground: hsl(0 0% 10%);
+}
+
+.dark {
+  --color-fd-primary: oklch(0.84 0.17 92);
+  --color-fd-primary-foreground: hsl(0 0% 8%);
+  --color-fd-accent: oklch(0.26 0.03 95);
+  --color-fd-accent-foreground: oklch(0.9 0.03 95);
+}
+
+#nd-toc .relative.flex.flex-col > .absolute,
+#nd-toc a > svg,
+[data-toc-popover-content] .relative.flex.flex-col > .absolute,
+[data-toc-popover-content] a > svg {
+  display: none;
+}
+
+.dark #nd-sidebar [data-active='true'],
+.dark #nd-sidebar a[data-active='true'],
+.dark #nd-sidebar button[data-active='true'] {
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-fd-primary) 22%, transparent);
+}

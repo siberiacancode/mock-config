@@ -1,0 +1,66 @@
+---
+title: Philosophy
+description: Principles that keep Mock Config simple, flexible, and transparent.
+---
+
+Mock Config is built around a simple idea: mocking should help you describe server behavior quickly, without turning configuration into a second application.
+
+The goal is to keep scenario emulation simple, searchable, and easy to maintain.
+
+## Simplicity
+
+We focus on the parts of mocking that usually slow teams down: too much setup, too many abstractions, and configs that are harder to read than the behavior they describe.
+
+Mock Config keeps things simple with:
+
+- concise configuration
+- sensible defaults
+- familiar transport primitives
+- typed helpers that stay close to real requests
+
+This lets you focus on the scenario, not on framework ceremony.
+
+## Scenario Emulation
+
+Real applications rarely need just one static response.
+
+Mock Config is designed to make [REST](/docs/mocking-requests/references/Rest), [GraphQL](/docs/mocking-requests/references/GraphQL), and [WebSocket](/docs/introduction/getting-started#3-try-your-mocks) scenario emulation quick to express. You keep the same route, operation, or socket channel, and describe different outcomes with [Matcher](/docs/mocking-requests/matcher), [Interceptors](/docs/mocking-requests/references/Interceptors), handlers, and response data.
+
+That means you do not need to invent extra endpoints or build special test-only logic just to cover one more case.
+
+## Flexibility
+
+Production systems are often complex, but creating mocks should not be.
+
+Mock Config lets you combine predefined responses with dynamic handlers, describe different outcomes for the same endpoint, and tailor behavior based on request context.
+
+This makes it useful for:
+
+- local development
+- UI state testing
+- automating testing
+
+Simple cases stay short, while more advanced cases still fit into the same mental model.
+
+## Transparency
+
+Mocks should not feel like a black box.
+
+When a response is returned, you should be able to understand why that scenario matched, what data was generated, and how the request was processed.
+
+Mock Config keeps this flow inspectable through explicit config structure, matchers, and logging tools.
+
+## Why This Matters
+
+These principles lead to a setup that is easier to trust:
+
+- scenarios are faster to add
+- configs stay easier to read
+- behavior stays closer to real contracts
+- the same mocks can support different stages of development
+
+In short, the philosophy is simple: make server behavior easy to emulate, while keeping mocks predictable and maintainable.
+
+## Continue Reading
+
+If you want to see these ideas in practice, continue with [Getting Started](/docs/introduction/getting-started)

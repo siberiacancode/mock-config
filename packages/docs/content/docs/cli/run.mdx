@@ -1,0 +1,26 @@
+---
+title: Run
+description: Start mock-config-server from the command line
+---
+
+### Usage
+
+```bash
+npx mock-config-server [options]
+```
+
+Starts a mock server in the current directory using a configuration file `mock-server.config.(js|ts)`.
+
+> If the package is already installed, you can use the short command `mcs`
+
+### Options
+
+| Option         | Short | Description                                                          | Default value                 |
+| -------------- | ----- | -------------------------------------------------------------------- | ----------------------------- |
+| `--baseUrl`    | `-b`  | Specify the base URL path from config. Must start with `/`.          | `/`                           |
+| `--port`       | `-p`  | Specify the server port from config.                                 | `31299`                       |
+| `--staticPath` | `-s`  | Specify the static assets path from the config. Must start with `/`. |                               |
+| `--config`     | `-c`  | Set path to the config file.                                         | `mock-server.config.(js\|ts)` |
+| `--watch`      | `-w`  | Enables server restart when config file changes.                     | `false`                       |
+| `--help`       | `-h`  | Display help for the command.                                        |                               |
+| `--version`    | `-v`  | Display the mock-config-server version.                              |                               |

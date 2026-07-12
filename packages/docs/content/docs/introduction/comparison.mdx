@@ -1,0 +1,379 @@
+---
+title: Comparison
+description: Compare Mock Config with similar API mocking tools.
+---
+
+Choosing the right mocking tool depends on what you need to emulate, where your application runs, and how much control you want over scenarios.
+
+<Callout type='idea' title='Comparison goal'>
+  This page is not about declaring one tool universally better than another. Different libraries
+  solve different problems well. The goal here is to make the tradeoffs visible and explain where
+  Mock Config fits especially well.
+</Callout>
+
+## Comparison Criteria
+
+These are the criteria we use when comparing Mock Config with alternatives:
+
+- supported API types
+- environment
+- implementation
+- integration
+- definition
+
+## MSW
+
+[MSW](https://mswjs.io/docs/comparison) is one of the closest alternatives to Mock Config.
+
+> MSW is especially strong when you want request interception directly in the app runtime. Mock Config is stronger when you want one explicit config for REST, GraphQL, WebSocket, and scenario-driven mock behavior.
+
+### API Support
+
+| API type                             | Mock Config | MSW |
+| ------------------------------------ | ----------- | --- |
+| REST API                             | ✅          | ✅  |
+| GraphQL queries and mutations        | ✅          | ✅  |
+| WebSocket API                        | ✅          | ✅  |
+| GraphQL subscriptions over WebSocket | ✅          | ❌  |
+
+### Supported Environments
+
+| Environment  | Mock Config | MSW |
+| ------------ | ----------- | --- |
+| Node.js      | ✅          | ✅  |
+| Browser      | ⏳          | ✅  |
+| React Native | ⏳          | ✅  |
+
+### Implementation
+
+| Criteria        | Mock Config                            | MSW                                        |
+| --------------- | -------------------------------------- | ------------------------------------------ |
+| Model           | Dedicated mock runtime                 | Request interception                       |
+| Transport setup | REST, GraphQL, WebSocket in one config | HTTP, GraphQL, WebSocket interception APIs |
+
+### Integration
+
+| Criteria                 | Mock Config | MSW |
+| ------------------------ | ----------- | --- |
+| CLI workflow             | ✅          | ⚪  |
+| Programmatic Node.js API | ✅          | ✅  |
+| Separate runtime process | ⚪          | ❌  |
+| No app code changes      | ✅          | ✅  |
+
+### Definition
+
+| Criteria           | Mock Config                                        | MSW                              |
+| ------------------ | -------------------------------------------------- | -------------------------------- |
+| Main style         | Config-driven helpers                              | Handler-driven interception      |
+| REST               | `rest.get(...)`                                    | `http.get(...)`                  |
+| GraphQL            | `graphql.query(...)`                               | `graphql.query(...)`             |
+| WebSocket          | `ws.connection(...)`, `ws.message(...)`            | `ws.link(...)` and socket events |
+| Scenario selection | Built-in [Matcher](/docs/mocking-requests/matcher) | Handler logic and overrides      |
+
+Mock Config keeps mocks in a dedicated config and adds scenario selection through matchers. MSW keeps mocks close to request interception and models them as handlers.
+
+#### Mock Config
+
+```typescript
+rest.get<{ params: { id: string } }>('/users/:id', ({ request }) => ({
+  id: Number(request.params.id),
+  name: 'John'
+}));
+```
+
+#### MSW
+
+```typescript
+http.get('/users/:id', ({ params }) => {
+  return HttpResponse.json({
+    id: params.id,
+    name: 'John'
+  });
+});
+```
+
+Mock Config is a stronger fit when you want one explicit config for REST, GraphQL, WebSocket, and GraphQL subscriptions over WebSocket.
+
+## Nock
+
+[Nock](https://github.com/nock/nock) is an HTTP server mocking and expectations library for Node.js.
+
+> Nock is a very solid Node.js choice for HTTP mocking and expectations. Mock Config covers a broader API surface with first-class GraphQL and WebSocket support.
+
+### API Support
+
+| API type      | Mock Config | Nock |
+| ------------- | ----------- | ---- |
+| REST API      | ✅          | ✅   |
+| GraphQL API   | ✅          | ❌   |
+| WebSocket API | ✅          | ❌   |
+
+### Supported Environments
+
+| Environment | Mock Config | Nock |
+| ----------- | ----------- | ---- |
+| Node.js     | ✅          | ✅   |
+| Browser     | ❌          | ❌   |
+
+### Integration
+
+| Criteria                     | Mock Config | Nock |
+| ---------------------------- | ----------- | ---- |
+| No app code changes          | ✅          | ✅   |
+| Works across request clients | ✅          | ⚪   |
+
+### Definition
+
+| Criteria   | Mock Config              | Nock                            |
+| ---------- | ------------------------ | ------------------------------- |
+| Main style | Route config             | Method chaining                 |
+| Example    | `rest.get('/user', ...)` | `nock(...).get(...).reply(...)` |
+
+Nock uses method chaining and is very direct for HTTP mocking in Node.js. Mock Config uses transport helpers and keeps the route behavior in one config format.
+
+#### Nock
+
+```typescript
+nock('https://api.example.com').get('/user').reply(200, {
+  id: 1,
+  name: 'John'
+});
+```
+
+#### Mock Config
+
+```typescript
+rest.get('/user', {
+  response: {
+    id: 1,
+    name: 'John'
+  }
+});
+```
+
+## JSON Server
+
+[JSON Server](https://github.com/typicode/json-server) creates an actual HTTP server from JSON resources.
+
+> JSON Server is great when a quick resource-based REST backend is enough. Mock Config is a better fit when you need explicit routes, richer scenario control, GraphQL, or WebSocket behavior.
+
+### API Support
+
+| API type      | Mock Config | JSON Server |
+| ------------- | ----------- | ----------- |
+| REST API      | ✅          | ✅          |
+| GraphQL API   | ✅          | ❌          |
+| WebSocket API | ✅          | ❌          |
+
+### Supported Environments
+
+| Environment | Mock Config | JSON Server |
+| ----------- | ----------- | ----------- |
+| Node.js     | ✅          | ✅          |
+| Browser     | ❌          | ⚪          |
+
+### Integration
+
+| Criteria                 | Mock Config | JSON Server |
+| ------------------------ | ----------- | ----------- |
+| No app code changes      | ✅          | ⚪          |
+| Separate runtime process | ✅          | ✅          |
+
+### Definition
+
+| Criteria          | Mock Config           | JSON Server         |
+| ----------------- | --------------------- | ------------------- |
+| Main style        | Explicit route config | Resource-first JSON |
+| Dynamic scenarios | ✅                    | ⚪                  |
+
+JSON Server starts from resources and derives routes from data. Mock Config starts from routes and scenarios, which gives you more explicit control over behavior.
+
+#### JSON Server
+
+```json
+{
+  "users": [
+    { "id": 1, "name": "John" },
+    { "id": 2, "name": "Jane" }
+  ]
+}
+```
+
+#### Mock Config
+
+```typescript
+rest.get('/users', {
+  response: [
+    { id: 1, name: 'John' },
+    { id: 2, name: 'Jane' }
+  ]
+});
+```
+
+## Mirage
+
+[Mirage](https://github.com/miragejs/miragejs) is an API mocking library with route handlers and in-memory data modeling.
+
+> Mirage shines when data modeling is the center of the mocking strategy. Mock Config focuses more on transport-level scenarios, matching, and reusable runtime behavior.
+
+### API Support
+
+| API type      | Mock Config | Mirage |
+| ------------- | ----------- | ------ |
+| REST API      | ✅          | ✅     |
+| GraphQL API   | ✅          | ❌     |
+| WebSocket API | ✅          | ❌     |
+
+### Supported Environments
+
+| Environment | Mock Config | Mirage |
+| ----------- | ----------- | ------ |
+| Node.js     | ✅          | ❌     |
+| Browser     | ❌          | ✅     |
+
+### Implementation
+
+| Criteria      | Mock Config            | Mirage                                |
+| ------------- | ---------------------- | ------------------------------------- |
+| Model         | Dedicated mock runtime | Browser patching and in-memory server |
+| Data modeling | External or custom     | Built in                              |
+
+### Definition
+
+| Criteria       | Mock Config                     | Mirage                    |
+| -------------- | ------------------------------- | ------------------------- |
+| Main style     | Config helpers                  | Route handlers and models |
+| Scenario focus | Matchers and explicit scenarios | Data-first modeling       |
+
+Mirage is built around route handlers and in-memory modeling. Mock Config is lighter when the main goal is to emulate transport behavior without introducing a built-in data layer.
+
+#### Mirage
+
+```typescript
+createServer({
+  routes() {
+    this.get('/movies', () => ['Interstellar', 'Dunkirk']);
+  }
+});
+```
+
+#### Mock Config
+
+```typescript
+rest.get('/movies', {
+  response: ['Interstellar', 'Dunkirk']
+});
+```
+
+## Cypress `cy.intercept()`
+
+[Cypress](https://github.com/cypress-io/cypress) provides API mocking through `cy.intercept()`.
+
+> `cy.intercept()` is a natural fit inside Cypress tests. Mock Config is more reusable when the same mocked behavior must work outside the test runner too.
+
+### API Support
+
+| API type      | Mock Config | `cy.intercept()` |
+| ------------- | ----------- | ---------------- |
+| REST API      | ✅          | ✅               |
+| GraphQL API   | ✅          | ⚪               |
+| WebSocket API | ✅          | ❌               |
+
+### Supported Environments
+
+| Environment | Mock Config | `cy.intercept()` |
+| ----------- | ----------- | ---------------- |
+| Node.js     | ✅          | ❌               |
+| Browser     | ❌          | ✅               |
+
+### Implementation
+
+| Criteria     | Mock Config            | `cy.intercept()`         |
+| ------------ | ---------------------- | ------------------------ |
+| Model        | Dedicated mock runtime | Test-runner interception |
+| Availability | App and tests          | Cypress only             |
+
+### Definition
+
+| Criteria            | Mock Config    | `cy.intercept()`                   |
+| ------------------- | -------------- | ---------------------------------- |
+| Main style          | Config helpers | Custom matcher and reply callbacks |
+| Reuse outside tests | ✅             | ❌                                 |
+
+`cy.intercept()` is great when the mock only needs to exist inside Cypress. Mock Config is more reusable when you want the same behavior in local development and tests.
+
+#### `cy.intercept()`
+
+```typescript
+cy.intercept('POST', '/users', (request) => {
+  request.reply({
+    statusCode: 201,
+    body: request.body
+  });
+});
+```
+
+#### Mock Config
+
+```typescript
+rest.post('/users', ({ body }) => ({
+  id: 1,
+  ...body
+}));
+```
+
+## Playwright `page.route()`
+
+[Playwright](https://github.com/microsoft/playwright) provides request mocking through `page.route()`.
+
+> `page.route()` works well for browser-level test routing. Mock Config is stronger when you want the same scenarios available in local development, Node.js, and automated testing with one shared config.
+
+### API Support
+
+| API type      | Mock Config | `page.route()` |
+| ------------- | ----------- | -------------- |
+| REST API      | ✅          | ✅             |
+| GraphQL API   | ✅          | ⚪             |
+| WebSocket API | ✅          | ✅             |
+
+### Supported Environments
+
+| Environment | Mock Config | `page.route()` |
+| ----------- | ----------- | -------------- |
+| Node.js     | ✅          | ❌             |
+| Browser     | ❌          | ✅             |
+
+### Implementation
+
+| Criteria     | Mock Config            | `page.route()`                      |
+| ------------ | ---------------------- | ----------------------------------- |
+| Model        | Dedicated mock runtime | Browser-level routing in Playwright |
+| Availability | App and tests          | Playwright browser context only     |
+
+### Definition
+
+| Criteria            | Mock Config    | `page.route()`                          |
+| ------------------- | -------------- | --------------------------------------- |
+| Main style          | Config helpers | Route continuation and fulfill handlers |
+| Reuse outside tests | ✅             | ❌                                      |
+
+`page.route()` works well for browser test routing. Mock Config is better when you want a standalone mock layer that is shared outside Playwright too.
+
+#### `page.route()`
+
+```typescript
+await page.route('**/users', async (route) => {
+  await route.fulfill({
+    status: 200,
+    json: [{ id: 1, name: 'John' }]
+  });
+});
+```
+
+#### Mock Config
+
+```typescript
+rest.get('/users', {
+  response: [{ id: 1, name: 'John' }]
+});
+```

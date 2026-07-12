@@ -1,0 +1,328 @@
+---
+title: Matcher
+description: Match requests and events to the right mock scenario
+---
+
+`Matcher` is the part of a mock config that decides which scenario should answer a request or event.
+
+Without matchers, one route can return only one fixed response. With matchers, you can describe several scenarios for the same endpoint and let the server pick the right one by `params`, `headers`, `cookies`, `queries`, `body`, or `variables`.
+
+## What It Is
+
+A matcher is the `match` field inside a config helper such as `rest.get`, `graphql.query`, `graphql.subscription`, or `ws.connection`.
+
+The server compares the incoming request with your matcher and chooses the first suitable scenario after internal prioritization.
+
+This gives you a simple way to emulate:
+
+- different users by `params`
+- feature flags by `headers`
+- search states by `queries`
+- GraphQL scenarios by `variables`
+- websocket rooms and event flows by connection data or subscription variables
+
+## Why It Matters
+
+Matchers solve a very common problem in mocking: one real endpoint usually has many states.
+
+Instead of creating many fake URLs, you keep the real route and describe scenarios close to business logic:
+
+- `GET /users/:id` for an admin
+- `GET /users/:id` for a guest
+- `GetUser` query for `id = 1`
+- `GetUser` query for `id = 2`
+- `UserUpdates` subscription for `room = billing`
+
+This makes scenarios faster to describe, easier to search in the config, and much closer to how frontend code really works.
+
+## How It Works
+
+The server narrows candidates in layers:
+
+1. It finds configs by transport-level selector such as REST `path`, GraphQL `operation`, or WebSocket `baseUrl`.
+2. It checks the `match` object against the actual request or event payload.
+3. If several scenarios can match, it applies prioritization rules.
+
+In practice, this means you can keep multiple scenarios under the same endpoint and still get predictable behavior.
+
+## REST Example
+
+For REST, matchers can use `params`, `headers`, `cookies`, `queries`, and `body`.
+
+```typescript
+import { mock, rest } from 'mock-config-server';
+
+type User = {
+  id: number;
+  name: string;
+  role: 'admin' | 'user';
+};
+
+export default mock(
+  {
+    port: 7777,
+    baseUrl: '/api'
+  },
+  {
+    name: 'rest',
+    configs: [
+      rest.get<{ params: { id: string }; response: User }>('/users/:id', {
+        match: {
+          params: {
+            id: '1'
+          }
+        },
+        response: {
+          id: 1,
+          name: 'John',
+          role: 'admin'
+        }
+      }),
+      rest.get<{ params: { id: string }; response: User }>('/users/:id', {
+        match: {
+          params: {
+            id: '2'
+          },
+          headers: {
+            'x-role': 'preview'
+          }
+        },
+        response: {
+          id: 2,
+          name: 'Jane',
+          role: 'user'
+        }
+      })
+    ]
+  }
+);
+```
+
+This is useful when one REST endpoint should emulate several states without changing the path.
+
+## GraphQL Example
+
+For GraphQL, matchers can use `headers`, `cookies`, `queries`, and `variables`.
+
+```typescript
+import { graphql, mock } from 'mock-config-server';
+
+type User = {
+  id: number;
+  name: string;
+  role: 'admin' | 'user';
+};
+
+export default mock(
+  {
+    port: 7777,
+    baseUrl: '/graphql'
+  },
+  {
+    name: 'graphql',
+    configs: [
+      graphql.query<{
+        body: { variables: { id: number } };
+        response: { data: { user: User } };
+      }>('GetUser', {
+        match: {
+          variables: {
+            id: 1
+          }
+        },
+        response: {
+          data: {
+            user: {
+              id: 1,
+              name: 'John',
+              role: 'admin'
+            }
+          }
+        }
+      }),
+      graphql.query<{
+        body: { variables: { id: number } };
+        response: { data: { user: User } };
+      }>('GetUser', {
+        match: {
+          variables: {
+            id: 2
+          }
+        },
+        response: {
+          data: {
+            user: {
+              id: 2,
+              name: 'Jane',
+              role: 'user'
+            }
+          }
+        }
+      })
+    ]
+  }
+);
+```
+
+This is especially helpful when frontend code keeps one operation name, but the UI needs different responses for different variables.
+
+## WebSocket Example
+
+For WebSocket flows there are two common matcher cases:
+
+- `ws.connection` for matching connection metadata such as `queries`, `headers`, or `cookies`
+- `graphql.subscription` for matching subscription `variables`
+
+```typescript
+import { graphql, mock, ws } from 'mock-config-server';
+
+export default mock(
+  {
+    port: 7777
+  },
+  {
+    name: 'websocket',
+    baseUrl: '/ws',
+    configs: [
+      ws.connection({
+        match: {
+          queries: {
+            room: 'billing'
+          }
+        },
+        handler: () => ({
+          type: 'connected',
+          room: 'billing'
+        })
+      }),
+      graphql.subscription('UserUpdates', {
+        match: {
+          variables: {
+            room: 'billing'
+          }
+        },
+        response: {
+          data: {
+            userUpdated: {
+              id: 1,
+              name: 'John'
+            }
+          }
+        }
+      })
+    ]
+  }
+);
+```
+
+This is where matchers become very useful for event emulation: you can keep one socket endpoint and branch behavior by room, event payload, or subscription variables.
+
+## Matcher Operators
+
+You are not limited to plain equality. Matchers also support comparator helpers exported from `mock-config-server`.
+
+Available helpers:
+
+- `equals`
+- `not`
+- `exists`
+- `includes`
+- `startsWith`
+- `endsWith`
+- `oneOf`
+- `regExp`
+- `greater`
+- `greaterOrEquals`
+- `less`
+- `lessOrEquals`
+- `inRange`
+- `length`
+- `minLength`
+- `maxLength`
+- `some`
+- `every`
+- `haveEntries`
+- `haveType`
+- `fn`
+
+Example:
+
+```typescript
+import { mock, oneOf, regExp, rest, startsWith } from 'mock-config-server';
+
+export default mock(
+  {
+    baseUrl: '/api'
+  },
+  {
+    configs: [
+      rest.get('/users/:id', {
+        match: {
+          params: {
+            id: regExp(/^\d+$/)
+          },
+          headers: {
+            'x-env': oneOf(['dev', 'stage'])
+          },
+          queries: {
+            search: startsWith('jo')
+          }
+        },
+        response: [{ id: 1, name: 'John' }]
+      })
+    ]
+  }
+);
+```
+
+Use plain values when possible. Reach for helpers when you need fuzzy, grouped, or rule-based matching.
+
+## Prioritization Rules
+
+When multiple matcher records can handle the same input, the server picks the most specific one.
+
+### REST
+
+REST uses two prioritization rules:
+
+- More specific path parts win: `static segment` beats `:param`, and `:param` beats `*`
+- If paths are comparable, configs with more matcher fields get higher priority
+
+Examples:
+
+- `/users/me` wins over `/users/:id`
+- `/users/:id` wins over `/users/*`
+- a route matching `params + headers` wins over a route matching only `params`
+
+### GraphQL
+
+GraphQL prioritization is based on matcher weight.
+
+The weight is calculated as the total number of keys inside the matcher object. A config with more matched fields is treated as more specific.
+
+Examples:
+
+- `variables: { id: 1, role: 'admin' }` has higher priority than `variables: { id: 1 }`
+- `headers + variables` has higher priority than only `variables`
+
+### WebSocket
+
+There are two different behaviors:
+
+- `graphql.subscription` over WebSocket also uses matcher weight, based on the number of `variables` keys
+- `ws.connection` and `ws.message` do not use an extra specificity weight, so declaration order matters more
+
+For connection matchers, put the most specific scenario first.
+
+## Summary
+
+Use matchers when one endpoint or event channel must emulate more than one scenario.
+
+They help you:
+
+- keep real paths and operation names
+- describe scenarios faster
+- search and maintain configs more easily
+- model UI states without inventing fake endpoints
+
+If you need to reshape request or response data after matching, continue with [Interceptors](/docs/mocking-requests/references/Interceptors).

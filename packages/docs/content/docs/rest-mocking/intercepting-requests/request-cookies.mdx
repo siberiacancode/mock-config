@@ -1,0 +1,77 @@
+---
+title: Request cookies
+description: Read and match REST request cookies in Mock Config.
+---
+
+Cookies let you describe request state that is sent outside the URL and request body. In Mock Config, request cookies are available on `request.cookies` inside your handler.
+
+## Read A Cookie
+
+Use `request.cookies` to access a cookie value:
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.get<{ cookies: { session?: string } }>('/profile', ({ request }) => {
+  const session = request.cookies.session;
+
+  if (!session) {
+    return {
+      error: 'Unauthorized'
+    };
+  }
+
+  return {
+    session
+  };
+});
+```
+
+Given a request with `Cookie: session=abc123`, the `session` value will be `'abc123'`.
+
+## Cookies In Matchers
+
+If you want to return different responses based on cookie values, use `cookies` in the route matcher.
+
+<Tabs items={['Matcher', 'Resolver']}>
+<Tab value="Matcher">
+
+```ts
+import { rest } from 'mock-config-server';
+
+const routes = [
+  rest.get('/profile', {
+    match: {
+      cookies: {
+        role: 'admin'
+      }
+    },
+    response: {
+      name: 'John',
+      role: 'admin'
+    }
+  })
+];
+```
+
+</Tab>
+<Tab value="Resolver">
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.get<{ cookies: { role?: string } }>('/profile', (request) => {
+  if (request.cookies.role === 'admin') {
+    return {
+      name: 'John',
+      role: 'admin'
+    };
+  }
+  // ...
+});
+```
+
+</Tab>
+</Tabs>
+
+This lets you keep one real route while describing multiple scenarios based on cookie state.

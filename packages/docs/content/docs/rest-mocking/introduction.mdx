@@ -1,0 +1,28 @@
+---
+title: Introduction
+description: Intercept and mock REST requests with Mock Config.
+---
+
+Mock Config supports REST request mocking through the `rest` namespace provided by the library:
+
+```ts
+import { rest } from 'mock-config-server';
+
+rest.get('/users', {
+  response: [
+    { id: 1, name: 'John', role: 'admin' },
+    { id: 2, name: 'Jane', role: 'developer' }
+  ]
+});
+```
+
+This section gives you an overview of the REST mocking experience in Mock Config. Continue with the nested pages here to learn how request matching works and how to describe responses for different scenarios.
+
+## Benefits
+
+Here are some of the benefits of using Mock Config for REST mocking:
+
+- config-first: keep route definitions and scenarios in one place
+- reusable: use the same mocks for local development, debugging, and tests
+- type-safe: annotate params, headers, body, and response types
+- scenario-driven: combine route handlers with [Matcher](/docs/mocking-requests/matcher) and [Interceptors](/docs/mocking-requests/references/Interceptors)

@@ -1,0 +1,153 @@
+---
+title: Intercepting requests
+description: Learn how REST request interception works in Mock Config.
+---
+
+To inspect and handle requests, you define REST routes with the `rest` namespace. Here is a minimal example:
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.get('/resource', ({ request }) => ({
+  method: request.method,
+  path: request.path
+}));
+```
+
+This route intercepts `GET /resource` requests and gives you access to the incoming request data. This page introduces the structure of REST routes and the supported ways of intercepting requests. Refer to the nested pages in this section for more specific cases like path parameters, query parameters, cookies, and request bodies.
+
+## Anatomy Of A REST Route
+
+At the core, every REST route consists of two parts: a `predicate` and a `resolver`. In Mock Config, a route can also include a `matcher` and `settings` when you need more control over how the request is selected and how the response is returned.
+
+```ts
+//       👇 This is a predicate.
+rest.get('/resource', () => {});
+//                    👆 This is a resolver.
+```
+
+The predicate decides which requests match the route. The resolver decides what response to return for those requests.
+
+## Predicate
+
+The predicate is what Mock Config uses to decide whether an incoming request should match a route.
+
+### Route Path
+
+You can provide a string path as the route predicate:
+
+```ts
+rest.get('/users/:id', () => {});
+```
+
+This matches requests by method and pathname. Query parameters are not part of the route path matching.
+
+### Query Parameters
+
+Include query parameters in the route path, even if you are certain that such a route is exactly what you want to cover in your scenario.
+
+```ts
+rest.get('/users?id=1', () => {});
+```
+
+Query parameters describe additional request data, not the route path itself. Use `request.queries` in the resolver or `queries` in a matcher instead.
+
+### Special Tokens
+
+When using a string path, you can use special tokens to represent dynamic matching behavior:
+
+- `:id` for a named path parameter
+- `*` for a wildcard segment
+
+```ts
+rest.get('/users/:id', () => {});
+rest.get('/users/*', () => {});
+```
+
+### Regular Expression
+
+You can also provide a regular expression as the path predicate:
+
+```ts
+rest.get(/\/settings\/(profile|billing)/, () => {});
+```
+
+Regular expressions are useful for advanced matching cases, but string paths are usually easier to read and maintain.
+
+### Advanced Matching
+
+For more nuanced use cases, Mock Config does not use a custom predicate function on the route itself. Instead, use a [Matcher](/docs/mocking-requests/matcher) to add extra conditions for `params`, `queries`, `cookies`, `headers`, or `body`.
+
+For example, `exists()` is useful when a request should match as long as a value is present:
+
+```ts
+import { exists, rest } from 'mock-config-server';
+
+rest.get('/products', {
+  match: {
+    queries: {
+      search: exists()
+    }
+  },
+  response: [{ id: 1, name: 'John' }]
+});
+```
+
+Use `fn()` when you need a custom comparator function:
+
+```ts
+import { fn, rest } from 'mock-config-server';
+
+const route = rest.get('/products', {
+  match: {
+    queries: {
+      search: fn((actual) => typeof actual === 'string' && actual.startsWith('jo'))
+    }
+  },
+  response: [{ id: 1, name: 'John' }]
+});
+```
+
+This keeps the route path simple while still letting you match requests by custom logic. More ready-made functions can be found in the [Matcher](/docs/mocking-requests/matcher) article.
+
+## Resolver
+
+The resolver decides what to return when a request matches the route.
+
+### Static Response
+
+Use a response object when the result is fixed:
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.get('/users', {
+  response: [{ id: 1, name: 'John' }]
+});
+```
+
+### Dynamic Response
+
+Use a function when the response depends on request data:
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.get<{ params: { id: string } }>('/users/:id', ({ request }) => {
+  return {
+    id: Number(request.params.id),
+    name: 'John'
+  };
+});
+```
+
+Inside the resolver, you can read: `request.params`, `request.queries`, `request.cookies`, `request.body`, headers and other request metadata
+
+## Next Steps
+
+Now that you know how REST request interception works, continue with the nested guides in this section:
+
+- [Path parameters](/docs/rest-mocking/intercepting-requests/path-parameters)
+- [Query parameters](/docs/rest-mocking/intercepting-requests/query-parameters)
+- [Request cookies](/docs/rest-mocking/intercepting-requests/request-cookies)
+- [Request body](/docs/rest-mocking/intercepting-requests/request-body)

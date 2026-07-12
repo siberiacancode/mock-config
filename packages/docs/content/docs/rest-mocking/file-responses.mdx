@@ -1,0 +1,34 @@
+---
+title: File responses
+description: Respond to a route with a file.
+---
+
+Mock Config can answer a route with a file straight from disk. Pass a `file` config with a path, and the route sends that file back as its response.
+
+## Respond With A File
+
+```ts
+rest.get('/report', {
+  file: './files/report.pdf'
+});
+```
+
+Every `GET /report` request receives the contents of `report.pdf` as the response.
+
+## Force A Download
+
+By default a file is sent inline where the client can render it. To send it as a download instead, set it as an attachment from a resolver with `attachment`.
+
+```ts
+rest.get('/report', ({ attachment }) => {
+  attachment('report.pdf');
+  // ...
+});
+```
+
+`attachment` marks the response as a downloadable file with the given filename, so the browser saves it rather than displaying it.
+
+<Callout>
+  If you just want to expose a folder of files over HTTP rather than wire each one to a route, you
+  may not need `file` at all — serve them as [static files](/docs/static-files) instead.
+</Callout>

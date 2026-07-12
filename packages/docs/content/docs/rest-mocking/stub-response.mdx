@@ -1,0 +1,64 @@
+---
+title: Stub response
+description: Return predictable, static responses for intercepted REST requests in Mock Config.
+---
+
+By default, every mock in Mock Config works as a **stub**: it returns the same predefined response for every request that matches the route, regardless of what the client sends. There is no logic to run, no state to track, no condition to evaluate. The request comes in, the stub answers. This is the simplest and most predictable way to mock an API, and it covers the majority of scenarios.
+
+## A Stubbed GET Request
+
+Define a route with a static `response` and it will answer every matching request with the exact same payload:
+
+```ts
+rest.get('/users', [
+  { id: 1, name: 'John' },
+  { id: 2, name: 'Jane' }
+]);
+```
+
+Every `GET /users` request receives the same list of users. It does not matter which query parameters, headers, or cookies the client sends — the stub always returns this response.
+
+## Stubs And Matchers
+
+A single stub answers every matching request the same way. To describe **different** responses for **different** requests, combine stubs with a [Matcher](/docs/mocking-requests/matcher). Instead of writing branching logic inside a resolver, you declare several stubs and let the matcher decide which one applies. Each stub stays simple and static; the matcher expresses the condition.
+
+```ts
+rest.get('/users', {
+  match: {
+    queries: {
+      role: 'admin'
+    }
+  },
+  response: [{ id: 1, name: 'John', role: 'admin' }]
+});
+rest.get('/users', {
+  match: {
+    queries: {
+      role: 'user'
+    }
+  },
+  response: [{ id: 2, name: 'Jane', role: 'user' }]
+});
+```
+
+Here `GET /users?role=admin` and `GET /users?role=user` are the same real route, but each scenario is described by its own stub. The matcher selects the right one based on the request.
+
+## Priority And The Default Stub
+
+When several stubs share the same route, the one with a `match` is more specific, so it takes priority over a stub without one. Mock Config checks the matched stubs first and only falls back to an unmatched stub when none of them apply. This lets you describe specific scenarios alongside a general default:
+
+```ts
+rest.get('/users', []);
+rest.get('/users', {
+  match: {
+    queries: {
+      role: 'admin'
+    }
+  },
+  response: [{ id: 1, name: 'John', role: 'admin' }]
+});
+```
+
+Here `GET /users?role=admin` matches the first, more specific stub, while every other `GET /users` request falls back to the default empty list.
+
+Keep each response **static and predictable**, and use matchers to map requests to the scenario you want to cover. You describe _what_ the server returns for a given situation, not _how_ to compute it. When you do need computed or stateful behavior, reach for a resolver function — but stubs and matchers are enough for most cases, and they keep your mocks easy to read and reason about. You can read more about matchers and their available functions in the [Matcher](/docs/mocking-requests/matcher) article.

@@ -1,0 +1,57 @@
+// @ts-nocheck
+import * as __fd_glob_46 from "../content/docs/rest-mocking/intercepting-requests/request-cookies.mdx?collection=docs"
+import * as __fd_glob_45 from "../content/docs/rest-mocking/intercepting-requests/request-body.mdx?collection=docs"
+import * as __fd_glob_44 from "../content/docs/rest-mocking/intercepting-requests/query-parameters.mdx?collection=docs"
+import * as __fd_glob_43 from "../content/docs/rest-mocking/intercepting-requests/path-parameters.mdx?collection=docs"
+import * as __fd_glob_42 from "../content/docs/rest-mocking/intercepting-requests/index.mdx?collection=docs"
+import * as __fd_glob_41 from "../content/docs/mocking-requests/references/StaticPath.mdx?collection=docs"
+import * as __fd_glob_40 from "../content/docs/mocking-requests/references/Rest.mdx?collection=docs"
+import * as __fd_glob_39 from "../content/docs/mocking-requests/references/MockServerSettings.mdx?collection=docs"
+import * as __fd_glob_38 from "../content/docs/mocking-requests/references/MockServerComponent.mdx?collection=docs"
+import * as __fd_glob_37 from "../content/docs/mocking-requests/references/Logger.mdx?collection=docs"
+import * as __fd_glob_36 from "../content/docs/mocking-requests/references/Interceptors.mdx?collection=docs"
+import * as __fd_glob_35 from "../content/docs/mocking-requests/references/GraphQL.mdx?collection=docs"
+import * as __fd_glob_34 from "../content/docs/mocking-requests/references/Database.mdx?collection=docs"
+import * as __fd_glob_33 from "../content/docs/mocking-requests/references/Cors.mdx?collection=docs"
+import * as __fd_glob_32 from "../content/docs/rest-mocking/stub-response.mdx?collection=docs"
+import * as __fd_glob_31 from "../content/docs/rest-mocking/streaming.mdx?collection=docs"
+import * as __fd_glob_30 from "../content/docs/rest-mocking/response-delay.mdx?collection=docs"
+import * as __fd_glob_29 from "../content/docs/rest-mocking/resolver-params.mdx?collection=docs"
+import * as __fd_glob_28 from "../content/docs/rest-mocking/request-settings.mdx?collection=docs"
+import * as __fd_glob_27 from "../content/docs/rest-mocking/redirects.mdx?collection=docs"
+import * as __fd_glob_26 from "../content/docs/rest-mocking/introduction.mdx?collection=docs"
+import * as __fd_glob_25 from "../content/docs/rest-mocking/file-responses.mdx?collection=docs"
+import * as __fd_glob_24 from "../content/docs/rest-mocking/error-responses.mdx?collection=docs"
+import * as __fd_glob_23 from "../content/docs/rest-mocking/cookies.mdx?collection=docs"
+import * as __fd_glob_22 from "../content/docs/mocking-requests/static-files.mdx?collection=docs"
+import * as __fd_glob_21 from "../content/docs/mocking-requests/settings.mdx?collection=docs"
+import * as __fd_glob_20 from "../content/docs/mocking-requests/matcher.mdx?collection=docs"
+import * as __fd_glob_19 from "../content/docs/mocking-requests/logger.mdx?collection=docs"
+import * as __fd_glob_18 from "../content/docs/mocking-requests/introducing.mdx?collection=docs"
+import * as __fd_glob_17 from "../content/docs/mocking-requests/cors.mdx?collection=docs"
+import * as __fd_glob_16 from "../content/docs/introduction/what-is-mock-config-server.mdx?collection=docs"
+import * as __fd_glob_15 from "../content/docs/introduction/philosophy.mdx?collection=docs"
+import * as __fd_glob_14 from "../content/docs/introduction/getting-started.mdx?collection=docs"
+import * as __fd_glob_13 from "../content/docs/introduction/comparison.mdx?collection=docs"
+import * as __fd_glob_12 from "../content/docs/integrations/nodejs.mdx?collection=docs"
+import * as __fd_glob_11 from "../content/docs/cli/run.mdx?collection=docs"
+import * as __fd_glob_10 from "../content/docs/cli/init.mdx?collection=docs"
+import * as __fd_glob_9 from "../content/docs/api/start-mock-server.mdx?collection=docs"
+import * as __fd_glob_8 from "../content/docs/api/create-mock-server.mdx?collection=docs"
+import { default as __fd_glob_7 } from "../content/docs/mocking-requests/references/meta.json?collection=docs"
+import { default as __fd_glob_6 } from "../content/docs/rest-mocking/intercepting-requests/meta.json?collection=docs"
+import { default as __fd_glob_5 } from "../content/docs/mocking-requests/meta.json?collection=docs"
+import { default as __fd_glob_4 } from "../content/docs/rest-mocking/meta.json?collection=docs"
+import { default as __fd_glob_3 } from "../content/docs/introduction/meta.json?collection=docs"
+import { default as __fd_glob_2 } from "../content/docs/integrations/meta.json?collection=docs"
+import { default as __fd_glob_1 } from "../content/docs/api/meta.json?collection=docs"
+import { default as __fd_glob_0 } from "../content/docs/meta.json?collection=docs"
+import { server } from 'fumadocs-mdx/runtime/server';
+import type * as Config from '../source.config';
+
+const create = server<typeof Config, import("fumadocs-mdx/runtime/types").InternalTypeConfig & {
+  DocData: {
+  }
+}>({"doc":{"passthroughs":["extractedReferences"]}});
+
+export const docs = await create.docs("docs", "content/docs", {"meta.json": __fd_glob_0, "api/meta.json": __fd_glob_1, "integrations/meta.json": __fd_glob_2, "introduction/meta.json": __fd_glob_3, "rest-mocking/meta.json": __fd_glob_4, "mocking-requests/meta.json": __fd_glob_5, "rest-mocking/intercepting-requests/meta.json": __fd_glob_6, "mocking-requests/references/meta.json": __fd_glob_7, }, {"api/create-mock-server.mdx": __fd_glob_8, "api/start-mock-server.mdx": __fd_glob_9, "cli/init.mdx": __fd_glob_10, "cli/run.mdx": __fd_glob_11, "integrations/nodejs.mdx": __fd_glob_12, "introduction/comparison.mdx": __fd_glob_13, "introduction/getting-started.mdx": __fd_glob_14, "introduction/philosophy.mdx": __fd_glob_15, "introduction/what-is-mock-config-server.mdx": __fd_glob_16, "mocking-requests/cors.mdx": __fd_glob_17, "mocking-requests/introducing.mdx": __fd_glob_18, "mocking-requests/logger.mdx": __fd_glob_19, "mocking-requests/matcher.mdx": __fd_glob_20, "mocking-requests/settings.mdx": __fd_glob_21, "mocking-requests/static-files.mdx": __fd_glob_22, "rest-mocking/cookies.mdx": __fd_glob_23, "rest-mocking/error-responses.mdx": __fd_glob_24, "rest-mocking/file-responses.mdx": __fd_glob_25, "rest-mocking/introduction.mdx": __fd_glob_26, "rest-mocking/redirects.mdx": __fd_glob_27, "rest-mocking/request-settings.mdx": __fd_glob_28, "rest-mocking/resolver-params.mdx": __fd_glob_29, "rest-mocking/response-delay.mdx": __fd_glob_30, "rest-mocking/streaming.mdx": __fd_glob_31, "rest-mocking/stub-response.mdx": __fd_glob_32, "mocking-requests/references/Cors.mdx": __fd_glob_33, "mocking-requests/references/Database.mdx": __fd_glob_34, "mocking-requests/references/GraphQL.mdx": __fd_glob_35, "mocking-requests/references/Interceptors.mdx": __fd_glob_36, "mocking-requests/references/Logger.mdx": __fd_glob_37, "mocking-requests/references/MockServerComponent.mdx": __fd_glob_38, "mocking-requests/references/MockServerSettings.mdx": __fd_glob_39, "mocking-requests/references/Rest.mdx": __fd_glob_40, "mocking-requests/references/StaticPath.mdx": __fd_glob_41, "rest-mocking/intercepting-requests/index.mdx": __fd_glob_42, "rest-mocking/intercepting-requests/path-parameters.mdx": __fd_glob_43, "rest-mocking/intercepting-requests/query-parameters.mdx": __fd_glob_44, "rest-mocking/intercepting-requests/request-body.mdx": __fd_glob_45, "rest-mocking/intercepting-requests/request-cookies.mdx": __fd_glob_46, });

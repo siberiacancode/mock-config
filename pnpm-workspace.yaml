@@ -1,5 +1,12 @@
 packages:
   - 'packages/*'
+allowBuilds:
+  '@tailwindcss/oxide': true
+  esbuild: true
+  sharp: true
+minimumReleaseAgeExclude:
+  - fumadocs-core@16.11.2
+  - fumadocs-ui@16.11.2
 publicHoistPattern:
   - eslint
   - prettier

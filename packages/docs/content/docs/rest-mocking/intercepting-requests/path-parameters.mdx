@@ -1,0 +1,124 @@
+---
+title: Path parameters
+description: Match and type REST path parameters in Mock Config.
+---
+
+Path parameters let you capture dynamic parts of a REST path, like user ids, slugs, or nested resource identifiers. In Mock Config, path parameters are declared directly in the route path and become available on `request.params` inside your handler.
+
+## Declaring Parameters
+
+Use `:name` to declare a parameter in the route path:
+
+```ts
+import { rest } from 'mock-config-server';
+
+type User = {
+  id: number;
+  name: string;
+};
+
+const route = rest.get<{ params: { id: string }; response: User }>('/users/:id', ({ request }) => {
+  const id = request.params.id;
+
+  return {
+    id: Number(id),
+    name: 'John'
+  };
+});
+```
+
+The incoming `GET /api/users/42` request matches `/users/:id`, and the handler receives `{ id: '42' }` in `request.params`.
+
+## Multiple Parameters
+
+You can declare more than one path parameter in the same route.
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.get<{
+  params: {
+    userId: string;
+    postId: string;
+  };
+}>('/users/:userId/posts/:postId', ({ request }) => {
+  const { userId, postId } = request.params;
+
+  return {
+    userId: Number(userId),
+    postId: Number(postId)
+  };
+});
+```
+
+Each parameter is extracted from the matching path segment and passed to the handler as a string.
+
+## Parameters In Matchers
+
+If you want to return different responses based on params values, use `params` in the route matcher.
+
+mdx## Parameters In Matchers
+
+If you want different scenarios for the same dynamic route, use [Matcher](/docs/mocking-requests/matcher) and match specific parameter values.
+
+<Tabs items={['Matcher', 'Resolver', 'Path']}>
+<Tab value="Matcher">
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.get<{ params: { id: string } }>('/users/:id', {
+  match: {
+    params: {
+      id: '1'
+    }
+  },
+  response: {
+    id: 1,
+    name: 'John'
+  }
+});
+```
+
+</Tab>
+<Tab value="Resolver">
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.get<{ params: { id: string } }>('/users/:id', ({ request }) => {
+  if (request.params.id === '1') {
+    return {
+      id: 1,
+      name: 'John'
+    };
+  }
+});
+```
+
+</Tab>
+<Tab value="Path">
+
+```ts
+import { rest } from 'mock-config-server';
+
+const route = rest.get('/users/1', {
+  id: 1,
+  name: 'John'
+});
+```
+
+</Tab>
+</Tabs>
+
+This lets you keep the real route shape while still returning different responses depending on the captured parameter values.
+
+## Why Parameters Stay Strings
+
+Path parameters come from the URL, so they are received as strings by default. If your application expects numbers, convert them explicitly in the handler:
+
+```ts
+const userId = Number(request.params.id);
+```
+
+This keeps the mock behavior aligned with real HTTP routing and makes type conversions explicit.

@@ -1,3 +1,6 @@
 {
-  "pages": ["what-is-mock-config-server", "getting-started"]
+  "title": "Introduction",
+  "icon": "BookOpen",
+  "defaultOpen": true,
+  "pages": ["what-is-mock-config-server", "getting-started", "philosophy", "comparison", "defaults"]
 }
