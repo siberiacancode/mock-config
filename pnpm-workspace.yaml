@@ -1,5 +1,13 @@
 packages:
   - 'packages/*'
+shellEmulator: true
+allowBuilds:
+  '@swc/core': true
+  '@tailwindcss/oxide': true
+  esbuild: true
+  sharp: true
+minimumReleaseAgeExclude:
+  - '@siberiacancode/reactuse@1.0.9'
 publicHoistPattern:
   - eslint
   - prettier
