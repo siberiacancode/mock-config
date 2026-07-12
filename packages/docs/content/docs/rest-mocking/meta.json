@@ -2,19 +2,5 @@
   "title": "REST Mocking",
   "icon": "Server",
   "defaultOpen": true,
-  "pages": [
-    "introduction",
-    "methods",
-    "intercepting-requests",
-    "stub-response",
-    "request-settings",
-    "error-responses",
-    "cookies",
-    "redirects",
-    "response-delay",
-    "polling",
-    "streaming",
-    "file-responses",
-    "resolver-params"
-  ]
+  "pages": ["introduction", "intercepting-requests", "mocking-responses", "methods"]
 }

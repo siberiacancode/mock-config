@@ -1,0 +1,16 @@
+{
+  "title": "Mocking responses",
+  "pagesIndex": "index",
+  "pages": [
+    "stub-response",
+    "request-settings",
+    "error-responses",
+    "cookies",
+    "redirects",
+    "response-delay",
+    "polling",
+    "streaming",
+    "file-responses",
+    "resolver-params"
+  ]
+}
