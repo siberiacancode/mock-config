@@ -1,0 +1,177 @@
+---
+title: Resolver params
+description: Read the request and shape the response from inside a GraphQL resolver.
+---
+
+When you pass a function as the handler config, it becomes a **resolver**. It receives a single argument with everything you need to read the incoming request and shape the outgoing response. Destructure only the fields you use.
+
+```ts
+graphql.query('GetUsers', ({ entities }) => ({
+  data: { users: [] }
+}));
+```
+
+## request
+
+The parsed incoming HTTP request — `query`, `body`, `params`, `headers`, and `method`. For most GraphQL scenarios, prefer `entities.variables` over `request.body` since variables are already parsed for you.
+
+```ts
+graphql.query('GetUsers', ({ request }) => ({
+  data: { locale: request.query.locale }
+}));
+```
+
+## entities
+
+The request entities resolved for the matched handler — `variables`, `headers`, `cookies`, and `queries`.
+
+```ts
+graphql.query('GetUsers', ({ entities }) => ({
+  data: {
+    users: [{ id: 1, role: entities.variables?.role }]
+  }
+}));
+```
+
+## setStatusCode
+
+Sets the HTTP status code of the response.
+
+```ts
+graphql.query('GetUsers', ({ setStatusCode }) => {
+  setStatusCode(403);
+  return { errors: [{ message: 'Forbidden' }] };
+});
+```
+
+## setDelay
+
+Holds the response for a number of milliseconds. Returns a promise, so you can await it.
+
+```ts
+graphql.query('GetUsers', async ({ setDelay }) => {
+  await setDelay(1000);
+  return { data: { users: [] } };
+});
+```
+
+## setHeader
+
+Sets a response header.
+
+```ts
+graphql.query('GetUsers', ({ setHeader }) => {
+  setHeader('x-powered-by', 'mock-config-server');
+  return { data: { users: [] } };
+});
+```
+
+## appendHeader
+
+Appends a value to an existing response header.
+
+```ts
+graphql.query('GetUsers', ({ appendHeader }) => {
+  appendHeader('vary', 'accept-encoding');
+  return { data: { users: [] } };
+});
+```
+
+## getRequestHeader
+
+Reads a single incoming request header.
+
+```ts
+graphql.query('GetUsers', ({ getRequestHeader }) => {
+  const token = getRequestHeader('authorization');
+  return { data: { token } };
+});
+```
+
+## getRequestHeaders
+
+Reads all incoming request headers.
+
+```ts
+graphql.query('GetUsers', ({ getRequestHeaders }) => {
+  const headers = getRequestHeaders();
+  return { data: { headers } };
+});
+```
+
+## getResponseHeader
+
+Reads a single response header that was already set.
+
+```ts
+graphql.query('GetUsers', ({ setHeader, getResponseHeader }) => {
+  setHeader('x-powered-by', 'mock-config-server');
+  return { data: { poweredBy: getResponseHeader('x-powered-by') } };
+});
+```
+
+## getResponseHeaders
+
+Reads all response headers that were already set.
+
+```ts
+graphql.query('GetUsers', ({ getResponseHeaders }) => {
+  const headers = getResponseHeaders();
+  return { data: { headers } };
+});
+```
+
+## getCookie
+
+Reads a request cookie.
+
+```ts
+graphql.query('GetProfile', ({ getCookie }) => {
+  const session = getCookie('session');
+  return { data: { session } };
+});
+```
+
+## setCookie
+
+Sets a response cookie.
+
+```ts
+graphql.mutation('Login', ({ setCookie }) => {
+  setCookie('auth', 'token', { httpOnly: true });
+  return { data: { ok: true } };
+});
+```
+
+## clearCookie
+
+Removes a response cookie.
+
+```ts
+graphql.mutation('Logout', ({ clearCookie }) => {
+  clearCookie('auth');
+  return { data: { ok: true } };
+});
+```
+
+## broadcast
+
+Sends a response to all connected clients.
+
+```ts
+graphql.mutation('CreateUser', ({ broadcast }) => {
+  broadcast({ event: 'user:created' });
+  return { data: { ok: true } };
+});
+```
+
+## next
+
+Stops handling in the current resolver and passes control to the next matching handler.
+
+```ts
+graphql.query('GetUsers', ({ entities, next }) => {
+  if (!entities.variables?.role) return next();
+  return { data: { users: [] } };
+});
+```

@@ -1,0 +1,42 @@
+---
+title: Operations
+description: Overview of GraphQL operations supported by the graphql namespace.
+---
+
+The `graphql` namespace exposes a method for each GraphQL operation type. Every method follows the same call signature — the only difference is the operation type it intercepts.
+
+## graphql.query
+
+Intercepts GraphQL query operations. Queries are read-only requests that fetch data.
+
+```ts
+graphql.query('GetUsers', {
+  data: { users: [{ id: 1, name: 'John' }] }
+});
+```
+
+## graphql.mutation
+
+Intercepts GraphQL mutation operations. Mutations modify data on the server.
+
+```ts
+graphql.mutation('CreateUser', ({ entities }) => ({
+  data: { createUser: { id: 1, name: entities.variables?.name } }
+}));
+```
+
+## graphql.subscription
+
+Intercepts GraphQL subscription operations over the `graphql-transport-ws` WebSocket protocol. Subscriptions push events from the server to the client over time.
+
+```ts
+graphql.subscription('OnUserCreated', async ({ next, complete, setDelay }) => {
+  next({ data: { userCreated: { id: 1, name: 'John' } } });
+  await setDelay(500);
+  complete();
+});
+```
+
+Unlike queries and mutations, subscriptions have no `settings` argument and no queue support. Use `next`, `complete`, and `setDelay` inside the handler to control the event stream.
+
+See [Subscriptions](/docs/graphql-mocking/subscriptions) for the full guide.

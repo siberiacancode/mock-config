@@ -1,4 +1,4 @@
 {
   "title": "API",
-  "pages": ["start-mock-server", "create-mock-server"]
+  "pages": ["start-mock-server", "create-mock-server", "rest", "graphql"]
 }

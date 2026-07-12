@@ -1,0 +1,332 @@
+---
+title: graphql
+description: Complete API reference for the graphql namespace in Mock Config.
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The `graphql` namespace provides methods for registering GraphQL operation handlers.
+
+## graphql.query
+
+Intercepts GraphQL query operations matching the given identifier.
+
+```ts
+graphql.query<Options>(identifier, config, settings?)
+```
+
+<TypeTable
+  type={{
+    identifier: {
+      description:
+        'Operation name to match. A string matches exactly; a RegExp matches any operation name that satisfies the pattern.',
+      type: 'string | RegExp',
+      required: true
+    },
+    config: {
+      description:
+        'Response configuration. Accepts an inline value, response object, handler function, handler object, or queue object.',
+      type: 'GraphQLConfig',
+      typeDescriptionLink: '#graphqlconfig',
+      required: true
+    },
+    settings: {
+      description: 'Optional response settings applied to this handler.',
+      type: 'GraphQLSettings',
+      typeDescriptionLink: '#graphqlsettings'
+    }
+  }}
+/>
+
+## graphql.mutation
+
+Intercepts GraphQL mutation operations. Identical signature to `graphql.query`.
+
+```ts
+graphql.mutation<Options>(identifier, config, settings?)
+```
+
+## graphql.subscription
+
+Intercepts GraphQL subscription operations over `graphql-transport-ws` WebSocket. Unlike queries and mutations, subscriptions have no `settings` argument — use `setDelay` inside the handler instead.
+
+```ts
+graphql.subscription(identifier, config);
+```
+
+<TypeTable
+  type={{
+    identifier: {
+      description: 'Subscription operation name to match.',
+      type: 'string | RegExp',
+      required: true
+    },
+    config: {
+      description:
+        'Response configuration. Accepts an inline value, response object, handler function, or handler object. No queue support.',
+      type: 'GraphQLSubscriptionConfig',
+      typeDescriptionLink: '#graphqlsubscriptionconfig',
+      required: true
+    }
+  }}
+/>
+
+---
+
+## GraphQLConfig
+
+The `config` argument for `graphql.query` and `graphql.mutation` accepts one of the following forms.
+
+### Inline value
+
+Pass a response object directly:
+
+```ts
+graphql.query('GetUsers', { data: { users: [] } });
+```
+
+### Response object
+
+Wrap the response in a `response` field to add an optional matcher:
+
+```ts
+graphql.query('GetUsers', {
+  response: { data: { users: [] } },
+  match: { variables: { role: 'admin' } } // optional
+});
+```
+
+<TypeTable
+  type={{
+    response: {
+      description: 'Static GraphQL execution result.',
+      type: 'GraphQLExecutionResult',
+      typeDescriptionLink: '#graphqlexecutionresult',
+      required: true
+    },
+    match: {
+      description: 'Optional matcher to scope this config to specific request conditions.',
+      type: 'GraphQLEntitiesByEntityName',
+      typeDescriptionLink: '/docs/mocking-requests/references/GraphQL#GraphQLEntitiesByEntityName'
+    }
+  }}
+/>
+
+### Handler function
+
+Pass a function to compute the response dynamically. The function receives [resolver params](/docs/graphql-mocking/resolver-params).
+
+```ts
+graphql.query('GetUsers', ({ entities }) => ({
+  data: { users: [{ role: entities.variables?.role }] }
+}));
+```
+
+### Handler object
+
+Wrap a handler function to add an optional matcher:
+
+```ts
+graphql.query('GetUsers', {
+  handler: ({ entities }) => ({ data: { users: [] } }),
+  match: { variables: { role: 'admin' } }
+});
+```
+
+<TypeTable
+  type={{
+    handler: {
+      description:
+        'Resolver function. Receives resolver params and returns a GraphQL execution result.',
+      type: '(params: GraphQLParams) => GraphQLExecutionResult | Promise<GraphQLExecutionResult>',
+      required: true
+    },
+    match: {
+      description: 'Optional matcher.',
+      type: 'GraphQLEntitiesByEntityName',
+      typeDescriptionLink: '/docs/mocking-requests/references/GraphQL#GraphQLEntitiesByEntityName'
+    }
+  }}
+/>
+
+### Queue object
+
+Cycle through a sequence of responses over time. The same queue model as REST — see [Polling](/docs/rest-mocking/polling).
+
+```ts
+graphql.query('GetStatus', {
+  queue: [
+    { response: { data: { status: 'pending' } }, time: 2000 },
+    { response: { data: { status: 'done' } } }
+  ]
+});
+```
+
+<TypeTable
+  type={{
+    queue: {
+      description:
+        'Ordered list of queue items. Each item can be a response or handler function, with an optional `time` (ms) controlling how long the item stays active.',
+      type: 'Array<{ response: GraphQLExecutionResult; time?: number } | { handler: Function; time?: number }>',
+      required: true
+    },
+    match: {
+      description: 'Optional matcher.',
+      type: 'GraphQLEntitiesByEntityName',
+      typeDescriptionLink: '/docs/mocking-requests/references/GraphQL#GraphQLEntitiesByEntityName'
+    }
+  }}
+/>
+
+---
+
+## GraphQLSubscriptionConfig
+
+The `config` argument for `graphql.subscription` accepts one of the following forms.
+
+### Inline value
+
+```ts
+graphql.subscription('OnUserCreated', { data: { userCreated: { id: 1 } } });
+```
+
+Sends the value as a single `next` event and immediately closes the subscription with `complete`.
+
+### Response object
+
+```ts
+graphql.subscription('OnUserCreated', {
+  response: { data: { userCreated: { id: 1 } } },
+  match: { variables: { teamId: '1' } }
+});
+```
+
+### Handler function
+
+The handler receives subscription params with `next`, `complete`, and `setDelay`:
+
+```ts
+graphql.subscription('OnUserCreated', async ({ next, complete, setDelay }) => {
+  next({ data: { userCreated: { id: 1 } } });
+  await setDelay(300);
+  complete();
+});
+```
+
+<TypeTable
+  type={{
+    next: {
+      description: 'Sends a data event to the subscribed client.',
+      type: '(payload: GraphQLExecutionResult) => void'
+    },
+    complete: {
+      description: 'Closes the subscription.',
+      type: '() => void'
+    },
+    setDelay: {
+      description: 'Pauses execution for the given number of milliseconds.',
+      type: '(ms: number) => Promise<void>'
+    },
+    entities: {
+      description: 'Matched entities — `variables` only.',
+      type: 'GraphQLSubscriptionEntities'
+    },
+    variables: {
+      description:
+        'Shorthand for `entities.variables`. The raw variables from the subscribe payload.',
+      type: 'Record<string, unknown> | undefined'
+    },
+    operationName: {
+      description: 'The operation name from the subscribe payload.',
+      type: 'string | undefined'
+    },
+    query: {
+      description: 'The raw GraphQL query string from the subscribe payload.',
+      type: 'string | undefined'
+    }
+  }}
+/>
+
+### Handler object
+
+```ts
+graphql.subscription('OnUserCreated', {
+  handler: async ({ next, complete }) => {
+    next({ data: { userCreated: { id: 1 } } });
+    complete();
+  },
+  match: { variables: { teamId: '1' } }
+});
+```
+
+---
+
+## GraphQLSettings
+
+The optional third argument for `graphql.query` and `graphql.mutation`.
+
+<TypeTable
+  type={{
+    delay: {
+      description: 'Artificial delay in milliseconds before the response is sent.',
+      type: 'number'
+    },
+    status: {
+      description: 'HTTP status code of the response.',
+      type: 'number',
+      default: '200'
+    }
+  }}
+/>
+
+---
+
+## GraphQLExecutionResult
+
+The shape of every GraphQL response:
+
+```ts
+type GraphQLExecutionResult = {
+  data?: Record<string, unknown> | null;
+  errors?: Array<{ message: string; [key: string]: unknown }>;
+};
+```
+
+---
+
+## Generic Options
+
+`graphql.query` and `graphql.mutation` accept an optional generic `Options` to type the request and response:
+
+```ts
+graphql.query<{
+  response: { data: { users: User[] } };
+}>('GetUsers', ({ entities }) => {
+  return { data: { users: [] } };
+});
+```
+
+<TypeTable
+  type={{
+    query: {
+      description: 'Type of the HTTP query string parameters.',
+      type: 'Record<string, unknown>',
+      default: 'Record<string, unknown>'
+    },
+    body: {
+      description: 'Type of the raw HTTP request body.',
+      type: 'Record<string, unknown>',
+      default: 'Record<string, unknown>'
+    },
+    params: {
+      description: 'Type of URL path parameters.',
+      type: 'Record<string, string>',
+      default: 'Record<string, string>'
+    },
+    response: {
+      description: 'Return type of the resolver function. Must extend `GraphQLExecutionResult`.',
+      type: 'GraphQLExecutionResult',
+      default: 'any'
+    }
+  }}
+/>

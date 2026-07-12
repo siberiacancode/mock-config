@@ -1,0 +1,104 @@
+---
+title: Subscriptions
+description: Mock GraphQL subscriptions over WebSocket with Mock Config.
+---
+
+Mock Config supports GraphQL subscriptions through the `graphql-transport-ws` protocol over WebSocket. Use `graphql.subscription` to define a handler that intercepts subscription operations and pushes events back to the client.
+
+```ts
+import { graphql } from 'mock-config-server';
+
+graphql.subscription('OnUserCreated', async ({ next, complete, setDelay }) => {
+  next({ data: { userCreated: { id: 1, name: 'John' } } });
+  await setDelay(500);
+  next({ data: { userCreated: { id: 2, name: 'Jane' } } });
+  complete();
+});
+```
+
+## Subscription Lifecycle
+
+When a client starts a subscription, Mock Config calls the handler once. The handler uses `next` and `complete` to control the event stream:
+
+- `next(payload)` — sends a data event to the client
+- `complete()` — closes the subscription and signals the client that no more events will arrive
+
+The subscription remains open until `complete()` is called or the client disconnects.
+
+## Static Subscription
+
+For a single-event subscription, return a response directly or use the inline object form:
+
+```ts
+//[JAVA_COMMENT_REDACTED_f5aaf19d]
+graphql.subscription('OnUserCreated', {
+  data: { userCreated: { id: 1, name: 'John' } }
+});
+
+//[JAVA_COMMENT_REDACTED_e59c71bb]
+graphql.subscription('OnUserCreated', {
+  response: { data: { userCreated: { id: 1, name: 'John' } } }
+});
+```
+
+Mock Config automatically sends the response as a single `next` event and then sends `complete`.
+
+## Streaming Multiple Events
+
+Use a handler function to push multiple events over time:
+
+```ts
+graphql.subscription('OnNewMessage', async ({ next, complete, setDelay }) => {
+  const messages = [
+    { id: 1, text: 'Hello' },
+    { id: 2, text: 'How are you?' },
+    { id: 3, text: 'Bye!' }
+  ];
+
+  for (const message of messages) {
+    next({ data: { newMessage: message } });
+    await setDelay(800);
+  }
+
+  complete();
+});
+```
+
+## Matching By Variables
+
+Use `match.variables` to scope a subscription to a specific variable set. This lets you return different event streams depending on what the client subscribed with:
+
+```ts
+graphql.subscription('OnNewMessage', {
+  match: { variables: { channelId: 'general' } },
+  response: { data: { newMessage: { text: 'Hello from #general' } } }
+});
+
+graphql.subscription('OnNewMessage', {
+  match: { variables: { channelId: 'random' } },
+  response: { data: { newMessage: { text: 'Hello from #random' } } }
+});
+```
+
+## Handler With Match
+
+Combine a `match` condition with a `handler` function for matched dynamic subscriptions:
+
+```ts
+graphql.subscription('OnUserCreated', {
+  match: { variables: { teamId: '1' } },
+  handler: async ({ next, complete, variables, setDelay }) => {
+    next({ data: { userCreated: { id: 1, teamId: variables?.teamId } } });
+    await setDelay(300);
+    complete();
+  }
+});
+```
+
+## Difference From Queries And Mutations
+
+Unlike `graphql.query` and `graphql.mutation`, subscriptions:
+
+- Have no `settings` argument — delay can only be set via `setDelay` inside the handler
+- Have no `queue` support — use `next` + `setDelay` in the handler to stream events
+- Use the WebSocket connection rather than HTTP

@@ -1,0 +1,105 @@
+---
+title: Schema-first mocking
+description: Generate mock responses automatically from a GraphQL schema in Mock Config.
+---
+
+When your GraphQL schema grows, writing every mock response by hand becomes repetitive. Schema-first mocking lets you generate realistic responses automatically from the schema type definitions — no manual stub data required. You can then override specific fields where you need exact values.
+
+## Setup
+
+Install the required packages:
+
+```sh
+npm install --save-dev @graphql-tools/schema @graphql-tools/mock graphql
+```
+
+## Generate Responses From The Schema
+
+Define your schema, create a mocked version of it, and execute queries against it inside a Mock Config handler:
+
+```ts
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { addMocksToSchema } from '@graphql-tools/mock';
+import { graphql as executeGraphQL } from 'graphql';
+import { graphql } from 'mock-config-server';
+
+const typeDefs = `
+  type User {
+    id: ID!
+    name: String!
+    email: String!
+    role: String!
+  }
+
+  type Query {
+    user(id: ID!): User
+    users: [User!]!
+  }
+`;
+
+const schema = makeExecutableSchema({ typeDefs });
+const mockedSchema = addMocksToSchema({ schema });
+
+graphql.query('GetUsers', async () => {
+  const result = await executeGraphQL({
+    schema: mockedSchema,
+    source: '{ users { id name email role } }'
+  });
+
+  return result;
+});
+```
+
+The mocked schema generates plausible values for every scalar field — strings, IDs, booleans, and numbers — so you get a valid response without defining any data yourself.
+
+## Customizing Specific Fields
+
+Override individual types or fields while letting the schema generate everything else:
+
+```ts
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { addMocksToSchema } from '@graphql-tools/mock';
+
+const schema = makeExecutableSchema({ typeDefs });
+
+const mockedSchema = addMocksToSchema({
+  schema,
+  mocks: {
+    User: () => ({
+      name: 'John Doe',
+      role: 'admin'
+    }),
+    ID: () => '1'
+  }
+});
+```
+
+Only the fields you specify are overridden. Everything else is still auto-generated.
+
+## Reflecting Variables In The Response
+
+Combine schema-generated data with incoming variables to make responses feel realistic:
+
+```ts
+graphql.query('GetUser', async ({ entities }) => {
+  const id = entities.variables?.id as string;
+
+  const result = await executeGraphQL({
+    schema: mockedSchema,
+    source: 'query GetUser($id: ID!) { user(id: $id) { id name email } }',
+    variableValues: { id }
+  });
+
+  return result;
+});
+```
+
+## When To Use Schema-First Mocking
+
+Schema-first mocking is most useful when:
+
+- the schema is large and maintaining stubs for every field is impractical
+- you want responses to stay in sync with schema changes automatically
+- you need a working mock quickly and do not care about exact field values
+
+For scenarios where the exact response data matters — specific test cases, known edge cases, error states — write explicit stubs or resolver functions as described in [Stub response](/docs/graphql-mocking/stub-response).

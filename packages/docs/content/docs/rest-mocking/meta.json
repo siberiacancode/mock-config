@@ -4,6 +4,7 @@
   "defaultOpen": true,
   "pages": [
     "introduction",
+    "methods",
     "intercepting-requests",
     "stub-response",
     "request-settings",
@@ -11,6 +12,7 @@
     "cookies",
     "redirects",
     "response-delay",
+    "polling",
     "streaming",
     "file-responses",
     "resolver-params"

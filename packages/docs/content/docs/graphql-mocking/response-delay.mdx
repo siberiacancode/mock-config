@@ -1,0 +1,27 @@
+---
+title: Response delay
+description: Control how long a GraphQL operation takes to respond.
+---
+
+You can control how long an operation takes to respond either statically, through the third `settings` argument, or dynamically from a resolver with `setDelay`. Both hold the response for the given number of milliseconds before it is sent.
+
+## Delay As A Setting
+
+For a fixed delay on the whole handler, set `delay` in settings:
+
+```ts
+graphql.query('GetUsers', { data: { users: [] } }, { delay: 500 });
+```
+
+Every `GetUsers` request takes at least 500ms to respond. This is the simplest way to describe a consistently slow operation.
+
+## Delay From A Resolver
+
+When the delay depends on the request, call `setDelay` inside a resolver. It returns a promise, so await it before responding.
+
+```ts
+graphql.query('GetUsers', async ({ setDelay }) => {
+  await setDelay(500);
+  return { data: { users: [] } };
+});
+```

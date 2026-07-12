@@ -1,0 +1,37 @@
+---
+title: Request settings
+description: Quickly configure common response behavior for GraphQL operations.
+---
+
+Every `graphql.query` and `graphql.mutation` factory accepts an optional third argument — `settings`. It is a quick way to configure common response behavior without writing any resolver logic.
+
+```ts
+graphql.query(identifier, config, settings);
+```
+
+Settings support two options:
+
+| Option   | Type     | Description                                         |
+| -------- | -------- | --------------------------------------------------- |
+| `delay`  | `number` | Delay before the response is sent, in milliseconds. |
+| `status` | `number` | HTTP status code of the response.                   |
+
+## Delay
+
+Use `delay` to simulate a slow network. The response is held for the given number of milliseconds before it is sent.
+
+```ts
+graphql.query('GetUsers', { data: { users: [] } }, { delay: 1000 });
+```
+
+Every `GetUsers` request resolves after a one-second delay. This is useful for testing loading states and spinners.
+
+## Status
+
+Use `status` to control the HTTP status code of the response. By default a mocked response is sent with `200`, but you can override it.
+
+```ts
+graphql.query('GetUsers', { errors: [{ message: 'Internal Server Error' }] }, { status: 500 });
+```
+
+For GraphQL-level errors you typically keep the status at `200` and use the `errors` field instead — see [Error responses](/docs/graphql-mocking/error-responses).

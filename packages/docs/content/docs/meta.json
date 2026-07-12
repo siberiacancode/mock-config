@@ -7,6 +7,8 @@
     "...integrations",
     "---[Server]REST Mocking---",
     "...rest-mocking",
+    "---[Braces]GraphQL Mocking---",
+    "...graphql-mocking",
     "---[Terminal]CLI---",
     "...cli"
   ]

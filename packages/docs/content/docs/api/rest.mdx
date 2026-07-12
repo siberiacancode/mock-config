@@ -1,0 +1,312 @@
+---
+title: rest
+description: Complete API reference for the rest namespace in Mock Config.
+---
+
+import { TypeTable } from 'fumadocs-ui/components/type-table';
+
+The `rest` namespace provides methods for registering REST route handlers. Every method follows the same call signature:
+
+```ts
+rest.method(path, config, settings?)
+```
+
+## rest.get
+
+Intercepts `GET` requests matching the given path.
+
+```ts
+rest.get<Options>(path, config, settings?)
+```
+
+<TypeTable
+  type={{
+    path: {
+      description:
+        'Route path to match. Supports path parameters (`:id`), wildcards (`*`), and regular expressions.',
+      type: 'string | RegExp',
+      required: true
+    },
+    config: {
+      description:
+        'Response configuration. Accepts an inline value, response object, file object, handler function, handler object, or queue object.',
+      type: 'RestConfig',
+      typeDescriptionLink: '#restconfig',
+      required: true
+    },
+    settings: {
+      description: 'Optional response settings applied to this route.',
+      type: 'RestSettings',
+      typeDescriptionLink: '#restsettings'
+    }
+  }}
+/>
+
+## rest.post
+
+Intercepts `POST` requests. Identical signature to `rest.get`. The `body` entity is available in the config and resolver params.
+
+```ts
+rest.post<Options>(path, config, settings?)
+```
+
+## rest.put
+
+Intercepts `PUT` requests. `body` entity is available.
+
+```ts
+rest.put<Options>(path, config, settings?)
+```
+
+## rest.patch
+
+Intercepts `PATCH` requests. `body` entity is available.
+
+```ts
+rest.patch<Options>(path, config, settings?)
+```
+
+## rest.delete
+
+Intercepts `DELETE` requests. No `body` entity.
+
+```ts
+rest.delete<Options>(path, config, settings?)
+```
+
+## rest.options
+
+Intercepts `OPTIONS` requests. No `body` entity.
+
+```ts
+rest.options<Options>(path, config, settings?)
+```
+
+## rest.sse
+
+Intercepts `GET` requests and opens a persistent Server-Sent Events connection. Sets the required `Content-Type: text/event-stream` headers automatically.
+
+```ts
+rest.sse<Options>(path, config, settings?)
+```
+
+The resolver receives a `client` object instead of returning a response value:
+
+<TypeTable
+  type={{
+    'client.send': {
+      description:
+        'Sends a message to the connected client. Accepts an optional metadata object with `event`, `id`, and `retry` fields.',
+      type: '(data: string, meta?: { event?: string; id?: string; retry?: number }) => void'
+    },
+    'client.close': {
+      description: 'Closes the SSE connection.',
+      type: '() => void'
+    }
+  }}
+/>
+
+```ts
+rest.sse('/notifications', ({ client }) => {
+  client.send('Hello', { event: 'message' });
+  client.close();
+});
+```
+
+## rest.stream
+
+Intercepts `POST` requests and opens a persistent SSE connection. Same behavior as `rest.sse` but for POST — use this when the client sends a body (e.g. an AI prompt) alongside the stream request.
+
+```ts
+rest.stream<Options>(path, config, settings?)
+```
+
+---
+
+## RestConfig
+
+The `config` argument accepts one of the following forms.
+
+### Inline value
+
+Pass any value directly as the response body:
+
+```ts
+rest.get('/users', [{ id: 1, name: 'John' }]);
+rest.get('/count', 42);
+```
+
+### Response object
+
+Wrap the response in a `response` field to add an optional matcher:
+
+```ts
+rest.get('/users', {
+  response: [{ id: 1, name: 'John' }],
+  match: { queries: { role: 'admin' } } // optional
+});
+```
+
+<TypeTable
+  type={{
+    response: {
+      description: 'Static response value.',
+      type: 'Data',
+      required: true
+    },
+    match: {
+      description: 'Optional matcher to scope this config to specific request conditions.',
+      type: 'RestEntitiesByEntityName<Method>',
+      typeDescriptionLink: '/docs/mocking-requests/references/Rest#RestEntitiesByEntityName'
+    }
+  }}
+/>
+
+### Handler function
+
+Pass a function to compute the response dynamically. The function receives [resolver params](/docs/rest-mocking/resolver-params).
+
+```ts
+rest.get('/users/:id', ({ request }) => ({
+  id: Number(request.params.id),
+  name: 'John'
+}));
+```
+
+### Handler object
+
+Wrap a handler function to add an optional matcher:
+
+```ts
+rest.get('/users', {
+  handler: ({ entities }) => [{ id: 1, role: entities.queries?.role }],
+  match: { queries: { role: 'admin' } } // optional
+});
+```
+
+<TypeTable
+  type={{
+    handler: {
+      description: 'Resolver function. Receives resolver params and returns the response.',
+      type: '(params: RestParams<Method>) => Data | Promise<Data>',
+      required: true
+    },
+    match: {
+      description: 'Optional matcher.',
+      type: 'RestEntitiesByEntityName<Method>',
+      typeDescriptionLink: '/docs/mocking-requests/references/Rest#RestEntitiesByEntityName'
+    }
+  }}
+/>
+
+### File object
+
+Respond with a file from disk:
+
+```ts
+rest.get('/report', {
+  file: './files/report.pdf',
+  match: { headers: { accept: 'application/pdf' } } // optional
+});
+```
+
+<TypeTable
+  type={{
+    file: {
+      description: 'Path to the file to send as the response body.',
+      type: 'string',
+      required: true
+    },
+    match: {
+      description: 'Optional matcher.',
+      type: 'RestEntitiesByEntityName<Method>',
+      typeDescriptionLink: '/docs/mocking-requests/references/Rest#RestEntitiesByEntityName'
+    }
+  }}
+/>
+
+### Queue object
+
+Cycle through a sequence of responses over time. See [Polling](/docs/rest-mocking/polling) for the full details.
+
+```ts
+rest.get('/status', {
+  queue: [{ response: { status: 'pending' }, time: 3000 }, { response: { status: 'done' } }]
+});
+```
+
+<TypeTable
+  type={{
+    queue: {
+      description:
+        'Ordered list of queue items. Each item can be a response, handler, or file, with an optional `time` (ms) that controls how long the item stays active.',
+      type: 'Array<{ response: Data; time?: number } | { handler: Function; time?: number } | { file: string; time?: number }>',
+      required: true
+    },
+    match: {
+      description: 'Optional matcher.',
+      type: 'RestEntitiesByEntityName<Method>',
+      typeDescriptionLink: '/docs/mocking-requests/references/Rest#RestEntitiesByEntityName'
+    }
+  }}
+/>
+
+---
+
+## RestSettings
+
+The optional third argument applied to the route.
+
+<TypeTable
+  type={{
+    delay: {
+      description: 'Artificial delay in milliseconds before the response is sent.',
+      type: 'number'
+    },
+    status: {
+      description: 'HTTP status code of the response.',
+      type: 'number',
+      default: '200'
+    }
+  }}
+/>
+
+---
+
+## Generic Options
+
+All `rest.*` methods accept an optional generic `Options` to type the request and response:
+
+```ts
+rest.get<{
+  params: { id: string };
+  query: { locale: string };
+  body: { name: string };    // POST/PUT/PATCH only
+  response: User;
+}>('/users/:id', ({ request, entities }) => { ... });
+```
+
+<TypeTable
+  type={{
+    params: {
+      description: 'Type of path parameters extracted from the route path.',
+      type: 'Record<string, string>',
+      default: 'Record<string, string>'
+    },
+    query: {
+      description: 'Type of query string parameters.',
+      type: 'Record<string, unknown>',
+      default: 'Record<string, unknown>'
+    },
+    body: {
+      description: 'Type of the request body. Available in POST, PUT, and PATCH handlers.',
+      type: 'Record<string, unknown>',
+      default: 'Record<string, unknown>'
+    },
+    response: {
+      description: 'Return type of the resolver function.',
+      type: 'Data',
+      default: 'any'
+    }
+  }}
+/>

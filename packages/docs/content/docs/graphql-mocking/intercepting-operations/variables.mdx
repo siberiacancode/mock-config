@@ -1,0 +1,82 @@
+---
+title: Variables
+description: Read and match GraphQL variables in Mock Config.
+---
+
+GraphQL variables let the client pass dynamic values alongside a query or mutation. In Mock Config, variables are available on `entities.variables` inside your handler and can be used in a matcher to return different responses for different variable values.
+
+## Reading Variables
+
+Use `entities.variables` to access the variables sent with the operation:
+
+```ts
+import { graphql } from 'mock-config-server';
+
+type GetUserVariables = { id: string };
+type GetUserResponse = { data: { user: { id: string; name: string } } };
+
+graphql.query<{ response: GetUserResponse }>('GetUser', ({ entities }) => {
+  const id = entities.variables?.id as string;
+
+  return {
+    data: {
+      user: { id, name: 'John' }
+    }
+  };
+});
+```
+
+## Matching Variables
+
+To return different responses based on variable values, use `variables` in the route matcher:
+
+```ts
+graphql.query('GetUsers', {
+  match: {
+    variables: { role: 'admin' }
+  },
+  response: {
+    data: { users: [{ id: 1, name: 'John', role: 'admin' }] }
+  }
+});
+
+graphql.query('GetUsers', {
+  data: { users: [] }
+});
+```
+
+The first handler matches only when `role` equals `'admin'`. The second is the default fallback for any other `GetUsers` request.
+
+## Matcher Functions With Variables
+
+You can use any [Matcher](/docs/mocking-requests/matcher) comparator with variables:
+
+```ts
+import { exists, graphql } from 'mock-config-server';
+
+graphql.query('GetUsers', {
+  match: {
+    variables: {
+      search: exists()
+    }
+  },
+  response: {
+    data: { users: [{ id: 1, name: 'John' }] }
+  }
+});
+```
+
+This matches as long as the `search` variable is present, regardless of its value.
+
+## Variables In Subscriptions
+
+Variables work the same way for subscriptions. Use `match.variables` to scope a subscription handler to a specific variable set:
+
+```ts
+graphql.subscription('OnNewMessage', {
+  match: { variables: { channelId: 'general' } },
+  response: { data: { newMessage: { text: 'Hello' } } }
+});
+```
+
+See [Subscriptions](/docs/graphql-mocking/subscriptions) for more on mocking subscription operations.

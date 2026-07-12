@@ -1,0 +1,18 @@
+{
+  "title": "GraphQL Mocking",
+  "icon": "Braces",
+  "defaultOpen": true,
+  "pages": [
+    "introduction",
+    "operations",
+    "matching",
+    "intercepting-operations",
+    "stub-response",
+    "request-settings",
+    "error-responses",
+    "response-delay",
+    "subscriptions",
+    "resolver-params",
+    "schema-first-mocking"
+  ]
+}

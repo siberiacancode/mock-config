@@ -1,0 +1,86 @@
+---
+title: Error responses
+description: Simulate GraphQL error responses in Mock Config.
+---
+
+GraphQL has two layers of errors: **GraphQL-level errors** returned in the `errors` field of the response body, and **HTTP-level errors** expressed through the response status code. Mock Config supports both.
+
+## GraphQL Errors
+
+A GraphQL error is returned inside the `errors` array of the response body with a `200` status code. This is the standard way to describe domain errors in GraphQL.
+
+```ts
+graphql.query('GetUser', {
+  errors: [{ message: 'User not found' }]
+});
+```
+
+The client receives a `200` response with the `errors` field set. The `data` field can be omitted or set to `null`.
+
+```ts
+graphql.query('GetUser', {
+  data: { user: null },
+  errors: [{ message: 'User not found' }]
+});
+```
+
+## Conditional Errors From A Resolver
+
+When whether the operation fails depends on the request, decide inside a resolver:
+
+```ts
+graphql.query('GetUser', ({ entities }) => {
+  const id = entities.variables?.id;
+
+  if (id === '0') {
+    return {
+      data: { user: null },
+      errors: [{ message: 'User not found' }]
+    };
+  }
+
+  return {
+    data: { user: { id, name: 'John' } }
+  };
+});
+```
+
+## HTTP Status Errors
+
+To simulate a transport-level failure — such as a `500` server error or a `401` unauthorized response — set the status code through `settings` or `setStatusCode`.
+
+```ts
+//[JAVA_COMMENT_REDACTED_e4bb0d13]
+graphql.query('GetUsers', { errors: [{ message: 'Internal Server Error' }] }, { status: 500 });
+
+//[JAVA_COMMENT_REDACTED_93f24eb5]
+graphql.query('GetUsers', ({ setStatusCode }) => {
+  setStatusCode(401);
+  return { errors: [{ message: 'Unauthorized' }] };
+});
+```
+
+## Errors And Matchers
+
+You can describe an error as a standalone stub paired with a matcher, keeping it static and separate from the success case:
+
+```ts
+import { exists, graphql } from 'mock-config-server';
+
+graphql.query('GetUsers', {
+  match: {
+    headers: { authorization: exists() }
+  },
+  response: { data: { users: [{ id: 1, name: 'John' }] } }
+});
+
+graphql.query(
+  'GetUsers',
+  {
+    errors: [{ message: 'Unauthorized' }]
+  },
+  { status: 401 }
+);
+```
+
+A request with an `authorization` header matches the first, more specific stub. Every other `GetUsers` request falls back to the `401` error.

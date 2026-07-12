@@ -1,0 +1,62 @@
+---
+title: Operation name
+description: Match GraphQL operations by name in Mock Config.
+---
+
+The operation name is the primary way Mock Config identifies which handler should respond to an incoming GraphQL request. It maps to the `operationName` field in the GraphQL request payload.
+
+## Exact Match
+
+Pass a string to match a specific operation name:
+
+```ts
+import { graphql } from 'mock-config-server';
+
+graphql.query('GetUsers', {
+  data: { users: [{ id: 1, name: 'John' }] }
+});
+```
+
+This matches only operations named exactly `GetUsers`.
+
+## Regular Expression
+
+Pass a regular expression when you want to cover multiple operation names with one handler:
+
+```ts
+graphql.query(/^GetUser/, {
+  data: { user: null }
+});
+```
+
+This matches `GetUser`, `GetUsers`, `GetUserById`, and any other query whose name starts with `GetUser`.
+
+```ts
+graphql.mutation(/CreateUser|UpdateUser/, {
+  data: { ok: true }
+});
+```
+
+RegExp is useful for grouping related operations that share the same mock response.
+
+## Priority
+
+When multiple handlers match the same operation, the one with the more specific identifier takes priority. A string identifier is always more specific than a regular expression.
+
+```ts
+//[JAVA_COMMENT_REDACTED_83c5dcb6]
+graphql.query('GetUsers', {
+  data: { users: [] }
+});
+
+//[JAVA_COMMENT_REDACTED_cb98fab3]
+graphql.query(/^Get/, {
+  data: {}
+});
+```
+
+A request for `GetUsers` matches the first handler. Any other operation starting with `Get` matches the second.
+
+## Queries Without An Operation Name
+
+If the client sends a query without an `operationName`, Mock Config cannot match it by name. Provide a regular expression that matches any string, or handle it at a lower level with an interceptor.

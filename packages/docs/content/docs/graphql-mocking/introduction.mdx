@@ -1,0 +1,36 @@
+---
+title: Introduction
+description: Intercept and mock GraphQL operations with Mock Config.
+---
+
+Mock Config supports GraphQL request mocking through the `graphql` namespace provided by the library:
+
+```ts
+import { graphql } from 'mock-config-server';
+
+graphql.query('GetUsers', {
+  data: {
+    users: [
+      { id: 1, name: 'John', role: 'admin' },
+      { id: 2, name: 'Jane', role: 'developer' }
+    ]
+  }
+});
+```
+
+This section gives you an overview of the GraphQL mocking experience in Mock Config. Continue with the nested pages here to learn how operation matching works and how to describe responses for queries, mutations, and subscriptions.
+
+## Benefits
+
+Here are some of the benefits of using Mock Config for GraphQL mocking:
+
+- operation-based: match requests by operation name or a regular expression
+- type-safe: annotate variables and response types with generics
+- subscription support: mock `graphql-transport-ws` subscriptions natively
+- scenario-driven: combine handlers with [Matcher](/docs/mocking-requests/matcher) and [Interceptors](/docs/mocking-requests/references/Interceptors)
+- coexists with REST: GraphQL and REST mocks run in the same server instance
+
+<Callout type='info'>
+  For the full list of methods, config variants, and types, see the [GraphQL API
+  Reference](/docs/api/graphql).
+</Callout>
