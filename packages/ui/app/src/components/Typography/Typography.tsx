@@ -28,22 +28,17 @@ const typographyVariants = cva('text-xl', {
 
 export interface TypographyProps
   extends React.HTMLAttributes<HTMLHeadingElement>,
-    VariantProps<typeof typographyVariants> {}
+    VariantProps<typeof typographyVariants> {
+  ref?: React.Ref<HTMLHeadingElement>;
+}
 
-const Typography = React.forwardRef<HTMLHeadingElement, TypographyProps>(
-  ({ className, variant, affects, children, ...props }, ref) => {
-    const Comp = variant || 'p';
-    return (
-      <Comp
-        ref={ref}
-        className={cn(typographyVariants({ variant, affects, className }))}
-        {...props}
-      >
-        {children}
-      </Comp>
-    );
-  }
-);
-Typography.displayName = 'Typography';
+const Typography = ({ className, variant, affects, children, ...props }: TypographyProps) => {
+  const Comp = variant || 'p';
+  return (
+    <Comp className={cn(typographyVariants({ variant, affects, className }))} {...props}>
+      {children}
+    </Comp>
+  );
+};
 
 export { Typography, typographyVariants };

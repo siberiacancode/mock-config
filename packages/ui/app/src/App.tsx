@@ -1,4 +1,4 @@
-import { Header } from '@/components';
+import { Header, Sidebar } from '@/components';
 import { getDefaultScheme } from '@/utils/helpers';
 import { useApiStatus, useMockServerConfig } from '@/utils/hooks';
 
@@ -17,13 +17,18 @@ const App = (props: AppProps) => {
 
   return (
     <Providers scheme={{ defaultScheme }}>
-      <div className='flex flex-col bg-background items-center gap-xl'>
+      <div className='flex h-screen flex-col bg-background'>
         <Header
           serverStatus={serverStatus}
           serverUrl={`http://localhost:${config.settings.port}${config.settings.baseUrl ?? '/'}`}
           wsStatus={config.status}
         />
-        <ComponentsList components={config.components} />
+        <div className='flex min-h-0 flex-1'>
+          <Sidebar components={config.components} />
+          <main className='flex-1 overflow-y-auto p-6'>
+            <ComponentsList components={config.components} />
+          </main>
+        </div>
       </div>
     </Providers>
   );

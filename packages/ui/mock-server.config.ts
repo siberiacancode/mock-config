@@ -1,246 +1,186 @@
-import type { MockServerConfig } from 'mock-config-server';
+import type { MockServerConfig, WsParams } from 'mock-config-server';
 
-import {
-  endsWith,
-  equals,
-  exists,
-  fn,
-  includes,
-  not,
-  regExp,
-  startsWith
-} from 'mock-config-server';
+import { startsWith } from 'mock-config-server';
+
+const USERS = [
+  {
+    id: 1,
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+    role: 'admin',
+    createdAt: '2025-01-15T09:30:00.000Z'
+  },
+  {
+    id: 2,
+    name: 'Jane Smith',
+    email: 'jane.smith@example.com',
+    role: 'user',
+    createdAt: '2025-03-02T14:05:00.000Z'
+  },
+  {
+    id: 3,
+    name: 'Bob Johnson',
+    email: 'bob.johnson@example.com',
+    role: 'user',
+    createdAt: '2025-06-21T18:45:00.000Z'
+  }
+];
+
+const ACCESS_TOKEN =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwibmFtZSI6IkpvaG4gRG9lIn0.mock-signature';
 
 const mockServerConfig: MockServerConfig = [
   {
     baseUrl: '/',
     port: 31299
   },
-  // {
-  //   port: 31299
-  // },
-  // {
-  //   // staticPath: {
-  //   //   path: '/images',
-  //   //   prefix: '/files'
-  //   // }
-  //   // staticPath: [
-  //   //   '/images',
-  //   //   {
-  //   //     path: '/images',
-  //   //     prefix: '/files'
-  //   //   }
-  //   // ]
-  //   staticPath: '/'
-  // },
-  // {
-  //   cors: {
-  //     // origin: () => new Promise((res) => 'https://www.google.com')
-  //     // origin: () => 'https://www.google.com'
-  //     // origin: ['https://www.google.com']
-  //     origin: 'https://www.google.com',
-  //     methods: ['GET'],
-  //     allowedHeaders: ['accept'],
-  //     exposedHeaders: ['accept'],
-  //     maxAge: 3600,
-  //     credentials: true
-  //   },
-  // },
-  // {
-  //   database: {
-  //     data: {
-  //       users: [{ id: 1, emoji: '🎉' }]
-  //     },
-  //     routes: {
-  //       '/*/users/:id': '/api/users/:id'
-  //     }
-  //   }
-  // },
   {
-    configs: [] // annonymos
+    name: 'auth',
+    configs: [
+      {
+        method: 'post',
+        path: '/auth/login',
+        routes: [
+          {
+            data: { message: 'Invalid credentials' },
+            settings: { status: 401 }
+          },
+          {
+            data: { accessToken: ACCESS_TOKEN, refreshToken: 'mock-refresh-token', user: USERS[0] },
+            entities: {
+              body: { email: 'john.doe@example.com', password: 'qwerty123' }
+            }
+          }
+        ]
+      },
+      {
+        method: 'get',
+        path: '/auth/me',
+        routes: [
+          {
+            data: { message: 'Unauthorized' },
+            settings: { status: 401 }
+          },
+          {
+            data: USERS[0],
+            entities: {
+              headers: {
+                authorization: startsWith('Bearer ')
+              }
+            }
+          }
+        ]
+      },
+      {
+        method: 'post',
+        path: '/auth/logout',
+        routes: [{ data: null, settings: { status: 204 } }]
+      }
+    ]
   },
   {
-    name: 'entities',
+    name: 'users',
     configs: [
       {
         method: 'get',
-        path: '/user/:id',
+        path: '/users',
         routes: [
           {
-            data: { emoji: 'ууу' }
+            data: { items: USERS, page: 1, limit: 10, total: USERS.length }
           },
           {
-            data: { emoji: '🎉' },
+            data: { items: [USERS[2]], page: 2, limit: 2, total: USERS.length },
             entities: {
-              headers: {
-                auth: 'token'
-              }
+              queries: { page: '2', limit: '2' }
             }
+          }
+        ]
+      },
+      {
+        method: 'get',
+        path: '/users/:id',
+        routes: [
+          {
+            data: { message: 'User not found' },
+            settings: { status: 404 }
           },
           {
-            data: { emoji: '🎉' },
-            entities: {
-              cookies: {
-                auth: 'token'
-              }
-            }
+            data: USERS[0],
+            entities: { params: { id: '1' } }
+          }
+        ]
+      },
+      {
+        method: 'post',
+        path: '/users',
+        routes: [
+          {
+            data: { id: 4, name: 'New User', email: 'new.user@example.com', role: 'user' },
+            settings: { status: 201 }
+          }
+        ]
+      },
+      {
+        method: 'delete',
+        path: '/users/:id',
+        routes: [{ data: null, settings: { status: 204 } }]
+      }
+    ]
+  },
+  {
+    name: 'graphql',
+    configs: [
+      {
+        operationType: 'query',
+        identifier: 'GetUser',
+        routes: [
+          {
+            data: { data: { user: null } }
           },
           {
-            data: { emoji: '🎉' },
+            data: { data: { user: { id: '1', name: 'John Doe', email: 'john.doe@example.com' } } },
             entities: {
-              queries: {
-                sort: 'asc'
-              }
+              variables: { id: '1' }
             }
-          },
+          }
+        ]
+      },
+      {
+        operationType: 'mutation',
+        identifier: 'CreateUser',
+        routes: [
           {
-            data: { emoji: '🎉' },
-            entities: {
-              params: {
-                id: '1'
-              }
-            }
+            data: { data: { createUser: { id: '4', name: 'New User' } } }
           }
         ]
       }
     ]
   },
   {
-    name: 'interceptors',
+    name: 'websockets',
     configs: [
       {
-        method: 'get',
-        path: '/user/:id',
+        operationType: 'subscription',
+        identifier: 'OnUserCreated',
         routes: [
           {
-            data: { emoji: '🎉' },
-            interceptors: {
-              request: () => {},
-              response: (data: unknown) => data
-            }
+            data: { data: { onUserCreated: { id: '4', name: 'New User' } } }
           }
-        ],
-        interceptors: {
-          request: () => {},
-          response: (data: unknown) => data
-        }
-      }
-    ],
-    interceptors: {
-      request: () => {},
-      response: (data) => data
-    }
-  },
-  {
-    name: 'comparators',
-    configs: [
+        ]
+      },
       {
-        method: 'get',
-        path: '/user/:id',
+        type: 'connection',
         routes: [
           {
-            data: { emoji: '🎉' },
-            entities: {
-              headers: {
-                auth: 'token'
-              }
-            }
-          },
+            data: () => ({ type: 'welcome', message: 'connected to mock ws' })
+          }
+        ]
+      },
+      {
+        type: 'raw',
+        routes: [
           {
-            data: { emoji: '🎉' },
-            entities: {
-              headers: {
-                auth: exists()
-              }
-            }
-          },
-          {
-            data: { emoji: '🎉' },
-            entities: {
-              headers: {
-                auth: not(exists())
-              }
-            }
-          },
-          {
-            data: { emoji: '🎉' },
-            entities: {
-              headers: {
-                auth: equals('token')
-              }
-            }
-          },
-          {
-            data: { emoji: '🎉' },
-            entities: {
-              headers: {
-                auth: not(equals('token'))
-              }
-            }
-          },
-          {
-            data: { emoji: '🎉' },
-            entities: {
-              headers: {
-                auth: startsWith('token')
-              }
-            }
-          },
-          {
-            data: { emoji: '🎉' },
-            entities: {
-              headers: {
-                auth: not(startsWith('token'))
-              }
-            }
-          },
-          {
-            data: { emoji: '🎉' },
-            entities: {
-              headers: {
-                auth: includes('token')
-              }
-            }
-          },
-          {
-            data: { emoji: '🎉' },
-            entities: {
-              headers: {
-                auth: not(includes('token'))
-              }
-            }
-          },
-          {
-            data: { emoji: '🎉' },
-            entities: {
-              headers: {
-                auth: endsWith('token')
-              }
-            }
-          },
-          {
-            data: { emoji: '🎉' },
-            entities: {
-              headers: {
-                auth: not(endsWith('token'))
-              }
-            }
-          },
-          {
-            data: { emoji: '🎉' },
-            entities: {
-              headers: {
-                auth: regExp(/token/)
-              }
-            }
-          },
-          {
-            data: { emoji: '🎉' },
-            entities: {
-              headers: {
-                auth: fn((actualValue) => actualValue === 'token')
-              }
-            }
+            data: (params: WsParams) => ({ type: 'echo', payload: String(params.raw) })
           }
         ]
       }
