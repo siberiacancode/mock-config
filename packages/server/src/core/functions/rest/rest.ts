@@ -152,6 +152,10 @@ const createConfigResolver = <Method extends RestMethod, Options extends RestReq
           return { data: item.response, time: item.time };
         }
 
+        if ('file' in item) {
+          return { data: item.file, time: item.time };
+        }
+
         throw new Error(`Unexpected polling item kind: ${JSON.stringify(item, null, 2)}`);
       });
 

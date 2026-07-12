@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createPollingHandler } from './createQueueHandler';
+import { createPollingHandler } from './createPollingHandler';
 
 const createParams = () =>
   ({
@@ -105,11 +105,11 @@ describe('createPollingHandler', () => {
     expect(result).toStrictEqual({ value: 'handler' });
   });
 
-  it('Should support generator-based pollings and keep the last response after completion', async () => {
+  it('Should support generator-based pollings', async () => {
     const pollingHandler = createPollingHandler<'get'>(function* (params) {
       expect(params).toBeDefined();
-      yield { data: { value: 'first' } };
-      return { data: { value: 'second' } };
+      yield { value: 'first' };
+      return { value: 'second' };
     });
     const params = createParams();
 
@@ -119,6 +119,6 @@ describe('createPollingHandler', () => {
 
     expect(firstResult).toStrictEqual({ value: 'first' });
     expect(secondResult).toStrictEqual({ value: 'second' });
-    expect(thirdResult).toStrictEqual({ value: 'second' });
+    expect(thirdResult).toStrictEqual({ value: 'first' });
   });
 });

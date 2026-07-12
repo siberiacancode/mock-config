@@ -14,11 +14,11 @@ export const createPollingHandler = <Method extends RestMethod>(
 ): RestDataResponseFunction<Method> => {
   let dynamicIterator: ReturnType<RestPollingHandler<Method>> | null = null;
   let latestPolling: RestPollingItem<Method> | undefined;
-  let queueIndex = 0;
+  let pollingIndex = 0;
   let timeoutInProgress = false;
 
-  const updateQueueIndex = () => {
-    queueIndex = polling.length - 1 === queueIndex ? 0 : queueIndex + 1;
+  const updatepollingIndex = () => {
+    pollingIndex = polling.length - 1 === pollingIndex ? 0 : pollingIndex + 1;
   };
 
   return async (params) => {
@@ -27,21 +27,21 @@ export const createPollingHandler = <Method extends RestMethod>(
     }
 
     if (Array.isArray(polling)) {
-      const queueItem = polling[queueIndex];
+      const pollingItem = polling[pollingIndex];
 
-      if (queueItem.time && !timeoutInProgress) {
+      if (pollingItem.time && !timeoutInProgress) {
         timeoutInProgress = true;
         setTimeout(() => {
           timeoutInProgress = false;
-          updateQueueIndex();
-        }, queueItem.time);
+          updatepollingIndex();
+        }, pollingItem.time);
       }
 
-      if (!queueItem.time) {
-        updateQueueIndex();
+      if (!pollingItem.time) {
+        updatepollingIndex();
       }
 
-      return typeof queueItem.data === 'function' ? queueItem.data(params) : queueItem.data;
+      return typeof pollingItem.data === 'function' ? pollingItem.data(params) : pollingItem.data;
     }
 
     if (!dynamicIterator) {

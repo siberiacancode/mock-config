@@ -202,7 +202,7 @@ describe('rest', () => {
       routes: [
         {
           data: expect.any(Function),
-          entities: undefined,
+          entities: {},
           settings: {}
         }
       ]

@@ -8,12 +8,12 @@ type GraphQLPolling = GraphQLPollingHandler | GraphQLPollingItem[];
 
 export const createPollingHandler = (polling: GraphQLPolling): GraphQLDataResponseFunction => {
   let dynamicIterator: ReturnType<GraphQLPollingHandler> | null = null;
-  let latestQueueItem: GraphQLPollingItem | undefined;
-  let queueIndex = 0;
+  let latestpollingItem: GraphQLPollingItem | undefined;
+  let pollingIndex = 0;
   let timeoutInProgress = false;
 
-  const updateQueueIndex = () => {
-    queueIndex = polling.length - 1 === queueIndex ? 0 : queueIndex + 1;
+  const updatepollingIndex = () => {
+    pollingIndex = polling.length - 1 === pollingIndex ? 0 : pollingIndex + 1;
   };
 
   return async (params) => {
@@ -22,21 +22,21 @@ export const createPollingHandler = (polling: GraphQLPolling): GraphQLDataRespon
     }
 
     if (Array.isArray(polling)) {
-      const queueItem = polling[queueIndex];
+      const pollingItem = polling[pollingIndex];
 
-      if (queueItem.time && !timeoutInProgress) {
+      if (pollingItem.time && !timeoutInProgress) {
         timeoutInProgress = true;
         setTimeout(() => {
           timeoutInProgress = false;
-          updateQueueIndex();
-        }, queueItem.time);
+          updatepollingIndex();
+        }, pollingItem.time);
       }
 
-      if (!queueItem.time) {
-        updateQueueIndex();
+      if (!pollingItem.time) {
+        updatepollingIndex();
       }
 
-      return typeof queueItem.data === 'function' ? queueItem.data(params) : queueItem.data;
+      return typeof pollingItem.data === 'function' ? pollingItem.data(params) : pollingItem.data;
     }
 
     if (!dynamicIterator) {
@@ -46,14 +46,14 @@ export const createPollingHandler = (polling: GraphQLPolling): GraphQLDataRespon
     const iteration = dynamicIterator.next(params);
     if (iteration.done) dynamicIterator = null;
 
-    const queueItem = iteration.done ? (iteration.value ?? latestQueueItem) : iteration.value;
+    const pollingItem = iteration.done ? (iteration.value ?? latestpollingItem) : iteration.value;
 
-    if (!queueItem) {
+    if (!pollingItem) {
       return params.next();
     }
 
-    latestQueueItem = queueItem;
+    latestpollingItem = pollingItem;
 
-    return queueItem;
+    return pollingItem;
   };
 };
