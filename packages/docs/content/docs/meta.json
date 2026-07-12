@@ -10,6 +10,8 @@
     "---[Braces]GraphQL Mocking---",
     "...graphql-mocking",
     "---[Terminal]CLI---",
-    "...cli"
+    "...cli",
+    "---[Terminal]API---",
+    "...api"
   ]
 }

@@ -8,12 +8,10 @@ Mock Config supports REST request mocking through the `rest` namespace provided 
 ```ts
 import { rest } from 'mock-config-server';
 
-rest.get('/users', {
-  response: [
-    { id: 1, name: 'John', role: 'admin' },
-    { id: 2, name: 'Jane', role: 'developer' }
-  ]
-});
+rest.get('/users', [
+  { id: 1, name: 'John', role: 'admin' },
+  { id: 2, name: 'Jane', role: 'developer' }
+]);
 ```
 
 This section gives you an overview of the REST mocking experience in Mock Config. Continue with the nested pages here to learn how request matching works and how to describe responses for different scenarios.
