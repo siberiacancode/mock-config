@@ -1,0 +1,37 @@
+import { Outlet, useRouteContext } from '@tanstack/react-router';
+
+import { Header, Sidebar } from '@/components';
+import { ConfigContext } from '@/utils/context';
+import { getDefaultScheme } from '@/utils/helpers';
+import { useApiStatus, useMockServerConfig } from '@/utils/hooks';
+
+import { Providers } from '../provider';
+
+export const RootLayout = () => {
+  const routerContext = useRouteContext({ from: '__root__' });
+
+  const config = useMockServerConfig(routerContext.payload);
+
+  const apiStatus = useApiStatus();
+  const defaultScheme = getDefaultScheme();
+
+  return (
+    <Providers scheme={{ defaultScheme }}>
+      <ConfigContext value={config}>
+        <div className='flex h-screen flex-col bg-background'>
+          <Header
+            serverStatus={apiStatus.serverStatus}
+            serverUrl={`http://localhost:${config.settings.port}${config.settings.baseUrl ?? '/'}`}
+            wsStatus={config.status}
+          />
+          <div className='flex min-h-0 flex-1'>
+            <Sidebar components={config.components} />
+            <main className='flex-1 overflow-y-auto p-6'>
+              <Outlet />
+            </main>
+          </div>
+        </div>
+      </ConfigContext>
+    </Providers>
+  );
+};

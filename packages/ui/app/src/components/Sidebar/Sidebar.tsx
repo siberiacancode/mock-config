@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { DatabaseIcon, LayoutGridIcon, ListIcon, SettingsIcon, WorkflowIcon } from 'lucide-react';
 import { useState } from 'react';
 
@@ -44,24 +45,39 @@ export const Sidebar = ({ components }: SidebarProps) => {
   return (
     <aside className='flex w-72 shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-border bg-background-secondary p-4'>
       <div className={NAV_LABEL_CLASS}>Inspect</div>
-      <div className={cn(NAV_ITEM_CLASS, 'bg-accent-secondary text-accent')}>
+      <Link
+        activeProps={{ className: 'bg-accent-secondary text-accent' }}
+        className={NAV_ITEM_CLASS}
+        inactiveProps={{ className: 'cursor-pointer hover:bg-card' }}
+        to='/routes'
+      >
         <ListIcon />
         Routes
         <span className='ml-auto rounded-full bg-card px-2 text-xs text-foreground-secondary'>
           {requestsCount}
         </span>
-      </div>
-      <div className={cn(NAV_ITEM_CLASS, 'cursor-pointer hover:bg-card')}>
+      </Link>
+      <Link
+        activeProps={{ className: 'bg-accent-secondary text-accent' }}
+        className={NAV_ITEM_CLASS}
+        inactiveProps={{ className: 'cursor-pointer hover:bg-card' }}
+        to='/components'
+      >
         <LayoutGridIcon />
         Components
         <span className='ml-auto rounded-full bg-card px-2 text-xs text-foreground-secondary'>
           {components.length}
         </span>
-      </div>
-      <div className={cn(NAV_ITEM_CLASS, 'cursor-pointer hover:bg-card')}>
+      </Link>
+      <Link
+        activeProps={{ className: 'bg-accent-secondary text-accent' }}
+        className={NAV_ITEM_CLASS}
+        inactiveProps={{ className: 'cursor-pointer hover:bg-card' }}
+        to='/settings'
+      >
         <SettingsIcon />
         Settings
-      </div>
+      </Link>
 
       <div className={cn(NAV_LABEL_CLASS, 'mt-3')}>Coming soon</div>
       <div className={cn(NAV_ITEM_CLASS, 'opacity-45')}>

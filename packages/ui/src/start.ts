@@ -76,20 +76,26 @@ export const start = async (argv: MockServerInspectorArgv) => {
     })
   );
 
+  const resolveBuildFilePath = (file: string) => {
+    if (!path.extname(file)) return path.join(BUILD_PATH, 'index.html');
+    return path.join(BUILD_PATH, file);
+  };
+
   app.use(
     '/',
     eventHandler((event) =>
       serveStatic(event, {
-        getContents: (file) => readFile(path.join(BUILD_PATH, file)),
+        getContents: (file) => readFile(resolveBuildFilePath(file)),
         getMeta: async (file) => {
-          const stats = await stat(path.join(BUILD_PATH, file));
+          const filePath = resolveBuildFilePath(file);
+          const stats = await stat(filePath).catch(() => undefined);
 
           if (!stats || !stats.isFile()) {
             return;
           }
 
           return {
-            type: lookup(file),
+            type: lookup(filePath),
             size: stats.size,
             mtime: stats.mtimeMs
           };

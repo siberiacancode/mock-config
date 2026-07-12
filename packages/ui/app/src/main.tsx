@@ -1,6 +1,7 @@
+import { RouterProvider } from '@tanstack/react-router';
 import { createRoot } from 'react-dom/client';
 
-import App from './App.tsx';
+import { createAppRouter } from './router';
 
 import './assets/styles/global.css';
 
@@ -15,7 +16,8 @@ const init = async () => {
 
   try {
     const payload = await getPayload();
-    root.render(<App payload={payload} />);
+    const router = createAppRouter(payload);
+    root.render(<RouterProvider router={router} />);
   } catch {
     root.render(
       <div className='flex h-screen flex-col items-center justify-center gap-m bg-background text-foreground'>

@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 
 import { LOCAL_STORAGE_KEYS, SCHEME } from '@/utils/constants';
@@ -55,5 +53,5 @@ export const SchemeProvider = ({ children, defaultScheme }: SchemeProviderProps)
     [scheme, resolvedScheme]
   );
 
-  return <SchemeContext.Provider value={value}>{children}</SchemeContext.Provider>;
+  return <SchemeContext value={value}>{children}</SchemeContext>;
 };
