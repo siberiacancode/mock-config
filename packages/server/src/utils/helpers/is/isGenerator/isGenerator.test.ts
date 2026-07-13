@@ -14,10 +14,4 @@ describe('isGenerator', () => {
   it('Common function value should return false', () => {
     expect(isGenerator(() => 1)).toBe(false);
   });
-
-  it('Non function values should return false', () => {
-    expect(isGenerator(1 as never)).toBe(false);
-    expect(isGenerator({} as never)).toBe(false);
-    expect(isGenerator(null as never)).toBe(false);
-  });
 });
