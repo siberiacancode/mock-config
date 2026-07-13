@@ -59,19 +59,17 @@ export interface GraphQLPollingItem {
   time?: number;
 }
 
-export type GraphQLPollingHandler<
-  Query = Record<string, unknown>,
-  Body = Record<string, unknown>,
-  Params = Record<string, unknown>,
-  Response = any
-> = (
-  params: GraphQLParams<Query, Body, Params, Response>
-) => Generator<Response, Response | void, GraphQLParams<Query, Body, Params, Response>>;
+export type GraphQLDataResponseGenerator = (
+  params: GraphQLParams
+) => Generator<GraphQLExecutionResult, GraphQLExecutionResult | void, GraphQLParams>;
 
 export type GraphQLDataResponseFunction = (
   params: GraphQLParams
 ) => MaybePromise<GraphQLExecutionResult>;
-export type GraphQLDataResponse = GraphQLDataResponseFunction | GraphQLExecutionResult;
+export type GraphQLDataResponse =
+  | GraphQLDataResponseFunction
+  | GraphQLDataResponseGenerator
+  | GraphQLExecutionResult;
 
 export interface GraphQLRouteConfig {
   data: GraphQLDataResponse;

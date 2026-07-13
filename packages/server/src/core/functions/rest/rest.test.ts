@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { rest } from './rest';
+import { file, polling, rest } from './rest';
 
 describe('rest', () => {
   it('Should build config for inline primitive response', () => {
@@ -12,6 +12,7 @@ describe('rest', () => {
       routes: [
         {
           data: 'value',
+          entities: {},
           settings: {}
         }
       ]
@@ -19,14 +20,17 @@ describe('rest', () => {
   });
 
   it('Should build config for response object with match', () => {
-    const result = rest.get('/users', {
-      response: { ok: true },
-      match: {
-        headers: {
-          key: 'value'
+    const result = rest.get(
+      '/users',
+      { ok: true },
+      {
+        match: {
+          headers: {
+            key: 'value'
+          }
         }
       }
-    });
+    );
 
     expect(result).toStrictEqual({
       method: 'get',
@@ -45,34 +49,7 @@ describe('rest', () => {
     });
   });
 
-  it('Should build config for file object with match', () => {
-    const result = rest.get('/users', {
-      file: '/tmp/user.json',
-      match: {
-        headers: {
-          key: 'value'
-        }
-      }
-    });
-
-    expect(result).toStrictEqual({
-      method: 'get',
-      path: '/users',
-      routes: [
-        {
-          data: expect.any(Function),
-          entities: {
-            headers: {
-              key: 'value'
-            }
-          },
-          settings: {}
-        }
-      ]
-    });
-  });
-
-  it('Should build config for inline handler', () => {
+  it('Should build config for handler', () => {
     const handler = vi.fn();
     const result = rest.get('/users', handler);
 
@@ -82,6 +59,7 @@ describe('rest', () => {
       routes: [
         {
           data: handler,
+          entities: {},
           settings: {}
         }
       ]
@@ -90,8 +68,7 @@ describe('rest', () => {
 
   it('Should build config for handler object with match', () => {
     const handler = vi.fn();
-    const result = rest.get('/users', {
-      handler,
+    const result = rest.get('/users', handler, {
       match: {
         headers: {
           key: 'value'
@@ -116,20 +93,23 @@ describe('rest', () => {
     });
   });
 
-  it('Should build config for polling object as data handler', async () => {
+  it('Should build config for polling', async () => {
     const pollingHandler = vi.fn();
-    const result = rest.get('/users', {
-      match: {
-        headers: {
-          key: 'value'
-        }
-      },
-      polling: [
+    const result = rest.get(
+      '/users',
+      polling([
         { handler: pollingHandler, time: 100 },
         { response: { ok: 'response' }, time: 200 },
         { file: '/tmp/user.json', time: 300 }
-      ]
-    });
+      ]),
+      {
+        match: {
+          headers: {
+            key: 'value'
+          }
+        }
+      }
+    );
 
     expect(result).toStrictEqual({
       method: 'get',
@@ -148,57 +128,12 @@ describe('rest', () => {
     });
   });
 
-  it('Should build config for generator polling', () => {
-    const result = rest.get('/users', {
-      match: {
-        headers: {
-          key: 'value'
-        }
-      },
-      *polling() {
-        yield { count: 1 };
-        return { count: 2 };
-      }
-    });
+  it('Should build config for file', () => {
+    const result = rest.get('/users', file('/tmp/user.json'));
 
     expect(result).toStrictEqual({
       method: 'get',
       path: '/users',
-      routes: [
-        {
-          data: expect.any(Function),
-          entities: {
-            headers: {
-              key: 'value'
-            }
-          },
-          settings: {}
-        }
-      ]
-    });
-  });
-
-  it('Should type generator polling params with full rest resolver context', () => {
-    const result = rest.post<{
-      query: { query: string };
-      body: { body: string };
-      params: { params: string };
-      response: { response: string };
-    }>('/users/:id', {
-      *polling(params) {
-        const query = params.request.query.query;
-        const body = params.request.body.body;
-        const path = params.request.params.params;
-        params.setStatusCode(200);
-        console.log(query, body, path);
-
-        yield { response: 'value' };
-      }
-    });
-
-    expect(result).toStrictEqual({
-      method: 'post',
-      path: '/users/:id',
       routes: [
         {
           data: expect.any(Function),
@@ -207,6 +142,42 @@ describe('rest', () => {
         }
       ]
     });
+  });
+
+  it('Should build config for generator resolver', () => {
+    const handler = function* () {
+      yield { count: 1 };
+      return { count: 2 };
+    };
+    const result = rest.get('/users', handler);
+
+    expect(result).toStrictEqual({
+      method: 'get',
+      path: '/users',
+      routes: [
+        {
+          data: expect.any(Function),
+          entities: {},
+          settings: {}
+        }
+      ]
+    });
+  });
+
+  it('Should preserve generator state between handler calls', () => {
+    const result = rest.get('/users', function* () {
+      yield { count: 1 };
+      return { count: 2 };
+    });
+
+    const [route] = result.routes as [{ data: (params: any) => unknown }];
+    const firstResponse = route.data({});
+    const secondResponse = route.data({});
+    const thirdResponse = route.data({});
+
+    expect(firstResponse).toStrictEqual({ count: 1 });
+    expect(secondResponse).toStrictEqual({ count: 2 });
+    expect(thirdResponse).toStrictEqual({ count: 1 });
   });
 
   it('Should build request config for every rest method', () => {
@@ -221,6 +192,7 @@ describe('rest', () => {
         routes: [
           {
             data: { ok: true },
+            entities: {},
             settings: {}
           }
         ]
@@ -229,7 +201,7 @@ describe('rest', () => {
   });
 
   it('Should keep provided settings for request', () => {
-    const result = rest.get('/users', { response: { ok: true } }, { delay: 150, status: 200 });
+    const result = rest.get('/users', { ok: true }, { delay: 150, status: 200 });
 
     expect(result).toStrictEqual({
       method: 'get',
@@ -237,7 +209,39 @@ describe('rest', () => {
       routes: [
         {
           data: { ok: true },
-          entities: undefined,
+          entities: {},
+          settings: { delay: 150, status: 200 }
+        }
+      ]
+    });
+  });
+
+  it('Should use match from settings', () => {
+    const result = rest.get(
+      '/users',
+      { ok: true },
+      {
+        delay: 150,
+        match: {
+          headers: {
+            key: 'value'
+          }
+        },
+        status: 200
+      }
+    );
+
+    expect(result).toStrictEqual({
+      method: 'get',
+      path: '/users',
+      routes: [
+        {
+          data: { ok: true },
+          entities: {
+            headers: {
+              key: 'value'
+            }
+          },
           settings: { delay: 150, status: 200 }
         }
       ]
@@ -253,17 +257,16 @@ describe('rest', () => {
       routes: [
         {
           data: expect.any(Function),
-          entities: undefined,
+          entities: {},
           settings: {}
         }
       ]
     });
   });
 
-  it('Should build config for SSE request with handler object and match', () => {
+  it('Should build config for SSE request with match', () => {
     const handler = vi.fn();
-    const result = rest.sse('/users/stream', {
-      handler,
+    const result = rest.sse('/users/stream', handler, {
       match: {
         headers: {
           key: 'value'
@@ -297,17 +300,16 @@ describe('rest', () => {
       routes: [
         {
           data: expect.any(Function),
-          entities: undefined,
+          entities: {},
           settings: {}
         }
       ]
     });
   });
 
-  it('Should build config for stream request with handler object and match', () => {
+  it('Should build config for stream request with match', () => {
     const handler = vi.fn();
-    const result = rest.stream('/users/stream', {
-      handler,
+    const result = rest.stream('/users/stream', handler, {
       match: {
         headers: {
           key: 'value'
@@ -395,6 +397,7 @@ describe('rest', () => {
       routes: [
         {
           data: expect.any(Function),
+          entities: {},
           settings: {}
         }
       ]

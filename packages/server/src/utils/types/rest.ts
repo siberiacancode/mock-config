@@ -60,22 +60,17 @@ export interface RestPollingItem<Method extends RestMethod = RestMethod> {
   time?: number;
 }
 
-export type RestPollingHandler<
-  Method extends RestMethod = RestMethod,
-  Query = Record<string, unknown>,
-  Body = Record<string, unknown>,
-  Params = Record<string, unknown>,
-  Response = any
-> = (
-  params: RestParams<Method, Query, Body, Params, Response>
-) => Generator<Response, Response | void, RestParams<Method, Query, Body, Params, Response>>;
+export type RestDataResponseGenerator<Method extends RestMethod = RestMethod> = (
+  params: RestParams<Method>
+) => Generator<Data, Data | void, RestParams<Method>>;
 
 export type RestDataResponseFunction<Method extends RestMethod = RestMethod> = (
   params: RestParams<Method>
 ) => MaybePromise<Data>;
 export type RestDataResponse<Method extends RestMethod = RestMethod> =
   | Data
-  | RestDataResponseFunction<Method>;
+  | RestDataResponseFunction<Method>
+  | RestDataResponseGenerator<Method>;
 
 export type RestFileResponse = string;
 

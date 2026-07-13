@@ -1,1 +1,1 @@
-export * from './createQueueHandler/createPollingHandler';
+export * from './createPollingHandler/createPollingHandler';

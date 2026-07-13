@@ -12,9 +12,13 @@ import type {
   GraphqlTransportWsParams,
   GraphqlTransportWsRequestConfig,
   GraphqlTransportWsRouteConfig,
+  GraphqlTransportWsSettings,
   MaybePromise
 } from '@/utils/types';
 
+import { isGenerator } from '@/utils/helpers';
+
+import { createGenerator } from '../shared/helpers';
 import { createPollingHandler } from './helpers';
 
 interface GraphQLRequestInput {
@@ -23,6 +27,10 @@ interface GraphQLRequestInput {
   query?: unknown;
   response: GraphQLExecutionResult;
 }
+
+type GraphQLFactorySettings = GraphQLSettings & {
+  match?: GraphQLEntitiesByEntityName;
+};
 
 type ReservedGraphQLConfigKeys = {
   [K in 'handler' | 'match' | 'polling' | 'response']?: never;
@@ -35,92 +43,63 @@ type GraphQLFunction<Options extends GraphQLRequestInput> = (
   params: GraphQLParams<Options['query'], Options['body'], Options['params'], Options['response']>
 ) => MaybePromise<Options['response']>;
 
-interface GraphQLResponseObject<Response extends GraphQLExecutionResult> {
-  match?: GraphQLEntitiesByEntityName;
-  response: Response;
-}
-
-interface GraphQLHandlerObject<Options extends GraphQLRequestInput> {
-  handler: GraphQLFunction<Options>;
-  match?: GraphQLEntitiesByEntityName;
-}
+type GraphQLGeneratorFunction<Options extends GraphQLRequestInput> = (
+  params: GraphQLParams<Options['query'], Options['body'], Options['params'], Options['response']>
+) => Generator<
+  Options['response'],
+  Options['response'] | void,
+  GraphQLParams<Options['query'], Options['body'], Options['params'], Options['response']>
+>;
 
 type GraphQLPollingItem<Options extends GraphQLRequestInput> =
   | { handler: GraphQLFunction<Options>; time?: number }
   | { response: Options['response']; time?: number };
 
-type GraphQLPolling<Options extends GraphQLRequestInput> =
-  | ((
-      params: GraphQLParams<
-        Options['query'],
-        Options['body'],
-        Options['params'],
-        Options['response']
-      >
-    ) => Generator<
-      Options['response'],
-      Options['response'] | void,
-      GraphQLParams<Options['query'], Options['body'], Options['params'], Options['response']>
-    >)
-  | GraphQLPollingItem<Options>[];
+type GraphQLPolling<Options extends GraphQLRequestInput> = GraphQLPollingItem<Options>[];
 
 interface GraphQLPollingObject<Options extends GraphQLRequestInput> {
-  match?: GraphQLEntitiesByEntityName;
   polling: GraphQLPolling<Options>;
 }
 
 type GraphQLConfig<Options extends GraphQLRequestInput> =
   | GraphQLFunction<Options>
-  | GraphQLHandlerObject<Options>
+  | GraphQLGeneratorFunction<Options>
   | GraphQLInlineResponse<Options['response']>
-  | GraphQLPollingObject<Options>
-  | GraphQLResponseObject<Options['response']>;
+  | GraphQLPollingObject<Options>;
 
 const resolveConfigType = <Options extends GraphQLRequestInput>(config: GraphQLConfig<Options>) => {
-  if (typeof config === 'function') return { type: 'inlineHandler' as const, config };
-  if (typeof config !== 'object' || config === null)
-    return { type: 'inlineResponse' as const, config };
+  if (typeof config === 'function' && isGenerator(config))
+    return { type: 'generator' as const, config };
+  if (typeof config === 'function') return { type: 'handler' as const, config };
+  if (typeof config !== 'object' || config === null) return { type: 'data' as const, config };
   if ('polling' in config) return { type: 'polling' as const, config };
-  if ('response' in config) return { type: 'data' as const, config };
-  if ('handler' in config) return { type: 'handler' as const, config };
-  return { type: 'inlineResponse' as const, config };
+  return { type: 'data' as const, config };
 };
 
 const createConfigResolver = <Options extends GraphQLRequestInput>(
   config: GraphQLConfig<Options>,
-  settings: GraphQLSettings = {}
+  factorySettings: GraphQLFactorySettings = {}
 ): GraphQLRouteConfig => {
   const resolvedConfig = resolveConfigType(config);
+  const { match: entities = {}, ...settings } = factorySettings;
 
   switch (resolvedConfig.type) {
-    case 'inlineHandler':
-    case 'inlineResponse':
-      return {
-        data: resolvedConfig.config,
-        entities: {},
-        settings
-      };
-
     case 'data': {
       return {
-        data: resolvedConfig.config.response!,
-        entities: resolvedConfig.config.match ?? {},
+        data: resolvedConfig.config,
+        entities,
         settings
       };
     }
 
     case 'polling': {
       const polling = resolvedConfig.config.polling!;
-      if (!Array.isArray(polling))
-        return {
-          data: createPollingHandler(polling),
-          entities: resolvedConfig.config.match ?? {},
-          settings
-        };
-
       const normalizedPolling = polling.map((item) => {
         if ('handler' in item) {
-          return { data: item.handler, time: item.time };
+          return {
+            data: item.handler,
+            time: item.time
+          };
         }
 
         if ('response' in item) {
@@ -132,15 +111,21 @@ const createConfigResolver = <Options extends GraphQLRequestInput>(
 
       return {
         data: createPollingHandler(normalizedPolling),
-        entities: resolvedConfig.config.match ?? {},
+        entities,
         settings
       };
     }
 
+    case 'generator': {
+      const config = resolvedConfig.config as GraphQLGeneratorFunction<Options>;
+      const generator = createGenerator(config);
+      return { data: generator, entities, settings };
+    }
+
     case 'handler': {
       return {
-        data: resolvedConfig.config.handler!,
-        entities: resolvedConfig.config.match ?? {},
+        data: resolvedConfig.config,
+        entities,
         settings
       };
     }
@@ -156,38 +141,26 @@ const createGraphQLFactory = <OperationType extends GraphQLOperationType>(
 ) => {
   function createRequestConfig<Options extends GraphQLRequestInput = GraphQLRequestInput>(
     identifier: GraphQLIdentifier,
-    config: GraphQLResponseObject<Options['response']>,
-    settings?: GraphQLSettings
-  ): GraphQLRequestConfig;
-
-  function createRequestConfig<Options extends GraphQLRequestInput = GraphQLRequestInput>(
-    identifier: GraphQLIdentifier,
-    config: GraphQLHandlerObject<Options>,
-    settings?: GraphQLSettings
-  ): GraphQLRequestConfig;
-
-  function createRequestConfig<Options extends GraphQLRequestInput = GraphQLRequestInput>(
-    identifier: GraphQLIdentifier,
-    config: GraphQLFunction<Options>,
-    settings?: GraphQLSettings
-  ): GraphQLRequestConfig;
-
-  function createRequestConfig<Options extends GraphQLRequestInput = GraphQLRequestInput>(
-    identifier: GraphQLIdentifier,
     config: GraphQLPollingObject<Options>,
-    settings?: GraphQLSettings
+    settings?: GraphQLFactorySettings
+  ): GraphQLRequestConfig;
+
+  function createRequestConfig<Options extends GraphQLRequestInput = GraphQLRequestInput>(
+    identifier: GraphQLIdentifier,
+    config: GraphQLFunction<Options> | GraphQLGeneratorFunction<Options>,
+    settings?: GraphQLFactorySettings
   ): GraphQLRequestConfig;
 
   function createRequestConfig<Options extends GraphQLRequestInput = GraphQLRequestInput>(
     identifier: GraphQLIdentifier,
     config: GraphQLInlineResponse<Options['response']>,
-    settings?: GraphQLSettings
+    settings?: GraphQLFactorySettings
   ): GraphQLRequestConfig;
 
   function createRequestConfig<Options extends GraphQLRequestInput = GraphQLRequestInput>(
     identifier: GraphQLIdentifier,
     config: GraphQLConfig<Options>,
-    settings?: GraphQLSettings
+    settings?: GraphQLFactorySettings
   ): GraphQLRequestConfig {
     return {
       identifier,
@@ -203,6 +176,10 @@ interface GraphqlTransportWsRequestInput {
   response: GraphqlTransportWsExecutionResult;
 }
 
+type GraphqlTransportWsFactorySettings = GraphqlTransportWsSettings & {
+  match?: GraphqlTransportWsEntitiesByEntityName;
+};
+
 type ReservedGraphqlTransportWsConfigKeys = {
   [K in 'handler' | 'match' | 'response']?: never;
 };
@@ -214,56 +191,38 @@ type GraphqlTransportWsFunction<Options extends GraphqlTransportWsRequestInput> 
   params: GraphqlTransportWsParams
 ) => MaybePromise<Options['response']>;
 
-interface GraphqlTransportWsResponseObject<Response extends GraphqlTransportWsExecutionResult> {
-  match?: GraphqlTransportWsEntitiesByEntityName;
-  response: Response;
-}
-
-interface GraphqlTransportWsHandlerObject<Options extends GraphqlTransportWsRequestInput> {
-  handler: GraphqlTransportWsFunction<Options>;
-  match?: GraphqlTransportWsEntitiesByEntityName;
-}
-
 type GraphqlTransportWsConfig<Options extends GraphqlTransportWsRequestInput> =
   | GraphqlTransportWsFunction<Options>
-  | GraphqlTransportWsHandlerObject<Options>
-  | GraphqlTransportWsInlineResponse<Options['response']>
-  | GraphqlTransportWsResponseObject<Options['response']>;
+  | GraphqlTransportWsInlineResponse<Options['response']>;
 
 const resolveSubscriptionConfigType = <Options extends GraphqlTransportWsRequestInput>(
   config: GraphqlTransportWsConfig<Options>
 ) => {
-  if (typeof config === 'function') return { type: 'inlineHandler' as const, config };
-  if (typeof config !== 'object' || config === null)
-    return { type: 'inlineResponse' as const, config };
-  if ('response' in config) return { type: 'data' as const, config };
-  if ('handler' in config) return { type: 'handler' as const, config };
-  return { type: 'inlineResponse' as const, config };
+  if (typeof config === 'function') return { type: 'handler' as const, config };
+  if (typeof config !== 'object' || config === null) return { type: 'data' as const, config };
+  return { type: 'data' as const, config };
 };
 
 const createSubscriptionRouteConfig = <Options extends GraphqlTransportWsRequestInput>(
-  config: GraphqlTransportWsConfig<Options>
+  config: GraphqlTransportWsConfig<Options>,
+  settings: GraphqlTransportWsFactorySettings = {}
 ): GraphqlTransportWsRouteConfig => {
   const resolvedConfig = resolveSubscriptionConfigType(config);
+  const { match: entities = {}, ...routeSettings } = settings;
 
   switch (resolvedConfig.type) {
-    case 'inlineHandler':
-    case 'inlineResponse':
-      return {
-        data: resolvedConfig.config,
-        entities: {}
-      };
-
     case 'data':
       return {
-        data: resolvedConfig.config.response!,
-        entities: resolvedConfig.config.match ?? {}
+        data: resolvedConfig.config,
+        entities,
+        settings: routeSettings
       };
 
     case 'handler':
       return {
-        data: resolvedConfig.config.handler!,
-        entities: resolvedConfig.config.match ?? {}
+        data: resolvedConfig.config,
+        entities,
+        settings: routeSettings
       };
 
     default: {
@@ -279,40 +238,29 @@ const createGraphqlTransportWsFactory = () => {
     Options extends GraphqlTransportWsRequestInput = GraphqlTransportWsRequestInput
   >(
     identifier: GraphQLIdentifier,
-    config: GraphqlTransportWsFunction<Options>
+    config: GraphqlTransportWsFunction<Options>,
+    settings?: GraphqlTransportWsFactorySettings
   ): GraphqlTransportWsRequestConfig;
 
   function createRequestConfig<
     Options extends GraphqlTransportWsRequestInput = GraphqlTransportWsRequestInput
   >(
     identifier: GraphQLIdentifier,
-    config: GraphqlTransportWsHandlerObject<Options>
+    config: GraphqlTransportWsInlineResponse<Options['response']>,
+    settings?: GraphqlTransportWsFactorySettings
   ): GraphqlTransportWsRequestConfig;
 
   function createRequestConfig<
     Options extends GraphqlTransportWsRequestInput = GraphqlTransportWsRequestInput
   >(
     identifier: GraphQLIdentifier,
-    config: GraphqlTransportWsInlineResponse<Options['response']>
-  ): GraphqlTransportWsRequestConfig;
-
-  function createRequestConfig<
-    Options extends GraphqlTransportWsRequestInput = GraphqlTransportWsRequestInput
-  >(
-    identifier: GraphQLIdentifier,
-    config: GraphqlTransportWsResponseObject<Options['response']>
-  ): GraphqlTransportWsRequestConfig;
-
-  function createRequestConfig<
-    Options extends GraphqlTransportWsRequestInput = GraphqlTransportWsRequestInput
-  >(
-    identifier: GraphQLIdentifier,
-    config: GraphqlTransportWsConfig<Options>
+    config: GraphqlTransportWsConfig<Options>,
+    settings?: GraphqlTransportWsFactorySettings
   ): GraphqlTransportWsRequestConfig {
     return {
       identifier,
       operationType: 'subscription',
-      routes: [createSubscriptionRouteConfig(config)]
+      routes: [createSubscriptionRouteConfig(config, settings)]
     };
   }
 
@@ -324,3 +272,7 @@ export const graphql = {
   mutation: createGraphQLFactory('mutation'),
   subscription: createGraphqlTransportWsFactory()
 };
+
+export const polling = <Options extends GraphQLRequestInput = GraphQLRequestInput>(
+  value: GraphQLPollingObject<Options>['polling']
+) => ({ polling: value });

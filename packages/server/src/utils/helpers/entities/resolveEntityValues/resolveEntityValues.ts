@@ -2,12 +2,8 @@ import { flatten } from 'flat';
 
 import type { Comparator, PlainObject } from '@/utils/types';
 
-import { isPlainObject } from '../../isPlainObject/isPlainObject';
-import { isPrimitive } from '../../isPrimitive/isPrimitive';
+import { isIterable, isObjectLike, isPrimitive } from '../../is';
 import { isComparator } from '../isComparator/isComparator';
-
-const isIterable = (value: any): value is Iterable<unknown> =>
-  value != null && typeof value[Symbol.iterator] === 'function';
 
 const getLength = (value: unknown) => {
   if (isIterable(value)) {
@@ -16,8 +12,6 @@ const getLength = (value: unknown) => {
 
   return Number.NaN;
 };
-
-const isObjectLike = (value: unknown) => isPlainObject(value) || Array.isArray(value);
 
 const normalize = (value: any) => {
   if (isObjectLike(value)) {
