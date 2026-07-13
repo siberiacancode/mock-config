@@ -7,7 +7,7 @@ export const baseOptions = (): BaseLayoutProps => ({
     title: (
       <>
         <LogoIcon />
-        Mock Config
+        <span className='text-xl'>mock-config</span>
       </>
     )
   },

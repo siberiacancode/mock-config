@@ -13,7 +13,7 @@ Mock Config can mock REST, GraphQL, and WebSocket flows with the same config, so
 
 ## 1. Create your config
 
-Create a `mock-server.config.ts` file and export the server configuration as default. The `mock(...)` helper keeps the config compact and typed. This is the default file path, but you can [change it](/docs/cli/run).
+Create a `./mock-server.config.(ts|mts|cts|js|mjs|cjs)` file and export the server configuration as default. The `mock(...)` helper keeps the config compact and typed. This is the default file path, but you can [change it](/docs/cli/run) by cli run arg.
 
 <Tabs groupId="transport-config" items={['REST', 'GraphQL', 'WebSocket']}>
   <Tab value='REST'>
@@ -35,12 +35,10 @@ export default mock(
   {
     name: 'rest',
     configs: [
-      rest.get<{ response: User[] }>('/users', {
-        response: [
-          { id: 1, name: 'John', role: 'admin' },
-          { id: 2, name: 'Jane', role: 'developer' }
-        ]
-      }),
+      rest.get<{ response: User[] }>('/users', [
+        { id: 1, name: 'John', role: 'admin' },
+        { id: 2, name: 'Jane', role: 'developer' }
+      ]),
       rest.get<{ params: { id: string }; response: User }>('/users/:id', ({ request }) => ({
         id: Number(request.params.id),
         name: 'John',
@@ -73,13 +71,11 @@ export default mock(
     name: 'graphql',
     configs: [
       graphql.query<{ response: { data: { users: User[] } } }>('GetUsers', {
-        response: {
-          data: {
-            users: [
-              { id: 1, name: 'John', role: 'admin' },
-              { id: 2, name: 'Jane', role: 'developer' }
-            ]
-          }
+        data: {
+          users: [
+            { id: 1, name: 'John', role: 'admin' },
+            { id: 2, name: 'Jane', role: 'developer' }
+          ]
         }
       })
     ]
@@ -105,21 +101,13 @@ export default mock(
     name: 'websocket',
     baseUrl: '/ws/users',
     configs: [
-      ws.connection(
-        (): ServerMessage => ({
-          type: 'connected'
-        })
-      ),
-      ws.message(({ raw }) => {
-        const message = JSON.parse(raw) as ClientMessage;
-
-        const response: ServerMessage = {
-          type: 'echo',
-          payload: message.payload
-        };
-
-        return response;
-      })
+      ws.connection<{ response: ServerMessage }>(() => ({
+        type: 'connected'
+      })),
+      ws.message<{ response: ClientMessage }>(({ raw }) => ({
+        type: 'echo',
+        payload: JSON.parse(raw) as ClientMessage
+      }))
     ]
   }
 );
@@ -159,7 +147,7 @@ console.log(users);
 
 ```typescript
 const users = await fetch('http://localhost:7777/graphql', {
-  method: 'POST',
+  method: 'GET',
   headers: {
     'Content-Type': 'application/json'
   },

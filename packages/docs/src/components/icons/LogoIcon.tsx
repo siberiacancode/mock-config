@@ -1,5 +1,5 @@
 import Image from 'next/image';
 
 export const LogoIcon = () => (
-  <Image alt='' height={24} src='/mock-config/icons/logo.svg' width={24} />
+  <Image alt='logo' height={25} src='/mock-config/icons/mock-config-logo.svg' width={25} />
 );
