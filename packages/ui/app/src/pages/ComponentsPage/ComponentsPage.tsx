@@ -10,7 +10,7 @@ export const ComponentsPage = () => {
   );
 
   return (
-    <div className='flex flex-col gap-l'>
+    <div className='flex flex-col gap-l p-7'>
       <div className='flex flex-col gap-1'>
         <div className='flex items-baseline gap-3'>
           <Typography variant='h1'>Components</Typography>

@@ -1,4 +1,4 @@
-import type { MockServerConfig, WsParams } from 'mock-config-server';
+import type { MockServerConfig, ResponseInterceptorParams, WsParams } from 'mock-config-server';
 
 import { startsWith } from 'mock-config-server';
 
@@ -84,6 +84,12 @@ const mockServerConfig: MockServerConfig = [
       {
         method: 'get',
         path: '/users',
+        interceptors: {
+          response: (data: unknown, params: ResponseInterceptorParams) => {
+            params.setHeader('x-total-count', '3');
+            return data;
+          }
+        },
         routes: [
           {
             data: { items: USERS, page: 1, limit: 10, total: USERS.length }

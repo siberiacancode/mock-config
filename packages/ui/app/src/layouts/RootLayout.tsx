@@ -26,7 +26,7 @@ export const RootLayout = () => {
           />
           <div className='flex min-h-0 flex-1'>
             <Sidebar components={config.components} />
-            <main className='flex-1 overflow-y-auto p-6'>
+            <main className='min-w-0 flex-1 overflow-y-auto'>
               <Outlet />
             </main>
           </div>

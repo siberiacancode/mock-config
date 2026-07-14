@@ -1,6 +1,5 @@
 import { Link } from '@tanstack/react-router';
 import { DatabaseIcon, LayoutGridIcon, ListIcon, SettingsIcon, WorkflowIcon } from 'lucide-react';
-import { useState } from 'react';
 
 import { cn } from '@/lib/utils';
 import { getConfigLabel, getConfigMethod } from '@/utils/helpers';
@@ -19,8 +18,6 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ components }: SidebarProps) => {
-  const [selectedConfig, setSelectedConfig] = useState<string>();
-
   const requestsCount = components.reduce(
     (count, component) => count + component.configs.length,
     0
@@ -84,25 +81,19 @@ export const Sidebar = ({ components }: SidebarProps) => {
               {component.name ?? `component #${componentIndex}`}
             </AccordionTrigger>
             <AccordionContent>
-              {component.configs.map((config, configIndex) => {
-                const id = `${componentIndex}-${configIndex}`;
-
-                return (
-                  <div
-                    key={id}
-                    className={cn(
-                      'flex cursor-pointer items-center gap-2.5 rounded-lg py-2 pl-7 pr-3 font-code text-[13px]',
-                      selectedConfig === id
-                        ? 'bg-accent-secondary text-accent'
-                        : 'text-foreground-secondary hover:bg-card'
-                    )}
-                    onClick={() => setSelectedConfig(id)}
-                  >
-                    <MethodBadge method={getConfigMethod(config)} />
-                    {getConfigLabel(config)}
-                  </div>
-                );
-              })}
+              {component.configs.map((config, configIndex) => (
+                <Link
+                  key={`${config.routes.length}-${configIndex}`}
+                  activeProps={{ className: 'bg-accent-secondary text-accent' }}
+                  className='flex cursor-pointer items-center gap-2.5 rounded-lg py-2 pl-7 pr-3 font-code text-[13px]'
+                  inactiveProps={{ className: 'text-foreground-secondary hover:bg-card' }}
+                  params={{ requestId: `${componentIndex}-${configIndex}` }}
+                  to='/routes/$requestId'
+                >
+                  <MethodBadge className='shrink-0' method={getConfigMethod(config)} />
+                  <span className='truncate'>{getConfigLabel(config)}</span>
+                </Link>
+              ))}
             </AccordionContent>
           </AccordionItem>
         ))}

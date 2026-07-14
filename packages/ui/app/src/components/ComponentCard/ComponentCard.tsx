@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { ArrowDownToDotIcon, ArrowRightIcon, ArrowUpFromDotIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { getConfigLabel, getConfigMethod } from '@/utils/helpers';
+import { getComponentInterceptors, getConfigLabel, getConfigMethod } from '@/utils/helpers';
 
 import { MethodBadge } from '../MethodBadge/MethodBadge';
 
@@ -18,14 +18,17 @@ export const ComponentCard = ({ component, index }: ComponentCardProps) => {
   const restConfigsCount = component.configs.length - previewConfigs.length;
 
   const routesCount = component.configs.reduce((count, config) => count + config.routes.length, 0);
-  const hasRequestInterceptor = Boolean(component.interceptors?.request);
-  const hasResponseInterceptor = Boolean(component.interceptors?.response);
-  const hasInterceptors = hasRequestInterceptor || hasResponseInterceptor;
+  const interceptors = getComponentInterceptors(component);
+  const hasInterceptors = interceptors.request || interceptors.response;
+
+  const linkProps = component.configs.length
+    ? { to: '/routes/$requestId' as const, params: { requestId: `${index}-0` } }
+    : { to: '/routes' as const };
 
   return (
     <Link
+      {...linkProps}
       className='group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-foreground-secondary/40'
-      to='/routes'
     >
       <div className='flex items-center gap-2.5 border-b border-border/60 px-4 py-3.5'>
         <span className='text-[15px] font-semibold text-foreground'>
@@ -63,8 +66,8 @@ export const ComponentCard = ({ component, index }: ComponentCardProps) => {
           {routesCount} {routesCount === 1 ? 'route' : 'routes'}
         </span>
         <span className='ml-auto flex items-center gap-1.5'>
-          <ArrowDownToDotIcon className={cn('size-3.5', hasRequestInterceptor && 'text-accent')} />
-          <ArrowUpFromDotIcon className={cn('size-3.5', hasResponseInterceptor && 'text-accent')} />
+          <ArrowDownToDotIcon className={cn('size-3.5', interceptors.request && 'text-accent')} />
+          <ArrowUpFromDotIcon className={cn('size-3.5', interceptors.response && 'text-accent')} />
           {hasInterceptors ? 'interceptors' : 'no interceptors'}
         </span>
       </div>

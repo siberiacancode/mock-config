@@ -6,7 +6,7 @@ import {
 } from '@tanstack/react-router';
 
 import { RootLayout } from './layouts/RootLayout';
-import { ComponentsPage, RoutesPage, SettingsPage } from './pages';
+import { ComponentsPage, RequestPage, RoutesIndexPage, RoutesPage, SettingsPage } from './pages';
 
 interface RouterContext {
   payload: Payload;
@@ -20,14 +20,33 @@ const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
   beforeLoad: () => {
-    throw redirect({ to: '/components' });
+    throw redirect({ to: '/routes' });
   }
 });
 
 const routesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/routes',
-  component: RoutesPage
+  component: RoutesPage,
+  validateSearch: (
+    search: Record<string, string>
+  ): {
+    query?: string;
+  } => ({
+    query: search.query ?? undefined
+  })
+});
+
+const routesIndexRoute = createRoute({
+  getParentRoute: () => routesRoute,
+  path: '/',
+  component: RoutesIndexPage
+});
+
+const requestRoute = createRoute({
+  getParentRoute: () => routesRoute,
+  path: '$requestId',
+  component: RequestPage
 });
 
 const componentsRoute = createRoute({
@@ -42,7 +61,12 @@ const settingsRoute = createRoute({
   component: SettingsPage
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, routesRoute, componentsRoute, settingsRoute]);
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  routesRoute.addChildren([routesIndexRoute, requestRoute]),
+  componentsRoute,
+  settingsRoute
+]);
 
 export const createAppRouter = (payload: Payload) =>
   createRouter({
