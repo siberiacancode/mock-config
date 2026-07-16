@@ -41,7 +41,7 @@
     "dev": "pnpm run \"/^mci:/\"",
     "build": "vite build --emptyOutDir && tsdown",
     "start": "pnpm build && node ./dist/bin/bin.mjs",
-    "mci:server": "nodemon --watch src --watch bin --watch mock-server.config.* -e js,ts --exec \"pnpm start --port $npm_package_config_inspectorPort\"",
+    "mci:server": "nodemon --watch src --watch bin -e js,ts --exec \"pnpm start --port $npm_package_config_inspectorPort\"",
     "mci:app": "vite",
     "mci:mock": "mcs --watch",
     "preview": "vite preview",

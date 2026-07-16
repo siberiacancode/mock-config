@@ -72,7 +72,7 @@ export const Header = ({ serverStatus, serverUrl, wsStatus }: HeaderProps) => (
     <div className='flex items-center gap-1'>
       <a
         className='flex size-8 items-center justify-center rounded-md text-foreground-secondary hover:bg-card hover:text-foreground'
-        href='https://www.npmjs.com/package/mock-config-server'
+        href='https://npmx.dev/package/mock-config-server'
         rel='noopener noreferrer'
         target='_blank'
       >
