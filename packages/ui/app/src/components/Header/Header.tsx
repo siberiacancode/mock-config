@@ -45,7 +45,7 @@ const SERVER_STATUS_LABELS: Record<ServerStatus, string> = {
 
 export const Header = ({ serverStatus, serverUrl, wsStatus }: HeaderProps) => (
   <header className='flex h-14 w-full items-center gap-4 border-b border-border bg-background-secondary px-5'>
-    <a className='flex items-center' href='/' rel='noopener noreferrer'>
+    <a aria-label='Mock config inspector home' className='flex items-center' href='/'>
       <LogoIcon />
     </a>
 
@@ -71,6 +71,7 @@ export const Header = ({ serverStatus, serverUrl, wsStatus }: HeaderProps) => (
 
     <div className='flex items-center gap-1'>
       <a
+        aria-label='mock-config-server on npm'
         className='flex size-8 items-center justify-center rounded-md text-foreground-secondary hover:bg-card hover:text-foreground'
         href='https://npmx.dev/package/mock-config-server'
         rel='noopener noreferrer'
@@ -79,6 +80,7 @@ export const Header = ({ serverStatus, serverUrl, wsStatus }: HeaderProps) => (
         <NpmIcon className='h-icon-m w-icon-m' />
       </a>
       <a
+        aria-label='mock-config-server on GitHub'
         className='flex size-8 items-center justify-center rounded-md text-foreground-secondary hover:bg-card hover:text-foreground'
         href='https://github.com/siberiacancode/mock-config-server'
         rel='noopener noreferrer'
@@ -87,14 +89,13 @@ export const Header = ({ serverStatus, serverUrl, wsStatus }: HeaderProps) => (
         <GitHubIcon className='h-icon-m w-icon-m' />
       </a>
       <a
+        aria-label='GitHub issues'
         className='flex size-8 items-center justify-center rounded-md text-foreground-secondary hover:bg-card hover:text-foreground'
         href='https://github.com/siberiacancode/mock-config-server/issues'
         rel='noopener noreferrer'
         target='_blank'
       >
-        <MessageCircleQuestion className='h-icon-l w-icon-l'>
-          <title>Github - issues</title>
-        </MessageCircleQuestion>
+        <MessageCircleQuestion className='h-icon-l w-icon-l' />
       </a>
       <ThemeToggle />
     </div>
