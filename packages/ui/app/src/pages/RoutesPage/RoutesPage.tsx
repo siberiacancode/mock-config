@@ -51,6 +51,7 @@ export const RoutesPage = () => {
           <label className='flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground-secondary focus-within:border-ring'>
             <SearchIcon className='size-4 shrink-0' />
             <input
+              aria-label='Search requests'
               className='w-full bg-transparent text-foreground outline-hidden placeholder:text-foreground-secondary'
               placeholder='Search by component, method, path…'
               type='text'
