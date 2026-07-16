@@ -1,4 +1,5 @@
 import { MoonIcon, SunIcon } from 'lucide-react';
+import { flushSync } from 'react-dom';
 
 import { useScheme } from '@/utils/context';
 
@@ -18,7 +19,11 @@ export const ThemeToggle = () => {
     const radius = Math.hypot(window.innerWidth, window.innerHeight);
 
     await document.startViewTransition(() => {
-      toggleScheme(newScheme);
+      // view transition snapshots the DOM right after this callback, so the react commit must be synchronous
+      // eslint-disable-next-line react/dom-no-flush-sync
+      flushSync(() => {
+        toggleScheme(newScheme);
+      });
     }).ready;
 
     document.documentElement.animate(
