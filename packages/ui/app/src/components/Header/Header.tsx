@@ -45,7 +45,7 @@ const SERVER_STATUS_LABELS: Record<ServerStatus, string> = {
 
 export const Header = ({ serverStatus, serverUrl, wsStatus }: HeaderProps) => (
   <header className='flex h-14 w-full items-center gap-4 border-b border-border bg-background-secondary px-5'>
-    <a aria-label='Mock config inspector home' className='flex items-center' href='/'>
+    <a className='flex items-center' href='/'>
       <LogoIcon />
     </a>
 
