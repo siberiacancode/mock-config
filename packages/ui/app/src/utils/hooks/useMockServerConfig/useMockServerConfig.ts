@@ -5,7 +5,7 @@ const DEFAULT_SETTINGS: MockServerSettings = { baseUrl: '/', port: 31299 };
 
 const parseMockServerConfig = (config: MockServerConfig) => {
   const [option, ...components] = config;
-  const settings = !('configs' in option) ? option : undefined;
+  const settings = option && !('configs' in option) ? option : undefined;
 
   return {
     settings,
@@ -16,9 +16,10 @@ const parseMockServerConfig = (config: MockServerConfig) => {
 export const useMockServerConfig = (payload: Payload) => {
   const initial = parseMockServerConfig(payload.config);
 
-  const [settings, setSettings] = useState<MockServerSettings>(
-    initial.settings ?? DEFAULT_SETTINGS
-  );
+  const [settings, setSettings] = useState<MockServerSettings>({
+    ...DEFAULT_SETTINGS,
+    ...initial.settings
+  });
   const [components, setComponents] = useState(initial.components);
 
   const webSocket = useWebSocket(`ws://${location.hostname}:${payload.ws.port}`, {
@@ -28,7 +29,7 @@ export const useMockServerConfig = (payload: Payload) => {
 
       const { settings, components } = parseMockServerConfig(message.payload.config);
 
-      if (settings) setSettings(settings);
+      setSettings({ ...DEFAULT_SETTINGS, ...settings });
       setComponents(components);
     }
   });
