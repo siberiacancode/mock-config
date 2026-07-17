@@ -28,7 +28,8 @@ export const SchemeProvider = ({ children, defaultScheme }: SchemeProviderProps)
     localStorage.setItem(LOCAL_STORAGE_KEYS.SCHEME, newScheme);
     setScheme(newScheme);
     setResolvedScheme(resolved);
-    document.documentElement.className = resolved;
+    document.documentElement.classList.remove(SCHEME.light, SCHEME.dark);
+    document.documentElement.classList.add(resolved);
   };
 
   React.useLayoutEffect(() => {
