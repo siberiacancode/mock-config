@@ -29,6 +29,19 @@ const USERS = [
 const ACCESS_TOKEN =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwibmFtZSI6IkpvaG4gRG9lIn0.mock-signature';
 
+interface User {
+  id: number;
+  name: string;
+  posts?: Post[];
+}
+interface Post {
+  author: User;
+  id: number;
+}
+
+const john: User = { id: 1, name: 'John' };
+const post: Post = { id: 10, author: john };
+john.posts = [post];
 const mockServerConfig: MockServerConfig = [
   {
     baseUrl: '/',
@@ -62,7 +75,7 @@ const mockServerConfig: MockServerConfig = [
             settings: { status: 401 }
           },
           {
-            data: USERS[0],
+            data: john,
             entities: {
               headers: {
                 authorization: startsWith('Bearer ')

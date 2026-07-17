@@ -34,9 +34,10 @@ export const start = async (argv: MockServerInspectorArgv) => {
 
   const watcher = await createConfigWatcher(argv, (mockConfig) =>
     ws.send(
-      JSON.stringify(
-        stringify({ type: 'config-updated', payload: { ws: ws.getData(), config: mockConfig } })
-      )
+      JSON.stringify({
+        type: 'config-updated',
+        payload: { ws: ws.getData(), config: stringify(mockConfig) }
+      })
     )
   );
 
