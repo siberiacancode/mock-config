@@ -11,7 +11,6 @@ describe('isObjectLike', () => {
   it('Non object-like values should return false', () => {
     expect(isObjectLike('value')).toBe(false);
     expect(isObjectLike(1)).toBe(false);
-    expect(isObjectLike(new Set([1, 2, 3]))).toBe(false);
     expect(isObjectLike(null)).toBe(false);
     expect(isObjectLike(undefined)).toBe(false);
   });

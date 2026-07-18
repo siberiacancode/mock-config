@@ -1,4 +1,4 @@
-export * from './isGenerator/isGenerator';
+export * from './isGeneratorFunction/isGeneratorFunction';
 export * from './isIterable/isIterable';
 export * from './isObjectLike/isObjectLike';
 export * from './isPlainObject/isPlainObject';

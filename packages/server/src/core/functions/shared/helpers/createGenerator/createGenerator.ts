@@ -1,18 +1,11 @@
-export const createGenerator = <
-  Handler extends (params: never) => Generator<unknown, unknown, never>
->(
-  handler: Handler
+export const createGenerator = <Params, Value, Return>(
+  handler: (params: Params) => Generator<Value, Return, Params>
 ) => {
-  type Params = Handler extends (params: infer P) => Generator<unknown, unknown, unknown>
-    ? P
-    : never;
-  type Value = Handler extends (params: never) => Generator<infer V, unknown, never> ? V : never;
+  let dynamicIterator: Generator<Value, Return, Params> | null = null;
 
-  let dynamicIterator: Generator<Value, Value | void, Params> | null = null;
-
-  return (params: Params) => {
+  return (params: Params): Return | Value => {
     if (!dynamicIterator) {
-      dynamicIterator = handler(params as never) as Generator<Value, Value | void, Params>;
+      dynamicIterator = handler(params);
     }
 
     const iteration = dynamicIterator.next(params);
@@ -21,6 +14,6 @@ export const createGenerator = <
       dynamicIterator = null;
     }
 
-    return iteration.value as Value;
+    return iteration.value;
   };
 };

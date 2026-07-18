@@ -19,36 +19,6 @@ describe('rest', () => {
     });
   });
 
-  it('Should build config for response object with match', () => {
-    const result = rest.get(
-      '/users',
-      { ok: true },
-      {
-        match: {
-          headers: {
-            key: 'value'
-          }
-        }
-      }
-    );
-
-    expect(result).toStrictEqual({
-      method: 'get',
-      path: '/users',
-      routes: [
-        {
-          data: { ok: true },
-          entities: {
-            headers: {
-              key: 'value'
-            }
-          },
-          settings: {}
-        }
-      ]
-    });
-  });
-
   it('Should build config for handler', () => {
     const handler = vi.fn();
     const result = rest.get('/users', handler);
@@ -66,33 +36,6 @@ describe('rest', () => {
     });
   });
 
-  it('Should build config for handler object with match', () => {
-    const handler = vi.fn();
-    const result = rest.get('/users', handler, {
-      match: {
-        headers: {
-          key: 'value'
-        }
-      }
-    });
-
-    expect(result).toStrictEqual({
-      method: 'get',
-      path: '/users',
-      routes: [
-        {
-          data: handler,
-          entities: {
-            headers: {
-              key: 'value'
-            }
-          },
-          settings: {}
-        }
-      ]
-    });
-  });
-
   it('Should build config for polling', async () => {
     const pollingHandler = vi.fn();
     const result = rest.get(
@@ -101,14 +44,7 @@ describe('rest', () => {
         { handler: pollingHandler, time: 100 },
         { response: { ok: 'response' }, time: 200 },
         { file: '/tmp/user.json', time: 300 }
-      ]),
-      {
-        match: {
-          headers: {
-            key: 'value'
-          }
-        }
-      }
+      ])
     );
 
     expect(result).toStrictEqual({
@@ -117,11 +53,7 @@ describe('rest', () => {
       routes: [
         {
           data: expect.any(Function),
-          entities: {
-            headers: {
-              key: 'value'
-            }
-          },
+          entities: {},
           settings: {}
         }
       ]
@@ -264,33 +196,6 @@ describe('rest', () => {
     });
   });
 
-  it('Should build config for SSE request with match', () => {
-    const handler = vi.fn();
-    const result = rest.sse('/users/stream', handler, {
-      match: {
-        headers: {
-          key: 'value'
-        }
-      }
-    });
-
-    expect(result).toStrictEqual({
-      method: 'get',
-      path: '/users/stream',
-      routes: [
-        {
-          data: expect.any(Function),
-          entities: {
-            headers: {
-              key: 'value'
-            }
-          },
-          settings: {}
-        }
-      ]
-    });
-  });
-
   it('Should build config for stream request', () => {
     const result = rest.stream('/users/stream', () => undefined);
 
@@ -301,33 +206,6 @@ describe('rest', () => {
         {
           data: expect.any(Function),
           entities: {},
-          settings: {}
-        }
-      ]
-    });
-  });
-
-  it('Should build config for stream request with match', () => {
-    const handler = vi.fn();
-    const result = rest.stream('/users/stream', handler, {
-      match: {
-        headers: {
-          key: 'value'
-        }
-      }
-    });
-
-    expect(result).toStrictEqual({
-      method: 'post',
-      path: '/users/stream',
-      routes: [
-        {
-          data: expect.any(Function),
-          entities: {
-            headers: {
-              key: 'value'
-            }
-          },
           settings: {}
         }
       ]

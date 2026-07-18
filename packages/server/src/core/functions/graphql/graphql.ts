@@ -16,7 +16,7 @@ import type {
   MaybePromise
 } from '@/utils/types';
 
-import { isGenerator } from '@/utils/helpers';
+import { isGeneratorFunction } from '@/utils/helpers';
 
 import { createGenerator } from '../shared/helpers';
 import { createPollingHandler } from './helpers';
@@ -33,7 +33,7 @@ type GraphQLFactorySettings = GraphQLSettings & {
 };
 
 type ReservedGraphQLConfigKeys = {
-  [K in 'handler' | 'match' | 'polling' | 'response']?: never;
+  [K in 'polling']?: never;
 };
 
 type GraphQLInlineResponse<Response extends GraphQLExecutionResult> = Response &
@@ -68,7 +68,7 @@ type GraphQLConfig<Options extends GraphQLRequestInput> =
   | GraphQLPollingObject<Options>;
 
 const resolveConfigType = <Options extends GraphQLRequestInput>(config: GraphQLConfig<Options>) => {
-  if (typeof config === 'function' && isGenerator(config))
+  if (typeof config === 'function' && isGeneratorFunction(config))
     return { type: 'generator' as const, config };
   if (typeof config === 'function') return { type: 'handler' as const, config };
   if (typeof config !== 'object' || config === null) return { type: 'data' as const, config };
@@ -180,12 +180,8 @@ type GraphqlTransportWsFactorySettings = GraphqlTransportWsSettings & {
   match?: GraphqlTransportWsEntitiesByEntityName;
 };
 
-type ReservedGraphqlTransportWsConfigKeys = {
-  [K in 'handler' | 'match' | 'response']?: never;
-};
-
 type GraphqlTransportWsInlineResponse<Response extends GraphqlTransportWsExecutionResult> =
-  Response & ReservedGraphqlTransportWsConfigKeys;
+  Response;
 
 type GraphqlTransportWsFunction<Options extends GraphqlTransportWsRequestInput> = (
   params: GraphqlTransportWsParams

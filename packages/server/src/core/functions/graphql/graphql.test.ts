@@ -19,36 +19,6 @@ describe('graphql', () => {
     });
   });
 
-  it('Should build config for response object with match', () => {
-    const result = graphql.query(
-      'GetUsers',
-      { data: { ok: true } },
-      {
-        match: {
-          headers: {
-            key: 'value'
-          }
-        }
-      }
-    );
-
-    expect(result).toStrictEqual({
-      identifier: 'GetUsers',
-      operationType: 'query',
-      routes: [
-        {
-          data: { data: { ok: true } },
-          entities: {
-            headers: {
-              key: 'value'
-            }
-          },
-          settings: {}
-        }
-      ]
-    });
-  });
-
   it('Should build config for handler', () => {
     const handler = vi.fn().mockResolvedValue({ data: { ok: true } });
     const result = graphql.query('GetUsers', handler);
@@ -66,33 +36,6 @@ describe('graphql', () => {
     });
   });
 
-  it('Should build config for handler object with match', () => {
-    const handler = vi.fn().mockResolvedValue({ data: { ok: true } });
-    const result = graphql.query('GetUsers', handler, {
-      match: {
-        headers: {
-          key: 'value'
-        }
-      }
-    });
-
-    expect(result).toStrictEqual({
-      identifier: 'GetUsers',
-      operationType: 'query',
-      routes: [
-        {
-          data: handler,
-          entities: {
-            headers: {
-              key: 'value'
-            }
-          },
-          settings: {}
-        }
-      ]
-    });
-  });
-
   it('Should build config for polling', () => {
     const pollingHandler = vi.fn().mockResolvedValue({ data: { ok: 'handler' } });
     const result = graphql.query(
@@ -100,14 +43,7 @@ describe('graphql', () => {
       polling([
         { handler: pollingHandler, time: 100 },
         { response: { data: { ok: 'response' } }, time: 200 }
-      ]),
-      {
-        match: {
-          headers: {
-            key: 'value'
-          }
-        }
-      }
+      ])
     );
 
     expect(result).toStrictEqual({
@@ -116,11 +52,7 @@ describe('graphql', () => {
       routes: [
         {
           data: expect.any(Function),
-          entities: {
-            headers: {
-              key: 'value'
-            }
-          },
+          entities: {},
           settings: {}
         }
       ]
@@ -164,11 +96,13 @@ describe('graphql', () => {
   });
 
   it('Should build request config for every graphql method', () => {
-    const methods = ['query', 'mutation'] as const;
+    const configs = [
+      { method: 'query', result: graphql.query('GetUsers', { data: { ok: true } }) },
+      { method: 'mutation', result: graphql.mutation('GetUsers', { data: { ok: true } }) },
+      { method: 'subscription', result: graphql.subscription('GetUsers', { data: { ok: true } }) }
+    ] as const;
 
-    methods.forEach((method) => {
-      const result = graphql[method]('GetUsers', { data: { ok: true } });
-
+    configs.forEach(({ method, result }) => {
       expect(result).toStrictEqual({
         identifier: 'GetUsers',
         operationType: method,
@@ -226,86 +160,6 @@ describe('graphql', () => {
             }
           },
           settings: { delay: 150, status: 200 }
-        }
-      ]
-    });
-  });
-
-  it('Should build subscription config for response', () => {
-    const result = graphql.subscription('OnUsers', { data: { key: 'value' } });
-
-    expect(result).toStrictEqual({
-      identifier: 'OnUsers',
-      operationType: 'subscription',
-      routes: [
-        {
-          data: { data: { key: 'value' } },
-          entities: {},
-          settings: {}
-        }
-      ]
-    });
-  });
-
-  it('Should build subscription config for handler', () => {
-    const result = graphql.subscription('OnUsers', () => ({ data: { ok: true } }));
-
-    expect(result).toStrictEqual({
-      identifier: 'OnUsers',
-      operationType: 'subscription',
-      routes: [
-        {
-          data: expect.any(Function),
-          entities: {},
-          settings: {}
-        }
-      ]
-    });
-  });
-
-  it('Should build subscription config for response with match from settings', () => {
-    const result = graphql.subscription(
-      'OnUsers',
-      { data: { key: 'value' } },
-      {
-        match: {
-          variables: { key: 'value' }
-        }
-      }
-    );
-
-    expect(result).toStrictEqual({
-      identifier: 'OnUsers',
-      operationType: 'subscription',
-      routes: [
-        {
-          data: { data: { key: 'value' } },
-          entities: {
-            variables: { key: 'value' }
-          },
-          settings: {}
-        }
-      ]
-    });
-  });
-
-  it('Should build subscription config for handler with match', () => {
-    const result = graphql.subscription('OnUsers', () => ({ data: { count: 1 } }), {
-      match: {
-        variables: { key: 'value' }
-      }
-    });
-
-    expect(result).toStrictEqual({
-      identifier: 'OnUsers',
-      operationType: 'subscription',
-      routes: [
-        {
-          data: expect.any(Function),
-          entities: {
-            variables: { key: 'value' }
-          },
-          settings: {}
         }
       ]
     });

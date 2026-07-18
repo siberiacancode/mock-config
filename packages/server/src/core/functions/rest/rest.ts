@@ -11,7 +11,7 @@ import type {
   RestSettings
 } from '@/utils/types';
 
-import { isGenerator } from '@/utils/helpers';
+import { isGeneratorFunction } from '@/utils/helpers';
 
 import { createGenerator } from '../shared/helpers';
 import { createFileHandler, createPollingHandler, formatSsePayload } from './helpers';
@@ -28,7 +28,7 @@ type RestFactorySettings<Method extends RestMethod> = RestSettings & {
 };
 
 type ReservedRestConfigKeys = {
-  [K in 'file' | 'handler' | 'match' | 'polling' | 'response']?: never;
+  [K in 'file' | 'polling']?: never;
 };
 
 type RestInlineResponse<Response> =
@@ -49,19 +49,14 @@ type RestFunction<
     AdditionalParams
 ) => MaybePromise<Options['response']>;
 
-type RestGeneratorFunction<
-  Method extends RestMethod,
-  Options extends RestRequestInput,
-  AdditionalParams = {}
-> = (
+type RestGeneratorFunction<Method extends RestMethod, Options extends RestRequestInput> = (
   params: RestParams<
     Method,
     Options['query'],
     Options['body'],
     Options['params'],
     Options['response']
-  > &
-    AdditionalParams
+  >
 ) => Generator<
   Options['response'],
   Options['response'] | void,
@@ -96,14 +91,12 @@ type RestConfig<Method extends RestMethod, Options extends RestRequestInput> =
 const resolveConfigType = <Method extends RestMethod, Options extends RestRequestInput>(
   config: RestConfig<Method, Options>
 ) => {
-  if (typeof config === 'function' && isGenerator(config))
+  if (typeof config === 'function' && isGeneratorFunction(config))
     return { type: 'generator' as const, config };
   if (typeof config === 'function') return { type: 'handler' as const, config };
   if (typeof config !== 'object' || config === null) return { type: 'data' as const, config };
   if ('polling' in config) return { type: 'polling' as const, config };
   if ('file' in config) return { type: 'file' as const, config };
-  if ('response' in config) return { type: 'data' as const, config };
-  if ('handler' in config) return { type: 'handler' as const, config };
   return { type: 'data' as const, config };
 };
 
@@ -132,7 +125,7 @@ const createConfigResolver = <Method extends RestMethod, Options extends RestReq
     }
 
     case 'polling': {
-      const polling = resolvedConfig.config.polling!;
+      const polling = resolvedConfig.config.polling;
       const normalizedPolling = polling.map((item) => {
         if ('handler' in item) {
           return {
