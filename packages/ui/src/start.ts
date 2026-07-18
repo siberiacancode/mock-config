@@ -78,8 +78,11 @@ export const start = async (argv: MockServerInspectorArgv) => {
   );
 
   const resolveBuildFilePath = (file: string) => {
-    if (!path.extname(file)) return path.join(BUILD_PATH, 'index.html');
-    return path.join(BUILD_PATH, file);
+    const filePath = path.join(BUILD_PATH, file);
+    const isInsideBuild = filePath.startsWith(BUILD_PATH + path.sep);
+
+    if (!isInsideBuild || !path.extname(file)) return path.join(BUILD_PATH, 'index.html');
+    return filePath;
   };
 
   app.use(
