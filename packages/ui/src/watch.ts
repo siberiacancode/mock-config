@@ -7,20 +7,23 @@ import path from 'node:path';
 
 import type { MockServerInspectorArgv } from './types';
 
-const resolveExportsFromSourceCode = (sourceCode: string) => {
-  const moduleInstance = new Module('mock-server.config');
+const resolveExportsFromSourceCode = (sourceCode: string, configFilePath: string) => {
+  const moduleInstance = new Module(configFilePath);
 
+  moduleInstance.filename = configFilePath;
+  // @ts-expect-error _nodeModulePaths is a private nodejs module api
+  moduleInstance.paths = Module._nodeModulePaths(path.dirname(configFilePath));
   // @ts-expect-error _compile is a private nodejs module api
-  moduleInstance._compile(sourceCode, 'mock-server.config.cjs');
+  moduleInstance._compile(sourceCode, configFilePath);
   return moduleInstance.exports;
 };
 
-const resolveConfigFile = (configSourceCode: string) => {
+const resolveConfigFile = (configSourceCode: string, configFilePath: string) => {
   if (!configSourceCode) {
     throw new Error('Cannot handle source code of mock-server.config.(ts|js)');
   }
 
-  const mockServerConfigExports = resolveExportsFromSourceCode(configSourceCode);
+  const mockServerConfigExports = resolveExportsFromSourceCode(configSourceCode, configFilePath);
 
   const mockServerConfig: any = mockServerConfigExports.default;
 
@@ -30,7 +33,7 @@ const resolveConfigFile = (configSourceCode: string) => {
 
   if (!Array.isArray(mockServerConfig)) {
     throw new TypeError(
-      'configuration should be array; see our doc (https://www.npmjs.com/package/mock-config-server) for more information'
+      'configuration should be array; see our doc (https://npmx.dev/package/mock-config-server) for more information'
     );
   }
   return mockServerConfig;
@@ -43,7 +46,10 @@ const resolveConfigFilePath = (cliConfigFilePath?: string) => {
 
   const configFileNameRegex = /mock-server.config.(?:ts|mts|cts|js|mjs|cjs)/;
 
-  return fs.readdirSync(appPath).find((fileName) => configFileNameRegex.test(fileName));
+  const configFileName = fs
+    .readdirSync(appPath)
+    .find((fileName) => configFileNameRegex.test(fileName));
+  return configFileName && path.resolve(appPath, configFileName);
 };
 
 export const createConfigWatcher = async (
@@ -73,7 +79,7 @@ export const createConfigWatcher = async (
     setup: (build) => {
       build.onEnd((result) => {
         if (result.errors.length) return;
-        mockConfig = resolveConfigFile(result.outputFiles![0].text);
+        mockConfig = resolveConfigFile(result.outputFiles![0].text, configFilePath);
         onUpdate(mockConfig);
       });
     }
@@ -84,7 +90,7 @@ export const createConfigWatcher = async (
   ctx.watch();
 
   const { outputFiles } = await esBuild(buildOptions);
-  mockConfig = resolveConfigFile(outputFiles[0].text);
+  mockConfig = resolveConfigFile(outputFiles[0].text, configFilePath);
 
   const getConfig = () => mockConfig;
 
