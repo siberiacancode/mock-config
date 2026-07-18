@@ -1,8 +1,6 @@
-import type { WebSocket } from 'ws';
-
 import color from 'ansi-colors';
 import { getPort } from 'get-port-please';
-import { WebSocketServer } from 'ws';
+import { WebSocket, WebSocketServer } from 'ws';
 
 export const createWsServer = async () => {
   const port = await getPort({ port: 7811, random: true });
@@ -22,7 +20,10 @@ export const createWsServer = async () => {
     lastUpdated: Date.now()
   });
 
-  const send = (value: string) => wsClients.forEach((wsClient) => wsClient.send(value));
+  const send = (value: string) =>
+    wsClients.forEach((wsClient) => {
+      if (wsClient.readyState === WebSocket.OPEN) wsClient.send(value);
+    });
 
   return {
     port,
