@@ -1,6 +1,6 @@
-import type { BuildOptions, Plugin } from 'esbuild';
+import type { BuildOptions, BuildResult, Plugin } from 'esbuild';
 
-import { context, build as esBuild } from 'esbuild';
+import { context } from 'esbuild';
 import fs from 'node:fs';
 import { Module } from 'node:module';
 import path from 'node:path';
@@ -74,23 +74,32 @@ export const createConfigWatcher = async (
     plugins: [] as Plugin[]
   } satisfies BuildOptions;
 
+  let resolveFirstBuild!: (result: BuildResult) => void;
+  const firstBuild = new Promise<BuildResult>((resolve) => {
+    resolveFirstBuild = resolve;
+  });
+
   const watchPlugin: Plugin = {
     name: 'watch',
     setup: (build) => {
       build.onEnd((result) => {
-        if (result.errors.length) return;
-        mockConfig = resolveConfigFile(result.outputFiles![0].text, configFilePath);
-        onUpdate(mockConfig);
+        if (!result.errors.length) {
+          mockConfig = resolveConfigFile(result.outputFiles![0].text, configFilePath);
+          onUpdate(mockConfig);
+        }
+        resolveFirstBuild(result);
       });
     }
   };
 
   buildOptions.plugins.push(watchPlugin);
   const ctx = await context(buildOptions);
-  ctx.watch();
+  await ctx.watch();
 
-  const { outputFiles } = await esBuild(buildOptions);
-  mockConfig = resolveConfigFile(outputFiles[0].text, configFilePath);
+  const firstBuildResult = await firstBuild;
+  if (firstBuildResult.errors.length) {
+    throw new Error('Cannot build config file mock-server.config.(ts|mts|cts|js|mjs|cjs)');
+  }
 
   const getConfig = () => mockConfig;
 
