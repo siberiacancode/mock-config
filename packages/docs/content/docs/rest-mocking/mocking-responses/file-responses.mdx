@@ -3,17 +3,29 @@ title: File responses
 description: Respond to a route with a file.
 ---
 
-Mock Config can answer a route with a file straight from disk. Pass a `file` config with a path, and the route sends that file back as its response.
+Mock Config can answer a route with a file straight from disk. Pass `file()` with a path, and the route sends that file back as its response.
 
 ## Respond With A File
 
 ```ts
-rest.get('/report', {
-  file: './files/report.pdf'
-});
+import { file, rest } from 'mock-config-server';
+
+rest.get('/report', file('./files/report.pdf'));
 ```
 
 Every `GET /report` request receives the contents of `report.pdf` as the response.
+
+## Match A File Response
+
+Pass matcher conditions in the route settings argument when a file response should only apply to some requests.
+
+```ts
+import { file, rest } from 'mock-config-server';
+
+rest.get('/report', file('./files/report.pdf'), {
+  match: { headers: { accept: 'application/pdf' } }
+});
+```
 
 ## Force A Download
 

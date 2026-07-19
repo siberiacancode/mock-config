@@ -6,6 +6,7 @@
     "request-settings",
     "error-responses",
     "response-delay",
+    "polling",
     "matching",
     "subscriptions",
     "resolver-params",

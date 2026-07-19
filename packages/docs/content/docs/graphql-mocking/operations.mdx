@@ -9,10 +9,10 @@ The `graphql` namespace exposes a method for each GraphQL operation type. Every 
 graphql.query(identifier, config, settings?)
 graphql.mutation(identifier, config, settings?)
 
-graphql.subscription(identifier, config)
+graphql.subscription(identifier, config, settings?)
 ```
 
-Subscriptions use the `graphql-transport-ws` WebSocket protocol. They have no `settings` argument and no queue support — use `next`, `complete`, and `setDelay` in the handler to control the event stream.
+Subscriptions use the `graphql-transport-ws` WebSocket protocol. They support matchers through the settings argument, but they do not support polling. Use `next`, `complete`, and `setDelay` in the handler to control the event stream.
 
 <Callout type='info'>
   For the full parameter descriptions, config variants, and types see the [GraphQL API

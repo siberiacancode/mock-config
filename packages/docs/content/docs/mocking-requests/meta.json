@@ -2,12 +2,5 @@
   "title": "Mock Server",
   "icon": "Blocks",
   "defaultOpen": true,
-  "pages": [
-    "introducing",
-    "matcher",
-    "settings",
-    "logger",
-    "cors",
-    "static-files"
-  ]
+  "pages": ["introducing", "type-safety", "matcher", "settings", "logger", "cors", "static-files"]
 }

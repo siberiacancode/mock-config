@@ -37,12 +37,15 @@ To return different responses based on a header value, use `headers` in the rout
 ```ts
 import { exists, graphql } from 'mock-config-server';
 
-graphql.query('GetUsers', {
-  match: {
-    headers: { authorization: exists() }
-  },
-  response: { data: { users: [{ id: 1, name: 'John' }] } }
-});
+graphql.query(
+  'GetUsers',
+  { data: { users: [{ id: 1, name: 'John' }] } },
+  {
+    match: {
+      headers: { authorization: exists() }
+    }
+  }
+);
 
 graphql.query(
   'GetUsers',
@@ -60,10 +63,13 @@ A request with an `authorization` header matches the first stub. Every other `Ge
 Match against the exact header value using a string:
 
 ```ts
-graphql.query('GetUsers', {
-  match: {
-    headers: { 'x-locale': 'en' }
-  },
-  response: { data: { users: [] } }
-});
+graphql.query(
+  'GetUsers',
+  { data: { users: [] } },
+  {
+    match: {
+      headers: { 'x-locale': 'en' }
+    }
+  }
+);
 ```

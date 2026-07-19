@@ -47,7 +47,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
       type: 'string'
     },
     routes: {
-      description: 'One or more route responses or queues for this operation',
+      description: 'One or more route responses or polling configs for this operation',
       type: 'GraphQLRouteConfig[]',
       typeDescriptionLink: '#GraphQLRouteConfig',
       required: true
@@ -65,7 +65,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 
 There are 2 ways to specify a GraphQL route:
 
-You can pass a `queue` field with an array of timed responses (for polling/queues):
+You can pass a `polling` field with an array or generator of timed responses:
 
 <TypeTable
   type={{
@@ -74,9 +74,9 @@ You can pass a `queue` field with an array of timed responses (for polling/queue
       type: 'GraphQLSettings & { polling: true }',
       typeDescriptionLink: '#GraphQLSettings'
     },
-    queue: {
-      description: 'Sequence of timed responses (for polling/queues)',
-      type: 'Array<{ time?: number; data: GraphQLDataResponse }>',
+    polling: {
+      description: 'Sequence of timed responses for polling',
+      type: 'Array<{ time?: number; data: GraphQLDataResponse }> | Generator',
       required: true
     },
     entities: {
@@ -126,8 +126,8 @@ Or you can specify a single response with the `data` field:
 <TypeTable
   type={{
     GraphQLDataResponse: {
-      description: 'Either a static Data value or a function producing Data (sync or async)',
-      type: 'Data | (request: Request, entities: GraphQLEntitiesByEntityName) => Data | Promise<Data>'
+      description: 'Static GraphQL result, resolver function, or generator resolver',
+      type: 'GraphQLExecutionResult | (params: GraphQLParams) => GraphQLExecutionResult | Promise<GraphQLExecutionResult> | Generator'
     }
   }}
 />
@@ -142,7 +142,7 @@ Or you can specify a single response with the `data` field:
       type: 'number'
     },
     polling: {
-      description: 'Whether this route is polling (returns queued responses)',
+      description: 'Whether this route is polling (returns polling responses)',
       type: 'boolean'
     },
     status: {

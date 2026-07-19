@@ -81,8 +81,10 @@ Only the fields you specify are overridden. Everything else is still auto-genera
 Combine schema-generated data with incoming variables to make responses feel realistic:
 
 ```ts
-graphql.query('GetUser', async ({ entities }) => {
-  const id = entities.variables?.id as string;
+type GetUserVariables = { id: string };
+
+graphql.query<{ body: { variables: GetUserVariables } }>('GetUser', async ({ entities }) => {
+  const id = entities.variables?.id;
 
   const result = await executeGraphQL({
     schema: mockedSchema,

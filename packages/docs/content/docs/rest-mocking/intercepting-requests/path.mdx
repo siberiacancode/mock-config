@@ -53,9 +53,8 @@ This matches `/settings/profile` and `/settings/billing` but nothing else under 
 When multiple routes share the same path pattern, more specific routes — those with a `match` condition — take priority over less specific ones. Among routes with equal specificity, the one declared first is preferred.
 
 ```ts
-rest.get('/users', {
-  match: { queries: { role: 'admin' } },
-  response: [{ id: 1, name: 'John', role: 'admin' }]
+rest.get('/users', [{ id: 1, name: 'John', role: 'admin' }], {
+  match: { queries: { role: 'admin' } }
 });
 
 rest.get('/users', { data: { users: [] } });

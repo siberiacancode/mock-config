@@ -54,13 +54,12 @@ You can also describe an error as its own scenario with a [Matcher](/docs/mockin
 import { exists, rest } from 'mock-config-server';
 
 const routes = [
-  rest.get('/users', {
+  rest.get('/users', [{ id: 1, name: 'John' }], {
     match: {
       headers: {
         authorization: exists()
       }
-    },
-    response: [{ id: 1, name: 'John' }]
+    }
   }),
   rest.get(
     '/users',

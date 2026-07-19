@@ -1,0 +1,79 @@
+---
+title: Using base URL
+description: Reuse a base URL across mock handlers.
+---
+
+Mock Config lets you apply a base URL to a group of handlers through configuration. This keeps route definitions short while still making the server prefix explicit.
+
+<Tabs items={['Node.js']}>
+  <Tab value='Node.js'>
+
+## Configuration
+
+Set `baseUrl` in the server settings when all handlers should live under the same prefix.
+
+```ts title="mock-server.config.ts"
+import { mock, rest } from 'mock-config-server';
+
+export default mock(
+  {
+    port: 7777,
+    baseUrl: '/api'
+  },
+  {
+    name: 'github',
+    configs: [
+      rest.get('/user/:login', ({ request }) => ({
+        login: request.params.login
+      }))
+    ]
+  }
+);
+```
+
+Start the mock server from Node.js and request the route with the configured prefix:
+
+```ts title="server.ts"
+import mockServerConfig from './mock-server.config';
+import { startMockServer } from 'mock-config-server';
+
+const server = startMockServer(mockServerConfig);
+
+const response = await fetch('http://localhost:7777/api/user/octocat');
+const user = await response.json();
+
+console.log(user);
+
+server.destroy();
+```
+
+## URL Helper
+
+When you want to keep handlers fully explicit, create a small helper that resolves relative paths against a base URL.
+
+```ts title="mock-server.config.ts"
+import { mock, rest } from 'mock-config-server';
+
+function api(path: string) {
+  return new URL(`.${path}`, 'http://localhost:7777/api/').pathname;
+}
+
+export default mock(
+  {
+    port: 7777
+  },
+  {
+    name: 'github',
+    configs: [
+      rest.get(api('/user/:login'), ({ request }) => ({
+        login: request.params.login
+      }))
+    ]
+  }
+);
+```
+
+Use `baseUrl` when the whole mock group shares one prefix. Use a helper when different handlers need different external origins or when you want each resolved route to stay local to the handler definition.
+
+  </Tab>
+</Tabs>

@@ -30,12 +30,15 @@ To return different responses based on a cookie value, use `cookies` in the rout
 ```ts
 import { exists, graphql } from 'mock-config-server';
 
-graphql.query('GetProfile', {
-  match: {
-    cookies: { session: exists() }
-  },
-  response: { data: { profile: { id: 1 } } }
-});
+graphql.query(
+  'GetProfile',
+  { data: { profile: { id: 1 } } },
+  {
+    match: {
+      cookies: { session: exists() }
+    }
+  }
+);
 
 graphql.query(
   'GetProfile',
@@ -53,10 +56,13 @@ A request with a `session` cookie matches the first stub. Every other `GetProfil
 Match against the exact cookie value using a string:
 
 ```ts
-graphql.query('GetProfile', {
-  match: {
-    cookies: { role: 'admin' }
-  },
-  response: { data: { profile: { role: 'admin' } } }
-});
+graphql.query(
+  'GetProfile',
+  { data: { profile: { role: 'admin' } } },
+  {
+    match: {
+      cookies: { role: 'admin' }
+    }
+  }
+);
 ```

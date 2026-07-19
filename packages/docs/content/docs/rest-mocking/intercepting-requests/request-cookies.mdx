@@ -40,17 +40,20 @@ If you want to return different responses based on cookie values, use `cookies` 
 import { rest } from 'mock-config-server';
 
 const routes = [
-  rest.get('/profile', {
-    match: {
-      cookies: {
-        role: 'admin'
-      }
-    },
-    response: {
+  rest.get(
+    '/profile',
+    {
       name: 'John',
       role: 'admin'
+    },
+    {
+      match: {
+        cookies: {
+          role: 'admin'
+        }
+      }
     }
-  })
+  )
 ];
 ```
 
@@ -60,7 +63,7 @@ const routes = [
 ```ts
 import { rest } from 'mock-config-server';
 
-const route = rest.get<{ cookies: { role?: string } }>('/profile', (request) => {
+const route = rest.get<{ cookies: { role?: string } }>('/profile', ({ request }) => {
   if (request.cookies.role === 'admin') {
     return {
       name: 'John',

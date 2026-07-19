@@ -1,0 +1,126 @@
+---
+title: Type safety
+description: Type REST and GraphQL mocks with Mock Config.
+---
+
+Mock Config helpers are designed to keep mocks type-safe without adding extra runtime code. You describe request and response shapes with a generic type, and the resolver params are inferred from that type.
+
+This helps catch mistakes where they usually happen: wrong path params, missing request body fields, incorrectly typed GraphQL variables, or a response that does not match the scenario you meant to mock.
+
+## REST
+
+For REST handlers, pass a generic with the request parts you need: `params`, `queries`, `body`, and `response`.
+
+```ts
+import { rest } from 'mock-config-server';
+
+type UpdateUserBody = {
+  name: string;
+  role: 'admin' | 'developer';
+};
+
+type User = {
+  id: number;
+  name: string;
+  role: 'admin' | 'developer';
+};
+
+rest.patch<{
+  params: { id: string };
+  body: UpdateUserBody;
+  response: User;
+}>('/users/:id', ({ request }) => {
+  return {
+    id: Number(request.params.id),
+    name: request.body.name,
+    role: request.body.role
+  };
+});
+```
+
+The generic above gives you typed access to:
+
+- `request.params.id` as `string`
+- `request.body.name` as `string`
+- `request.body.role` as `'admin' | 'developer'`
+- the resolver return value as `User`
+
+Matchers use the same request entity names, so you can keep matched scenarios aligned with the handler shape:
+
+```ts
+rest.get<{ queries: { role?: User['role'] }; response: User[] }>(
+  '/users',
+  [{ id: 1, name: 'John', role: 'admin' }],
+  {
+    match: {
+      queries: {
+        role: 'admin'
+      }
+    }
+  }
+);
+```
+
+## GraphQL
+
+For GraphQL queries and mutations, type variables through `body.variables` and type the returned GraphQL execution result through `response`.
+
+```ts
+import { graphql } from 'mock-config-server';
+
+type GetUserVariables = {
+  id: string;
+};
+
+type GetUserResponse = {
+  data: {
+    user: {
+      id: string;
+      name: string;
+    };
+  };
+};
+
+graphql.query<{ body: { variables: GetUserVariables }; response: GetUserResponse }>(
+  'GetUser',
+  ({ entities }) => {
+    const id = entities.variables?.id;
+
+    return {
+      data: {
+        user: {
+          id,
+          name: 'John'
+        }
+      }
+    };
+  }
+);
+```
+
+This keeps `entities.variables` typed from the operation input. The same typing applies when you match GraphQL scenarios by variables:
+
+```ts
+graphql.query<{ body: { variables: GetUserVariables }; response: GetUserResponse }>(
+  'GetUser',
+  {
+    data: {
+      user: {
+        id: '1',
+        name: 'John'
+      }
+    }
+  },
+  {
+    match: {
+      variables: {
+        id: '1'
+      }
+    }
+  }
+);
+```
+
+## Why It Matters
+
+Typed mocks make the mock server behave more like the API contract your application expects. When the contract changes, TypeScript points at stale mock responses and resolver code before those mismatches reach the browser or test runner.

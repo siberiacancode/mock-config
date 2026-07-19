@@ -1,0 +1,6 @@
+{
+  "title": "Mocking SSE",
+  "icon": "Radio",
+  "defaultOpen": true,
+  "pages": ["introduction"]
+}

@@ -19,14 +19,17 @@ This handler intercepts any `query { ... }` operation named `GetUsers` and gives
 
 ## Anatomy Of A GraphQL Handler
 
-Every GraphQL handler consists of two parts: an **identifier** and a **resolver**. Like in REST, a handler can also include a `match` condition and `settings` when you need more control.
+Every GraphQL handler consists of an **identifier** and a response config. The config can be a static value, a resolver function, a generator function, or `polling()`. Pass matchers and response settings in the optional third argument.
 
 ```ts
-//                identifier     resolver
-graphql.query('GetUsers', () => ({ data: { users: [] } }));
+//            identifier                    settings
+//            v                             v
+graphql.query('GetUsers', { data: { users: [] } }, { status: 200 });
+//                      ^ response config
+//
 ```
 
-The identifier decides which operations match the handler. The resolver decides what response to return.
+The identifier decides which operations match the handler. The response config decides what response to return.
 
 ## Identifier
 
@@ -59,12 +62,15 @@ For additional conditions beyond the operation name — such as specific variabl
 ```ts
 import { exists, graphql } from 'mock-config-server';
 
-graphql.query('GetUsers', {
-  match: {
-    variables: { role: 'admin' }
-  },
-  response: { data: { users: [{ id: 1, name: 'John', role: 'admin' }] } }
-});
+graphql.query(
+  'GetUsers',
+  { data: { users: [{ id: 1, name: 'John', role: 'admin' }] } },
+  {
+    match: {
+      variables: { role: 'admin' }
+    }
+  }
+);
 ```
 
 The identifier filters by operation name first; the matcher then narrows by the request data.
@@ -75,15 +81,7 @@ The resolver decides what to return when an operation matches the handler.
 
 ### Static Response
 
-Pass a response object when the result is fixed:
-
-```ts
-graphql.query('GetUsers', {
-  response: { data: { users: [{ id: 1, name: 'John' }] } }
-});
-```
-
-You can also pass the response inline without the `response` wrapper:
+Pass a response object directly when the result is fixed:
 
 ```ts
 graphql.query('GetUsers', { data: { users: [{ id: 1, name: 'John' }] } });
@@ -94,9 +92,12 @@ graphql.query('GetUsers', { data: { users: [{ id: 1, name: 'John' }] } });
 Pass a function when the response depends on the request:
 
 ```ts
-graphql.query<{ response: { data: { users: User[] } } }>('GetUsers', ({ entities }) => ({
+graphql.query<{
+  body: { variables: { role?: User['role'] } };
+  response: { data: { users: User[] } };
+}>('GetUsers', ({ entities }) => ({
   data: {
-    users: [{ id: 1, name: 'John', role: entities.variables?.role }]
+    users: [{ id: 1, name: 'John', role: entities.variables?.role ?? 'admin' }]
   }
 }));
 ```

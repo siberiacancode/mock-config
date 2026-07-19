@@ -3,7 +3,7 @@ title: Intercepting requests
 description: Learn how REST request interception works in Mock Config.
 ---
 
-To inspect and handle requests, you define REST routes with the `rest` namespace. Here is a minimal example:
+To inspect and handle requests, define REST routes with the `rest` namespace. Here is a minimal example:
 
 ```ts
 import { rest } from 'mock-config-server';
@@ -14,23 +14,19 @@ const route = rest.get('/resource', ({ request }) => ({
 }));
 ```
 
-This route intercepts `GET /resource` requests and gives you access to the incoming request data. This page introduces the structure of REST routes and the supported ways of intercepting requests. Refer to the nested pages in this section for more specific cases like path parameters, query parameters, cookies, and request bodies.
+This route intercepts `GET /resource` requests and gives you access to the incoming request data. This page introduces the structure of REST routes and the supported ways of intercepting requests.
 
 ## Anatomy Of A REST Route
 
-At the core, every REST route consists of two parts: a `predicate` and a `resolver`. In Mock Config, a route can also include a `matcher` and `settings` when you need more control over how the request is selected and how the response is returned.
+Every REST route consists of a path selector and a response config. The config can be a static value, a resolver function, a generator function, `file()`, or `polling()`. Pass matchers and response settings in the optional third argument.
 
 ```ts
-//       👇 This is a predicate.
-rest.get('/resource', () => {});
-//                    👆 This is a resolver.
+//       path selector               settings
+//       v                           v
+rest.get('/resource', { ok: true }, { status: 200 });
+//                    ^ response config
+//
 ```
-
-The predicate decides which requests match the route. The resolver decides what response to return for those requests.
-
-## Predicate
-
-The predicate is what Mock Config uses to decide whether an incoming request should match a route.
 
 ### Route Path
 
@@ -44,7 +40,7 @@ This matches requests by method and pathname. Query parameters are not part of t
 
 ### Query Parameters
 
-Include query parameters in the route path, even if you are certain that such a route is exactly what you want to cover in your scenario.
+Do not include query parameters in the route path, even if you are certain that such a route is exactly what you want to cover in your scenario.
 
 ```ts
 rest.get('/users?id=1', () => {});
@@ -74,22 +70,21 @@ rest.get(/\/settings\/(profile|billing)/, () => {});
 
 Regular expressions are useful for advanced matching cases, but string paths are usually easier to read and maintain.
 
-### Advanced Matching
+## Advanced Matching
 
-For more nuanced use cases, Mock Config does not use a custom predicate function on the route itself. Instead, use a [Matcher](/docs/mocking-requests/matcher) to add extra conditions for `params`, `queries`, `cookies`, `headers`, or `body`.
+For more nuanced use cases, use a [Matcher](/docs/mocking-requests/matcher) to add extra conditions for `params`, `queries`, `cookies`, `headers`, or `body`.
 
 For example, `exists()` is useful when a request should match as long as a value is present:
 
 ```ts
 import { exists, rest } from 'mock-config-server';
 
-rest.get('/products', {
+const route = rest.get('/products', [{ id: 1, name: 'John' }], {
   match: {
     queries: {
       search: exists()
     }
-  },
-  response: [{ id: 1, name: 'John' }]
+  }
 });
 ```
 
@@ -98,13 +93,12 @@ Use `fn()` when you need a custom comparator function:
 ```ts
 import { fn, rest } from 'mock-config-server';
 
-const route = rest.get('/products', {
+const route = rest.get('/products', [{ id: 1, name: 'John' }], {
   match: {
     queries: {
       search: fn((actual) => typeof actual === 'string' && actual.startsWith('jo'))
     }
-  },
-  response: [{ id: 1, name: 'John' }]
+  }
 });
 ```
 
@@ -116,14 +110,12 @@ The resolver decides what to return when a request matches the route.
 
 ### Static Response
 
-Use a response object when the result is fixed:
+Pass a static value when the result is fixed:
 
 ```ts
 import { rest } from 'mock-config-server';
 
-const route = rest.get('/users', {
-  response: [{ id: 1, name: 'John' }]
-});
+const route = rest.get('/users', [{ id: 1, name: 'John' }]);
 ```
 
 ### Dynamic Response
@@ -141,7 +133,7 @@ const route = rest.get<{ params: { id: string } }>('/users/:id', ({ request }) =
 });
 ```
 
-Inside the resolver, you can read: `request.params`, `request.queries`, `request.cookies`, `request.body`, headers and other request metadata
+Inside the resolver, you can read `request.params`, `request.queries`, `request.cookies`, `request.body`, headers, and other request metadata.
 
 ## Next Steps
 

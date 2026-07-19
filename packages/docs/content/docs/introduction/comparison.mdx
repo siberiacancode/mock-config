@@ -144,10 +144,8 @@ nock('https://api.example.com').get('/user').reply(200, {
 
 ```typescript
 rest.get('/user', {
-  response: {
-    id: 1,
-    name: 'John'
-  }
+  id: 1,
+  name: 'John'
 });
 ```
 
@@ -202,12 +200,10 @@ JSON Server starts from resources and derives routes from data. Mock Config star
 #### Mock Config
 
 ```typescript
-rest.get('/users', {
-  response: [
-    { id: 1, name: 'John' },
-    { id: 2, name: 'Jane' }
-  ]
-});
+rest.get('/users', [
+  { id: 1, name: 'John' },
+  { id: 2, name: 'Jane' }
+]);
 ```
 
 ## Mirage
@@ -260,9 +256,7 @@ createServer({
 #### Mock Config
 
 ```typescript
-rest.get('/movies', {
-  response: ['Interstellar', 'Dunkirk']
-});
+rest.get('/movies', ['Interstellar', 'Dunkirk']);
 ```
 
 ## Cypress `cy.intercept()`
@@ -373,7 +367,5 @@ await page.route('**/users', async (route) => {
 #### Mock Config
 
 ```typescript
-rest.get('/users', {
-  response: [{ id: 1, name: 'John' }]
-});
+rest.get('/users', [{ id: 1, name: 'John' }]);
 ```

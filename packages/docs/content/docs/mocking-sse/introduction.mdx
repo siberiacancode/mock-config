@@ -1,0 +1,35 @@
+---
+title: Introduction
+description: Intercept and mock Server-Sent Events with Mock Config.
+---
+
+Mock Config supports Server-Sent Events through the `rest.sse` and `rest.stream` helpers provided by the library:
+
+```ts
+import { rest } from 'mock-config-server';
+
+rest.sse('/notifications', ({ client }) => {
+  client.send('Connected', { event: 'status' });
+  client.send('New message', { event: 'message', id: '1' });
+  client.close();
+});
+```
+
+SSE is built on top of HTTP, but long-lived event streams are easier to describe with a dedicated helper. Mock Config sets the event-stream response headers for you and gives the handler a `client` for pushing messages over time.
+
+Use `rest.sse` for `GET` streams opened with `EventSource`. Use `rest.stream` for `POST` streams when the client sends a request body before reading the response.
+
+## Benefits
+
+Here are some of the benefits of using Mock Config for SSE mocking:
+
+- stream-first: push multiple events from one handler
+- ergonomic: use `client.send()`, `client.close()`, and `setDelay()`
+- request-aware: read params, queries, headers, cookies, and request body in handlers
+- scenario-driven: combine streams with [Matcher](/docs/mocking-requests/matcher) and [Interceptors](/docs/mocking-requests/references/Interceptors)
+- coexists with REST and GraphQL: SSE mocks run in the same server instance
+
+<Callout type='info'>
+  For detailed examples of `rest.sse`, `rest.stream`, event metadata, and delayed streams, see
+  [Streaming](/docs/rest-mocking/mocking-responses/streaming).
+</Callout>

@@ -29,7 +29,7 @@ rest.get<Options>(path, config, settings?)
     },
     config: {
       description:
-        'Response configuration. Accepts an inline value, response object, file object, handler function, handler object, or queue object.',
+        'Response configuration. Accepts an inline value, handler function, generator function, file helper, or polling helper.',
       type: 'RestConfig',
       typeDescriptionLink: '#restconfig',
       required: true
@@ -136,26 +136,25 @@ rest.get('/users', [{ id: 1, name: 'John' }]);
 rest.get('/count', 42);
 ```
 
-### Response object
+### Matching A Response
 
-Wrap the response in a `response` field to add an optional matcher:
+Pass `match` in the route settings argument when a response should only apply to specific request conditions:
 
 ```ts
-rest.get('/users', {
-  response: [{ id: 1, name: 'John' }],
-  match: { queries: { role: 'admin' } } // optional
+rest.get('/users', [{ id: 1, name: 'John' }], {
+  match: { queries: { role: 'admin' } }
 });
 ```
 
 <TypeTable
   type={{
-    response: {
+    config: {
       description: 'Static response value.',
       type: 'Data',
       required: true
     },
     match: {
-      description: 'Optional matcher to scope this config to specific request conditions.',
+      description: 'Matcher to scope this config to specific request conditions.',
       type: 'RestEntitiesByEntityName<Method>',
       typeDescriptionLink: '/docs/mocking-requests/references/Rest#RestEntitiesByEntityName'
     }
@@ -173,40 +172,52 @@ rest.get('/users/:id', ({ request }) => ({
 }));
 ```
 
-### Handler object
+### Matching A Handler
 
-Wrap a handler function to add an optional matcher:
+Use the same settings argument to match dynamic handlers:
 
 ```ts
-rest.get('/users', {
-  handler: ({ entities }) => [{ id: 1, role: entities.queries?.role }],
-  match: { queries: { role: 'admin' } } // optional
+rest.get('/users', ({ entities }) => [{ id: 1, role: entities.queries?.role }], {
+  match: { queries: { role: 'admin' } }
 });
 ```
 
 <TypeTable
   type={{
-    handler: {
+    config: {
       description: 'Resolver function. Receives resolver params and returns the response.',
       type: '(params: RestParams<Method>) => Data | Promise<Data>',
       required: true
     },
     match: {
-      description: 'Optional matcher.',
+      description: 'Matcher for this handler.',
       type: 'RestEntitiesByEntityName<Method>',
       typeDescriptionLink: '/docs/mocking-requests/references/Rest#RestEntitiesByEntityName'
     }
   }}
 />
 
-### File object
+### Generator function
+
+Pass a generator function when each request should receive the next generated value. When the generator finishes, Mock Config starts it again.
+
+```ts
+rest.get('/status', function* () {
+  yield { status: 'pending' };
+  yield { status: 'processing' };
+  return { status: 'done' };
+});
+```
+
+### File helper
 
 Respond with a file from disk:
 
 ```ts
-rest.get('/report', {
-  file: './files/report.pdf',
-  match: { headers: { accept: 'application/pdf' } } // optional
+import { file, rest } from 'mock-config-server';
+
+rest.get('/report', file('./files/report.pdf'), {
+  match: { headers: { accept: 'application/pdf' } }
 });
 ```
 
@@ -218,33 +229,36 @@ rest.get('/report', {
       required: true
     },
     match: {
-      description: 'Optional matcher.',
+      description: 'Matcher for this file response.',
       type: 'RestEntitiesByEntityName<Method>',
       typeDescriptionLink: '/docs/mocking-requests/references/Rest#RestEntitiesByEntityName'
     }
   }}
 />
 
-### Queue object
+### Polling helper
 
 Cycle through a sequence of responses over time. See [Polling](/docs/rest-mocking/polling) for the full details.
 
 ```ts
-rest.get('/status', {
-  queue: [{ response: { status: 'pending' }, time: 3000 }, { response: { status: 'done' } }]
-});
+import { polling, rest } from 'mock-config-server';
+
+rest.get(
+  '/status',
+  polling([{ response: { status: 'pending' }, time: 3000 }, { response: { status: 'done' } }])
+);
 ```
 
 <TypeTable
   type={{
-    queue: {
+    polling: {
       description:
-        'Ordered list of queue items. Each item can be a response, handler, or file, with an optional `time` (ms) that controls how long the item stays active.',
+        'Ordered list of polling items. Each item can be a response, handler, or file, with an optional `time` (ms) that controls how long the item stays active.',
       type: 'Array<{ response: Data; time?: number } | { handler: Function; time?: number } | { file: string; time?: number }>',
       required: true
     },
     match: {
-      description: 'Optional matcher.',
+      description: 'Matcher for this polling sequence.',
       type: 'RestEntitiesByEntityName<Method>',
       typeDescriptionLink: '/docs/mocking-requests/references/Rest#RestEntitiesByEntityName'
     }
@@ -267,6 +281,11 @@ The optional third argument applied to the route.
       description: 'HTTP status code of the response.',
       type: 'number',
       default: '200'
+    },
+    match: {
+      description: 'Optional matcher to scope this route config to specific request conditions.',
+      type: 'RestEntitiesByEntityName<Method>',
+      typeDescriptionLink: '/docs/mocking-requests/references/Rest#RestEntitiesByEntityName'
     }
   }}
 />

@@ -55,10 +55,6 @@ Each parameter is extracted from the matching path segment and passed to the han
 
 ## Parameters In Matchers
 
-If you want to return different responses based on params values, use `params` in the route matcher.
-
-mdx## Parameters In Matchers
-
 If you want different scenarios for the same dynamic route, use [Matcher](/docs/mocking-requests/matcher) and match specific parameter values.
 
 <Tabs items={['Matcher', 'Resolver', 'Path']}>
@@ -67,17 +63,20 @@ If you want different scenarios for the same dynamic route, use [Matcher](/docs/
 ```ts
 import { rest } from 'mock-config-server';
 
-const route = rest.get<{ params: { id: string } }>('/users/:id', {
-  match: {
-    params: {
-      id: '1'
-    }
-  },
-  response: {
+const route = rest.get<{ params: { id: string } }>(
+  '/users/:id',
+  {
     id: 1,
     name: 'John'
+  },
+  {
+    match: {
+      params: {
+        id: '1'
+      }
+    }
   }
-});
+);
 ```
 
 </Tab>

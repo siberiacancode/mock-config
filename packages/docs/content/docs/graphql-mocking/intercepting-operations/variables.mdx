@@ -15,15 +15,18 @@ import { graphql } from 'mock-config-server';
 type GetUserVariables = { id: string };
 type GetUserResponse = { data: { user: { id: string; name: string } } };
 
-graphql.query<{ response: GetUserResponse }>('GetUser', ({ entities }) => {
-  const id = entities.variables?.id as string;
+graphql.query<{ body: { variables: GetUserVariables }; response: GetUserResponse }>(
+  'GetUser',
+  ({ entities }) => {
+    const id = entities.variables?.id;
 
-  return {
-    data: {
-      user: { id, name: 'John' }
-    }
-  };
-});
+    return {
+      data: {
+        user: { id, name: 'John' }
+      }
+    };
+  }
+);
 ```
 
 ## Matching Variables
@@ -31,14 +34,17 @@ graphql.query<{ response: GetUserResponse }>('GetUser', ({ entities }) => {
 To return different responses based on variable values, use `variables` in the route matcher:
 
 ```ts
-graphql.query('GetUsers', {
-  match: {
-    variables: { role: 'admin' }
-  },
-  response: {
+graphql.query(
+  'GetUsers',
+  {
     data: { users: [{ id: 1, name: 'John', role: 'admin' }] }
+  },
+  {
+    match: {
+      variables: { role: 'admin' }
+    }
   }
-});
+);
 
 graphql.query('GetUsers', {
   data: { users: [] }
@@ -54,16 +60,19 @@ You can use any [Matcher](/docs/mocking-requests/matcher) comparator with variab
 ```ts
 import { exists, graphql } from 'mock-config-server';
 
-graphql.query('GetUsers', {
-  match: {
-    variables: {
-      search: exists()
-    }
-  },
-  response: {
+graphql.query(
+  'GetUsers',
+  {
     data: { users: [{ id: 1, name: 'John' }] }
+  },
+  {
+    match: {
+      variables: {
+        search: exists()
+      }
+    }
   }
-});
+);
 ```
 
 This matches as long as the `search` variable is present, regardless of its value.
@@ -73,10 +82,11 @@ This matches as long as the `search` variable is present, regardless of its valu
 Variables work the same way for subscriptions. Use `match.variables` to scope a subscription handler to a specific variable set:
 
 ```ts
-graphql.subscription('OnNewMessage', {
-  match: { variables: { channelId: 'general' } },
-  response: { data: { newMessage: { text: 'Hello' } } }
-});
+graphql.subscription(
+  'OnNewMessage',
+  { data: { newMessage: { text: 'Hello' } } },
+  { match: { variables: { channelId: 'general' } } }
+);
 ```
 
 See [Subscriptions](/docs/graphql-mocking/subscriptions) for more on mocking subscription operations.

@@ -43,7 +43,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
       required: true
     },
     routes: {
-      description: 'One or more route responses or queues for this path',
+      description: 'One or more route responses or polling configs for this path',
       type: 'RestRouteConfig<Method>[]',
       typeDescriptionLink: '#RestRouteConfig',
       required: true
@@ -61,7 +61,7 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 
 There are 3 ways to specify the RestRequestConfig:
 
-You can pass a queue field with an array of timed responses (for polling/queues):
+You can pass a `polling` field with an array or generator of timed responses:
 
 <TypeTable
   type={{
@@ -77,15 +77,15 @@ You can pass a queue field with an array of timed responses (for polling/queues)
       ),
       required: true
     },
-    queue: {
-      description: 'Sequence of timed responses (for polling/queues)',
+    polling: {
+      description: 'Sequence of timed responses for polling',
       type: (
         <span>
           Array{'<{'} time?: number; data:{' '}
           <a href='#RestDataResponse' className='underline'>
             RestDataResponse{'<'}Method{'>'}
           </a>{' '}
-          {'}'} | {'{'} time?: number; file: string {'}>'}
+          {'}'} | {'{'} time?: number; file: string {'}>'} | Generator
         </span>
       ),
       required: true
@@ -178,7 +178,9 @@ Or you can specify a file response with the file field:
 
 ```typescript
 <Method extends RestMethod = RestMethod>
-((request: Request, entities: RestEntitiesByEntityName<Method>) => Data | Promise<Data>) | Data;
+| Data
+| ((request: Request, entities: RestEntitiesByEntityName<Method>) => Data | Promise<Data>)
+| Generator<Data, Data | void, RestParams<Method>>;
 ```
 
 <a id='RestSettings'></a>
@@ -191,7 +193,7 @@ Or you can specify a file response with the file field:
       type: 'number'
     },
     polling: {
-      description: 'Whether this route is polling (returns queued responses)',
+      description: 'Whether this route is polling (returns polling responses)',
       type: 'boolean'
     },
     status: {

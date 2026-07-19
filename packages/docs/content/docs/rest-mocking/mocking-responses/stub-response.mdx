@@ -7,37 +7,40 @@ By default, every mock in Mock Config works as a **stub**: it returns the same p
 
 ## A Stubbed GET Request
 
-Define a route with a static `response` and it will answer every matching request with the exact same payload:
+Pass a static value as the route config and it will answer every matching request with the exact same payload:
 
 ```ts
+import { rest } from 'mock-config-server';
+
 rest.get('/users', [
   { id: 1, name: 'John' },
   { id: 2, name: 'Jane' }
 ]);
 ```
 
-Every `GET /users` request receives the same list of users. It does not matter which query parameters, headers, or cookies the client sends — the stub always returns this response.
+Every `GET /users` request receives the same list of users. It does not matter which query parameters, headers, or cookies the client sends: the stub always returns this response.
 
 ## Stubs And Matchers
 
-A single stub answers every matching request the same way. To describe **different** responses for **different** requests, combine stubs with a [Matcher](/docs/mocking-requests/matcher). Instead of writing branching logic inside a resolver, you declare several stubs and let the matcher decide which one applies. Each stub stays simple and static; the matcher expresses the condition.
+A single stub answers every matching request the same way. To describe **different** responses for **different** requests, combine stubs with a [Matcher](/docs/mocking-requests/matcher). Pass the response as the second argument and `match` in the route settings argument.
 
 ```ts
-rest.get('/users', {
+import { rest } from 'mock-config-server';
+
+rest.get('/users', [{ id: 1, name: 'John', role: 'admin' }], {
   match: {
     queries: {
       role: 'admin'
     }
-  },
-  response: [{ id: 1, name: 'John', role: 'admin' }]
+  }
 });
-rest.get('/users', {
+
+rest.get('/users', [{ id: 2, name: 'Jane', role: 'user' }], {
   match: {
     queries: {
       role: 'user'
     }
-  },
-  response: [{ id: 2, name: 'Jane', role: 'user' }]
+  }
 });
 ```
 
@@ -48,17 +51,19 @@ Here `GET /users?role=admin` and `GET /users?role=user` are the same real route,
 When several stubs share the same route, the one with a `match` is more specific, so it takes priority over a stub without one. Mock Config checks the matched stubs first and only falls back to an unmatched stub when none of them apply. This lets you describe specific scenarios alongside a general default:
 
 ```ts
+import { rest } from 'mock-config-server';
+
 rest.get('/users', []);
-rest.get('/users', {
+
+rest.get('/users', [{ id: 1, name: 'John', role: 'admin' }], {
   match: {
     queries: {
       role: 'admin'
     }
-  },
-  response: [{ id: 1, name: 'John', role: 'admin' }]
+  }
 });
 ```
 
 Here `GET /users?role=admin` matches the first, more specific stub, while every other `GET /users` request falls back to the default empty list.
 
-Keep each response **static and predictable**, and use matchers to map requests to the scenario you want to cover. You describe _what_ the server returns for a given situation, not _how_ to compute it. When you do need computed or stateful behavior, reach for a resolver function — but stubs and matchers are enough for most cases, and they keep your mocks easy to read and reason about. You can read more about matchers and their available functions in the [Matcher](/docs/mocking-requests/matcher) article.
+Keep each response **static and predictable**, and use matchers to map requests to the scenario you want to cover. You describe _what_ the server returns for a given situation, not _how_ to compute it. When you do need computed or stateful behavior, reach for a resolver function. Stubs and matchers are enough for most cases, and they keep your mocks easy to read and reason about.

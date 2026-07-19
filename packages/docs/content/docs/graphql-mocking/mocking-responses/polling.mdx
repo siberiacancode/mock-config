@@ -1,0 +1,117 @@
+---
+title: Polling
+description: Simulate polling behavior for GraphQL queries and mutations.
+---
+
+Polling is useful when a GraphQL operation represents changing state: a background job, report generation, import progress, or any workflow where the client repeats the same query until the result is ready.
+
+Mock Config supports two polling styles for GraphQL queries and mutations:
+
+- `polling()` for timed or request-based response sequences
+- generator resolvers for request-by-request state
+
+## Polling Helper
+
+Use `polling()` when you want to describe an ordered sequence of GraphQL responses.
+
+```ts
+import { graphql, polling } from 'mock-config-server';
+
+graphql.query(
+  'GetJobStatus',
+  polling([
+    { response: { data: { job: { status: 'pending' } } }, time: 2000 },
+    { response: { data: { job: { status: 'processing' } } }, time: 2000 },
+    { response: { data: { job: { status: 'done' } } } }
+  ])
+);
+```
+
+Each item can define:
+
+| Field      | Type     | Description                                                         |
+| ---------- | -------- | ------------------------------------------------------------------- |
+| `response` | object   | Static GraphQL execution result returned while this item is active. |
+| `handler`  | function | Dynamic resolver called while this item is active.                  |
+| `time`     | number   | How long, in milliseconds, this item stays active before advancing. |
+
+When an item has `time`, every request during that window receives the same response. When an item has no `time`, polling advances on the next request.
+
+## Matching Polling
+
+Pass `match` in the settings argument to run a polling sequence only for specific variables, headers, cookies, or query parameters.
+
+```ts
+import { graphql, polling } from 'mock-config-server';
+
+graphql.query(
+  'GetJobStatus',
+  polling([
+    { response: { data: { job: { status: 'pending' } } }, time: 1000 },
+    { response: { data: { job: { status: 'done' } } } }
+  ]),
+  {
+    match: {
+      variables: {
+        id: 'job-1'
+      }
+    }
+  }
+);
+```
+
+Other `GetJobStatus` requests fall through to the next matching route.
+
+## Dynamic Items
+
+Use `handler` inside a polling item when the response depends on the incoming operation.
+
+```ts
+import { graphql, polling } from 'mock-config-server';
+
+type JobVariables = { id: string };
+type JobResponse = { data: { job: { id: string; status: string } } };
+
+graphql.query<{ body: { variables: JobVariables }; response: JobResponse }>(
+  'GetJobStatus',
+  polling([
+    {
+      handler: ({ entities }) => ({
+        data: {
+          job: {
+            id: entities.variables?.id,
+            status: 'pending'
+          }
+        }
+      }),
+      time: 1000
+    },
+    {
+      handler: ({ entities }) => ({
+        data: {
+          job: {
+            id: entities.variables?.id,
+            status: 'done'
+          }
+        }
+      })
+    }
+  ])
+);
+```
+
+## Generator Polling
+
+Pass a generator function directly when each request should receive the next value. Mock Config preserves generator state between calls and starts it again after the generator finishes.
+
+```ts
+import { graphql } from 'mock-config-server';
+
+graphql.query('GetJobStatus', function* () {
+  yield { data: { job: { status: 'pending' } } };
+  yield { data: { job: { status: 'processing' } } };
+  return { data: { job: { status: 'done' } } };
+});
+```
+
+Use `polling()` when you need time windows. Use a generator when the sequence should advance once per request.

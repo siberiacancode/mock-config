@@ -25,7 +25,7 @@ graphql.query<Options>(identifier, config, settings?)
     },
     config: {
       description:
-        'Response configuration. Accepts an inline value, response object, handler function, handler object, or queue object.',
+        'Response configuration. Accepts an inline value, handler function, generator function, or polling helper.',
       type: 'GraphQLConfig',
       typeDescriptionLink: '#graphqlconfig',
       required: true
@@ -48,10 +48,10 @@ graphql.mutation<Options>(identifier, config, settings?)
 
 ## graphql.subscription
 
-Intercepts GraphQL subscription operations over `graphql-transport-ws` WebSocket. Unlike queries and mutations, subscriptions have no `settings` argument — use `setDelay` inside the handler instead.
+Intercepts GraphQL subscription operations over `graphql-transport-ws` WebSocket.
 
 ```ts
-graphql.subscription(identifier, config);
+graphql.subscription(identifier, config, settings?)
 ```
 
 <TypeTable
@@ -63,10 +63,14 @@ graphql.subscription(identifier, config);
     },
     config: {
       description:
-        'Response configuration. Accepts an inline value, response object, handler function, or handler object. No queue support.',
+        'Response configuration. Accepts an inline value or handler function. No polling support.',
       type: 'GraphQLSubscriptionConfig',
       typeDescriptionLink: '#graphqlsubscriptionconfig',
       required: true
+    },
+    settings: {
+      description: 'Optional subscription settings, including matcher conditions.',
+      type: 'GraphQLSubscriptionSettings'
     }
   }}
 />
@@ -85,27 +89,30 @@ Pass a response object directly:
 graphql.query('GetUsers', { data: { users: [] } });
 ```
 
-### Response object
+### Matching A Response
 
-Wrap the response in a `response` field to add an optional matcher:
+Pass `match` in the operation settings argument when a response should only apply to specific request conditions:
 
 ```ts
-graphql.query('GetUsers', {
-  response: { data: { users: [] } },
-  match: { variables: { role: 'admin' } } // optional
-});
+graphql.query(
+  'GetUsers',
+  { data: { users: [] } },
+  {
+    match: { variables: { role: 'admin' } }
+  }
+);
 ```
 
 <TypeTable
   type={{
-    response: {
+    config: {
       description: 'Static GraphQL execution result.',
       type: 'GraphQLExecutionResult',
       typeDescriptionLink: '#graphqlexecutionresult',
       required: true
     },
     match: {
-      description: 'Optional matcher to scope this config to specific request conditions.',
+      description: 'Matcher to scope this config to specific request conditions.',
       type: 'GraphQLEntitiesByEntityName',
       typeDescriptionLink: '/docs/mocking-requests/references/GraphQL#GraphQLEntitiesByEntityName'
     }
@@ -122,56 +129,70 @@ graphql.query('GetUsers', ({ entities }) => ({
 }));
 ```
 
-### Handler object
+### Matching A Handler
 
-Wrap a handler function to add an optional matcher:
+Use the same settings argument to match dynamic handlers:
 
 ```ts
-graphql.query('GetUsers', {
-  handler: ({ entities }) => ({ data: { users: [] } }),
+graphql.query('GetUsers', ({ entities }) => ({ data: { users: [] } }), {
   match: { variables: { role: 'admin' } }
 });
 ```
 
 <TypeTable
   type={{
-    handler: {
+    config: {
       description:
         'Resolver function. Receives resolver params and returns a GraphQL execution result.',
       type: '(params: GraphQLParams) => GraphQLExecutionResult | Promise<GraphQLExecutionResult>',
       required: true
     },
     match: {
-      description: 'Optional matcher.',
+      description: 'Matcher for this handler.',
       type: 'GraphQLEntitiesByEntityName',
       typeDescriptionLink: '/docs/mocking-requests/references/GraphQL#GraphQLEntitiesByEntityName'
     }
   }}
 />
 
-### Queue object
+### Generator function
 
-Cycle through a sequence of responses over time. The same queue model as REST — see [Polling](/docs/rest-mocking/polling).
+Pass a generator function when each request should receive the next generated value. When the generator finishes, Mock Config starts it again.
 
 ```ts
-graphql.query('GetStatus', {
-  queue: [
+graphql.query('GetStatus', function* () {
+  yield { data: { status: 'pending' } };
+  yield { data: { status: 'processing' } };
+  return { data: { status: 'done' } };
+});
+```
+
+### Polling helper
+
+Cycle through a sequence of responses over time. The same polling model as REST. See [Polling](/docs/rest-mocking/polling).
+
+```ts
+import { graphql, polling } from 'mock-config-server';
+
+graphql.query(
+  'GetStatus',
+  polling([
     { response: { data: { status: 'pending' } }, time: 2000 },
     { response: { data: { status: 'done' } } }
-  ]
-});
+  ])
+);
 ```
 
 <TypeTable
   type={{
-    queue: {
+    polling: {
       description:
-        'Ordered list of queue items. Each item can be a response or handler function, with an optional `time` (ms) controlling how long the item stays active.',
+        'Ordered list of polling items. Each item can be a response or handler function, with an optional `time` (ms) controlling how long the item stays active.',
       type: 'Array<{ response: GraphQLExecutionResult; time?: number } | { handler: Function; time?: number }>',
       required: true
     },
     match: {
-      description: 'Optional matcher.',
+      description: 'Matcher for this polling sequence.',
       type: 'GraphQLEntitiesByEntityName',
       typeDescriptionLink: '/docs/mocking-requests/references/GraphQL#GraphQLEntitiesByEntityName'
     }
@@ -192,13 +213,14 @@ graphql.subscription('OnUserCreated', { data: { userCreated: { id: 1 } } });
 
 Sends the value as a single `next` event and immediately closes the subscription with `complete`.
 
-### Response object
+Use the settings argument for subscription matchers:
 
 ```ts
-graphql.subscription('OnUserCreated', {
-  response: { data: { userCreated: { id: 1 } } },
-  match: { variables: { teamId: '1' } }
-});
+graphql.subscription(
+  'OnUserCreated',
+  { data: { userCreated: { id: 1 } } },
+  { match: { variables: { teamId: '1' } } }
+);
 ```
 
 ### Handler function
@@ -247,16 +269,17 @@ graphql.subscription('OnUserCreated', async ({ next, complete, setDelay }) => {
   }}
 />
 
-### Handler object
+### Matching A Handler
 
 ```ts
-graphql.subscription('OnUserCreated', {
-  handler: async ({ next, complete }) => {
+graphql.subscription(
+  'OnUserCreated',
+  async ({ next, complete }) => {
     next({ data: { userCreated: { id: 1 } } });
     complete();
   },
-  match: { variables: { teamId: '1' } }
-});
+  { match: { variables: { teamId: '1' } } }
+);
 ```
 
 ---
@@ -275,6 +298,11 @@ The optional third argument for `graphql.query` and `graphql.mutation`.
       description: 'HTTP status code of the response.',
       type: 'number',
       default: '200'
+    },
+    match: {
+      description: 'Optional matcher to scope this operation to specific request conditions.',
+      type: 'GraphQLEntitiesByEntityName',
+      typeDescriptionLink: '/docs/mocking-requests/references/GraphQL#GraphQLEntitiesByEntityName'
     }
   }}
 />

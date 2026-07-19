@@ -9,7 +9,7 @@ Without matchers, one route can return only one fixed response. With matchers, y
 
 ## What It Is
 
-A matcher is the `match` field inside a config helper such as `rest.get`, `graphql.query`, `graphql.subscription`, or `ws.connection`.
+A matcher is the `match` field in route settings for helpers such as `rest.get`, `graphql.query`, `graphql.subscription`, or `ws.connection`.
 
 The server compares the incoming request with your matcher and chooses the first suitable scenario after internal prioritization.
 
@@ -66,33 +66,39 @@ export default mock(
   {
     name: 'rest',
     configs: [
-      rest.get<{ params: { id: string }; response: User }>('/users/:id', {
-        match: {
-          params: {
-            id: '1'
-          }
-        },
-        response: {
+      rest.get<{ params: { id: string }; response: User }>(
+        '/users/:id',
+        {
           id: 1,
           name: 'John',
           role: 'admin'
-        }
-      }),
-      rest.get<{ params: { id: string }; response: User }>('/users/:id', {
-        match: {
-          params: {
-            id: '2'
-          },
-          headers: {
-            'x-role': 'preview'
-          }
         },
-        response: {
+        {
+          match: {
+            params: {
+              id: '1'
+            }
+          }
+        }
+      ),
+      rest.get<{ params: { id: string }; response: User }>(
+        '/users/:id',
+        {
           id: 2,
           name: 'Jane',
           role: 'user'
+        },
+        {
+          match: {
+            params: {
+              id: '2'
+            },
+            headers: {
+              'x-role': 'preview'
+            }
+          }
         }
-      })
+      )
     ]
   }
 );
@@ -124,13 +130,9 @@ export default mock(
       graphql.query<{
         body: { variables: { id: number } };
         response: { data: { user: User } };
-      }>('GetUser', {
-        match: {
-          variables: {
-            id: 1
-          }
-        },
-        response: {
+      }>(
+        'GetUser',
+        {
           data: {
             user: {
               id: 1,
@@ -138,18 +140,21 @@ export default mock(
               role: 'admin'
             }
           }
+        },
+        {
+          match: {
+            variables: {
+              id: 1
+            }
+          }
         }
-      }),
+      ),
       graphql.query<{
         body: { variables: { id: number } };
         response: { data: { user: User } };
-      }>('GetUser', {
-        match: {
-          variables: {
-            id: 2
-          }
-        },
-        response: {
+      }>(
+        'GetUser',
+        {
           data: {
             user: {
               id: 2,
@@ -157,8 +162,15 @@ export default mock(
               role: 'user'
             }
           }
+        },
+        {
+          match: {
+            variables: {
+              id: 2
+            }
+          }
         }
-      })
+      )
     ]
   }
 );
@@ -195,21 +207,24 @@ export default mock(
           room: 'billing'
         })
       }),
-      graphql.subscription('UserUpdates', {
-        match: {
-          variables: {
-            room: 'billing'
-          }
-        },
-        response: {
+      graphql.subscription(
+        'UserUpdates',
+        {
           data: {
             userUpdated: {
               id: 1,
               name: 'John'
             }
           }
+        },
+        {
+          match: {
+            variables: {
+              room: 'billing'
+            }
+          }
         }
-      })
+      )
     ]
   }
 );
@@ -256,7 +271,7 @@ export default mock(
   },
   {
     configs: [
-      rest.get('/users/:id', {
+      rest.get('/users/:id', [{ id: 1, name: 'John' }], {
         match: {
           params: {
             id: regExp(/^\d+$/)
@@ -267,8 +282,7 @@ export default mock(
           queries: {
             search: startsWith('jo')
           }
-        },
-        response: [{ id: 1, name: 'John' }]
+        }
       })
     ]
   }

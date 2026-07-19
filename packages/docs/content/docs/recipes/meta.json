@@ -1,0 +1,6 @@
+{
+  "title": "Recipes",
+  "icon": "ScrollText",
+  "defaultOpen": true,
+  "pages": ["using-base-url"]
+}

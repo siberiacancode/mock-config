@@ -64,13 +64,12 @@ If you want to return different responses based on query values, use `queries` i
 ```ts
 import { rest } from 'mock-config-server';
 
-const route = rest.get('/products', {
+const route = rest.get('/products', [{ id: 1, name: 'John' }], {
   match: {
     queries: {
       search: 'john'
     }
-  },
-  response: [{ id: 1, name: 'John' }]
+  }
 });
 ```
 
@@ -80,7 +79,7 @@ const route = rest.get('/products', {
 ```ts
 import { rest } from 'mock-config-server';
 
-const route = rest.get<{ queries: { search: string } }>('/products', (request) => {
+const route = rest.get<{ queries: { search: string } }>('/products', ({ request }) => {
   if (request.queries.search === 'john') {
     return [{ id: 1, name: 'John' }];
   }

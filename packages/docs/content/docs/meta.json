@@ -11,8 +11,12 @@
     "...rest-mocking",
     "---[Braces]GraphQL Mocking---",
     "...graphql-mocking",
+    "---[Radio]Mocking SSE---",
+    "...mocking-sse",
     "---[Terminal]CLI---",
     "...cli",
+    "---[ScrollText]Recipes---",
+    "...recipes",
     "---[Terminal]API---",
     "...api"
   ]

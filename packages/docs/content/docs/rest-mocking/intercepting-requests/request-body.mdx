@@ -43,17 +43,20 @@ If you want to return different responses based on the request body, use `body` 
 import { rest } from 'mock-config-server';
 
 const routes = [
-  rest.post('/users', {
-    match: {
-      body: {
-        role: 'admin'
-      }
-    },
-    response: {
+  rest.post(
+    '/users',
+    {
       ok: true,
       source: 'admin'
+    },
+    {
+      match: {
+        body: {
+          role: 'admin'
+        }
+      }
     }
-  })
+  )
 ];
 ```
 
@@ -86,16 +89,19 @@ Mock Config also supports flat matching for nested body fields. That means you c
 ```ts
 import { rest } from 'mock-config-server';
 
-const route = rest.post('/users', {
-  match: {
-    body: {
-      'profile.role': 'admin'
-    }
-  },
-  response: {
+const route = rest.post(
+  '/users',
+  {
     ok: true
+  },
+  {
+    match: {
+      body: {
+        'profile.role': 'admin'
+      }
+    }
   }
-});
+);
 ```
 
 Dot notation also works with arrays. Use the index to reach into a specific element:
@@ -103,16 +109,19 @@ Dot notation also works with arrays. Use the index to reach into a specific elem
 ```ts
 import { rest } from 'mock-config-server';
 
-const route = rest.post('/users', {
-  match: {
-    body: {
-      'users.0.role': 'admin'
-    }
-  },
-  response: {
+const route = rest.post(
+  '/users',
+  {
     ok: true
+  },
+  {
+    match: {
+      body: {
+        'users.0.role': 'admin'
+      }
+    }
   }
-});
+);
 ```
 
 Flat matching is useful when:

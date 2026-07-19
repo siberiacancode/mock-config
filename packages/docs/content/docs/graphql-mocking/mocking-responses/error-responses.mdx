@@ -65,12 +65,15 @@ You can describe an error as a standalone stub paired with a matcher, keeping it
 ```ts
 import { exists, graphql } from 'mock-config-server';
 
-graphql.query('GetUsers', {
-  match: {
-    headers: { authorization: exists() }
-  },
-  response: { data: { users: [{ id: 1, name: 'John' }] } }
-});
+graphql.query(
+  'GetUsers',
+  { data: { users: [{ id: 1, name: 'John' }] } },
+  {
+    match: {
+      headers: { authorization: exists() }
+    }
+  }
+);
 
 graphql.query(
   'GetUsers',
