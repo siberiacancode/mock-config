@@ -6,7 +6,7 @@ export const createPollingHandler = <Method extends RestMethod>(
   let pollingIndex = 0;
   let timeoutInProgress = false;
 
-  const updatepollingIndex = () => {
+  const updatePollingIndex = () => {
     pollingIndex = polling.length - 1 === pollingIndex ? 0 : pollingIndex + 1;
   };
 
@@ -21,12 +21,12 @@ export const createPollingHandler = <Method extends RestMethod>(
       timeoutInProgress = true;
       setTimeout(() => {
         timeoutInProgress = false;
-        updatepollingIndex();
+        updatePollingIndex();
       }, pollingItem.time);
     }
 
     if (!pollingItem.time) {
-      updatepollingIndex();
+      updatePollingIndex();
     }
 
     return typeof pollingItem.data === 'function' ? pollingItem.data(params) : pollingItem.data;
