@@ -8,6 +8,7 @@ describe('ws', () => {
     const result = ws.message(handler);
 
     expect(result).toStrictEqual({
+      transportType: 'ws',
       type: 'raw',
       routes: [
         {
@@ -22,6 +23,7 @@ describe('ws', () => {
     const result = ws.connection(handler);
 
     expect(result).toStrictEqual({
+      transportType: 'ws',
       type: 'connection',
       routes: [{ data: handler }]
     });
@@ -39,6 +41,7 @@ describe('ws', () => {
     });
 
     expect(result).toStrictEqual({
+      transportType: 'ws',
       type: 'connection',
       routes: [
         {

@@ -7,6 +7,7 @@ describe('graphql', () => {
     const result = graphql.query('GetUsers', { data: { ok: true } }, { delay: 25, status: 201 });
 
     expect(result).toStrictEqual({
+      transportType: 'graphQL',
       identifier: 'GetUsers',
       operationType: 'query',
       routes: [
@@ -34,6 +35,7 @@ describe('graphql', () => {
     );
 
     expect(result).toStrictEqual({
+      transportType: 'graphQL',
       identifier: 'GetUsers',
       operationType: 'query',
       routes: [
@@ -54,6 +56,7 @@ describe('graphql', () => {
     const result = graphql.query('GetUsers', { response: { data: { ok: true } } });
 
     expect(result).toStrictEqual({
+      transportType: 'graphQL',
       identifier: 'GetUsers',
       operationType: 'query',
       routes: [
@@ -71,6 +74,7 @@ describe('graphql', () => {
     const result = graphql.query('GetUsers', handler, { delay: 30 });
 
     expect(result).toStrictEqual({
+      transportType: 'graphQL',
       identifier: 'GetUsers',
       operationType: 'query',
       routes: [
@@ -99,6 +103,7 @@ describe('graphql', () => {
     );
 
     expect(result).toStrictEqual({
+      transportType: 'graphQL',
       identifier: 'GetUsers',
       operationType: 'query',
       routes: [
@@ -134,6 +139,7 @@ describe('graphql', () => {
     );
 
     expect(result).toStrictEqual({
+      transportType: 'graphQL',
       identifier: 'GetUsers',
       operationType: 'query',
       routes: [
@@ -154,6 +160,7 @@ describe('graphql', () => {
     const result = graphql.mutation('CreateUser', { data: { ok: true } });
 
     expect(result).toStrictEqual({
+      transportType: 'graphQL',
       identifier: 'CreateUser',
       operationType: 'mutation',
       routes: [
@@ -174,6 +181,7 @@ describe('graphql', () => {
     );
 
     expect(result).toStrictEqual({
+      transportType: 'graphQL',
       identifier: 'GetUsers',
       operationType: 'query',
       routes: [
@@ -190,6 +198,7 @@ describe('graphql', () => {
     const result = graphql.subscription('OnUsers', { data: { key: 'value' } });
 
     expect(result).toStrictEqual({
+      transportType: 'graphQLSubscription',
       identifier: 'OnUsers',
       operationType: 'subscription',
       routes: [
@@ -205,6 +214,7 @@ describe('graphql', () => {
     const result = graphql.subscription('OnUsers', () => ({ data: { ok: true } }));
 
     expect(result).toStrictEqual({
+      transportType: 'graphQLSubscription',
       identifier: 'OnUsers',
       operationType: 'subscription',
       routes: [
@@ -225,6 +235,7 @@ describe('graphql', () => {
     });
 
     expect(result).toStrictEqual({
+      transportType: 'graphQLSubscription',
       identifier: 'OnUsers',
       operationType: 'subscription',
       routes: [
@@ -247,8 +258,10 @@ describe('graphql', () => {
     });
 
     expect(result).toStrictEqual({
+      transportType: 'graphQLSubscription',
       identifier: 'OnUsers',
       operationType: 'subscription',
+
       routes: [
         {
           data: expect.any(Function),
@@ -276,6 +289,7 @@ describe('graphql', () => {
     });
 
     expect(result).toStrictEqual({
+      transportType: 'graphQL',
       identifier: 'GetUsers',
       operationType: 'query',
       routes: [

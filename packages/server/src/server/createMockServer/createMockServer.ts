@@ -2,6 +2,7 @@ import type { Express } from 'express';
 
 import bodyParser from 'body-parser';
 import express from 'express';
+import { Server as SocketIOServer } from 'socket.io';
 import { WebSocketServer } from 'ws';
 
 import type {
@@ -10,6 +11,7 @@ import type {
   MockServerComponent,
   MockServerConfig,
   RestRequestArtifact,
+  SocketIoRequestArtifact,
   WsRequestArtifact
 } from '@/utils/types';
 
@@ -33,6 +35,7 @@ import {
   createRestRoute,
   prepareRestRequestArtifacts
 } from '@/core/rest';
+import { createSocketIoRoute, prepareSocketIoRequestArtifacts } from '@/core/socketio';
 import {
   calculateGraphqlTransportWsRouteConfigWeight,
   createWsRoute,
@@ -61,6 +64,14 @@ export const createMockServer = (
     baseUrl: serverBaseUrl = '/',
     database
   } = mockServerSettings ?? {};
+
+  const io = new SocketIOServer({
+    serveClient: false,
+    cors: {
+      ...cors,
+      origin: !cors?.origin || typeof cors.origin === 'function' ? '*' : cors.origin
+    }
+  });
 
   server.use(bodyParser.urlencoded({ extended: false }));
 
@@ -100,11 +111,15 @@ export const createMockServer = (
     ? mockServerComponents
     : (mockServerConfig as MockServerComponent[]);
 
-  const { restRequestArtifacts, graphQLRequestArtifacts, wsRequestArtifacts } = components.reduce(
+  const {
+    restRequestArtifacts,
+    graphQLRequestArtifacts,
+    wsRequestArtifacts,
+    socketIoRequestArtifacts
+  } = components.reduce(
     (acc, component) => {
       component.configs.forEach((config) => {
-        const isRest = 'method' in config;
-        if (isRest) {
+        if (config.transportType === 'rest') {
           config.routes.forEach((route) => {
             acc.restRequestArtifacts.push({
               baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
@@ -124,8 +139,7 @@ export const createMockServer = (
           });
         }
 
-        const isGraphql = 'operationType' in config && config.operationType !== 'subscription';
-        if (isGraphql) {
+        if (config.transportType === 'graphQL') {
           config.routes.forEach((route) => {
             acc.graphQLRequestArtifacts.push({
               baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
@@ -145,9 +159,7 @@ export const createMockServer = (
           });
         }
 
-        const isGraphqlSubscription =
-          'operationType' in config && config.operationType === 'subscription';
-        if (isGraphqlSubscription) {
+        if (config.transportType === 'graphQLSubscription') {
           config.routes.forEach((route) => {
             acc.wsRequestArtifacts.push({
               type: 'graphql-ws',
@@ -160,8 +172,7 @@ export const createMockServer = (
           });
         }
 
-        const isWs = 'type' in config;
-        if (isWs) {
+        if (config.transportType === 'ws') {
           const baseUrl = urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl;
           config.routes.forEach((route) => {
             acc.wsRequestArtifacts.push({
@@ -174,6 +185,20 @@ export const createMockServer = (
             } as WsRequestArtifact);
           });
         }
+
+        if (config.transportType === 'socket.io') {
+          const baseUrl = urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl;
+          config.routes.forEach((route) => {
+            acc.socketIoRequestArtifacts.push({
+              config: route,
+              weight: 0,
+              componentRequestInterceptor: component.interceptors?.request,
+              componentResponseInterceptor: component.interceptors?.response,
+              baseUrl,
+              type: config.type
+            } as SocketIoRequestArtifact);
+          });
+        }
       });
 
       return acc;
@@ -181,7 +206,8 @@ export const createMockServer = (
     {
       restRequestArtifacts: [] as RestRequestArtifact[],
       graphQLRequestArtifacts: [] as GraphQLRequestArtifact[],
-      wsRequestArtifacts: [] as WsRequestArtifact[]
+      wsRequestArtifacts: [] as WsRequestArtifact[],
+      socketIoRequestArtifacts: [] as SocketIoRequestArtifact[]
     }
   );
 
@@ -189,8 +215,16 @@ export const createMockServer = (
   const originalListen = server.listen.bind(server);
   server.listen = ((...args: any[]) => {
     const httpServer = originalListen(...args);
+    if (socketIoRequestArtifacts.length) {
+      io.attach(httpServer);
+    }
+
     httpServer.on('upgrade', (request, socket, head) => {
       const [requestPathname] = request.url!.split('?');
+      if (requestPathname === '/socket.io' || requestPathname.startsWith('/socket.io/')) {
+        return;
+      }
+
       const shouldHandleUpgrade = [...wsBaseUrls].some((baseUrl) => {
         if (baseUrl === '/') return true;
         return requestPathname === baseUrl || requestPathname.startsWith(`${baseUrl}/`);
@@ -226,6 +260,13 @@ export const createMockServer = (
     createWsRoute({
       server: ws,
       wsRequestArtifacts: prepareWsRequestArtifacts(wsRequestArtifacts)
+    });
+  }
+
+  if (socketIoRequestArtifacts.length) {
+    createSocketIoRoute({
+      io,
+      socketIoRequestArtifacts: prepareSocketIoRequestArtifacts(socketIoRequestArtifacts)
     });
   }
 

@@ -9,6 +9,7 @@ import { routeConfigSchema } from './routeConfigSchema/routeConfigSchema';
 const baseRequestConfigSchema = (method: RestMethod) =>
   z.strictObject({
     path: z.union([stringForwardSlashSchema, z.instanceof(RegExp)]),
+    transportType: z.literal('rest'),
     method: z.literal(method),
     routes: z.array(routeConfigSchema(method)),
     interceptors: plainObjectSchema(interceptorsSchema).optional()

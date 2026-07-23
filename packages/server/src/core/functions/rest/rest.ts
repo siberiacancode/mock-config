@@ -201,6 +201,7 @@ const createRestFactory = <Method extends RestMethod>(method: Method) => {
     settings?: RestSettings
   ): BaseRestRequestConfig<Method> {
     return {
+      transportType: 'rest',
       method,
       path,
       routes: [createConfigResolver(config, settings)]
@@ -283,6 +284,7 @@ const createSseRestFactory = <Method extends 'get' | 'post'>(method: Method) => 
     };
 
     return {
+      transportType: 'rest',
       method,
       path,
       routes: [createConfigResolver({ handler: wrapperHandler, match }, settings)]
