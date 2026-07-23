@@ -23,7 +23,7 @@ const createMockIo = () => {
   return { io, triggerConnection };
 };
 
-describe('createSocketIoRoute', () => {
+describe('createSocketIoRoute: connection', () => {
   it('Should match connection route by entities and send resolved data', async () => {
     const { io, triggerConnection } = createMockIo();
 
@@ -84,9 +84,7 @@ describe('createSocketIoRoute', () => {
       handshake: {
         url: '/?room=public'
       },
-      send: vi.fn(),
-      on: vi.fn(),
-      emit: vi.fn()
+      send: vi.fn()
     };
 
     createSocketIoRoute({
@@ -110,6 +108,46 @@ describe('createSocketIoRoute', () => {
     expect(socket.send).not.toHaveBeenCalled();
   });
 
+  it('Should broadcast data via io.emit when broadcast() is called in connection handler', async () => {
+    const { io, triggerConnection } = createMockIo();
+
+    const socket = {
+      request: {
+        headers: {
+          cookie: 'a=1'
+        }
+      },
+      handshake: {
+        url: '/'
+      },
+      send: vi.fn()
+    };
+
+    createSocketIoRoute({
+      io,
+      socketIoRequestArtifacts: [
+        {
+          baseUrl: '/',
+          type: 'connection',
+          config: {
+            data: vi.fn(async ({ broadcast }: any) => {
+              broadcast({ msg: 'broadcasted' });
+              return { ok: true };
+            })
+          }
+        } as any
+      ]
+    });
+
+    await triggerConnection('/', socket);
+
+    expect(io.emit).toHaveBeenCalledTimes(1);
+    expect(io.emit).toHaveBeenCalledWith('message', { msg: 'broadcasted' });
+    expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ ok: true }));
+  });
+});
+
+describe('createSocketIoRoute: message', () => {
   it('Should route raw socket.io messages by event and call response interceptor after data resolves', async () => {
     const { io, triggerConnection } = createMockIo();
 
@@ -164,7 +202,7 @@ describe('createSocketIoRoute', () => {
     const { io, triggerConnection } = createMockIo();
     vi.useFakeTimers();
 
-    const socketOn = vi.fn((event: string, handler: any) => {
+    const socketOn = vi.fn((_, handler: any) => {
       void handler('hello');
     });
 
@@ -212,7 +250,7 @@ describe('createSocketIoRoute', () => {
   it('Should support sending undefined without socket.send', async () => {
     const { io, triggerConnection } = createMockIo();
 
-    const socketOn = vi.fn((event: string, handler: any) => {
+    const socketOn = vi.fn((_, handler: any) => {
       void handler('hello');
     });
 
@@ -247,5 +285,141 @@ describe('createSocketIoRoute', () => {
     await triggerConnection('/', socket);
 
     expect(socket.send).not.toHaveBeenCalled();
+  });
+
+  it('Should broadcast data via io.emit when broadcast() is called in message handler', async () => {
+    const { io, triggerConnection } = createMockIo();
+
+    const socketOn = vi.fn((_, handler: any) => {
+      void handler('hello');
+    });
+
+    const socket = {
+      request: {
+        headers: {
+          cookie: 'a=1'
+        }
+      },
+      handshake: {
+        url: '/?room=public'
+      },
+      send: vi.fn(),
+      emit: vi.fn(),
+      on: socketOn
+    };
+
+    createSocketIoRoute({
+      io,
+      socketIoRequestArtifacts: [
+        {
+          baseUrl: '/',
+          type: 'message',
+          config: {
+            event: 'user.created',
+            data: vi.fn(async ({ broadcast }: any) => {
+              broadcast({ broadcasted: true });
+              return { ok: true };
+            })
+          }
+        } as any
+      ]
+    });
+
+    await triggerConnection('/', socket);
+
+    expect(io.emit).toHaveBeenCalledTimes(1);
+    expect(io.emit).toHaveBeenCalledWith('message', { broadcasted: true });
+  });
+
+  it('Should emit custom event with data when emit() is called in message handler', async () => {
+    const { io, triggerConnection } = createMockIo();
+
+    const socketOn = vi.fn((_, handler: any) => {
+      void handler('hello');
+    });
+
+    const socket = {
+      request: {
+        headers: {
+          cookie: 'a=1'
+        }
+      },
+      handshake: {
+        url: '/?room=public'
+      },
+      send: vi.fn(),
+      emit: vi.fn(),
+      on: socketOn
+    };
+
+    createSocketIoRoute({
+      io,
+      socketIoRequestArtifacts: [
+        {
+          baseUrl: '/',
+          type: 'message',
+          config: {
+            event: 'user.created',
+            data: vi.fn(async ({ emit }: any) => {
+              emit('custom-event', { custom: true });
+              return { ok: true };
+            })
+          }
+        } as any
+      ]
+    });
+
+    await triggerConnection('/', socket);
+
+    expect(socket.emit).toHaveBeenCalledTimes(1);
+    expect(socket.emit).toHaveBeenCalledWith('custom-event', { custom: true });
+  });
+
+  it('Should call both broadcast and emit independently in message handler', async () => {
+    const { io, triggerConnection } = createMockIo();
+
+    const socketOn = vi.fn((_, handler: any) => {
+      void handler('hello');
+    });
+
+    const socket = {
+      request: {
+        headers: {
+          cookie: 'a=1'
+        }
+      },
+      handshake: {
+        url: '/?room=public'
+      },
+      send: vi.fn(),
+      emit: vi.fn(),
+      on: socketOn
+    };
+
+    createSocketIoRoute({
+      io,
+      socketIoRequestArtifacts: [
+        {
+          baseUrl: '/',
+          type: 'message',
+          config: {
+            event: 'user.created',
+            data: vi.fn(async ({ broadcast, emit: emitFn }: any) => {
+              broadcast({ broadcasted: true });
+              emitFn('custom-event', { custom: true });
+              return { ok: true };
+            })
+          }
+        } as any
+      ]
+    });
+
+    await triggerConnection('/', socket);
+
+    expect(io.emit).toHaveBeenCalledTimes(1);
+    expect(io.emit).toHaveBeenCalledWith('message', { broadcasted: true });
+    expect(socket.emit).toHaveBeenCalledTimes(1);
+    expect(socket.emit).toHaveBeenCalledWith('custom-event', { custom: true });
+    expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ ok: true }));
   });
 });
