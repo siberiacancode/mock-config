@@ -9,8 +9,9 @@
   --foreground: rgb(24 24 27 / 100%);
   --foreground-secondary: rgb(113 113 122 / 100%);
   --card: rgb(255 255 255 / 100%);
-  --accent: rgb(91 99 245 / 100%);
-  --accent-secondary: rgb(91 99 245 / 10%);
+  --accent: rgb(234 88 12 / 100%);
+  --accent-secondary: rgb(234 88 12 / 10%);
+  --accent-foreground: rgb(255 255 255 / 100%);
   --success: 142, 76%, 36%;
   --warning: 32, 95%, 44%;
   --fail: 0, 72%, 51%;
@@ -47,8 +48,9 @@
   --foreground: rgb(250 250 250 / 100%);
   --foreground-secondary: rgb(161 161 170 / 100%);
   --card: rgb(24 24 27 / 100%);
-  --accent: rgb(105 114 255 / 100%);
-  --accent-secondary: rgb(105 114 255 / 14%);
+  --accent: rgb(249 115 22 / 100%);
+  --accent-secondary: rgb(249 115 22 / 14%);
+  --accent-foreground: rgb(24 24 27 / 100%);
   --success: 142, 69%, 58%;
   --warning: 43, 96%, 56%;
   --fail: 0, 91%, 71%;
@@ -90,6 +92,7 @@
   --color-card: var(--card);
   --color-accent: var(--accent);
   --color-accent-secondary: var(--accent-secondary);
+  --color-accent-foreground: var(--accent-foreground);
   --color-additional-success: hsl(var(--success));
   --color-additional-warning: hsl(var(--warning));
   --color-additional-fail: hsl(var(--fail));
