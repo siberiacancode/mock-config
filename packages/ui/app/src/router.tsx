@@ -6,7 +6,14 @@ import {
 } from '@tanstack/react-router';
 
 import { RootLayout } from './layouts/RootLayout';
-import { ComponentsPage, RequestPage, RoutesIndexPage, RoutesPage, SettingsPage } from './pages';
+import {
+  ComponentPage,
+  ComponentsPage,
+  RequestPage,
+  RoutesIndexPage,
+  RoutesPage,
+  SettingsPage
+} from './pages';
 
 interface RouterContext {
   payload: Payload;
@@ -51,8 +58,19 @@ const requestRoute = createRoute({
 
 const componentsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/components',
+  path: '/components'
+});
+
+const componentsIndexRoute = createRoute({
+  getParentRoute: () => componentsRoute,
+  path: '/',
   component: ComponentsPage
+});
+
+const componentRoute = createRoute({
+  getParentRoute: () => componentsRoute,
+  path: '$componentId',
+  component: ComponentPage
 });
 
 const settingsRoute = createRoute({
@@ -64,7 +82,7 @@ const settingsRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexRoute,
   routesRoute.addChildren([routesIndexRoute, requestRoute]),
-  componentsRoute,
+  componentsRoute.addChildren([componentsIndexRoute, componentRoute]),
   settingsRoute
 ]);
 

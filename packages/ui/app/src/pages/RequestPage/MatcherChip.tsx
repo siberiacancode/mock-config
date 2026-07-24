@@ -13,7 +13,7 @@ export const MatcherChip = ({ label, value }: MatcherChipProps) => {
 
   return (
     <Popover>
-      <PopoverTrigger className='max-w-80 cursor-pointer truncate rounded-md border border-border bg-background-secondary px-2 py-0.5 font-code text-[11px] text-foreground-secondary transition-colors hover:border-foreground-secondary/40 hover:text-foreground'>
+      <PopoverTrigger className='max-w-80 cursor-pointer truncate rounded-md border border-border bg-background-secondary px-2 py-0.5 font-code text-[11px] text-accent transition-colors hover:border-accent/50'>
         {label}
       </PopoverTrigger>
       <PopoverContent className='max-w-lg'>

@@ -17,7 +17,7 @@ const TabsList = ({ className, ...props }: TabsPrimitive.List.Props) => (
 const TabsTrigger = ({ className, ...props }: TabsPrimitive.Tab.Props) => (
   <TabsPrimitive.Tab
     className={cn(
-      '-mb-px flex cursor-pointer items-center gap-1.5 border-b-2 border-transparent px-3.5 py-2 text-[13px] text-foreground-secondary transition-colors hover:text-foreground data-active:border-accent data-active:text-foreground',
+      'group -mb-px flex cursor-pointer items-center gap-1.5 border-b-2 border-transparent px-3.5 py-2 text-[13px] text-foreground-secondary transition-colors hover:text-foreground data-active:border-accent data-active:text-foreground',
       className
     )}
     data-slot='tabs-trigger'
