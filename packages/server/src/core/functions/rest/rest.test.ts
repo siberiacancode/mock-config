@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { file, polling, rest } from './rest';
+import { rest } from './rest';
 
 describe('rest', () => {
   it('Should build config for inline primitive response', () => {
@@ -40,7 +40,7 @@ describe('rest', () => {
     const pollingHandler = vi.fn();
     const result = rest.get(
       '/users',
-      polling([
+      rest.polling([
         { handler: pollingHandler, time: 100 },
         { response: { ok: 'response' }, time: 200 },
         { file: '/tmp/user.json', time: 300 }
@@ -61,7 +61,7 @@ describe('rest', () => {
   });
 
   it('Should build config for file', () => {
-    const result = rest.get('/users', file('/tmp/user.json'));
+    const result = rest.get('/users', rest.file('/tmp/user.json'));
 
     expect(result).toStrictEqual({
       method: 'get',

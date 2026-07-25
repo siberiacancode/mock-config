@@ -67,6 +67,25 @@ type GraphQLConfig<Input extends GraphQLRequestInput> =
   | GraphQLInlineResponse<Input['response']>
   | GraphQLPollingObject<Input>;
 
+interface GraphqlTransportWsRequestInput {
+  response: GraphqlTransportWsExecutionResult;
+}
+
+type GraphqlTransportWsFactorySettings = GraphqlTransportWsSettings & {
+  match?: GraphqlTransportWsEntitiesByEntityName;
+};
+
+type GraphqlTransportWsInlineResponse<Response extends GraphqlTransportWsExecutionResult> =
+  Response;
+
+type GraphqlTransportWsFunction<Input extends GraphqlTransportWsRequestInput> = (
+  params: GraphqlTransportWsParams
+) => MaybePromise<Input['response']>;
+
+type GraphqlTransportWsConfig<Input extends GraphqlTransportWsRequestInput> =
+  | GraphqlTransportWsFunction<Input>
+  | GraphqlTransportWsInlineResponse<Input['response']>;
+
 const resolveConfigType = <Input extends GraphQLRequestInput>(config: GraphQLConfig<Input>) => {
   if (typeof config === 'function' && isGeneratorFunction(config))
     return { type: 'generator' as const, config };
@@ -172,30 +191,10 @@ const createGraphQLFactory = <OperationType extends GraphQLOperationType>(
   return createRequestConfig;
 };
 
-interface GraphqlTransportWsRequestInput {
-  response: GraphqlTransportWsExecutionResult;
-}
-
-type GraphqlTransportWsFactorySettings = GraphqlTransportWsSettings & {
-  match?: GraphqlTransportWsEntitiesByEntityName;
-};
-
-type GraphqlTransportWsInlineResponse<Response extends GraphqlTransportWsExecutionResult> =
-  Response;
-
-type GraphqlTransportWsFunction<Input extends GraphqlTransportWsRequestInput> = (
-  params: GraphqlTransportWsParams
-) => MaybePromise<Input['response']>;
-
-type GraphqlTransportWsConfig<Input extends GraphqlTransportWsRequestInput> =
-  | GraphqlTransportWsFunction<Input>
-  | GraphqlTransportWsInlineResponse<Input['response']>;
-
 const resolveSubscriptionConfigType = <Input extends GraphqlTransportWsRequestInput>(
   config: GraphqlTransportWsConfig<Input>
 ) => {
   if (typeof config === 'function') return { type: 'handler' as const, config };
-  if (typeof config !== 'object' || config === null) return { type: 'data' as const, config };
   return { type: 'data' as const, config };
 };
 
@@ -263,12 +262,13 @@ const createGraphqlTransportWsFactory = () => {
   return createRequestConfig;
 };
 
+const polling = <Input extends GraphQLRequestInput = GraphQLRequestInput>(
+  value: GraphQLPollingObject<Input>['polling']
+) => ({ polling: value });
+
 export const graphql = {
   query: createGraphQLFactory('query'),
   mutation: createGraphQLFactory('mutation'),
+  polling,
   subscription: createGraphqlTransportWsFactory()
 };
-
-export const polling = <Input extends GraphQLRequestInput = GraphQLRequestInput>(
-  value: GraphQLPollingObject<Input>['polling']
-) => ({ polling: value });

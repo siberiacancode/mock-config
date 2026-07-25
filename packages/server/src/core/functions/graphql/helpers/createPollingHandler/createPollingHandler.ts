@@ -6,8 +6,9 @@ export const createPollingHandler = (
   let pollingIndex = 0;
   let timeoutInProgress = false;
 
-  const updatePollingIndex = () => {
-    pollingIndex = polling.length - 1 === pollingIndex ? 0 : pollingIndex + 1;
+  const cyclePollingIndex = () => {
+    const isLastIndex = pollingIndex === polling.length - 1;
+    pollingIndex = isLastIndex ? 0 : pollingIndex + 1;
   };
 
   return async (params) => {
@@ -21,12 +22,12 @@ export const createPollingHandler = (
       timeoutInProgress = true;
       setTimeout(() => {
         timeoutInProgress = false;
-        updatePollingIndex();
+        cyclePollingIndex();
       }, pollingItem.time);
     }
 
     if (!pollingItem.time) {
-      updatePollingIndex();
+      cyclePollingIndex();
     }
 
     return typeof pollingItem.data === 'function' ? pollingItem.data(params) : pollingItem.data;

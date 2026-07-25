@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { graphql, polling } from './graphql';
+import { graphql } from './graphql';
 
 describe('graphql', () => {
   it('Should build config for response', () => {
@@ -40,7 +40,7 @@ describe('graphql', () => {
     const pollingHandler = vi.fn().mockResolvedValue({ data: { ok: 'handler' } });
     const result = graphql.query(
       'GetUsers',
-      polling([
+      graphql.polling([
         { handler: pollingHandler, time: 100 },
         { response: { data: { ok: 'response' } }, time: 200 }
       ])

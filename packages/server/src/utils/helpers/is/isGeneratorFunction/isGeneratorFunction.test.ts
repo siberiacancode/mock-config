@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { isGeneratorFunction } from './isGeneratorFunction';
 
 describe('isGeneratorFunction', () => {
-  it('Generator function value should return true', () => {
+  it('Should return true for generator function value', () => {
     expect(
       isGeneratorFunction(function* () {
         yield 1;
@@ -11,7 +11,7 @@ describe('isGeneratorFunction', () => {
     ).toBe(true);
   });
 
-  it('Common function value should return false', () => {
+  it('Should return false for common function value', () => {
     expect(isGeneratorFunction(() => 1)).toBe(false);
   });
 });

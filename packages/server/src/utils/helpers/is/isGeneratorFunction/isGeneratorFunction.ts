@@ -1,4 +1,4 @@
-export const isGeneratorFunction = <Handler extends (...args: any[]) => unknown>(
-  value: Handler
-): value is Handler & ((...args: Parameters<Handler>) => Generator<unknown, unknown, unknown>) =>
+export const isGeneratorFunction = <Args extends unknown[]>(
+  value: (...args: Args) => unknown
+): value is (...args: Args) => Generator<unknown, unknown, unknown> =>
   value.constructor?.name === 'GeneratorFunction';

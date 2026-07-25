@@ -250,22 +250,24 @@ const createSseRestFactory = <Method extends 'get' | 'post'>(method: Method) => 
   return createSseRequestConfig;
 };
 
-export const rest = {
-  delete: createRestFactory('delete'),
-  get: createRestFactory('get'),
-  options: createRestFactory('options'),
-  patch: createRestFactory('patch'),
-  post: createRestFactory('post'),
-  put: createRestFactory('put'),
-  sse: createSseRestFactory('get'),
-  stream: createSseRestFactory('post')
-};
+const file = <Path extends RestFileResponse>(path: Path) => ({ file: path });
 
-export const file = <Path extends RestFileResponse>(path: Path) => ({ file: path });
-
-export const polling = <
+const polling = <
   Method extends RestMethod = RestMethod,
   Input extends RestRequestInput = Partial<RestRequestInput>
 >(
   value: RestPollingObject<Method, Input>['polling']
 ) => ({ polling: value });
+
+export const rest = {
+  delete: createRestFactory('delete'),
+  file,
+  get: createRestFactory('get'),
+  options: createRestFactory('options'),
+  patch: createRestFactory('patch'),
+  polling,
+  post: createRestFactory('post'),
+  put: createRestFactory('put'),
+  sse: createSseRestFactory('get'),
+  stream: createSseRestFactory('post')
+};
