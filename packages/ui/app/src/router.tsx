@@ -5,19 +5,17 @@ import {
   redirect
 } from '@tanstack/react-router';
 
+import { EmptyState } from './components';
 import { RootLayout } from './layouts/RootLayout';
-import {
-  ComponentPage,
-  ComponentsPage,
-  RequestPage,
-  RoutesIndexPage,
-  RoutesPage,
-  SettingsPage
-} from './pages';
+import { ComponentPage, ComponentsPage, RequestPage, RoutesPage, SettingsPage } from './pages';
 
 interface RouterContext {
   payload: Payload;
 }
+
+const validateQuerySearch = (search: Record<string, string>): { query?: string } => ({
+  query: search.query ?? undefined
+});
 
 const rootRoute = createRootRouteWithContext<RouterContext>()({
   component: RootLayout
@@ -35,19 +33,18 @@ const routesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/routes',
   component: RoutesPage,
-  validateSearch: (
-    search: Record<string, string>
-  ): {
-    query?: string;
-  } => ({
-    query: search.query ?? undefined
-  })
+  validateSearch: validateQuerySearch
 });
 
 const routesIndexRoute = createRoute({
   getParentRoute: () => routesRoute,
   path: '/',
-  component: RoutesIndexPage
+  component: () => (
+    <EmptyState
+      description='Pick a request from the list to inspect its routes'
+      title='No request selected'
+    />
+  )
 });
 
 const requestRoute = createRoute({
@@ -58,7 +55,8 @@ const requestRoute = createRoute({
 
 const componentsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/components'
+  path: '/components',
+  validateSearch: validateQuerySearch
 });
 
 const componentsIndexRoute = createRoute({
@@ -76,7 +74,8 @@ const componentRoute = createRoute({
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings',
-  component: SettingsPage
+  component: SettingsPage,
+  validateSearch: validateQuerySearch
 });
 
 const routeTree = rootRoute.addChildren([
