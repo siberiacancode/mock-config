@@ -8,7 +8,7 @@ import type { MaybePromise } from './utils';
 type InterceptorCookieValue = string | undefined;
 type InterceptorHeaderValue = number | string | string[] | undefined;
 
-export interface HttpRequestInterceptorFnParams {
+export interface HttpRequestInterceptorHandlerParams {
   request: Request;
   getCookie: (name: string) => InterceptorCookieValue;
   getHeader: (field: string) => InterceptorHeaderValue;
@@ -17,11 +17,11 @@ export interface HttpRequestInterceptorFnParams {
   setDelay: (delay: number) => Promise<void>;
 }
 
-export type HttpRequestInterceptorFn = (
-  params: HttpRequestInterceptorFnParams
+export type HttpRequestInterceptorHandler = (
+  params: HttpRequestInterceptorHandlerParams
 ) => MaybePromise<void>;
 
-export interface HttpResponseInterceptorFnParams {
+export interface HttpResponseInterceptorHandlerParams {
   request: Request;
   response: Response;
   appendHeader: (field: string, value?: string | string[]) => void;
@@ -39,30 +39,32 @@ export interface HttpResponseInterceptorFnParams {
   setStatusCode: (statusCode: number) => void;
 }
 
-export type HttpResponseInterceptorFn<Data = any> = (
+export type HttpResponseInterceptorHandler<Data = any> = (
   data: Data,
-  params: HttpResponseInterceptorFnParams
+  params: HttpResponseInterceptorHandlerParams
 ) => any;
 
-export interface WsRequestInterceptorFnParams {
+export interface WsRequestInterceptorHandlerParams {
   socket: WebSocket;
   broadcast: <Response = unknown>(response: Response) => void;
   send: <Response = unknown>(response: Response) => void;
   setDelay: (delay: number) => Promise<void>;
 }
 
-export type WsRequestInterceptorFn = (params: WsRequestInterceptorFnParams) => MaybePromise<void>;
+export type WsRequestInterceptorHandler = (
+  params: WsRequestInterceptorHandlerParams
+) => MaybePromise<void>;
 
-export interface WsResponseInterceptorFnParams {
+export interface WsResponseInterceptorHandlerParams {
   socket: WebSocket;
   broadcast: <Response = unknown>(response: Response) => void;
   send: <Response = unknown>(response: Response) => void;
   setDelay: (delay: number) => Promise<void>;
 }
 
-export type WsResponseInterceptorFn<Data = any> = (
+export type WsResponseInterceptorHandler<Data = any> = (
   data: Data,
-  params: WsResponseInterceptorFnParams
+  params: WsResponseInterceptorHandlerParams
 ) => any;
 
 interface RestInterceptorMeta {

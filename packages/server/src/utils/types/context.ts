@@ -1,5 +1,5 @@
 import type { GraphQLEntity } from './graphql';
-import type { ApiType, GraphQLOperationType, RestMethod, WsEvent } from './shared';
+import type { ApiType, GraphQLOperationType, RestMethod } from './shared';
 
 export interface RestContext {
   method: RestMethod;
@@ -14,9 +14,4 @@ export interface GraphqlContext {
   variables?: GraphQLEntity<'variables'>;
 }
 
-export interface WsContext {
-  event: WsEvent;
-  type: Extract<ApiType, 'ws'>;
-}
-
-export type ApiContext = GraphqlContext | RestContext | WsContext;
+export type ApiContext = GraphqlContext | RestContext;

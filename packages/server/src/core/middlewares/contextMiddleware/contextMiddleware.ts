@@ -1,27 +1,28 @@
 import type { Express } from 'express';
+import type { IncomingMessage } from 'node:http';
 import type { WebSocketServer } from 'ws';
 
 import { Buffer } from 'node:buffer';
 import { WebSocket } from 'ws';
 
-import type {
-  ApiContext,
-  DatabaseConfig,
-  GraphQLOperationType,
-  RestMethod,
-  WsEvent
-} from '@/utils/types';
+import type { ApiContext, DatabaseConfig, GraphQLOperationType, RestMethod } from '@/utils/types';
 
 import { createOrm, createStorage } from '@/core/database';
-import { getGraphQLInput, parseGraphQLQuery } from '@/utils/helpers';
+import { getGraphQLInput, parseCookie, parseGraphQLQuery, parseQuery } from '@/utils/helpers';
 
-declare global {
-  namespace Express {
-    export interface Request {
-      api: ApiContext;
-      id: number;
-      timestamp: number;
-    }
+export interface RequestContext {
+  orm: Partial<ReturnType<typeof createOrm>>;
+  broadcast: (data: unknown) => void;
+}
+
+declare module 'http' {
+  interface IncomingMessage {
+    api: ApiContext;
+    context: RequestContext;
+    cookies: Record<string, string>;
+    id: number;
+    queries: Record<string, string | string[]>;
+    timestamp: number;
   }
 }
 
@@ -55,7 +56,7 @@ export const contextMiddleware = (
   };
 
   let requestId = 0;
-  const context: Express['request']['context'] = {
+  const context: RequestContext = {
     orm: {},
     broadcast: (payload: unknown) => broadcast(payload)
   };
@@ -66,7 +67,7 @@ export const contextMiddleware = (
     context.orm = orm;
   }
 
-  const addContext = (request: Express['request']) => {
+  const addContext = (request: IncomingMessage) => {
     requestId += 1;
     request.id = requestId;
     request.timestamp = Date.now();
@@ -75,6 +76,8 @@ export const contextMiddleware = (
 
   server.use((request, _response, next) => {
     addContext(request);
+
+    request.queries = request.query as Record<string, string | string[]>;
 
     if (request.method === 'GET' || request.method === 'POST') {
       const graphQLInput = getGraphQLInput(request);
@@ -100,17 +103,20 @@ export const contextMiddleware = (
     return next();
   });
 
-  ws.on('connection', (socket, incomingMessage) => {
-    const request = incomingMessage as Express['request'];
+  ws.on('connection', (socket, request) => {
+    addContext(request);
 
-    const getAddWsContextFn = (event: WsEvent) => () => {
+    request.queries = parseQuery(request.url ?? '');
+    request.cookies = parseCookie(request.headers.cookie ?? '');
+
+    socket.on('message', () => {
       addContext(request);
-      request.api = { type: 'ws', event };
-    };
-
-    getAddWsContextFn('open')();
-    socket.on('message', getAddWsContextFn('message'));
-    socket.on('close', getAddWsContextFn('close'));
-    socket.on('error', getAddWsContextFn('error'));
+    });
+    socket.on('close', () => {
+      addContext(request);
+    });
+    socket.on('error', () => {
+      addContext(request);
+    });
   });
 };

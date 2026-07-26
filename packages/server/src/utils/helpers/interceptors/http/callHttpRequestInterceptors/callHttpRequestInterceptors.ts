@@ -3,7 +3,7 @@ import type { Request } from 'express';
 import type {
   HttpInterceptorMeta,
   HttpRequestInterceptor,
-  HttpRequestInterceptorFnParams,
+  HttpRequestInterceptorHandlerParams,
   Interceptor
 } from '@/utils/types';
 
@@ -23,19 +23,21 @@ export const callHttpRequestInterceptors = async ({
   meta,
   request
 }: CallHttpRequestInterceptorsParams) => {
-  const getHeader: HttpRequestInterceptorFnParams['getHeader'] = (field) => request.headers[field];
-  const getHeaders: HttpRequestInterceptorFnParams['getHeaders'] = () => request.headers;
+  const getHeader: HttpRequestInterceptorHandlerParams['getHeader'] = (field) =>
+    request.headers[field];
+  const getHeaders: HttpRequestInterceptorHandlerParams['getHeaders'] = () => request.headers;
 
-  const getCookie: HttpRequestInterceptorFnParams['getCookie'] = (name) => request.cookies[name];
+  const getCookie: HttpRequestInterceptorHandlerParams['getCookie'] = (name) =>
+    request.cookies[name];
 
-  const log: HttpRequestInterceptorFnParams['log'] = (logger) =>
+  const log: HttpRequestInterceptorHandlerParams['log'] = (logger) =>
     callRequestLogger({ logger, request });
 
-  const setDelay: HttpRequestInterceptorFnParams['setDelay'] = async (delay) => {
+  const setDelay: HttpRequestInterceptorHandlerParams['setDelay'] = async (delay) => {
     await sleep(delay);
   };
 
-  const requestInterceptorFnParams: HttpRequestInterceptorFnParams = {
+  const requestInterceptorFnParams: HttpRequestInterceptorHandlerParams = {
     request,
     setDelay,
     getHeader,
@@ -51,7 +53,7 @@ export const callHttpRequestInterceptors = async ({
 
   const requestInterceptors = interceptors.filter(
     (interceptor): interceptor is HttpRequestInterceptor =>
-      interceptorNames.includes((interceptor as HttpRequestInterceptor)[INTERCEPTOR_NAME])
+      interceptorNames.includes(interceptor[INTERCEPTOR_NAME])
   );
 
   for (const requestInterceptor of requestInterceptors) {

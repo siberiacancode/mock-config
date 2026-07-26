@@ -4,7 +4,7 @@ import type {
   Interceptor,
   WsInterceptorMeta,
   WsRequestInterceptor,
-  WsRequestInterceptorFnParams
+  WsRequestInterceptorHandlerParams
 } from '@/utils/types';
 
 import { INTERCEPTOR_NAME } from '@/utils/constants';
@@ -26,11 +26,11 @@ export const callWsRequestInterceptors = async ({
   broadcast,
   send
 }: CallWsRequestInterceptorsParams) => {
-  const setDelay: WsRequestInterceptorFnParams['setDelay'] = async (delay) => {
+  const setDelay: WsRequestInterceptorHandlerParams['setDelay'] = async (delay) => {
     await sleep(delay);
   };
 
-  const requestInterceptorFnParams: WsRequestInterceptorFnParams = {
+  const requestInterceptorFnParams: WsRequestInterceptorHandlerParams = {
     broadcast,
     socket,
     send,
@@ -47,7 +47,7 @@ export const callWsRequestInterceptors = async ({
 
   const requestInterceptors = interceptors.filter(
     (interceptor): interceptor is WsRequestInterceptor =>
-      interceptorNames.includes((interceptor as WsRequestInterceptor)[INTERCEPTOR_NAME])
+      interceptorNames.includes(interceptor[INTERCEPTOR_NAME])
   );
 
   for (const requestInterceptor of requestInterceptors) {

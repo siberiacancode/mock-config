@@ -1,15 +1,19 @@
 import type {
   Data,
   MaybePromise,
+  WsCloseParams,
   WsConnectionEntitiesByEntityName,
   WsConnectionParams,
   WsConnectionRouteConfig,
+  WsErrorParams,
   WsMessageParams,
   WsRequestConfig
 } from '@/utils/types';
 
 type WsMessageHandler = (params: WsMessageParams) => MaybePromise<Data>;
 type WsConnectionHandler = (params: WsConnectionParams) => MaybePromise<Data>;
+type WsErrorHandler = (params: WsErrorParams) => MaybePromise<Data>;
+type WsCloseHandler = (params: WsCloseParams) => MaybePromise<Data>;
 
 interface WsConnectionHandlerObject {
   handler: WsConnectionHandler;
@@ -51,7 +55,27 @@ export function createWsConnectionRequestConfig(
   };
 }
 
+export const createWsErrorRequestConfig = (handler: WsErrorHandler): WsRequestConfig => ({
+  type: 'error',
+  routes: [
+    {
+      data: handler
+    }
+  ]
+});
+
+export const createWsCloseRequestConfig = (handler: WsCloseHandler): WsRequestConfig => ({
+  type: 'close',
+  routes: [
+    {
+      data: handler
+    }
+  ]
+});
+
 export const ws = {
   connection: createWsConnectionRequestConfig,
-  message: createWsMessageRequestConfig
+  message: createWsMessageRequestConfig,
+  error: createWsErrorRequestConfig,
+  close: createWsCloseRequestConfig
 };

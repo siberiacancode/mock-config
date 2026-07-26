@@ -76,7 +76,7 @@ describe('callResponseInterceptors: params functions', () => {
     };
     await callResponseInterceptors({
       data,
-      request: request as unknown as Request,
+      request,
       response: response as Response,
       interceptors: {
         routeInterceptor: getCookieRouteInterceptor
@@ -95,7 +95,7 @@ describe('callResponseInterceptors: params functions', () => {
     };
     await callResponseInterceptors({
       data,
-      request: request as unknown as Request,
+      request,
       response: response as Response,
       interceptors: {
         routeInterceptor: getCookieRouteInterceptor
@@ -218,7 +218,7 @@ describe('callResponseInterceptors: params functions', () => {
     };
     await callResponseInterceptors({
       data,
-      request: request as unknown as Request,
+      request,
       response: response as Response,
       interceptors: {
         routeInterceptor: getCookieRouteInterceptor

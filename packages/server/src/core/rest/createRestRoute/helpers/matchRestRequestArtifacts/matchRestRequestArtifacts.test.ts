@@ -12,7 +12,7 @@ const makeArtifact = (overrides: Partial<RestRequestArtifact>): RestRequestArtif
     config: { data: { ok: true } },
     weight: 0,
     ...overrides
-  }) as RestRequestArtifact;
+  });
 
 describe('matchRestRequestArtifacts', () => {
   it('Should not match request path to artifact baseUrl segment', () => {

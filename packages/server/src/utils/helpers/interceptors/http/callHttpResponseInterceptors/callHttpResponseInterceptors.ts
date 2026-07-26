@@ -4,7 +4,7 @@ import type {
   Data,
   HttpInterceptorMeta,
   HttpResponseInterceptor,
-  HttpResponseInterceptorFnParams,
+  HttpResponseInterceptorHandlerParams,
   Interceptor
 } from '@/utils/types';
 
@@ -30,51 +30,54 @@ export const callHttpResponseInterceptors = async ({
   componentInterceptors = [],
   serverInterceptors = []
 }: CallHttpResponseInterceptorsParams) => {
-  const getRequestHeader: HttpResponseInterceptorFnParams['getRequestHeader'] = (field: string) =>
-    request.headers[field];
-  const getRequestHeaders: HttpResponseInterceptorFnParams['getRequestHeaders'] = () =>
+  const getRequestHeader: HttpResponseInterceptorHandlerParams['getRequestHeader'] = (
+    field: string
+  ) => request.headers[field];
+  const getRequestHeaders: HttpResponseInterceptorHandlerParams['getRequestHeaders'] = () =>
     request.headers;
 
-  const getResponseHeader: HttpResponseInterceptorFnParams['getResponseHeader'] = (field: string) =>
-    response.getHeader(field);
-  const getResponseHeaders: HttpResponseInterceptorFnParams['getResponseHeaders'] = () =>
+  const getResponseHeader: HttpResponseInterceptorHandlerParams['getResponseHeader'] = (
+    field: string
+  ) => response.getHeader(field);
+  const getResponseHeaders: HttpResponseInterceptorHandlerParams['getResponseHeaders'] = () =>
     response.getHeaders();
 
   const setHeader = (field: string, value?: string | string[]) => {
     response.set(field, value);
   };
-  const appendHeader: HttpResponseInterceptorFnParams['appendHeader'] = (field, value) => {
+  const appendHeader: HttpResponseInterceptorHandlerParams['appendHeader'] = (field, value) => {
     response.append(field, value);
   };
 
-  const setStatusCode: HttpResponseInterceptorFnParams['setStatusCode'] = (statusCode) => {
+  const setStatusCode: HttpResponseInterceptorHandlerParams['setStatusCode'] = (statusCode) => {
     response.statusCode = statusCode;
   };
 
-  const getCookie: HttpResponseInterceptorFnParams['getCookie'] = (name) => request.cookies[name];
-  const setCookie: HttpResponseInterceptorFnParams['setCookie'] = (name, value, options) => {
+  const getCookie: HttpResponseInterceptorHandlerParams['getCookie'] = (name) =>
+    request.cookies[name];
+  const setCookie: HttpResponseInterceptorHandlerParams['setCookie'] = (name, value, options) => {
     if (options) {
       response.cookie(name, value, options);
       return;
     }
     response.cookie(name, value);
   };
-  const clearCookie: HttpResponseInterceptorFnParams['clearCookie'] = (name, options) => {
+  const clearCookie: HttpResponseInterceptorHandlerParams['clearCookie'] = (name, options) => {
     response.clearCookie(name, options);
   };
 
-  const attachment: HttpResponseInterceptorFnParams['attachment'] = (filename) => {
+  const attachment: HttpResponseInterceptorHandlerParams['attachment'] = (filename) => {
     response.attachment(filename);
   };
 
-  const log: HttpResponseInterceptorFnParams['log'] = (logger) =>
+  const log: HttpResponseInterceptorHandlerParams['log'] = (logger) =>
     callResponseLogger({ logger, data, request, response });
 
-  const setDelay: HttpResponseInterceptorFnParams['setDelay'] = async (delay) => {
+  const setDelay: HttpResponseInterceptorHandlerParams['setDelay'] = async (delay) => {
     await sleep(delay);
   };
 
-  const responseInterceptorFnParams: HttpResponseInterceptorFnParams = {
+  const responseInterceptorFnParams: HttpResponseInterceptorHandlerParams = {
     request,
     response,
     setDelay,
@@ -101,7 +104,7 @@ export const callHttpResponseInterceptors = async ({
 
   const responseInterceptors = [...componentInterceptors, ...serverInterceptors].filter(
     (interceptor): interceptor is HttpResponseInterceptor =>
-      interceptorNames.includes((interceptor as HttpResponseInterceptor)[INTERCEPTOR_NAME])
+      interceptorNames.includes(interceptor[INTERCEPTOR_NAME])
   );
 
   for (const responseInterceptor of responseInterceptors) {

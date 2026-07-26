@@ -12,7 +12,7 @@ const makeArtifact = (overrides: Partial<RestRequestArtifact>): RestRequestArtif
     config: { data: { ok: true } },
     weight: 0,
     ...overrides
-  }) as RestRequestArtifact;
+  });
 
 describe('prepareRestRequestArtifacts', () => {
   it('Should sort by weight descending', () => {

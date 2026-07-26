@@ -2,11 +2,11 @@ import type { WebSocket } from 'ws';
 
 import type {
   Data,
-  HttpResponseInterceptorFnParams,
+  HttpResponseInterceptorHandlerParams,
   Interceptor,
   WsInterceptorMeta,
   WsResponseInterceptor,
-  WsResponseInterceptorFnParams
+  WsResponseInterceptorHandlerParams
 } from '@/utils/types';
 
 import { INTERCEPTOR_NAME } from '@/utils/constants';
@@ -32,11 +32,11 @@ export const callWsResponseInterceptors = async ({
   broadcast,
   send
 }: CallWsResponseInterceptorsParams) => {
-  const setDelay: HttpResponseInterceptorFnParams['setDelay'] = async (delay) => {
+  const setDelay: HttpResponseInterceptorHandlerParams['setDelay'] = async (delay) => {
     await sleep(delay);
   };
 
-  const responseInterceptorFnParams: WsResponseInterceptorFnParams = {
+  const responseInterceptorFnParams: WsResponseInterceptorHandlerParams = {
     setDelay,
     socket,
     send,
@@ -47,7 +47,7 @@ export const callWsResponseInterceptors = async ({
 
   const interceptorNames = ['ws.response.all', `ws.response.${meta.event}`];
   if (meta.event === 'message' && meta.messageType === 'raw') {
-    interceptorNames.push(`ws.response.raw`);
+    interceptorNames.push('ws.response.raw');
   }
   if (meta.event === 'message' && meta.messageType === 'graphql-ws') {
     interceptorNames.push('graphql.response.subscription');
@@ -55,7 +55,7 @@ export const callWsResponseInterceptors = async ({
 
   const responseInterceptors = [...componentInterceptors, ...serverInterceptors].filter(
     (interceptor): interceptor is WsResponseInterceptor =>
-      interceptorNames.includes((interceptor as WsResponseInterceptor)[INTERCEPTOR_NAME])
+      interceptorNames.includes(interceptor[INTERCEPTOR_NAME])
   );
 
   for (const responseInterceptor of responseInterceptors) {

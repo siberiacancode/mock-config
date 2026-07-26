@@ -30,7 +30,7 @@ describe('callRequestInterceptors: params functions', () => {
     };
 
     callRequestInterceptor({
-      request: request as unknown as Request,
+      request,
       interceptor: getHeaderRequestInterceptor
     });
   });
@@ -42,7 +42,7 @@ describe('callRequestInterceptors: params functions', () => {
     };
 
     callRequestInterceptor({
-      request: request as unknown as Request,
+      request,
       interceptor: getHeadersRequestInterceptor
     });
   });
@@ -54,7 +54,7 @@ describe('callRequestInterceptors: params functions', () => {
     };
 
     callRequestInterceptor({
-      request: request as unknown as Request,
+      request,
       interceptor: getCookieRequestInterceptor
     });
   });

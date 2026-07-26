@@ -39,8 +39,6 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
       const query = parseGraphQLQuery(graphQLInput.query);
       if (!query) return next();
 
-      request.queries = request.query;
-
       const matchedRequestArtifacts = matchGraphQLRequestArtifacts({
         artifacts: graphQLRequestArtifacts,
         meta: {

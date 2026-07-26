@@ -1,4 +1,4 @@
-import type { Express } from 'express';
+import type { IncomingMessage } from 'node:http';
 
 import type { ConnectionWsRequestArtifact, Entries } from '@/utils/types';
 
@@ -6,13 +6,8 @@ import { isComparator, resolveEntityValues } from '@/utils/helpers';
 
 import { equals } from '../../../../entities';
 
-type WsRequest = Express['request'] & {
-  queries: Record<string, string | string[]>;
-  cookies: Record<string, string>;
-};
-
 export const isRequestMatchedByEntities = (
-  request: WsRequest,
+  request: IncomingMessage,
   entities: ConnectionWsRequestArtifact['config']['entities']
 ) => {
   if (!entities) return true;

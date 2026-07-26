@@ -39,7 +39,6 @@ export interface WsRawRouteConfig {
   settings?: WsSettings;
 }
 
-// wsIncoming wsOut
 export interface WsConnectionParams {
   request: IncomingMessage;
   socket: WebSocket;
@@ -116,14 +115,12 @@ export type WsCloseDataResponse = (params: WsCloseParams) => MaybePromise<Data>;
 export type WsErrorDataResponse = (params: WsErrorParams) => MaybePromise<Data>;
 
 export interface WsCloseRouteConfig {
-  data?: WsCloseDataResponse;
-  entities?: WsConnectionEntitiesByEntityName;
+  data: WsCloseDataResponse;
   settings?: WsSettings;
 }
 
 export interface WsErrorRouteConfig {
-  data?: WsErrorDataResponse;
-  entities?: WsConnectionEntitiesByEntityName;
+  data: WsErrorDataResponse;
   settings?: WsSettings;
 }
 

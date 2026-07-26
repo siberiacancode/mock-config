@@ -1,4 +1,5 @@
 import type { Express } from 'express';
+import type { RawData } from 'ws';
 
 import bodyParser from 'body-parser';
 import express from 'express';
@@ -10,6 +11,7 @@ import type {
   MockServerComponent,
   MockServerConfig,
   RestRequestArtifact,
+  WsInterceptorMeta,
   WsRequestArtifact
 } from '@/utils/types';
 
@@ -34,11 +36,14 @@ import {
   prepareRestRequestArtifacts
 } from '@/core/rest';
 import {
+  broadcastWsData,
   calculateGraphqlTransportWsRouteConfigWeight,
   createWsRoute,
-  prepareWsRequestArtifacts
+  enqueueWsTask,
+  prepareWsRequestArtifacts,
+  sendWsData
 } from '@/core/ws';
-import { urlJoin } from '@/utils/helpers';
+import { callWsRequestInterceptors, getGraphqlTransportWsInput, urlJoin } from '@/utils/helpers';
 import { validateMockServerConfig } from '@/utils/validate';
 
 export const createMockServer = (
@@ -106,7 +111,7 @@ export const createMockServer = (
         if (isRest) {
           config.routes.forEach((route) => {
             acc.restRequestArtifacts.push({
-              baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
+              baseUrl: urlJoin(serverBaseUrl, component.baseUrl ?? '') as BaseUrl,
               method: config.method,
               path: config.path,
               config: route,
@@ -121,7 +126,7 @@ export const createMockServer = (
         if (isGraphql) {
           config.routes.forEach((route) => {
             acc.graphQLRequestArtifacts.push({
-              baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
+              baseUrl: urlJoin(serverBaseUrl, component.baseUrl ?? '') as BaseUrl,
               operationType: config.operationType,
               identifier: config.identifier,
               config: route,
@@ -138,7 +143,7 @@ export const createMockServer = (
           config.routes.forEach((route) => {
             acc.wsRequestArtifacts.push({
               type: 'graphql-ws',
-              baseUrl: urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl,
+              baseUrl: urlJoin(serverBaseUrl, component.baseUrl ?? '') as BaseUrl,
               weight: calculateGraphqlTransportWsRouteConfigWeight(route),
               operationType: config.operationType,
               identifier: config.identifier,
@@ -151,13 +156,14 @@ export const createMockServer = (
 
         const isWs = 'type' in config;
         if (isWs) {
-          const baseUrl = urlJoin(serverBaseUrl ?? '/', component.baseUrl ?? '') as BaseUrl;
+          const baseUrl = urlJoin(serverBaseUrl, component.baseUrl ?? '') as BaseUrl;
           config.routes.forEach((route) => {
             acc.wsRequestArtifacts.push({
               baseUrl,
               type: config.type,
               config: route,
               weight: 0,
+              serverInterceptors,
               componentInterceptors: component.interceptors
             } as WsRequestArtifact);
           });
@@ -175,10 +181,24 @@ export const createMockServer = (
 
   const wsBaseUrls = new Set<string>(wsRequestArtifacts.map((artifact) => artifact.baseUrl));
   const originalListen = server.listen.bind(server);
-  server.listen = ((...args: any[]) => {
+  server.listen = ((...args: Parameters<typeof originalListen>) => {
     const httpServer = originalListen(...args);
-    httpServer.on('upgrade', (request, socket, head) => {
-      // TODO: call request
+    httpServer.on('upgrade', async (request, socket, head) => {
+      // if (serverInterceptors) {
+      //   const broadcast = (data: unknown) => broadcastWsData(server, data);
+      //   const send = (data: unknown) => sendWsData(socket, data);
+      //
+      //   await callWsRequestInterceptors({
+      //     meta: {
+      //       type: 'ws',
+      //       event: 'open'
+      //     },
+      //     interceptors: serverInterceptors,
+      //     socket,
+      //     broadcast,
+      //     send
+      //   });
+      // }
       const [requestPathname] = request.url!.split('?');
       const shouldHandleUpgrade = [...wsBaseUrls].some((baseUrl) => {
         if (baseUrl === '/') return true;
@@ -186,6 +206,7 @@ export const createMockServer = (
       });
 
       if (!shouldHandleUpgrade) {
+        socket.write('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
         socket.destroy();
         return;
       }
@@ -196,6 +217,41 @@ export const createMockServer = (
     });
     return httpServer;
   }) as typeof server.listen;
+
+  if (serverInterceptors?.length) {
+    ws.on('connection', async (socket) => {
+      const broadcast = (data: unknown) => broadcastWsData(ws, data);
+      const send = (data: unknown) => sendWsData(socket, data);
+
+      const callServerRequestInterceptors = (meta: WsInterceptorMeta) =>
+        enqueueWsTask(socket, () =>
+          callWsRequestInterceptors({
+            meta,
+            interceptors: serverInterceptors,
+            socket,
+            broadcast,
+            send
+          })
+        );
+
+      socket.on('message', async (raw: RawData, isBinary: boolean) => {
+        const graphqlTransportWsInput = isBinary
+          ? undefined
+          : getGraphqlTransportWsInput(raw.toString());
+
+        await callServerRequestInterceptors({
+          type: 'ws',
+          event: 'message',
+          messageType: graphqlTransportWsInput ? 'graphql-ws' : 'raw'
+        });
+      });
+
+      socket.on('close', () => callServerRequestInterceptors({ type: 'ws', event: 'close' }));
+      socket.on('error', () => callServerRequestInterceptors({ type: 'ws', event: 'error' }));
+
+      await callServerRequestInterceptors({ type: 'ws', event: 'open' });
+    });
+  }
 
   if (restRequestArtifacts.length) {
     createRestRoute({

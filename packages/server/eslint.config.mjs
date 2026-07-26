@@ -2,7 +2,7 @@ import { eslint } from '@siberiacancode/eslint';
 
 export default eslint(
   {
-    typescript: true
+    typescript: 'engine'
   },
   {
     name: 'mock-config-server/md',
