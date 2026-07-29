@@ -54,10 +54,22 @@ export interface GraphQLParams<
   setStatusCode: (statusCode: number) => void;
 }
 
+export interface GraphQLPollingItem {
+  data: GraphQLDataResponse;
+  time?: number;
+}
+
+export type GraphQLDataResponseGenerator = (
+  params: GraphQLParams
+) => Generator<GraphQLExecutionResult, GraphQLExecutionResult | void, GraphQLParams>;
+
 export type GraphQLDataResponseFunction = (
   params: GraphQLParams
 ) => MaybePromise<GraphQLExecutionResult>;
-export type GraphQLDataResponse = GraphQLDataResponseFunction | GraphQLExecutionResult;
+export type GraphQLDataResponse =
+  | GraphQLDataResponseFunction
+  | GraphQLDataResponseGenerator
+  | GraphQLExecutionResult;
 
 export interface GraphQLRouteConfig {
   data: GraphQLDataResponse;

@@ -23,6 +23,17 @@ interface GraphQLSettings {
   readonly status?: number;
 }
 
+interface PollingQueueItem<Data> {
+  data: Data;
+  time?: number;
+}
+
+type PollingGenerator<Data> = Generator<
+  PollingQueueItem<Data>,
+  PollingQueueItem<Data> | void,
+  unknown
+>;
+
 export type GraphQLDataResponse =
   | ((request: Request, entities: GraphQLEntitiesByEntityName) => MaybePromise<Data>)
   | Data;
@@ -30,10 +41,7 @@ export type GraphQLDataResponse =
 export type GraphQLRouteConfig = (
   | {
       settings: GraphQLSettings & { polling: true };
-      queue: Array<{
-        time?: number;
-        data: GraphQLDataResponse;
-      }>;
+      polling: PollingGenerator<GraphQLDataResponse> | PollingQueueItem<GraphQLDataResponse>[];
     }
   | {
       settings?: GraphQLSettings & { polling?: false };
