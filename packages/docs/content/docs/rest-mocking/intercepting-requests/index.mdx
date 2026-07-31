@@ -18,7 +18,7 @@ This route intercepts `GET /resource` requests and gives you access to the incom
 
 ## Anatomy Of A REST Route
 
-Every REST route consists of a path selector and a response config. The config can be a static value, a resolver function, a generator function, `file()`, or `polling()`. Pass matchers and response settings in the optional third argument.
+Every REST route consists of a path selector and a response config. The config can be a static value, a resolver function, a generator function, `rest.file()`, or `rest.polling()`. Pass matchers and response settings in the optional third argument.
 
 ```ts
 //       path selector               settings

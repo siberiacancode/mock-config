@@ -3,14 +3,14 @@ title: Polling
 description: Simulate polling behavior with cycling responses in Mock Config.
 ---
 
-Some APIs are polled repeatedly by the client: a job status endpoint, a progress tracker, a notification feed. Mock Config supports this pattern with `polling()`: an ordered list of responses that the server cycles through as requests come in.
+Some APIs are polled repeatedly by the client: a job status endpoint, a progress tracker, a notification feed. Mock Config supports this pattern with `rest.polling()`: an ordered list of responses that the server cycles through as requests come in.
 
 ```ts
-import { polling, rest } from 'mock-config-server';
+import { rest } from 'mock-config-server';
 
 rest.get(
   '/job/status',
-  polling([
+  rest.polling([
     { response: { status: 'pending' }, time: 3000 },
     { response: { status: 'processing' }, time: 3000 },
     { response: { status: 'done' } }
@@ -34,11 +34,11 @@ Each item in a polling list has a `response`, `handler`, or REST `file`, plus an
 When an item has a `time` value, it stays active for that many milliseconds. Every request that arrives during that window receives the same response. After the time elapses, polling advances to the next item.
 
 ```ts
-import { polling, rest } from 'mock-config-server';
+import { rest } from 'mock-config-server';
 
 rest.get(
   '/job/status',
-  polling([
+  rest.polling([
     { response: { status: 'pending' }, time: 3000 },
     { response: { status: 'processing' }, time: 3000 },
     { response: { status: 'done' } }
@@ -59,11 +59,11 @@ Here the first two items each hold for 3 seconds. The third item has no `time`, 
 When an item has no `time`, it advances immediately after the first request that hits it. Each subsequent request moves to the next item.
 
 ```ts
-import { polling, rest } from 'mock-config-server';
+import { rest } from 'mock-config-server';
 
 rest.get(
   '/notifications',
-  polling([
+  rest.polling([
     { response: [] },
     { response: [{ id: 1, text: 'New message' }] },
     {
@@ -90,11 +90,11 @@ When the last item is reached, polling loops back to the first item. The client 
 You can combine polling with a matcher to scope it to specific request conditions. Pass `match` in the route settings argument.
 
 ```ts
-import { polling, rest } from 'mock-config-server';
+import { rest } from 'mock-config-server';
 
 rest.get(
   '/status',
-  polling([
+  rest.polling([
     { response: { progress: 0 }, time: 1000 },
     { response: { progress: 50 }, time: 1000 },
     { response: { progress: 100 } }
@@ -112,11 +112,11 @@ Only requests with the matching `x-session` header participate in this polling s
 A polling item can use a `handler` function instead of a static `response` when the reply depends on the request.
 
 ```ts
-import { polling, rest } from 'mock-config-server';
+import { rest } from 'mock-config-server';
 
 rest.get(
   '/data',
-  polling([
+  rest.polling([
     { handler: ({ request }) => ({ id: request.params.id, status: 'loading' }), time: 2000 },
     { response: { status: 'done' } }
   ])

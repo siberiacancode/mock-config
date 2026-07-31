@@ -66,14 +66,14 @@ A `GetUsers` request with `role: 'admin'` matches the more specific stub. Every 
 
 ## Polling Responses
 
-For scenarios where the response should change across consecutive requests, such as a background job status, use `polling()`:
+For scenarios where the response should change across consecutive requests, such as a background job status, use `graphql.polling()`:
 
 ```ts
-import { graphql, polling } from 'mock-config-server';
+import { graphql } from 'mock-config-server';
 
 graphql.query(
   'GetJobStatus',
-  polling([
+  graphql.polling([
     { response: { data: { job: { status: 'pending' } } }, time: 2000 },
     { response: { data: { job: { status: 'done' } } } }
   ])

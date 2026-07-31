@@ -7,19 +7,19 @@ Polling is useful when a GraphQL operation represents changing state: a backgrou
 
 Mock Config supports two polling styles for GraphQL queries and mutations:
 
-- `polling()` for timed or request-based response sequences
+- `graphql.polling()` for timed or request-based response sequences
 - generator resolvers for request-by-request state
 
 ## Polling Helper
 
-Use `polling()` when you want to describe an ordered sequence of GraphQL responses.
+Use `graphql.polling()` when you want to describe an ordered sequence of GraphQL responses.
 
 ```ts
-import { graphql, polling } from 'mock-config-server';
+import { graphql } from 'mock-config-server';
 
 graphql.query(
   'GetJobStatus',
-  polling([
+  graphql.polling([
     { response: { data: { job: { status: 'pending' } } }, time: 2000 },
     { response: { data: { job: { status: 'processing' } } }, time: 2000 },
     { response: { data: { job: { status: 'done' } } } }
@@ -42,11 +42,11 @@ When an item has `time`, every request during that window receives the same resp
 Pass `match` in the settings argument to run a polling sequence only for specific variables, headers, cookies, or query parameters.
 
 ```ts
-import { graphql, polling } from 'mock-config-server';
+import { graphql } from 'mock-config-server';
 
 graphql.query(
   'GetJobStatus',
-  polling([
+  graphql.polling([
     { response: { data: { job: { status: 'pending' } } }, time: 1000 },
     { response: { data: { job: { status: 'done' } } } }
   ]),
@@ -67,14 +67,14 @@ Other `GetJobStatus` requests fall through to the next matching route.
 Use `handler` inside a polling item when the response depends on the incoming operation.
 
 ```ts
-import { graphql, polling } from 'mock-config-server';
+import { graphql } from 'mock-config-server';
 
 type JobVariables = { id: string };
 type JobResponse = { data: { job: { id: string; status: string } } };
 
 graphql.query<{ body: { variables: JobVariables }; response: JobResponse }>(
   'GetJobStatus',
-  polling([
+  graphql.polling([
     {
       handler: ({ entities }) => ({
         data: {
@@ -114,4 +114,4 @@ graphql.query('GetJobStatus', function* () {
 });
 ```
 
-Use `polling()` when you need time windows. Use a generator when the sequence should advance once per request.
+Use `graphql.polling()` when you need time windows. Use a generator when the sequence should advance once per request.

@@ -19,7 +19,7 @@ This handler intercepts any `query { ... }` operation named `GetUsers` and gives
 
 ## Anatomy Of A GraphQL Handler
 
-Every GraphQL handler consists of an **identifier** and a response config. The config can be a static value, a resolver function, a generator function, or `polling()`. Pass matchers and response settings in the optional third argument.
+Every GraphQL handler consists of an **identifier** and a response config. The config can be a static value, a resolver function, a generator function, or `graphql.polling()`. Pass matchers and response settings in the optional third argument.
 
 ```ts
 //            identifier                    settings

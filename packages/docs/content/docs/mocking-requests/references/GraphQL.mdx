@@ -37,17 +37,14 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
       typeDescriptionLink: '#GraphQLOperationType',
       required: true
     },
-    operationName: {
-      description: 'Operation name (string or RegExp) used to match requests',
-      type: 'GraphQLOperationName',
-      typeDescriptionLink: '#GraphQLOperationName'
-    },
-    query: {
-      description: 'GraphQL query string to match against incoming requests',
-      type: 'string'
+    identifier: {
+      description: 'Operation name, event name, query string, or RegExp used to match requests',
+      type: 'GraphQLIdentifier',
+      typeDescriptionLink: '#GraphQLIdentifier',
+      required: true
     },
     routes: {
-      description: 'One or more route responses or polling configs for this operation',
+      description: 'One or more normalized route configs for this operation',
       type: 'GraphQLRouteConfig[]',
       typeDescriptionLink: '#GraphQLRouteConfig',
       required: true
@@ -63,26 +60,25 @@ import { TypeTable } from 'fumadocs-ui/components/type-table';
 <a id='GraphQLRouteConfig'></a>
 ## GraphQLRouteConfig
 
-There are 2 ways to specify a GraphQL route:
-
-You can pass a `polling` field with an array or generator of timed responses:
-
 <TypeTable
   type={{
-    settings: {
-      description: 'Optional response settings (delay, polling, status)',
-      type: 'GraphQLSettings & { polling: true }',
-      typeDescriptionLink: '#GraphQLSettings'
-    },
-    polling: {
-      description: 'Sequence of timed responses for polling',
-      type: 'Array<{ time?: number; data: GraphQLDataResponse }> | Generator',
+    data: {
+      description:
+        'Static GraphQL result, resolver function, generator resolver, or polling handler',
+      type: 'GraphQLDataResponse',
+      typeDescriptionLink: '#GraphQLDataResponse',
       required: true
     },
     entities: {
-      description: 'Optional request entities mapping (cookies, headers, query, variables)',
+      description:
+        'Normalized matcher entities. In operation helpers, pass these as `settings.match`.',
       type: 'GraphQLEntitiesByEntityName',
       typeDescriptionLink: '#GraphQLEntitiesByEntityName'
+    },
+    settings: {
+      description: 'Optional response settings such as delay and status',
+      type: 'GraphQLSettings',
+      typeDescriptionLink: '#GraphQLSettings'
     },
     interceptors: {
       description: 'Optional interceptors applied to GraphQL routes',
@@ -92,30 +88,13 @@ You can pass a `polling` field with an array or generator of timed responses:
   }}
 />
 
-Or you can specify a single response with the `data` field:
+Operation helpers accept several config forms and normalize them into `GraphQLRouteConfig.data`.
 
 <TypeTable
   type={{
-    settings: {
-      description: 'Optional response settings (delay, polling, status)',
-      type: 'GraphQLSettings & { polling?: false }',
-      typeDescriptionLink: '#GraphQLSettings'
-    },
-    data: {
-      description: 'Static or dynamic response data (function or value)',
-      type: 'GraphQLDataResponse',
-      typeDescriptionLink: '#GraphQLDataResponse',
-      required: true
-    },
-    entities: {
-      description: 'Optional request entities mapping (cookies, headers, query, variables)',
-      type: 'GraphQLEntitiesByEntityName',
-      typeDescriptionLink: '#GraphQLEntitiesByEntityName'
-    },
-    interceptors: {
-      description: 'Optional interceptors applied to GraphQL routes',
-      type: "Interceptors<'graphql'>",
-      typeDescriptionLink: './Interceptors'
+    'graphql.polling(items)': {
+      description: 'Creates a polling response config from ordered response or handler items',
+      type: 'Array<{ response: GraphQLExecutionResult; time?: number } | { handler: Function; time?: number }>'
     }
   }}
 />
@@ -141,13 +120,15 @@ Or you can specify a single response with the `data` field:
       description: 'Optional artificial delay (ms) applied to this response',
       type: 'number'
     },
-    polling: {
-      description: 'Whether this route is polling (returns polling responses)',
-      type: 'boolean'
-    },
     status: {
       description: 'Optional HTTP status code for the response',
       type: 'number'
+    },
+    match: {
+      description:
+        'Public operation-helper matcher from the optional third argument. It is normalized to `GraphQLRouteConfig.entities`.',
+      type: 'GraphQLEntitiesByEntityName',
+      typeDescriptionLink: '#GraphQLEntitiesByEntityName'
     }
   }}
 />
@@ -161,18 +142,23 @@ Operation types supported by GraphQL configs
 type GraphQLOperationType = 'mutation' | 'query';
 ```
 
-<a id='GraphQLOperationName'></a>
-## GraphQLOperationName
+<a id='GraphQLIdentifier'></a>
+## GraphQLIdentifier
 
-Operation name
+Operation identifier
 
 ```typescript
-type GraphQLOperationName = string | RegExp;
+type GraphQLIdentifier = string | RegExp;
 ```
 
 <a id='GraphQLEntitiesByEntityName'></a>
 ## GraphQLEntitiesByEntityName
 
 ```typescript
-Record<'cookies' | 'headers' | 'query' | 'variables', GraphQLEntity>;
+{
+  cookies?: GraphQLEntity<'cookies'>;
+  headers?: GraphQLEntity<'headers'>;
+  queries?: GraphQLEntity<'queries'>;
+  variables?: GraphQLEntity<'variables'>;
+}
 ```

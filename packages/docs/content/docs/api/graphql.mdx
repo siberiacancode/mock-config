@@ -112,7 +112,8 @@ graphql.query(
       required: true
     },
     match: {
-      description: 'Matcher to scope this config to specific request conditions.',
+      description:
+        'Matcher passed as `settings.match` to scope this config to specific request conditions.',
       type: 'GraphQLEntitiesByEntityName',
       typeDescriptionLink: '/docs/mocking-requests/references/GraphQL#GraphQLEntitiesByEntityName'
     }
@@ -148,7 +149,7 @@ graphql.query('GetUsers', ({ entities }) => ({ data: { users: [] } }), {
       required: true
     },
     match: {
-      description: 'Matcher for this handler.',
+      description: 'Matcher passed as `settings.match` for this handler.',
       type: 'GraphQLEntitiesByEntityName',
       typeDescriptionLink: '/docs/mocking-requests/references/GraphQL#GraphQLEntitiesByEntityName'
     }
@@ -172,11 +173,11 @@ graphql.query('GetStatus', function* () {
 Cycle through a sequence of responses over time. The same polling model as REST. See [Polling](/docs/rest-mocking/polling).
 
 ```ts
-import { graphql, polling } from 'mock-config-server';
+import { graphql } from 'mock-config-server';
 
 graphql.query(
   'GetStatus',
-  polling([
+  graphql.polling([
     { response: { data: { status: 'pending' } }, time: 2000 },
     { response: { data: { status: 'done' } } }
   ])
@@ -185,14 +186,14 @@ graphql.query(
 
 <TypeTable
   type={{
-    polling: {
+    config: {
       description:
-        'Ordered list of polling items. Each item can be a response or handler function, with an optional `time` (ms) controlling how long the item stays active.',
-      type: 'Array<{ response: GraphQLExecutionResult; time?: number } | { handler: Function; time?: number }>',
+        'Polling response created with `graphql.polling(items)`. Each item can be a response or handler function, with an optional `time` (ms) controlling how long the item stays active.',
+      type: 'ReturnType<typeof graphql.polling>',
       required: true
     },
     match: {
-      description: 'Matcher for this polling sequence.',
+      description: 'Matcher passed as `settings.match` for this polling sequence.',
       type: 'GraphQLEntitiesByEntityName',
       typeDescriptionLink: '/docs/mocking-requests/references/GraphQL#GraphQLEntitiesByEntityName'
     }

@@ -154,7 +154,8 @@ rest.get('/users', [{ id: 1, name: 'John' }], {
       required: true
     },
     match: {
-      description: 'Matcher to scope this config to specific request conditions.',
+      description:
+        'Matcher passed as `settings.match` to scope this config to specific request conditions.',
       type: 'RestEntitiesByEntityName<Method>',
       typeDescriptionLink: '/docs/mocking-requests/references/Rest#RestEntitiesByEntityName'
     }
@@ -190,7 +191,7 @@ rest.get('/users', ({ entities }) => [{ id: 1, role: entities.queries?.role }], 
       required: true
     },
     match: {
-      description: 'Matcher for this handler.',
+      description: 'Matcher passed as `settings.match` for this handler.',
       type: 'RestEntitiesByEntityName<Method>',
       typeDescriptionLink: '/docs/mocking-requests/references/Rest#RestEntitiesByEntityName'
     }
@@ -214,22 +215,22 @@ rest.get('/status', function* () {
 Respond with a file from disk:
 
 ```ts
-import { file, rest } from 'mock-config-server';
+import { rest } from 'mock-config-server';
 
-rest.get('/report', file('./files/report.pdf'), {
+rest.get('/report', rest.file('./files/report.pdf'), {
   match: { headers: { accept: 'application/pdf' } }
 });
 ```
 
 <TypeTable
   type={{
-    file: {
-      description: 'Path to the file to send as the response body.',
-      type: 'string',
+    config: {
+      description: 'File response created with `rest.file(path)`.',
+      type: 'ReturnType<typeof rest.file>',
       required: true
     },
     match: {
-      description: 'Matcher for this file response.',
+      description: 'Matcher passed as `settings.match` for this file response.',
       type: 'RestEntitiesByEntityName<Method>',
       typeDescriptionLink: '/docs/mocking-requests/references/Rest#RestEntitiesByEntityName'
     }
@@ -241,24 +242,24 @@ rest.get('/report', file('./files/report.pdf'), {
 Cycle through a sequence of responses over time. See [Polling](/docs/rest-mocking/polling) for the full details.
 
 ```ts
-import { polling, rest } from 'mock-config-server';
+import { rest } from 'mock-config-server';
 
 rest.get(
   '/status',
-  polling([{ response: { status: 'pending' }, time: 3000 }, { response: { status: 'done' } }])
+  rest.polling([{ response: { status: 'pending' }, time: 3000 }, { response: { status: 'done' } }])
 );
 ```
 
 <TypeTable
   type={{
-    polling: {
+    config: {
       description:
-        'Ordered list of polling items. Each item can be a response, handler, or file, with an optional `time` (ms) that controls how long the item stays active.',
-      type: 'Array<{ response: Data; time?: number } | { handler: Function; time?: number } | { file: string; time?: number }>',
+        'Polling response created with `rest.polling(items)`. Each item can be a response, handler, or file, with an optional `time` (ms) that controls how long the item stays active.',
+      type: 'ReturnType<typeof rest.polling>',
       required: true
     },
     match: {
-      description: 'Matcher for this polling sequence.',
+      description: 'Matcher passed as `settings.match` for this polling sequence.',
       type: 'RestEntitiesByEntityName<Method>',
       typeDescriptionLink: '/docs/mocking-requests/references/Rest#RestEntitiesByEntityName'
     }
