@@ -1,6 +1,6 @@
 import type { PlainObject } from '@/utils/types';
 
-import { isPlainObject } from '../../../isPlainObject/isPlainObject';
+import { isPlainObject } from '../../../is';
 
 type TokenNestedOption = Record<string, boolean>;
 
