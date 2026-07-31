@@ -33,7 +33,7 @@ describe('callResponseLogger', () => {
       {
         type: 'response',
         id: 1,
-        timestamp: '31.12.2024, 12:34:56,789',
+        timestamp: '31.12.2024, 05:34:56,789',
         method: 'POST',
         url: 'http://host/api/rest/posts/2',
         statusCode: 200,
@@ -48,7 +48,7 @@ describe('callResponseLogger', () => {
       {
         type: 'response',
         id: 1,
-        timestamp: '31.12.2024, 12:34:56,789',
+        timestamp: '31.12.2024, 05:34:56,789',
         method: 'POST',
         url: 'http://host/api/rest/posts/2',
         statusCode: 200,
