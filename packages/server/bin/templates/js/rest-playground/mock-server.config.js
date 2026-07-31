@@ -13,7 +13,7 @@ export default mock(
   {
     name: 'rest',
     configs: [
-      rest.get('/users', users),
+      rest.get('/users', () => users),
       rest.get('/users/:id', (params) => {
         const user = users[Number(params.request.params.id) - 1];
         if (!user) {
@@ -21,6 +21,20 @@ export default mock(
           return { error: 'Not found' };
         }
         return user;
+      }),
+      rest.post('/users', (params) => {
+        const user = params.request.body;
+        users.push(user);
+        return user;
+      }),
+      rest.put('/users/:id', (params) => {
+        const user = params.request.body;
+        users[Number(params.request.params.id) - 1] = user;
+        return user;
+      }),
+      rest.delete('/users/:id', (params) => {
+        users.splice(Number(params.request.params.id) - 1, 1);
+        return { ok: true };
       })
     ]
   }

@@ -1,16 +1,28 @@
-import type { MockServerConfig } from 'mock-config-server';
+import { graphql, mock } from 'mock-config-server';
 
-import { createUserMutation, getUserQuery, getUsersQuery } from './mock-requests';
-
-const mockServerConfig: MockServerConfig = [
-  {
-    port: 31299,
-    baseUrl: '/graphql'
-  },
-  {
-    name: 'graphql',
-    configs: [getUserQuery, getUsersQuery, createUserMutation]
-  }
+const users = [
+  { emoji: '🍎', name: 'Alice' },
+  { emoji: '🍌', name: 'Bob' },
+  { emoji: '🍒', name: 'Carol' },
+  { emoji: '🍇', name: 'Dan' },
+  { emoji: '🥝', name: 'Eve' }
 ];
 
-export default mockServerConfig;
+export default mock(
+  { port: 7777, baseUrl: '/' },
+  {
+    name: 'graphql',
+    baseUrl: '/graphql',
+    configs: [
+      graphql.query('GetUsers', users),
+      graphql.query<{ body: { variables: { id: string } } }>('GetUser', (params) => {
+        const user = users[Number(params.request.body.variables.id) - 1];
+        if (!user) {
+          params.setStatusCode(404);
+          return { error: 'Not found' };
+        }
+        return user;
+      })
+    ]
+  }
+);
