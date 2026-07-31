@@ -4,6 +4,12 @@ allowBuilds:
   '@tailwindcss/oxide': true
   esbuild: true
   sharp: true
+minimumReleaseAgeExclude:
+  - '@types/react-dom@19.2.4'
+  - '@types/react@19.2.18'
+  - fumadocs-core@16.14.0
+  - fumadocs-mdx@15.2.1
+  - fumadocs-ui@16.14.0
 publicHoistPattern:
   - eslint
   - prettier

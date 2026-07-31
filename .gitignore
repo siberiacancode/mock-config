@@ -192,10 +192,10 @@ build/Release
 # Optional REPL history
 .node_repl_history
 .next
+.source
 
 husky.sh
 .emoji
 
 dist
 out
-.source

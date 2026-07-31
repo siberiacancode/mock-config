@@ -1,7 +1,7 @@
 <div align="center">
   <a href="https://siberiacancode.github.io/mock-config">
     <picture>
-      <img alt="React Use logo" src="https://siberiacancode.github.io/mock-config/logo.svg" height="128">
+      <img alt="Mock Config logo" src="https://siberiacancode.github.io/mock-config/logo/logo-light.svg" height="128">
     </picture>
   </a>
   <h1>Mock Config Server</h1>
@@ -41,7 +41,7 @@ export default mock(
     name: 'rest',
     configs: [
       rest.get('/users', [{ emoji: '🧊', name: 'siberiacancode' }]),
-      rest.get<{ response: { name: string }; params: { id: number } }>(
+      rest.get<{ response: { emoji: string; id: number; name: string }; params: { id: string } }>(
         '/user/:id',
         {
           id: 1,
@@ -57,11 +57,14 @@ export default mock(
           delay: 1000
         }
       ),
-      rest.get<{ response: { name: string }; params: { id: number } }>('/user/:id', (params) => ({
-        id: params.request.params.id,
-        emoji: '🧊',
-        name: 'siberiacancode'
-      })),
+      rest.get<{ response: { emoji: string; id: number; name: string }; params: { id: string } }>(
+        '/user/:id',
+        (params) => ({
+          id: Number(params.request.params.id),
+          emoji: '🧊',
+          name: 'siberiacancode'
+        })
+      ),
       rest.sse('/stream', ({ client }) => {
         client.send('hello');
         client.close();
@@ -71,13 +74,19 @@ export default mock(
   {
     name: 'graphql',
     baseUrl: '/graphql',
-    configs: [graphql.query('GetUsers', [{ emoji: '🧊', name: 'siberiacancode' }])]
+    configs: [
+      graphql.query('GetUsers', {
+        data: {
+          users: [{ emoji: '🧊', name: 'siberiacancode' }]
+        }
+      })
+    ]
   },
   {
     name: 'ws',
     baseUrl: '/ws',
     configs: [
-      ws.event('notification', { success: true, message: 'We are happy to see you!' }),
+      ws.connection(() => ({ success: true, message: 'We are happy to see you!' })),
       ws.message(async (params) => {
         await params.setDelay(1000);
         params.send({ payload: 'Hello, world!' });
@@ -88,8 +97,10 @@ export default mock(
     name: 'graphql-subscription',
     baseUrl: '/graphql-subscription',
     configs: [
-      graphql.subscription('GetUsers', (params) => {
-        params.next({ data: [{ emoji: '🧊', name: 'siberiacancode' }] });
+      graphql.subscription('GetUsers', {
+        data: {
+          users: [{ emoji: '🧊', name: 'siberiacancode' }]
+        }
       })
     ]
   }
@@ -101,8 +112,8 @@ export default mock(
 We aim to support all essential APIs for mocking.
 
 - `rest.get`, `rest.post`, `rest.put`, `rest.patch`, `rest.delete`, `rest.options`, `rest.sse`, `rest.stream`
-- `graphql.query`, `graphql.mutation`, `graphql.raw`, `graphql.subscription`
-- `ws.event`, `ws.message`
+- `graphql.query`, `graphql.mutation`, `graphql.subscription`
+- `ws.connection`, `ws.message`
 
 ## CLI installation
 
