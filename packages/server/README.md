@@ -117,7 +117,7 @@ We aim to support all essential APIs for mocking.
 
 ## CLI installation
 
-Use the CLI to scaffold a starter `mock-server.config` and `mock-requests` folder with `mock-config-server`.
+Let the CLI create `mock-server.config` for you. Pick JavaScript or TypeScript, choose an API preset, and set the base URL, port, and static path in one short flow.
 
 ```bash
 npx mock-config-server@latest init
@@ -129,9 +129,9 @@ You will be prompted for a few choices:
 
 ```text
 ? Would you like to use TypeScript? › Yes / No
-? Choose API type › REST · GraphQL · Both (REST + GraphQL)
+? Choose API type › REST · REST playground · GraphQL · GraphQL playground · WebSocket · Full API
 ? Base URL (must start with a forward slash): › /
-? Port: › 31299
+? Port: › 7777
 ? Static path (must start with a forward slash): › /
 ```
 

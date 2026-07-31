@@ -14,29 +14,29 @@ export default mock(
     name: 'graphql',
     baseUrl: '/graphql',
     configs: [
-      graphql.query('GetUsers', () => users),
+      graphql.query('GetUsers', () => ({ data: { users } })),
       graphql.query('GetUser', (params) => {
         const id = params.request.body.variables.id;
         const user = users[Number(id) - 1];
         if (!user) {
           params.setStatusCode(404);
-          return { error: 'Not found' };
+          return { data: { user: null } };
         }
-        return user;
+        return { data: { user } };
       }),
       graphql.mutation('CreateUser', (params) => {
         const user = params.request.body.variables;
         users.push(user);
-        return user;
+        return { data: { createUser: user } };
       }),
       graphql.mutation('ChangeUser', (params) => {
         const user = params.request.body.variables;
         users[Number(user.id) - 1] = user;
-        return user;
+        return { data: { changeUser: user } };
       }),
       graphql.mutation('DeleteUser', (params) => {
         users.splice(Number(params.request.body.variables.id) - 1, 1);
-        return { ok: true };
+        return { data: { deleteUser: true } };
       })
     ]
   }

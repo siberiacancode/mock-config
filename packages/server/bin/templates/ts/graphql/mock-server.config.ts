@@ -14,14 +14,17 @@ export default mock(
     name: 'graphql',
     baseUrl: '/graphql',
     configs: [
-      graphql.query('GetUsers', users),
-      graphql.query<{ body: { variables: { id: string } } }>('GetUser', (params) => {
+      graphql.query('GetUsers', { data: { users } }),
+      graphql.query<{
+        body: { variables: { id: string } };
+        response: { data: { user: null | { emoji: string; name: string } } };
+      }>('GetUser', (params) => {
         const user = users[Number(params.request.body.variables.id) - 1];
         if (!user) {
           params.setStatusCode(404);
-          return { error: 'Not found' };
+          return { data: { user: null } };
         }
-        return user;
+        return { data: { user } };
       })
     ]
   }

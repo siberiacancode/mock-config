@@ -28,14 +28,14 @@ export default mock(
     name: 'graphql',
     baseUrl: '/graphql',
     configs: [
-      graphql.query('GetUsers', users),
+      graphql.query('GetUsers', { data: { users } }),
       graphql.query('GetUser', (params) => {
         const user = users[Number(params.request.body.variables.id) - 1];
         if (!user) {
           params.setStatusCode(404);
-          return { error: 'Not found' };
+          return { data: { user: null } };
         }
-        return user;
+        return { data: { user } };
       })
     ]
   },
@@ -43,7 +43,7 @@ export default mock(
     name: 'ws',
     baseUrl: '/ws',
     configs: [
-      ws.event('notification', { message: `${new Date().toISOString()} Hello from server` }),
+      ws.connection(() => ({ message: `${new Date().toISOString()} Hello from server` })),
       ws.message(async (params) => {
         await params.setDelay(200);
         params.send({ ok: true });
