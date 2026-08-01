@@ -36,10 +36,10 @@ import {
   prepareRestRequestArtifacts
 } from '@/core/rest';
 import {
+  addTaskInWsQueue,
   broadcastWsData,
   calculateGraphqlTransportWsRouteConfigWeight,
   createWsRoute,
-  enqueueWsTask,
   prepareWsRequestArtifacts,
   sendWsData
 } from '@/core/ws';
@@ -224,7 +224,7 @@ export const createMockServer = (
       const send = (data: unknown) => sendWsData(socket, data);
 
       const callServerRequestInterceptors = (meta: WsInterceptorMeta) =>
-        enqueueWsTask(socket, () =>
+        addTaskInWsQueue(socket, () =>
           callWsRequestInterceptors({
             meta,
             interceptors: serverInterceptors,

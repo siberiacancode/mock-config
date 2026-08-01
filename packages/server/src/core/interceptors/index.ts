@@ -1,8 +1,6 @@
-import type { INTERCEPTOR_NAME } from '@/utils/constants';
 import type {
   HttpRequestInterceptorHandler,
   HttpResponseInterceptorHandler,
-  LeafKeys,
   WsRequestInterceptorHandler,
   WsResponseInterceptorHandler
 } from '@/utils/types';
@@ -104,33 +102,3 @@ export const ws = {
       createInterceptor('ws.response.message', interceptor)
   }
 };
-
-export type InterceptorName = LeafKeys<{
-  http: typeof http;
-  rest: typeof rest;
-  graphql: typeof graphql;
-  ws: typeof ws;
-}>;
-
-export type RequestInterceptorName = Extract<InterceptorName, `${string}.request.${string}`>;
-export type ResponseInterceptorName = Extract<InterceptorName, `${string}.response.${string}`>;
-
-export type HttpRequestInterceptor = HttpRequestInterceptorHandler & {
-  [INTERCEPTOR_NAME]: RequestInterceptorName;
-};
-export type WsRequestInterceptor = WsRequestInterceptorHandler & {
-  [INTERCEPTOR_NAME]: RequestInterceptorName;
-};
-
-export type HttpResponseInterceptor = HttpResponseInterceptorHandler & {
-  [INTERCEPTOR_NAME]: ResponseInterceptorName;
-};
-export type WsResponseInterceptor = WsResponseInterceptorHandler & {
-  [INTERCEPTOR_NAME]: ResponseInterceptorName;
-};
-
-export type Interceptor =
-  | HttpRequestInterceptor
-  | HttpResponseInterceptor
-  | WsRequestInterceptor
-  | WsResponseInterceptor;

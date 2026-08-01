@@ -91,6 +91,7 @@ export const contextMiddleware = (
       if (graphQLInput.query && graphQLQuery) {
         request.api = {
           type: 'graphql',
+          eventName: graphQLQuery.eventName,
           operationType: graphQLQuery.operationType as GraphQLOperationType,
           operationName: graphQLQuery.operationName,
           query: graphQLInput.query,

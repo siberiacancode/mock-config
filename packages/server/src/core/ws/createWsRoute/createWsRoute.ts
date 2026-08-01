@@ -33,8 +33,8 @@ import {
 
 import { equals } from '../../entities';
 import {
+  addTaskInWsQueue,
   broadcastWsData,
-  enqueueWsTask,
   isRequestMatchedByEntities,
   matchGraphqlTransportWsRequestArtifacts,
   matchRawRequestArtifacts,
@@ -421,12 +421,12 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
     };
 
     socket.on('message', (raw, isBinary) =>
-      enqueueWsTask(socket, () => handleMessage(raw, isBinary))
+      addTaskInWsQueue(socket, () => handleMessage(raw, isBinary))
     );
 
-    socket.on('close', (code, reason) => enqueueWsTask(socket, () => handleClose(code, reason)));
+    socket.on('close', (code, reason) => addTaskInWsQueue(socket, () => handleClose(code, reason)));
 
-    socket.on('error', (error) => enqueueWsTask(socket, () => handleError(error)));
+    socket.on('error', (error) => addTaskInWsQueue(socket, () => handleError(error)));
 
-    await enqueueWsTask(socket, handleOpen);
+    await addTaskInWsQueue(socket, handleOpen);
   });

@@ -1,9 +1,6 @@
-import type {
-  ApiType,
-  GraphQLOperationType,
-  GraphQLTransportWsOperationType,
-  RestMethod
-} from './shared';
+import type { GraphQLOperationType, GraphQLTransportWsOperationType } from './graphql';
+import type { RestMethod } from './rest';
+import type { ApiType } from './shared';
 import type { Cookies, Headers, Params, PlainObject, Query } from './values';
 
 export interface LoggerBaseTokens {

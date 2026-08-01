@@ -1,9 +1,14 @@
 import type { CookieOptions, Request, Response } from 'express';
 import type { WebSocket } from 'ws';
 
+import type { graphql, http, rest, ws } from '../../core/interceptors';
+import type { INTERCEPTOR_NAME } from '../constants';
+import type { GraphQLOperationType } from './graphql';
 import type { Logger, LoggerTokens } from './logger';
-import type { ApiType, GraphQLOperationType, RestMethod, WsEvent, WsMessageType } from './shared';
-import type { MaybePromise } from './utils';
+import type { RestMethod } from './rest';
+import type { ApiType } from './shared';
+import type { LeafKeys, MaybePromise } from './utils';
+import type { WsEvent, WsMessageType } from './ws';
 
 type InterceptorCookieValue = string | undefined;
 type InterceptorHeaderValue = number | string | string[] | undefined;
@@ -90,13 +95,32 @@ export type WsInterceptorMeta =
       messageType: WsMessageType;
     };
 
-export type {
-  HttpRequestInterceptor,
-  HttpResponseInterceptor,
-  Interceptor,
-  InterceptorName,
-  RequestInterceptorName,
-  ResponseInterceptorName,
-  WsRequestInterceptor,
-  WsResponseInterceptor
-} from '../../core/interceptors';
+export type InterceptorName = LeafKeys<{
+  http: typeof http;
+  rest: typeof rest;
+  graphql: typeof graphql;
+  ws: typeof ws;
+}>;
+
+export type RequestInterceptorName = Extract<InterceptorName, `${string}.request.${string}`>;
+export type ResponseInterceptorName = Extract<InterceptorName, `${string}.response.${string}`>;
+
+export type HttpRequestInterceptor = HttpRequestInterceptorHandler & {
+  [INTERCEPTOR_NAME]: RequestInterceptorName;
+};
+export type WsRequestInterceptor = WsRequestInterceptorHandler & {
+  [INTERCEPTOR_NAME]: RequestInterceptorName;
+};
+
+export type HttpResponseInterceptor = HttpResponseInterceptorHandler & {
+  [INTERCEPTOR_NAME]: ResponseInterceptorName;
+};
+export type WsResponseInterceptor = WsResponseInterceptorHandler & {
+  [INTERCEPTOR_NAME]: ResponseInterceptorName;
+};
+
+export type Interceptor =
+  | HttpRequestInterceptor
+  | HttpResponseInterceptor
+  | WsRequestInterceptor
+  | WsResponseInterceptor;

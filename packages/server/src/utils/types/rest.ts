@@ -3,9 +3,10 @@ import type { CookieOptions, Response as ExpressResponse, Request } from 'expres
 import type { BodyEntity, MappedEntity } from './entities';
 import type { Interceptor } from './interceptors';
 import type { BaseUrl } from './server';
-import type { RestMethod } from './shared';
 import type { MaybePromise } from './utils';
 import type { Data } from './values';
+
+export type RestMethod = 'delete' | 'get' | 'options' | 'patch' | 'post' | 'put';
 
 export type RestEntityName = 'body' | 'cookies' | 'headers' | 'params' | 'queries';
 

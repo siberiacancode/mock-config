@@ -2,8 +2,7 @@ import type { ExecutionResult, GraphQLError } from 'graphql';
 import type { RawData, WebSocket } from 'ws';
 
 import type { VariablesEntity } from './entities';
-import type { GraphQLIdentifier } from './graphql';
-import type { GraphQLTransportWsOperationType } from './shared';
+import type { GraphQLIdentifier, GraphQLTransportWsOperationType } from './graphql';
 import type { MaybePromise } from './utils';
 import type { PlainObject } from './values';
 

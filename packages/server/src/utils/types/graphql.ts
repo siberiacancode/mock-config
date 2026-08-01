@@ -4,9 +4,11 @@ import type { ExecutionResult } from 'graphql';
 import type { MappedEntity, VariablesEntity } from './entities';
 import type { Interceptor } from './interceptors';
 import type { BaseUrl } from './server';
-import type { GraphQLOperationType } from './shared';
 import type { MaybePromise } from './utils';
 import type { PlainObject } from './values';
+
+export type GraphQLOperationType = 'mutation' | 'query';
+export type GraphQLTransportWsOperationType = 'subscription';
 
 export type GraphQLEntityName = 'cookies' | 'headers' | 'queries' | 'variables';
 

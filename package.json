@@ -27,7 +27,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@siberiacancode/eslint": "file:../siberiacancode-core/tools/eslint",
+    "@siberiacancode/eslint": "^2.18.0",
     "@siberiacancode/prettier": "^1.7.0",
     "@types/node": "^25.9.2",
     "husky": "^9.1.7",

@@ -1,6 +1,6 @@
 import type { Request } from 'express';
 
-import type { RestMethod } from './shared';
+import type { RestMethod } from './rest';
 import type { MaybePromise } from './utils';
 
 export type CorsHeader = string;

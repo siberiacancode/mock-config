@@ -1,6 +1,6 @@
+export * from './addTaskInWsQueue/addTaskInWsQueue';
 export * from './broadcastWsData/broadcastWsData';
 export * from './calculateGraphqlTransportWsRouteConfigWeight/calculateGraphqlTransportWsRouteConfigWeight';
-export * from './enqueueWsTask/enqueueWsTask';
 export * from './isRequestMatchedByEntities/isRequestMatchedByEntities';
 export * from './matchGraphqlTransportWsRequestArtifacts/matchGraphqlTransportWsRequestArtifacts';
 export * from './matchRawRequestArtifacts/matchRawRequestArtifacts';

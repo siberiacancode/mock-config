@@ -1,5 +1,6 @@
-import type { GraphQLEntity } from './graphql';
-import type { ApiType, GraphQLOperationType, RestMethod } from './shared';
+import type { GraphQLEntity, GraphQLOperationType } from './graphql';
+import type { RestMethod } from './rest';
+import type { ApiType } from './shared';
 
 export interface RestContext {
   method: RestMethod;
@@ -7,6 +8,7 @@ export interface RestContext {
 }
 
 export interface GraphqlContext {
+  eventName?: string;
   operationName?: string;
   operationType: GraphQLOperationType;
   query: string;
