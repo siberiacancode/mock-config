@@ -19,6 +19,42 @@ describe('rest', () => {
     });
   });
 
+  it('Should treat an unbranded file key as inline response data', () => {
+    const response = { file: '/tmp/user.json' };
+    const result = rest.get('/users', response);
+
+    expect(result).toStrictEqual({
+      method: 'get',
+      path: '/users',
+      routes: [
+        {
+          data: response,
+          entities: {},
+          settings: {}
+        }
+      ]
+    });
+  });
+
+  it('Should treat an unbranded polling key as inline response data', () => {
+    const response = {
+      polling: [{ response: 'ordinary response data' }]
+    };
+    const result = rest.get('/users', response);
+
+    expect(result).toStrictEqual({
+      method: 'get',
+      path: '/users',
+      routes: [
+        {
+          data: response,
+          entities: {},
+          settings: {}
+        }
+      ]
+    });
+  });
+
   it('Should build config for handler', () => {
     const handler = vi.fn();
     const result = rest.get('/users', handler);

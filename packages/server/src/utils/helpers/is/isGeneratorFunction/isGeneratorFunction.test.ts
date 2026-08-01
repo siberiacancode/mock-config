@@ -14,4 +14,9 @@ describe('isGeneratorFunction', () => {
   it('Should return false for common function value', () => {
     expect(isGeneratorFunction(() => 1)).toBe(false);
   });
+
+  it('Non-function value should return false', () => {
+    expect(isGeneratorFunction(null)).toBe(false);
+    expect(isGeneratorFunction({})).toBe(false);
+  });
 });
