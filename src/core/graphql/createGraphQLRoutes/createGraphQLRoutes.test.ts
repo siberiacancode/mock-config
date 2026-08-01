@@ -427,6 +427,68 @@ describe('createGraphQLRoutes: content', () => {
   });
 });
 
+describe('createGraphQLRoutes: headers', () => {
+  it('Should set "application/json; charset=utf-8" Content-Type header by default for data', async () => {
+    const server = createServer({
+      graphql: {
+        configs: [
+          {
+            operationName: 'GetUsers',
+            operationType: 'query',
+            routes: [
+              {
+                data: 'Some text'
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const query = {
+      query: 'query GetUsers { users { name } }'
+    };
+
+    const response = await request(server).get('/').query(query);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-type']).toBe('application/json; charset=utf-8');
+  });
+
+  it('Should use Content-Type header from response interceptor for data', async () => {
+    const server = createServer({
+      graphql: {
+        configs: [
+          {
+            operationName: 'GetUsers',
+            operationType: 'query',
+            routes: [
+              {
+                data: 'Some text',
+                interceptors: {
+                  response: (data, { appendHeader }) => {
+                    appendHeader('content-type', 'text/plain; charset=utf-8');
+                    return data;
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const query = {
+      query: 'query GetUsers { users { name } }'
+    };
+
+    const response = await request(server).get('/').query(query);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-type']).toBe('text/plain; charset=utf-8');
+  });
+});
+
 describe('createGraphQLRoutes: settings', () => {
   it('Should correctly delay response based on delay setting', async () => {
     const delay = 1000;

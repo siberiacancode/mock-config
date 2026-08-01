@@ -234,7 +234,10 @@ export const createGraphQLRoutes = ({
       await sleep(matchedRouteConfig.settings.delay);
     }
 
-    return response.json(data);
+    if (!response.getHeader('content-type')) {
+      return response.json(data);
+    }
+    response.send(data);
   };
 
   router.route('/').get(asyncHandler(graphqlMiddleware));

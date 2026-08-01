@@ -83,7 +83,7 @@ $ npx mock-config-server
 - `name` {string} name of component
 - `baseUrl?` {string} part of the url that will be substituted at the beginning of rest request url (default: `'/'`)
 - `configs` {Array<RestRequestConfig | GraphQLRequestConfig>} configs for mock requests, [read](#configs)
-  - `interceptors?` {Interceptors} functions to change request or response parameters, [read](#interceptors)
+- `interceptors?` {Interceptors} functions to change request or response parameters, [read](#interceptors)
 
 ### Configs
 

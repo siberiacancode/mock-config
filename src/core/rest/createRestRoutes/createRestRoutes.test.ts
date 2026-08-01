@@ -348,7 +348,7 @@ describe('createRestRoutes: content', () => {
     fs.rmSync(tmpDirPath, { recursive: true, force: true });
   });
 
-  it('should call response interceptor with Buffer as the first argument property when return a file', async () => {
+  it('Should call response interceptor with Buffer as the first argument property when return a file', async () => {
     const tmpDirPath = createTmpDir();
     const pathToFile = path.join(tmpDirPath, './data.json') as `${string}.json`;
     const dataInFile = JSON.stringify({ standName: 'The World' });
@@ -480,6 +480,161 @@ describe('createRestRoutes: content', () => {
     expect(response.statusCode).toBe(200);
     expect(response.headers['content-type']).toBe('application/json; charset=utf-8');
     expect(response.body).toStrictEqual({ path: pathToFile, file: 'file' });
+
+    fs.rmSync(tmpDirPath, { recursive: true, force: true });
+  });
+});
+
+describe('createRestRoutes: headers', () => {
+  it('Should set "application/json; charset=utf-8" Content-Type header by default for data', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                data: 'Some text'
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-type']).toBe('application/json; charset=utf-8');
+  });
+
+  it('Should use Content-Type header from response interceptor for data', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                data: 'Some text',
+                interceptors: {
+                  response: (data, { appendHeader }) => {
+                    appendHeader('content-type', 'text/plain; charset=utf-8');
+                    return data;
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-type']).toBe('text/plain; charset=utf-8');
+  });
+
+  it('Should set correct Content-Type and Content-Disposition headers by default for file', async () => {
+    const tmpDirPath = createTmpDir();
+    const pathToJSONFile = path.join(tmpDirPath, './jsonData.json');
+    fs.writeFileSync(pathToJSONFile, JSON.stringify({ some: 'data' }));
+    const pathToTxtFile = path.join(tmpDirPath, './txtData.txt');
+    fs.writeFileSync(pathToTxtFile, 'Some text');
+    const pathToHtmlFile = path.join(tmpDirPath, './htmlData.html');
+    fs.writeFileSync(pathToHtmlFile, '<html lang="en"><body>Some HTML</body></html>');
+
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                entities: {
+                  query: {
+                    type: 'json'
+                  }
+                },
+                file: pathToJSONFile
+              },
+              {
+                entities: {
+                  query: {
+                    type: 'txt'
+                  }
+                },
+                file: pathToTxtFile
+              },
+              {
+                entities: {
+                  query: {
+                    type: 'html'
+                  }
+                },
+                file: pathToHtmlFile
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const jsonResponse = await request(server).get('/users').query({ type: 'json' });
+
+    expect(jsonResponse.statusCode).toBe(200);
+    expect(jsonResponse.headers['content-type']).toBe('application/json; charset=utf-8');
+
+    const txtResponse = await request(server).get('/users').query({ type: 'txt' });
+
+    expect(txtResponse.statusCode).toBe(200);
+    expect(txtResponse.headers['content-type']).toBe('text/plain; charset=utf-8');
+
+    const htmlResponse = await request(server).get('/users').query({ type: 'html' });
+
+    expect(htmlResponse.statusCode).toBe(200);
+    expect(htmlResponse.headers['content-type']).toBe('text/html; charset=utf-8');
+
+    fs.rmSync(tmpDirPath, { recursive: true, force: true });
+  });
+
+  it('Should use Content-Type and Content-Disposition headers from response interceptor for file', async () => {
+    const tmpDirPath = createTmpDir();
+    const pathToFile = path.join(tmpDirPath, './data.json');
+    fs.writeFileSync(pathToFile, JSON.stringify({ some: 'data' }));
+
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                file: pathToFile,
+                interceptors: {
+                  response: (data, { appendHeader }) => {
+                    appendHeader('content-type', 'text/plain; charset=utf-8');
+                    appendHeader('content-disposition', 'filename=someData.txt');
+                    return data;
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-type']).toBe('text/plain; charset=utf-8');
+    expect(response.headers['content-disposition']).toBe('filename=someData.txt');
 
     fs.rmSync(tmpDirPath, { recursive: true, force: true });
   });
