@@ -2,19 +2,8 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 
 import { SearchInput, Typography } from '@/components';
 import { useConfig } from '@/utils/context';
-import { getConfigTransport, getRoutesCount, getTransports } from '@/utils/helpers';
 
-interface SettingsField {
-  label: string;
-  value: string;
-  wide?: boolean;
-}
-
-interface SettingsSection {
-  fields: SettingsField[];
-  isEnabled?: boolean;
-  title: string;
-}
+import { filterSettingsSections, getSettingsSections } from './helpers';
 
 export const SettingsPage = () => {
   const { components, settings } = useConfig();
@@ -26,47 +15,8 @@ export const SettingsPage = () => {
   const onSearchChange = (value: string) =>
     navigate({ to: '.', search: { query: value || undefined }, replace: true });
 
-  const transports = getTransports(components);
-  const isWsEnabled = components.some((component) =>
-    component.configs.some((config) => getConfigTransport(config)?.isRealtime)
-  );
-
-  const sections: SettingsSection[] = [
-    {
-      title: 'Server',
-      fields: [
-        { label: 'Base URL', value: String(settings.baseUrl ?? '/') },
-        { label: 'Port', value: String(settings.port) },
-        { label: 'Server URL', value: `http://localhost:${settings.port}`, wide: true }
-      ]
-    },
-    {
-      title: 'Overview',
-      fields: [
-        { label: 'Components', value: String(components.length) },
-        { label: 'Total routes', value: String(getRoutesCount(components)) },
-        {
-          label: 'Transports',
-          value: transports.map((transport) => transport.label).join(', ') || '—',
-          wide: true
-        }
-      ]
-    },
-    {
-      title: 'WebSocket',
-      isEnabled: isWsEnabled,
-      fields: [{ label: 'WebSocket URL', value: `ws://localhost:${settings.port}`, wide: true }]
-    }
-  ];
-
-  const filteredSections = sections
-    .map((section) => ({
-      ...section,
-      fields: section.fields.filter((field) =>
-        field.label.toLowerCase().includes(query.toLowerCase())
-      )
-    }))
-    .filter((section) => section.fields.length > 0);
+  const sections = getSettingsSections(components, settings);
+  const filteredSections = filterSettingsSections(sections, query);
 
   return (
     <div className='flex max-w-2xl flex-col gap-l p-7'>

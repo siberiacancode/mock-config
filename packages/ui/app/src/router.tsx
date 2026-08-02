@@ -5,9 +5,15 @@ import {
   redirect
 } from '@tanstack/react-router';
 
-import { EmptyState } from './components';
 import { RootLayout } from './layouts/RootLayout';
-import { ComponentPage, ComponentsPage, RequestPage, RoutesPage, SettingsPage } from './pages';
+import {
+  ComponentPage,
+  ComponentsPage,
+  RequestPage,
+  RoutesIndexPage,
+  RoutesPage,
+  SettingsPage
+} from './pages';
 
 interface RouterContext {
   payload: Payload;
@@ -39,12 +45,7 @@ const routesRoute = createRoute({
 const routesIndexRoute = createRoute({
   getParentRoute: () => routesRoute,
   path: '/',
-  component: () => (
-    <EmptyState
-      description='Pick a request from the list to inspect its routes'
-      title='No request selected'
-    />
-  )
+  component: RoutesIndexPage
 });
 
 const requestRoute = createRoute({
