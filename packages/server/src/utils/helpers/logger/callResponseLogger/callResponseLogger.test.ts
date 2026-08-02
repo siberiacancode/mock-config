@@ -17,7 +17,7 @@ describe('callResponseLogger', () => {
     get: (headerName: string) => headerName,
     protocol: 'http',
     originalUrl: '/api/rest/posts/2'
-  } as Request;
+  } as unknown as Request;
 
   const response = {
     statusCode: 200

@@ -1,4 +1,4 @@
-import type { IncomingMessage } from 'node:http';
+import type { Request } from 'express';
 
 import { describe, expect, it, vi } from 'vitest';
 
@@ -17,7 +17,7 @@ describe('callRequestLogger', () => {
     get: (headerName: string) => headerName,
     protocol: 'http',
     originalUrl: '/api/rest/posts/2'
-  } satisfies IncomingMessage;
+  } as unknown as Request;
 
   it('Should log default tokens if logger or options was not provided', () => {
     const consoleDir = vi.spyOn(console, 'dir');

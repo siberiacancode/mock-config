@@ -1,5 +1,6 @@
 import type { AddressInfo } from 'ws';
 
+import { Buffer } from 'node:buffer';
 import { once } from 'node:events';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WebSocket, WebSocketServer } from 'ws';
@@ -14,7 +15,7 @@ import type {
   WsCloseRouteConfig,
   WsConnectionRouteConfig,
   WsDataResponse,
-  WsErrorParams,
+  WsErrorRouteConfig,
   WsRawRouteConfig,
   WsRequestArtifact
 } from '@/utils/types';
@@ -52,7 +53,7 @@ export interface WsCloseRequestConfig {
 }
 
 export interface WsErrorRequestConfig {
-  routes: { data: (params: WsErrorParams) => unknown }[];
+  routes: WsErrorRouteConfig[];
   type: 'error';
 }
 
@@ -113,7 +114,7 @@ const createServer = async (
             config: route,
             weight: calculateWsRouteConfigWeight(route),
             componentInterceptors: ws.interceptors
-          } as WsRequestArtifact);
+          } as unknown as WsRequestArtifact);
         });
 
         return acc;
@@ -475,8 +476,11 @@ describe('createWsRoute: ws.raw', () => {
         isBinary: false,
         raw: '{"event":"ping"}'
       };
-      expect(componentRequestInterceptor.mock.calls[0][0].frame).toStrictEqual(frame);
-      expect(componentResponseInterceptor.mock.calls[0][1].frame).toStrictEqual(frame);
+      expect(componentRequestInterceptor).toHaveBeenCalledWith(expect.objectContaining({ frame }));
+      expect(componentResponseInterceptor).toHaveBeenCalledWith(
+        { source: 'raw' },
+        expect.objectContaining({ frame })
+      );
     });
   });
 
@@ -786,14 +790,13 @@ describe('createWsRoute: ws.close', () => {
       client.close(4000, 'user left');
       await promise;
 
-      expect(componentRequestInterceptor.mock.calls[0][0]).toMatchObject({
-        code: 4000,
-        reason: 'user left'
-      });
-      expect(componentResponseInterceptor.mock.calls[0][1]).toMatchObject({
-        code: 4000,
-        reason: 'user left'
-      });
+      expect(componentRequestInterceptor).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 4000, reason: 'user left' })
+      );
+      expect(componentResponseInterceptor).toHaveBeenCalledWith(
+        { source: 'close' },
+        expect.objectContaining({ code: 4000, reason: 'user left' })
+      );
     });
   });
 });
@@ -853,7 +856,9 @@ describe('createWsRoute: ws.error', () => {
       breakProtocol(client);
       await promise;
 
-      expect(componentRequestInterceptor.mock.calls[0][0].error).toBeInstanceOf(Error);
+      expect(componentRequestInterceptor).toHaveBeenCalledWith(
+        expect.objectContaining({ error: expect.any(Error) })
+      );
     });
   });
 });

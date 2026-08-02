@@ -108,7 +108,7 @@ describe('callWsResponseInterceptors: params functions', () => {
       send
     });
 
-    expect(interceptor.mock.calls[0][1].frame).toStrictEqual(frame);
+    expect(interceptor).toHaveBeenCalledWith({ key: 'value' }, expect.objectContaining({ frame }));
   });
 
   it('Should correctly provide code and reason for close event', async () => {
@@ -125,10 +125,10 @@ describe('callWsResponseInterceptors: params functions', () => {
       send
     });
 
-    expect(interceptor.mock.calls[0][1]).toMatchObject({
-      code: 1000,
-      reason: 'normal closure'
-    });
+    expect(interceptor).toHaveBeenCalledWith(
+      { key: 'value' },
+      expect.objectContaining({ code: 1000, reason: 'normal closure' })
+    );
   });
 
   it('Should correctly provide socket, send, broadcast and setDelay', async () => {
@@ -143,10 +143,14 @@ describe('callWsResponseInterceptors: params functions', () => {
       send
     });
 
-    const params = interceptor.mock.calls[0][1];
-    expect(params.socket).toBe(socket);
-    expect(params.send).toBe(send);
-    expect(params.broadcast).toBe(broadcast);
-    expect(typeof params.setDelay).toBe('function');
+    expect(interceptor).toHaveBeenCalledWith(
+      { key: 'value' },
+      expect.objectContaining({
+        socket,
+        send,
+        broadcast,
+        setDelay: expect.any(Function)
+      })
+    );
   });
 });

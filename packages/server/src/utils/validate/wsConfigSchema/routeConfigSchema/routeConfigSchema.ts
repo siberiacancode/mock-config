@@ -8,7 +8,6 @@ import { mappedEntitySchema, plainObjectSchema } from '../../utils';
 
 const comparatorSchema = z.custom<Comparator>(isComparator);
 
-// TODO: validation
 export const rawRouteConfigSchema = z.strictObject({
   data: z.function(),
   entities: plainObjectSchema(

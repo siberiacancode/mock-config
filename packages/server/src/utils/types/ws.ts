@@ -96,7 +96,7 @@ export interface WsConnectionRouteConfig {
   data: WsConnectionDataResponse;
   entities?: WsConnectionEntitiesByEntityName;
 }
-interface WsErrorRouteConfig {
+export interface WsErrorRouteConfig {
   data: WsErrorDataResponse;
   settings?: WsSettings;
 }
