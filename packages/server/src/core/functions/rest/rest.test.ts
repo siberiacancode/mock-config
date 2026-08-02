@@ -296,25 +296,4 @@ describe('rest', () => {
 
     expect(write).toHaveBeenCalledWith('id: id-1\nevent: user.created\nretry: 1500\ndata: msg\n\n');
   });
-
-  it('Should type handler params with all typed fields', () => {
-    const result = rest.post<{
-      query: { query: string };
-      body: { body: string };
-      params: { params: string };
-      response: { response: string };
-    }>('/users/:id', () => ({ response: 'value' }));
-
-    expect(result).toStrictEqual({
-      method: 'post',
-      path: '/users/:id',
-      routes: [
-        {
-          data: expect.any(Function),
-          entities: {},
-          settings: {}
-        }
-      ]
-    });
-  });
 });

@@ -5,7 +5,10 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     ...vitest,
-    environment: 'node'
+    environment: 'node',
+    typecheck: {
+      ignoreSourceErrors: true
+    }
   },
   resolve: {
     alias: {

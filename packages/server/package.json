@@ -47,7 +47,7 @@
     "start": "pnpm build && node ./dist/bin/bin.mjs",
     "dev": "nodemon --watch src --watch bin --watch mock-server.config.* -e js,ts --exec \"pnpm start\"",
     "type": "tsc --noEmit",
-    "unit-test": "vitest",
+    "unit-test": "vitest --typecheck",
     "lint": "eslint . --fix",
     "lint-inspector": "npx @eslint/config-inspector",
     "format": "prettier --write \"**/*.(ts|js)\"",

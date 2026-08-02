@@ -3,8 +3,8 @@
     "target": "esnext",
     "lib": ["dom", "esnext"],
     "baseUrl": "./",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "paths": {
       "@/server": ["./src/server"],
       "@/core/database": ["./src/core/database"],
