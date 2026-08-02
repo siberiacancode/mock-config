@@ -7,3 +7,9 @@ allowBuilds:
 publicHoistPattern:
   - eslint
   - prettier
+supportedArchitectures:
+  os:
+    - current
+  cpu:
+    - x64
+    - arm64
