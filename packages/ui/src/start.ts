@@ -1,6 +1,6 @@
 import color from 'ansi-colors';
 import { getPort } from 'get-port-please';
-import { createApp, eventHandler, serveStatic, toNodeListener } from 'h3';
+import { createApp, eventHandler, readBody, serveStatic, toNodeListener } from 'h3';
 import { lookup } from 'mrmime';
 import { readFile, stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
@@ -18,10 +18,27 @@ const BUILD_PATH = path.join(path.dirname(fileURLToPath(import.meta.url)), '..',
 
 const MOCK_SERVER_DEFAULT_PORT = 31299;
 
-const getMockServerPort = (mockConfig: any) => {
+const getMockServerSettings = (mockConfig: any) => {
   const [option] = mockConfig ?? [];
-  if (option && !('configs' in option) && typeof option.port === 'number') return option.port;
-  return MOCK_SERVER_DEFAULT_PORT;
+  return option && !('configs' in option) ? option : {};
+};
+
+const getMockServerPort = (mockConfig: any) => {
+  const { port } = getMockServerSettings(mockConfig);
+  return typeof port === 'number' ? port : MOCK_SERVER_DEFAULT_PORT;
+};
+
+const joinPath = (...parts: unknown[]) =>
+  `/${parts
+    .flatMap((part) => String(part ?? '').split('/'))
+    .filter(Boolean)
+    .join('/')}`;
+
+const resolveMockServerUrl = (mockConfig: any, requestPath: string) => {
+  const { baseUrl } = getMockServerSettings(mockConfig);
+  const [pathname, search] = requestPath.split('?');
+
+  return `http://127.0.0.1:${getMockServerPort(mockConfig)}${joinPath(baseUrl, pathname)}${search ? `?${search}` : ''}`;
 };
 
 export const start = async (argv: MockServerInspectorArgv) => {
@@ -74,6 +91,58 @@ export const start = async (argv: MockServerInspectorArgv) => {
     eventHandler(async (event) => {
       event.node.res.setHeader('Content-Type', 'application/json');
       return event.node.res.end(JSON.stringify(stringify(watcher.getConfig())));
+    })
+  );
+
+  // requests from the ui are replayed through the inspector instead of being sent by the browser:
+  // Cookie is a forbidden request-header, so fetch drops it without an error and routes matched by
+  // cookies would resolve to the wrong one:
+  // MDN - https://developer.mozilla.org/en-US/docs/Glossary/Forbidden_request_header
+  // Spec - https://fetch.spec.whatwg.org/#forbidden-request-header
+  // the mock server cors settings may also exclude the inspector origin
+  app.use(
+    '/api/request',
+    eventHandler(async (event) => {
+      const {
+        method = 'get',
+        path: requestPath,
+        headers = {},
+        body
+      } = (await readBody(event)) ?? {};
+
+      event.node.res.setHeader('Content-Type', 'application/json');
+
+      if (typeof requestPath !== 'string' || !requestPath.startsWith('/')) {
+        event.node.res.statusCode = 400;
+        return event.node.res.end(JSON.stringify({ error: 'path must start with "/"' }));
+      }
+
+      const startedAt = performance.now();
+
+      try {
+        const response = await fetch(resolveMockServerUrl(watcher.getConfig(), requestPath), {
+          method: String(method).toUpperCase(),
+          headers,
+          ...(body !== undefined && { body }),
+          signal: AbortSignal.timeout(10_000)
+        });
+        const responseBody = await response.text();
+
+        return event.node.res.end(
+          JSON.stringify({
+            status: response.status,
+            statusText: response.statusText,
+            durationMs: Math.round(performance.now() - startedAt),
+            headers: Object.fromEntries(response.headers.entries()),
+            body: responseBody
+          })
+        );
+      } catch (error) {
+        event.node.res.statusCode = 502;
+        return event.node.res.end(
+          JSON.stringify({ error: error instanceof Error ? error.message : 'Request failed' })
+        );
+      }
     })
   );
 
