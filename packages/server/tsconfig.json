@@ -1,3 +1,25 @@
 {
-  "extends": "./tsconfig.dev.json"
+  "extends": "@siberiacancode/tsconfig/tsconfig.bundler.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@/server": ["./src/server"],
+      "@/core/database": ["./src/core/database"],
+      "@/core/handlers": ["./src/core/handlers"],
+      "@/core/rest": ["./src/core/rest"],
+      "@/core/graphql": ["./src/core/graphql"],
+      "@/core/ws": ["./src/core/ws"],
+      "@/core/middlewares": ["./src/core/middlewares"],
+      "@/utils/helpers": ["./src/utils/helpers"],
+      "@/utils/helpers/tests": ["./src/utils/helpers/tests"],
+      "@/utils/types": ["./src/utils/types"],
+      "@/utils/constants": ["./src/utils/constants"],
+      "@/utils/validate": ["./src/utils/validate"]
+    },
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "outDir": "dist"
+  },
+  "exclude": ["examples", "bin/templates", "dist", "node_modules"]
 }
