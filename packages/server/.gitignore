@@ -2,5 +2,6 @@
 dist
 mock-server.config.*
 !bin/templates/**/mock-server.config.*
+!test/fixtures/mock-server.config.ts
 mock-requests
 !bin/templates/**/mock-requests

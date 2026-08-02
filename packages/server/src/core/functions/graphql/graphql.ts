@@ -21,6 +21,8 @@ import { isGeneratorFunction } from '@/utils/helpers';
 import { createGenerator } from '../shared/helpers';
 import { createPollingHandler } from './helpers';
 
+const GRAPHQL_POLLING_CONFIG = Symbol('mock-config-server.graphql.polling');
+
 interface GraphQLRequestInput {
   body?: unknown;
   params?: unknown;
@@ -32,12 +34,7 @@ type GraphQLFactorySettings = GraphQLSettings & {
   match?: GraphQLEntitiesByEntityName;
 };
 
-type ReservedGraphQLConfigKeys = {
-  [K in 'polling']?: never;
-};
-
-type GraphQLInlineResponse<Response extends GraphQLExecutionResult> = Response &
-  ReservedGraphQLConfigKeys;
+type GraphQLInlineResponse<Response extends GraphQLExecutionResult> = Response;
 
 type GraphQLFunction<Input extends GraphQLRequestInput> = (
   params: GraphQLParams<Input['query'], Input['body'], Input['params'], Input['response']>
@@ -58,6 +55,7 @@ type GraphQLPollingItem<Input extends GraphQLRequestInput> =
 type GraphQLPolling<Input extends GraphQLRequestInput> = GraphQLPollingItem<Input>[];
 
 interface GraphQLPollingObject<Input extends GraphQLRequestInput> {
+  readonly [GRAPHQL_POLLING_CONFIG]: true;
   polling: GraphQLPolling<Input>;
 }
 
@@ -91,7 +89,7 @@ const resolveConfigType = <Input extends GraphQLRequestInput>(config: GraphQLCon
     return { type: 'generator' as const, config };
   if (typeof config === 'function') return { type: 'handler' as const, config };
   if (typeof config !== 'object' || config === null) return { type: 'data' as const, config };
-  if ('polling' in config) return { type: 'polling' as const, config };
+  if (GRAPHQL_POLLING_CONFIG in config) return { type: 'polling' as const, config };
   return { type: 'data' as const, config };
 };
 
@@ -160,19 +158,16 @@ const createGraphQLFactory = <OperationType extends GraphQLOperationType>(
 ) => {
   function createRequestConfig<Input extends GraphQLRequestInput = GraphQLRequestInput>(
     identifier: GraphQLIdentifier,
+    config:
+      | GraphQLFunction<Input>
+      | GraphQLGeneratorFunction<Input>
+      | GraphQLInlineResponse<Input['response']>,
+    settings?: GraphQLFactorySettings
+  ): GraphQLRequestConfig;
+
+  function createRequestConfig<Input extends GraphQLRequestInput = GraphQLRequestInput>(
+    identifier: GraphQLIdentifier,
     config: GraphQLPollingObject<Input>,
-    settings?: GraphQLFactorySettings
-  ): GraphQLRequestConfig;
-
-  function createRequestConfig<Input extends GraphQLRequestInput = GraphQLRequestInput>(
-    identifier: GraphQLIdentifier,
-    config: GraphQLFunction<Input> | GraphQLGeneratorFunction<Input>,
-    settings?: GraphQLFactorySettings
-  ): GraphQLRequestConfig;
-
-  function createRequestConfig<Input extends GraphQLRequestInput = GraphQLRequestInput>(
-    identifier: GraphQLIdentifier,
-    config: GraphQLInlineResponse<Input['response']>,
     settings?: GraphQLFactorySettings
   ): GraphQLRequestConfig;
 
@@ -264,7 +259,10 @@ const createGraphqlTransportWsFactory = () => {
 
 const polling = <Input extends GraphQLRequestInput = GraphQLRequestInput>(
   value: GraphQLPollingObject<Input>['polling']
-) => ({ polling: value });
+): GraphQLPollingObject<Input> => ({
+  [GRAPHQL_POLLING_CONFIG]: true,
+  polling: value
+});
 
 export const graphql = {
   query: createGraphQLFactory('query'),
