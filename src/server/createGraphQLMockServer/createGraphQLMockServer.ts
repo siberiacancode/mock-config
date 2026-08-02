@@ -16,13 +16,11 @@ import {
   requestInterceptorMiddleware,
   staticMiddleware
 } from '@/core/middlewares';
-import { validateApiMockServerConfig } from '@/utils/validate';
 
 export const createGraphQLMockServer = (
   graphqlMockServerConfig: Omit<GraphQLMockServerConfig, 'port'>,
   server: Express = express()
 ) => {
-  validateApiMockServerConfig(graphqlMockServerConfig, 'graphql');
   const { cors, staticPath, configs, database, interceptors } = graphqlMockServerConfig;
 
   server.use(bodyParser.urlencoded({ extended: false }));

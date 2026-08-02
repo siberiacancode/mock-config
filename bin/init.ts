@@ -80,7 +80,7 @@ export const init = async (argv: MockServerConfigArgv) => {
       }
     );
 
-    await createTemplate({ ...argv, ...response });
+    createTemplate({ ...argv, ...response });
     const userAgent = process.env.npm_config_user_agent ?? '';
 
     const packageManager = /pnpm/.test(userAgent)

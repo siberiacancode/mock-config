@@ -24,13 +24,11 @@ import {
   staticMiddleware
 } from '@/core/middlewares';
 import { createRestRoutes } from '@/core/rest';
-import { validateFlatMockServerConfig } from '@/utils/validate';
 
 export const createFlatMockServer = (
   flatMockServerConfig: FlatMockServerConfig,
   server: Express = express()
 ) => {
-  validateFlatMockServerConfig(flatMockServerConfig);
   const [option, ...flatMockServerComponents] = flatMockServerConfig;
 
   const flatMockServerSettings = !('configs' in option) ? option : undefined;

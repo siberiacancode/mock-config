@@ -1,5 +1,4 @@
-import { getMostSpecificPathFromError } from '../../getMostSpecificPathFromError';
-import { getValidationMessageFromPath } from '../../getValidationMessageFromPath';
+import { getValidationMessage } from '../../getValidationMessage';
 import { bodyPlainEntitySchema } from './entitiesSchema';
 
 it('Should return correct error path: firstly check object as a descriptor', () => {
@@ -12,8 +11,7 @@ it('Should return correct error path: firstly check object as a descriptor', () 
   expect(topLevelParseResult.success).toBe(false);
 
   if (!topLevelParseResult.success) {
-    const path = getMostSpecificPathFromError(topLevelParseResult.error);
-    const validationMessage = getValidationMessageFromPath(path);
+    const validationMessage = getValidationMessage(topLevelParseResult.error.issues);
     expect(validationMessage).toBe('.value');
   }
 
@@ -28,8 +26,7 @@ it('Should return correct error path: firstly check object as a descriptor', () 
   expect(propertyLevelParseResult.success).toBe(false);
 
   if (!propertyLevelParseResult.success) {
-    const path = getMostSpecificPathFromError(propertyLevelParseResult.error);
-    const validationMessage = getValidationMessageFromPath(path);
+    const validationMessage = getValidationMessage(propertyLevelParseResult.error.issues);
     expect(validationMessage).toBe('.property.value');
   }
 });

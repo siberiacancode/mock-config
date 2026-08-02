@@ -1,9 +1,8 @@
-#!/usr/bin/env node
-
 import type { GraphQLMockServerConfig, RestMockServerConfig } from '@/utils/types';
 
 import { startGraphQLMockServer, startMockServer, startRestMockServer } from '@/server';
 import { isPlainObject } from '@/utils/helpers';
+import { validateApiMockServerConfig, validateMockServerConfig } from '@/utils/validate';
 
 import type { MockServerConfig, MockServerConfigArgv } from '../src';
 
@@ -32,26 +31,27 @@ export const run = (
         | GraphQLMockServerConfig
         | RestMockServerConfig;
 
-      if (
-        Array.isArray(mergedApiMockServerConfig.configs) &&
-        isPlainObject(mergedApiMockServerConfig.configs[0]) &&
-        'path' in mergedApiMockServerConfig.configs[0]
-      ) {
+      const { configs } = mergedApiMockServerConfig;
+      const [firstConfig] = Array.isArray(configs) ? configs : [];
+
+      if (isPlainObject(firstConfig) && 'path' in firstConfig) {
+        validateApiMockServerConfig(mockConfig, 'rest');
         return startRestMockServer(mergedApiMockServerConfig as RestMockServerConfig);
       }
 
       if (
-        Array.isArray(mergedApiMockServerConfig.configs) &&
-        isPlainObject(mergedApiMockServerConfig.configs[0]) &&
-        ('query' in mergedApiMockServerConfig.configs[0] ||
-          'operationName' in mergedApiMockServerConfig.configs[0])
+        isPlainObject(firstConfig) &&
+        ('query' in firstConfig || 'operationName' in firstConfig)
       ) {
+        validateApiMockServerConfig(mockConfig, 'graphql');
         return startGraphQLMockServer(mergedApiMockServerConfig as GraphQLMockServerConfig);
       }
 
+      validateApiMockServerConfig(mockConfig, 'rest');
       return startRestMockServer(mergedApiMockServerConfig as RestMockServerConfig);
     }
 
+    validateMockServerConfig(mockConfig);
     return startMockServer(mergedMockServerConfig);
   } catch (error: any) {
     console.error(error.message);

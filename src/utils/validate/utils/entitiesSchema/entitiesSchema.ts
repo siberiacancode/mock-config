@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-import { isPlainObject } from '@/utils/helpers';
-
 import {
   checkActualValueCheckModeSchema,
   compareWithDescriptorAnyValueCheckModeSchema,
@@ -9,16 +7,16 @@ import {
   compareWithDescriptorValueCheckModeSchema,
   entityDescriptorSchema
 } from '../checkModeSchema/checkModeSchema';
-import { extendedDiscriminatedUnion } from '../extendedDiscriminatedUnion/extendedDiscriminatedUnion';
-import { nestedObjectOrArraySchema } from '../nestedObjectOrArraySchema/nestedObjectOrArraySchema';
-import { plainObjectSchema } from '../plainObjectSchema/plainObjectSchema';
 
 /* ----- Plain entity schema ----- */
 
 const plainEntityPrimitiveValueSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
-const plainEntityObjectiveValueSchema = nestedObjectOrArraySchema(plainEntityPrimitiveValueSchema);
+const plainEntityObjectiveValueSchema = z.union([
+  z.array(z.json()),
+  z.record(z.string(), z.json())
+]);
 
-const topLevelPlainEntityDescriptorSchema = extendedDiscriminatedUnion('checkMode', [
+const topLevelPlainEntityDescriptorSchema = z.discriminatedUnion('checkMode', [
   entityDescriptorSchema(checkActualValueCheckModeSchema),
   entityDescriptorSchema(z.literal('function'), z.function()),
   entityDescriptorSchema(
@@ -27,7 +25,7 @@ const topLevelPlainEntityDescriptorSchema = extendedDiscriminatedUnion('checkMod
   )
 ]);
 
-const propertyLevelPlainEntityDescriptorSchema = extendedDiscriminatedUnion('checkMode', [
+const propertyLevelPlainEntityDescriptorSchema = z.discriminatedUnion('checkMode', [
   entityDescriptorSchema(checkActualValueCheckModeSchema),
   entityDescriptorSchema(z.literal('function'), z.function()),
   entityDescriptorSchema(z.literal('regExp'), z.instanceof(RegExp)),
@@ -41,26 +39,18 @@ const propertyLevelPlainEntityDescriptorSchema = extendedDiscriminatedUnion('che
   )
 ]);
 
-const nonCheckModeSchema = (schema: z.ZodTypeAny) =>
+const withoutCheckModeSchema = (schema: z.ZodObject<any> | z.ZodRecord<any> | z.ZodUnion<any>) =>
   z
-    .custom((value) => typeof value === 'object')
-    .superRefine((value, context) => {
-      if (isPlainObject(value) && 'checkMode' in value) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['checkMode'],
-          fatal: true
-        });
-        return z.NEVER;
-      }
-    })
+    .looseObject({})
+    .refine((value) => !('checkMode' in value))
     .pipe(schema);
 
-const topLevelPlainEntityRecordSchema = nonCheckModeSchema(
+const topLevelPlainEntityRecordSchema = withoutCheckModeSchema(
   z.record(
+    z.string(),
     z.union([
       propertyLevelPlainEntityDescriptorSchema,
-      nonCheckModeSchema(plainEntityObjectiveValueSchema),
+      withoutCheckModeSchema(plainEntityObjectiveValueSchema),
       plainEntityPrimitiveValueSchema
     ])
   )
@@ -85,13 +75,14 @@ export const variablesPlainEntitySchema = z.union([
 
 const mappedEntityValueSchema = z.union([z.string(), z.number(), z.boolean()]);
 
-const mappedEntityDescriptorSchema = extendedDiscriminatedUnion('checkMode', [
+const mappedEntityDescriptorSchema = z.discriminatedUnion('checkMode', [
   entityDescriptorSchema(checkActualValueCheckModeSchema),
   entityDescriptorSchema(z.literal('function'), z.function()),
   entityDescriptorSchema(z.literal('regExp'), z.instanceof(RegExp)),
   entityDescriptorSchema(compareWithDescriptorValueCheckModeSchema, mappedEntityValueSchema)
 ]);
 
-export const mappedEntitySchema = plainObjectSchema(
-  z.record(z.union([mappedEntityValueSchema, mappedEntityDescriptorSchema]))
+export const mappedEntitySchema = z.record(
+  z.string(),
+  z.union([mappedEntityValueSchema, mappedEntityDescriptorSchema])
 );

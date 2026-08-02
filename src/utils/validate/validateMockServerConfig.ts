@@ -5,14 +5,12 @@ import type { PlainObject } from '@/utils/types';
 import { baseUrlSchema } from './baseUrlSchema/baseUrlSchema';
 import { corsSchema } from './corsSchema/corsSchema';
 import { databaseConfigSchema } from './databaseConfigSchema/databaseConfigSchema';
-import { getMostSpecificPathFromError } from './getMostSpecificPathFromError';
-import { getValidationMessageFromPath } from './getValidationMessageFromPath';
+import { getValidationMessage } from './getValidationMessage';
 import { graphqlConfigSchema } from './graphqlConfigSchema/graphqlConfigSchema';
 import { interceptorsSchema } from './interceptorsSchema/interceptorsSchema';
 import { portSchema } from './portSchema/portSchema';
 import { restConfigSchema } from './restConfigSchema/restConfigSchema';
 import { staticPathSchema } from './staticPathSchema/staticPathSchema';
-import { plainObjectSchema } from './utils';
 
 export const validateMockServerConfig = (mockServerConfig: PlainObject) => {
   if (
@@ -30,7 +28,7 @@ export const validateMockServerConfig = (mockServerConfig: PlainObject) => {
     baseUrl: baseUrlSchema.optional(),
     port: portSchema.optional(),
     staticPath: staticPathSchema.optional(),
-    interceptors: plainObjectSchema(interceptorsSchema).optional(),
+    interceptors: interceptorsSchema.optional(),
     cors: corsSchema.optional(),
     rest: restConfigSchema.optional(),
     graphql: graphqlConfigSchema.optional(),
@@ -39,8 +37,7 @@ export const validateMockServerConfig = (mockServerConfig: PlainObject) => {
 
   const validationResult = mockServerConfigSchema.safeParse(mockServerConfig);
   if (!validationResult.success) {
-    const path = getMostSpecificPathFromError(validationResult.error);
-    const validationMessage = getValidationMessageFromPath(path);
+    const validationMessage = getValidationMessage(validationResult.error.issues);
 
     throw new Error(
       `Validation Error: configuration${validationMessage} does not match the API schema. Click here to see correct type: https://github.com/siberiacancode/mock-config-server`
