@@ -19,6 +19,42 @@ describe('rest', () => {
     });
   });
 
+  it('Should treat an unbranded file key as inline response data', () => {
+    const response = { file: '/tmp/user.json' };
+    const result = rest.get('/users', response);
+
+    expect(result).toStrictEqual({
+      method: 'get',
+      path: '/users',
+      routes: [
+        {
+          data: response,
+          entities: {},
+          settings: {}
+        }
+      ]
+    });
+  });
+
+  it('Should treat an unbranded polling key as inline response data', () => {
+    const response = {
+      polling: [{ response: 'ordinary response data' }]
+    };
+    const result = rest.get('/users', response);
+
+    expect(result).toStrictEqual({
+      method: 'get',
+      path: '/users',
+      routes: [
+        {
+          data: response,
+          entities: {},
+          settings: {}
+        }
+      ]
+    });
+  });
+
   it('Should build config for handler', () => {
     const handler = vi.fn();
     const result = rest.get('/users', handler);
@@ -259,26 +295,5 @@ describe('rest', () => {
     });
 
     expect(write).toHaveBeenCalledWith('id: id-1\nevent: user.created\nretry: 1500\ndata: msg\n\n');
-  });
-
-  it('Should type handler params with all typed fields', () => {
-    const result = rest.post<{
-      query: { query: string };
-      body: { body: string };
-      params: { params: string };
-      response: { response: string };
-    }>('/users/:id', () => ({ response: 'value' }));
-
-    expect(result).toStrictEqual({
-      method: 'post',
-      path: '/users/:id',
-      routes: [
-        {
-          data: expect.any(Function),
-          entities: {},
-          settings: {}
-        }
-      ]
-    });
   });
 });

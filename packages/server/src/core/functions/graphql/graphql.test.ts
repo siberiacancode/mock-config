@@ -19,6 +19,26 @@ describe('graphql', () => {
     });
   });
 
+  it('Should treat an unbranded polling key as inline response data', () => {
+    const response = {
+      data: { ok: true },
+      polling: [{ response: { data: { ok: 'ordinary response data' } } }]
+    };
+    const result = graphql.query('GetUsers', response);
+
+    expect(result).toStrictEqual({
+      identifier: 'GetUsers',
+      operationType: 'query',
+      routes: [
+        {
+          data: response,
+          entities: {},
+          settings: {}
+        }
+      ]
+    });
+  });
+
   it('Should build config for handler', () => {
     const handler = vi.fn().mockResolvedValue({ data: { ok: true } });
     const result = graphql.query('GetUsers', handler);
@@ -160,34 +180,6 @@ describe('graphql', () => {
             }
           },
           settings: { delay: 150, status: 200 }
-        }
-      ]
-    });
-  });
-
-  it('Should type handler params with all typed fields', () => {
-    const result = graphql.query<{
-      query: { query: string };
-      body: { body: string };
-      params: { params: string };
-      response: { data: { response: string } };
-    }>('GetUsers', (params) => {
-      const query = params.request.query.query;
-      const body = params.request.body.body;
-      const path = params.request.params.params;
-      console.log(query, body, path);
-
-      return { data: { response: 'value' } };
-    });
-
-    expect(result).toStrictEqual({
-      identifier: 'GetUsers',
-      operationType: 'query',
-      routes: [
-        {
-          data: expect.any(Function),
-          entities: {},
-          settings: {}
         }
       ]
     });

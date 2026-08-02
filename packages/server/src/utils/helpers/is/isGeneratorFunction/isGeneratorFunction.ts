@@ -1,4 +1,4 @@
-export const isGeneratorFunction = <Args extends unknown[]>(
-  value: (...args: Args) => unknown
-): value is (...args: Args) => Generator<unknown, unknown, unknown> =>
-  value.constructor?.name === 'GeneratorFunction';
+export const isGeneratorFunction = (
+  value: unknown
+): value is (...args: any[]) => Generator<unknown, unknown, unknown> =>
+  typeof value === 'function' && value.constructor?.name === 'GeneratorFunction';
