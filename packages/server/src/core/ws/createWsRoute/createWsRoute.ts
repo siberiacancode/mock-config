@@ -400,6 +400,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
             type: 'ws',
             event: 'error'
           },
+          error,
           interceptors: matchedArtifact.componentInterceptors,
           socket,
           broadcast,

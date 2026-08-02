@@ -6,13 +6,14 @@ import { describe, expect, it, vi } from 'vitest';
 import type {
   BaseServerConfig,
   BaseUrl,
-  Interceptors,
+  Interceptor,
   RestMethod,
   RestRequestArtifact,
   RestRequestConfig
 } from '@/utils/types';
 
-import { urlJoin } from '@/utils/helpers';
+import { rest as restInterceptors } from '@/core/interceptors';
+import { parseCookie, urlJoin } from '@/utils/helpers';
 
 import { createRestRoute } from './createRestRoute';
 import { calculateRestRouteConfigWeight, prepareRestRequestArtifacts } from './helpers';
@@ -20,7 +21,7 @@ import { calculateRestRouteConfigWeight, prepareRestRequestArtifacts } from './h
 interface RestConfig {
   baseUrl?: BaseUrl;
   configs: RestRequestConfig[];
-  interceptors?: Interceptors;
+  interceptors?: Interceptor[];
 }
 
 const createServer = (
@@ -31,8 +32,11 @@ const createServer = (
   const { baseUrl, rest, interceptors } = mockServerConfig;
   const server = express();
 
+  // ✅ important: contextMiddleware does it in real server, tests use bare express app
   server.use((request, _, next) => {
     request.context = { orm: {}, broadcast: vi.fn() };
+    request.queries = request.query as Record<string, string | string[]>;
+    request.cookies = parseCookie(request.headers.cookie ?? '');
     next();
   });
 
@@ -49,14 +53,8 @@ const createServer = (
             path: config.path,
             config: route,
             weight: calculateRestRouteConfigWeight(route),
-            serverResponseInterceptor: interceptors?.response,
-            serverRequestInterceptor: interceptors?.request,
-            requestResponseInterceptor: config.interceptors?.response,
-            requestRequestInterceptor: config.interceptors?.request,
-            componentResponseInterceptor: undefined,
-            componentRequestInterceptor: undefined,
-            routeResponseInterceptor: route.interceptors?.response,
-            routeRequestInterceptor: route.interceptors?.request
+            componentInterceptors: rest.interceptors,
+            serverInterceptors: interceptors
           });
         });
 
@@ -506,12 +504,19 @@ describe('createRestRoutes: interceptors', () => {
     expect(response.body).toStrictEqual({ source: 'static' });
   });
 
-  it('Should call request interceptors in order: request -> route', async () => {
-    const routeInterceptor = vi.fn();
-    const requestInterceptor = vi.fn();
+  it('Should call interceptors in order: component request -> component response -> server response', async () => {
+    const componentRequestInterceptor = vi.fn();
+    const componentResponseInterceptor = vi.fn((data) => data);
+    const serverResponseInterceptor = vi.fn((data) => data);
 
     const server = createServer({
+      // ✅ important: server request interceptors are called by middleware, not by route
+      interceptors: [restInterceptors.response.post(serverResponseInterceptor)],
       rest: {
+        interceptors: [
+          restInterceptors.request.post(componentRequestInterceptor),
+          restInterceptors.response.post(componentResponseInterceptor)
+        ],
         configs: [
           {
             path: '/users',
@@ -524,24 +529,7 @@ describe('createRestRoutes: interceptors', () => {
                     key2: 'value2'
                   }
                 },
-                data: { name: 'John', surname: 'Doe' },
-                interceptors: { request: routeInterceptor }
-              }
-            ],
-            interceptors: { request: requestInterceptor }
-          },
-          {
-            path: '/settings',
-            method: 'post',
-            routes: [
-              {
-                entities: {
-                  body: {
-                    key1: 'value1',
-                    key2: 'value2'
-                  }
-                },
-                data: { name: 'John', surname: 'Smith' }
+                data: { name: 'John', surname: 'Doe' }
               }
             ]
           }
@@ -553,26 +541,15 @@ describe('createRestRoutes: interceptors', () => {
       .post('/users')
       .set('Content-Type', 'application/json')
       .send({ key1: 'value1', key2: 'value2' });
-    expect(requestInterceptor).toBeCalledTimes(1);
-    expect(routeInterceptor).toBeCalledTimes(1);
-    expect(requestInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
-      routeInterceptor.mock.invocationCallOrder[0]
+
+    expect(componentRequestInterceptor).toBeCalledTimes(1);
+    expect(componentResponseInterceptor).toBeCalledTimes(1);
+    expect(serverResponseInterceptor).toBeCalledTimes(1);
+    expect(componentRequestInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
+      componentResponseInterceptor.mock.invocationCallOrder[0]
     );
-
-    // ✅ important:
-    // request interceptor called when path and method is matched
-    await request(server)
-      .post('/users')
-      .set('Content-Type', 'application/json')
-      .send({ key3: 'value3', key4: 'value4' });
-    expect(requestInterceptor).toBeCalledTimes(1);
-    expect(routeInterceptor).toBeCalledTimes(1);
-
-    await request(server)
-      .post('/settings')
-      .set('Content-Type', 'application/json')
-      .send({ key1: 'value1', key2: 'value2' });
-    expect(requestInterceptor).toBeCalledTimes(1);
-    expect(routeInterceptor).toBeCalledTimes(1);
+    expect(componentResponseInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
+      serverResponseInterceptor.mock.invocationCallOrder[0]
+    );
   });
 });

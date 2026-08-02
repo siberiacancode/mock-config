@@ -1,312 +1,152 @@
-import type { Request, Response } from 'express';
+import type { WebSocket } from 'ws';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ResponseInterceptor } from '@/utils/types';
+import type { WsFrame } from '@/utils/types';
 
-import { callResponseInterceptors } from './callResponseInterceptors';
+import { graphql, ws } from '@/core/interceptors';
 
-const createRequest = (value: object) =>
-  ({
-    context: { orm: {} },
-    ...value
-  }) as Request;
+import { callWsResponseInterceptors } from './callWsResponseInterceptors';
 
-describe('callResponseInterceptors: order of calls', () => {
-  it('Should call all passed response interceptors in order: route -> request -> api -> server', async () => {
-    const initialData = '';
-    const request = createRequest({});
-    const response = {} as Response;
-    const routeInterceptor = vi.fn((data) => `${data}routeInterceptor;`);
-    const requestInterceptor = vi.fn((data) => `${data}requestInterceptor;`);
+const socket = {} as WebSocket;
+const broadcast = vi.fn();
+const send = vi.fn();
+
+const frame: WsFrame = {
+  data: { type: 'ping' },
+  isBinary: false,
+  raw: '{"type":"ping"}'
+};
+
+describe('callWsResponseInterceptors: order of calls', () => {
+  it('Should call all passed response interceptors in order: component -> server', async () => {
     const componentInterceptor = vi.fn((data) => `${data}componentInterceptor;`);
     const serverInterceptor = vi.fn((data) => `${data}serverInterceptor`);
 
     expect(
-      await callResponseInterceptors({
-        data: initialData,
-        request,
-        response
+      await callWsResponseInterceptors({
+        data: '',
+        meta: { type: 'ws', event: 'open' },
+        socket,
+        broadcast,
+        send
       })
     ).toBe('');
-    expect(routeInterceptor).toBeCalledTimes(0);
-    expect(requestInterceptor).toBeCalledTimes(0);
     expect(componentInterceptor).toBeCalledTimes(0);
     expect(serverInterceptor).toBeCalledTimes(0);
 
     expect(
-      await callResponseInterceptors({
-        data: initialData,
-        request,
-        response,
-        interceptors: {
-          routeInterceptor,
-          componentInterceptor,
-          requestInterceptor,
-          serverInterceptor
-        }
+      await callWsResponseInterceptors({
+        data: '',
+        meta: { type: 'ws', event: 'open' },
+        componentInterceptors: [ws.response.open(componentInterceptor)],
+        serverInterceptors: [ws.response.open(serverInterceptor)],
+        socket,
+        broadcast,
+        send
       })
-    ).toBe('routeInterceptor;requestInterceptor;componentInterceptor;serverInterceptor');
-    expect(routeInterceptor).toBeCalledTimes(1);
-    expect(requestInterceptor).toBeCalledTimes(1);
+    ).toBe('componentInterceptor;serverInterceptor');
     expect(componentInterceptor).toBeCalledTimes(1);
     expect(serverInterceptor).toBeCalledTimes(1);
-
-    expect(routeInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
-      requestInterceptor.mock.invocationCallOrder[0]
-    );
-    expect(requestInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
-      componentInterceptor.mock.invocationCallOrder[0]
-    );
     expect(componentInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
       serverInterceptor.mock.invocationCallOrder[0]
     );
   });
 });
 
-describe('callResponseInterceptors: params functions', () => {
-  it('Should correctly get header from request.headers when use getRequestHeader param', async () => {
-    const data = null;
-    const request = createRequest({ headers: { name: 'value' } });
-    const response = {};
+describe('callWsResponseInterceptors: interceptors filtering', () => {
+  it('Should call only interceptors matched by event', async () => {
+    const allInterceptor = vi.fn((data) => data);
+    const closeInterceptor = vi.fn((data) => data);
+    const openInterceptor = vi.fn((data) => data);
 
-    const getCookieRouteInterceptor: ResponseInterceptor = (data, { getRequestHeader }) => {
-      expect(getRequestHeader('name')).toBe('value');
-      return data;
-    };
-    await callResponseInterceptors({
-      data,
-      request,
-      response: response as Response,
-      interceptors: {
-        routeInterceptor: getCookieRouteInterceptor
-      }
+    await callWsResponseInterceptors({
+      data: { key: 'value' },
+      meta: { type: 'ws', event: 'close' },
+      componentInterceptors: [
+        ws.response.all(allInterceptor),
+        ws.response.close(closeInterceptor),
+        ws.response.open(openInterceptor)
+      ],
+      socket,
+      broadcast,
+      send
+    });
+
+    expect(allInterceptor).toBeCalledTimes(1);
+    expect(closeInterceptor).toBeCalledTimes(1);
+    expect(openInterceptor).toBeCalledTimes(0);
+  });
+
+  it('Should call graphql subscription interceptors for graphql-ws message', async () => {
+    const subscriptionInterceptor = vi.fn((data) => data);
+
+    await callWsResponseInterceptors({
+      data: { key: 'value' },
+      meta: { type: 'ws', event: 'message', messageType: 'graphql-ws' },
+      componentInterceptors: [graphql.response.subscription(subscriptionInterceptor)],
+      socket,
+      broadcast,
+      send
+    });
+
+    expect(subscriptionInterceptor).toBeCalledTimes(1);
+  });
+});
+
+describe('callWsResponseInterceptors: params functions', () => {
+  it('Should correctly provide frame for message event', async () => {
+    const interceptor = vi.fn((data) => data);
+
+    await callWsResponseInterceptors({
+      data: { key: 'value' },
+      meta: { type: 'ws', event: 'message', messageType: 'raw' },
+      frame,
+      componentInterceptors: [ws.response.message(interceptor)],
+      socket,
+      broadcast,
+      send
+    });
+
+    expect(interceptor.mock.calls[0][1].frame).toStrictEqual(frame);
+  });
+
+  it('Should correctly provide code and reason for close event', async () => {
+    const interceptor = vi.fn((data) => data);
+
+    await callWsResponseInterceptors({
+      data: { key: 'value' },
+      meta: { type: 'ws', event: 'close' },
+      code: 1000,
+      reason: 'normal closure',
+      componentInterceptors: [ws.response.close(interceptor)],
+      socket,
+      broadcast,
+      send
+    });
+
+    expect(interceptor.mock.calls[0][1]).toMatchObject({
+      code: 1000,
+      reason: 'normal closure'
     });
   });
 
-  it('Should correctly get headers property from request when use getRequestHeaders param', async () => {
-    const data = null;
-    const request = createRequest({ headers: { name: 'value' } });
-    const response = {};
+  it('Should correctly provide socket, send, broadcast and setDelay', async () => {
+    const interceptor = vi.fn((data) => data);
 
-    const getCookieRouteInterceptor: ResponseInterceptor = (data, { getRequestHeaders }) => {
-      expect(getRequestHeaders()).toBe(request.headers);
-      return data;
-    };
-    await callResponseInterceptors({
-      data,
-      request,
-      response: response as Response,
-      interceptors: {
-        routeInterceptor: getCookieRouteInterceptor
-      }
+    await callWsResponseInterceptors({
+      data: { key: 'value' },
+      meta: { type: 'ws', event: 'open' },
+      componentInterceptors: [ws.response.open(interceptor)],
+      socket,
+      broadcast,
+      send
     });
-  });
 
-  it('Should correctly call response getHeader method when use getResponseHeader param', async () => {
-    const data = null;
-    const request = createRequest({});
-    const response = { getHeader: vi.fn() };
-
-    const getHeaderRouteInterceptor: ResponseInterceptor = (data, { getResponseHeader }) => {
-      getResponseHeader('header');
-      return data;
-    };
-    await callResponseInterceptors({
-      data,
-      request,
-      response: response as unknown as Response,
-      interceptors: {
-        routeInterceptor: getHeaderRouteInterceptor
-      }
-    });
-    expect(response.getHeader).toHaveBeenCalledWith('header');
-    expect(response.getHeader).toHaveBeenCalledTimes(1);
-  });
-
-  it('Should correctly call response getHeaders method when use getResponseHeaders param', async () => {
-    const data = null;
-    const request = createRequest({});
-    const response = { getHeaders: vi.fn() };
-
-    const getHeadersRouteInterceptor: ResponseInterceptor = (data, { getResponseHeaders }) => {
-      getResponseHeaders();
-      return data;
-    };
-    await callResponseInterceptors({
-      data,
-      request,
-      response: response as unknown as Response,
-      interceptors: {
-        routeInterceptor: getHeadersRouteInterceptor
-      }
-    });
-    expect(response.getHeaders).toHaveBeenCalledWith();
-    expect(response.getHeaders).toHaveBeenCalledTimes(1);
-  });
-
-  it('Should correctly call response set method when use setHeader param', async () => {
-    const data = null;
-    const request = createRequest({});
-    const response = { set: vi.fn() };
-
-    const setHeaderRouteInterceptor: ResponseInterceptor = (data, { setHeader }) => {
-      setHeader('name', 'value');
-      return data;
-    };
-    await callResponseInterceptors({
-      data,
-      request,
-      response: response as unknown as Response,
-      interceptors: {
-        routeInterceptor: setHeaderRouteInterceptor
-      }
-    });
-    expect(response.set).toHaveBeenCalledWith('name', 'value');
-    expect(response.set).toHaveBeenCalledTimes(1);
-  });
-
-  it('Should correctly call response append method when use appendHeader param', async () => {
-    const data = null;
-    const request = createRequest({});
-    const response = { append: vi.fn() };
-
-    const appendHeaderRouteInterceptor: ResponseInterceptor = (data, { appendHeader }) => {
-      appendHeader('name', 'value');
-      return data;
-    };
-    await callResponseInterceptors({
-      data,
-      request,
-      response: response as unknown as Response,
-      interceptors: {
-        routeInterceptor: appendHeaderRouteInterceptor
-      }
-    });
-    expect(response.append).toHaveBeenCalledWith('name', 'value');
-    expect(response.append).toHaveBeenCalledTimes(1);
-  });
-
-  it('Should correctly set statusCode into response when use setStatusCode param', async () => {
-    const data = null;
-    const request = createRequest({});
-    const response = {} as Response;
-
-    const setStatusCodeRouteInterceptor: ResponseInterceptor = (data, { setStatusCode }) => {
-      setStatusCode(204);
-      return data;
-    };
-    await callResponseInterceptors({
-      data,
-      request,
-      response,
-      interceptors: {
-        routeInterceptor: setStatusCodeRouteInterceptor
-      }
-    });
-    expect(response.statusCode).toBe(204);
-  });
-
-  it('Should correctly get cookie from request.cookies object when use getCookie param', async () => {
-    const data = null;
-    const request = createRequest({ cookies: { name: 'value' } });
-    const response = {};
-
-    const getCookieRouteInterceptor: ResponseInterceptor = (data, { getCookie }) => {
-      expect(getCookie('name')).toBe('value');
-      return data;
-    };
-    await callResponseInterceptors({
-      data,
-      request,
-      response: response as Response,
-      interceptors: {
-        routeInterceptor: getCookieRouteInterceptor
-      }
-    });
-  });
-
-  it('Should correctly call response cookie method with/without options when use setCookie param', async () => {
-    const data = null;
-    const request = createRequest({});
-    const response = { cookie: vi.fn() };
-
-    const setCookieWithoutOptionsRouteInterceptor: ResponseInterceptor = (data, { setCookie }) => {
-      setCookie('name', 'value');
-      return data;
-    };
-    await callResponseInterceptors({
-      data,
-      request,
-      response: response as unknown as Response,
-      interceptors: {
-        routeInterceptor: setCookieWithoutOptionsRouteInterceptor
-      }
-    });
-    expect(response.cookie).toHaveBeenCalledWith('name', 'value');
-    expect(response.cookie).toHaveBeenCalledTimes(1);
-
-    response.cookie.mockClear();
-
-    const setCookieWithOptionsRouteInterceptor: ResponseInterceptor = (data, { setCookie }) => {
-      setCookie('name', 'value', { path: '/your/path' });
-      return data;
-    };
-    await callResponseInterceptors({
-      data,
-      request,
-      response: response as unknown as Response,
-      interceptors: {
-        routeInterceptor: setCookieWithOptionsRouteInterceptor
-      }
-    });
-    expect(response.cookie).toHaveBeenCalledWith('name', 'value', {
-      path: '/your/path'
-    });
-    expect(response.cookie).toBeCalledTimes(1);
-  });
-
-  it('Should correctly call response clearCookie method when use clearCookie param', async () => {
-    const data = null;
-    const request = createRequest({});
-    const response = { clearCookie: vi.fn() };
-
-    const clearCookieRouteInterceptor: ResponseInterceptor = (data, { clearCookie }) => {
-      clearCookie('name', { path: '/your/path' });
-      return data;
-    };
-    await callResponseInterceptors({
-      data,
-      request,
-      response: response as unknown as Response,
-      interceptors: {
-        routeInterceptor: clearCookieRouteInterceptor
-      }
-    });
-    expect(response.clearCookie).toHaveBeenCalledWith('name', {
-      path: '/your/path'
-    });
-    expect(response.clearCookie).toHaveBeenCalledTimes(1);
-  });
-
-  it('Should correctly call response attachment method when use attachment param', async () => {
-    const data = null;
-    const request = createRequest({});
-    const response = { attachment: vi.fn() };
-
-    const attachmentRouteInterceptor: ResponseInterceptor = (data, { attachment }) => {
-      attachment('filename');
-      return data;
-    };
-    await callResponseInterceptors({
-      data,
-      request,
-      response: response as unknown as Response,
-      interceptors: {
-        routeInterceptor: attachmentRouteInterceptor
-      }
-    });
-    expect(response.attachment).toHaveBeenCalledWith('filename');
-    expect(response.attachment).toHaveBeenCalledTimes(1);
+    const params = interceptor.mock.calls[0][1];
+    expect(params.socket).toBe(socket);
+    expect(params.send).toBe(send);
+    expect(params.broadcast).toBe(broadcast);
+    expect(typeof params.setDelay).toBe('function');
   });
 });
