@@ -2,7 +2,13 @@ import type { Buffer } from 'node:buffer';
 import type { IncomingMessage } from 'node:http';
 import type { WebSocket } from 'ws';
 
-import type { MappedEntity } from './entities';
+import type {
+  MappedEntity,
+  WsCloseCodeEntity,
+  WsCloseReasonEntity,
+  WsDataEntity,
+  WsIsBinaryEntity
+} from './entities';
 import type { GraphQLIdentifier, GraphQLTransportWsOperationType } from './graphql';
 import type { GraphqlTransportWsRouteConfig } from './graphql-transport-ws';
 import type { Interceptor } from './interceptors';
@@ -27,10 +33,22 @@ export interface WsSettings {
   readonly delay?: number;
 }
 
+export type WsCloseEntityName = 'code' | 'reason';
+export interface WsCloseEntitiesByEntityName {
+  code?: WsCloseCodeEntity;
+  reason?: WsCloseReasonEntity;
+}
+
 export type WsConnectionEntityName = 'cookies' | 'headers' | 'queries';
 export type WsConnectionEntitiesByEntityName = {
   [EntityName in WsConnectionEntityName]?: MappedEntity;
 };
+
+export type WsRawEntityName = 'data' | 'isBinary';
+export interface WsRawEntitiesByEntityName {
+  data?: WsDataEntity;
+  isBinary?: WsIsBinaryEntity;
+}
 
 export interface WsCloseParams {
   code: number;
@@ -69,8 +87,9 @@ export type WsMessageParams = WsFrame & {
 };
 export type WsDataResponse = (params: WsMessageParams) => MaybePromise<Data>;
 
-interface WsCloseRouteConfig {
+export interface WsCloseRouteConfig {
   data: WsCloseDataResponse;
+  entities?: WsCloseEntitiesByEntityName;
   settings?: WsSettings;
 }
 export interface WsConnectionRouteConfig {
@@ -81,10 +100,16 @@ interface WsErrorRouteConfig {
   data: WsErrorDataResponse;
   settings?: WsSettings;
 }
-interface WsRawRouteConfig {
+export interface WsRawRouteConfig {
   data: WsDataResponse;
+  entities?: WsRawEntitiesByEntityName;
   settings?: WsSettings;
 }
+export type WsRouteConfig =
+  | WsCloseRouteConfig
+  | WsConnectionRouteConfig
+  | WsErrorRouteConfig
+  | WsRawRouteConfig;
 
 interface WsCloseRequestConfig {
   routes: WsCloseRouteConfig[];

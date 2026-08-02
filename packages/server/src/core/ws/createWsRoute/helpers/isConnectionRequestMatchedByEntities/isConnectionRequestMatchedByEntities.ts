@@ -6,7 +6,7 @@ import { isComparator, resolveEntityValues } from '@/utils/helpers';
 
 import { equals } from '../../../../entities';
 
-export const isRequestMatchedByEntities = (
+export const isConnectionRequestMatchedByEntities = (
   request: IncomingMessage,
   entities: ConnectionWsRequestArtifact['config']['entities']
 ) => {

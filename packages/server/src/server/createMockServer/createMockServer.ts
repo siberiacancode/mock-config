@@ -39,6 +39,7 @@ import {
   addTaskInWsQueue,
   broadcastWsData,
   calculateGraphqlTransportWsRouteConfigWeight,
+  calculateWsRouteConfigWeight,
   createWsRoute,
   prepareWsRequestArtifacts,
   sendWsData
@@ -162,7 +163,7 @@ export const createMockServer = (
               baseUrl,
               type: config.type,
               config: route,
-              weight: 0,
+              weight: calculateWsRouteConfigWeight(route),
               serverInterceptors,
               componentInterceptors: component.interceptors
             } as WsRequestArtifact);
