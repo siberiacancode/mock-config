@@ -1,6 +1,8 @@
 import { useWebSocket } from '@siberiacancode/reactuse';
 import { useState } from 'react';
 
+import { mergeComponentConfigs } from '@/utils/helpers';
+
 const DEFAULT_SETTINGS: MockServerSettings = { baseUrl: '/', port: 31299 };
 
 const parseMockServerConfig = (config: MockServerConfig) => {
@@ -9,7 +11,7 @@ const parseMockServerConfig = (config: MockServerConfig) => {
 
   return {
     settings,
-    components: settings ? components : (config as MockServerComponent[])
+    components: mergeComponentConfigs(settings ? components : (config as MockServerComponent[]))
   };
 };
 

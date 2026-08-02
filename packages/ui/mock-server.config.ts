@@ -1,6 +1,6 @@
-import type { MockServerConfig, ResponseInterceptorParams, WsParams } from 'mock-config-server';
+import type { ResponseInterceptorParams } from 'mock-config-server';
 
-import { startsWith } from 'mock-config-server';
+import { graphql, mock, rest, startsWith, ws } from 'mock-config-server';
 
 const USERS = [
   {
@@ -42,7 +42,8 @@ interface Post {
 const john: User = { id: 1, name: 'John' };
 const post: Post = { id: 10, author: john };
 john.posts = [post];
-const mockServerConfig: MockServerConfig = [
+
+export default mock(
   {
     baseUrl: '/',
     port: 31299
@@ -50,161 +51,89 @@ const mockServerConfig: MockServerConfig = [
   {
     name: 'auth',
     configs: [
-      {
-        method: 'post',
-        path: '/auth/login',
-        routes: [
-          {
-            data: { message: 'Invalid credentials' },
-            settings: { status: 401 }
-          },
-          {
-            data: { accessToken: ACCESS_TOKEN, refreshToken: 'mock-refresh-token', user: USERS[0] },
-            entities: {
-              body: { email: 'john.doe@example.com', password: 'qwerty123' }
-            }
-          }
-        ]
-      },
-      {
-        method: 'get',
-        path: '/auth/me',
-        routes: [
-          {
-            data: { message: 'Unauthorized' },
-            settings: { status: 401 }
-          },
-          {
-            data: john,
-            entities: {
-              headers: {
-                authorization: startsWith('Bearer ')
-              }
-            }
-          }
-        ]
-      },
-      {
-        method: 'post',
-        path: '/auth/logout',
-        routes: [{ data: null, settings: { status: 204 } }]
-      }
+      rest.post('/auth/login', { message: 'Invalid credentials' }, { status: 401 }),
+      rest.post('/auth/login', {
+        response: {
+          accessToken: ACCESS_TOKEN,
+          refreshToken: 'mock-refresh-token',
+          user: USERS[0]
+        },
+        match: {
+          body: { email: 'john.doe@example.com', password: 'qwerty123' }
+        }
+      }),
+
+      rest.get('/auth/me', { message: 'Unauthorized' }, { status: 401 }),
+      rest.get('/auth/me', {
+        response: john,
+        match: {
+          headers: { authorization: startsWith('Bearer ') }
+        }
+      }),
+
+      rest.post('/auth/logout', null, { status: 204 })
     ]
   },
   {
     name: 'users',
-    configs: [
-      {
-        method: 'get',
-        path: '/users',
-        interceptors: {
-          response: (data: unknown, params: ResponseInterceptorParams) => {
-            params.setHeader('x-total-count', '3');
-            return data;
-          }
-        },
-        routes: [
-          {
-            data: { items: USERS, page: 1, limit: 10, total: USERS.length }
-          },
-          {
-            data: { items: [USERS[2]], page: 2, limit: 2, total: USERS.length },
-            entities: {
-              queries: { page: '2', limit: '2' }
-            }
-          }
-        ]
-      },
-      {
-        method: 'get',
-        path: '/users/:id',
-        routes: [
-          {
-            data: { message: 'User not found' },
-            settings: { status: 404 }
-          },
-          {
-            data: USERS[0],
-            entities: { params: { id: '1' } }
-          }
-        ]
-      },
-      {
-        method: 'post',
-        path: '/users',
-        routes: [
-          {
-            data: { id: 4, name: 'New User', email: 'new.user@example.com', role: 'user' },
-            settings: { status: 201 }
-          }
-        ]
-      },
-      {
-        method: 'delete',
-        path: '/users/:id',
-        routes: [{ data: null, settings: { status: 204 } }]
+    interceptors: {
+      response: (data: unknown, params: ResponseInterceptorParams) => {
+        params.setHeader('x-total-count', String(USERS.length));
+        return data;
       }
+    },
+    configs: [
+      rest.get('/users', { items: USERS, page: 1, limit: 10, total: USERS.length }),
+      rest.get('/users', {
+        response: { items: [USERS[2]], page: 2, limit: 2, total: USERS.length },
+        match: {
+          queries: { page: '2', limit: '2' }
+        }
+      }),
+
+      rest.get('/users/:id', { message: 'User not found' }, { status: 404 }),
+      rest.get('/users/:id', {
+        response: USERS[0],
+        match: {
+          params: { id: '1' }
+        }
+      }),
+
+      rest.post(
+        '/users',
+        { id: 4, name: 'New User', email: 'new.user@example.com', role: 'user' },
+        { status: 201 }
+      ),
+
+      rest.delete('/users/:id', null, { status: 204 })
     ]
   },
   {
     name: 'graphql',
     configs: [
-      {
-        operationType: 'query',
-        identifier: 'GetUser',
-        routes: [
-          {
-            data: { data: { user: null } }
-          },
-          {
-            data: { data: { user: { id: '1', name: 'John Doe', email: 'john.doe@example.com' } } },
-            entities: {
-              variables: { id: '1' }
-            }
-          }
-        ]
-      },
-      {
-        operationType: 'mutation',
-        identifier: 'CreateUser',
-        routes: [
-          {
-            data: { data: { createUser: { id: '4', name: 'New User' } } }
-          }
-        ]
-      }
+      graphql.query('GetUser', { data: { user: null } }),
+      graphql.query('GetUser', {
+        response: {
+          data: { user: { id: '1', name: 'John Doe', email: 'john.doe@example.com' } }
+        },
+        match: {
+          variables: { id: '1' }
+        }
+      }),
+
+      graphql.mutation('CreateUser', { data: { createUser: { id: '4', name: 'New User' } } })
     ]
   },
   {
     name: 'websockets',
+    baseUrl: '/ws/users',
     configs: [
-      {
-        operationType: 'subscription',
-        identifier: 'OnUserCreated',
-        routes: [
-          {
-            data: { data: { onUserCreated: { id: '4', name: 'New User' } } }
-          }
-        ]
-      },
-      {
-        type: 'connection',
-        routes: [
-          {
-            data: () => ({ type: 'welcome', message: 'connected to mock ws' })
-          }
-        ]
-      },
-      {
-        type: 'raw',
-        routes: [
-          {
-            data: (params: WsParams) => ({ type: 'echo', payload: String(params.raw) })
-          }
-        ]
-      }
+      graphql.subscription('OnUserCreated', {
+        data: { onUserCreated: { id: '4', name: 'New User' } }
+      }),
+
+      ws.connection(() => ({ type: 'welcome', message: 'connected to mock ws' })),
+      ws.message((params) => ({ type: 'echo', payload: String(params.raw) }))
     ]
   }
-];
-
-export default mockServerConfig;
+);
