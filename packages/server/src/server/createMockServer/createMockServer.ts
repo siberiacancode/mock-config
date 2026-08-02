@@ -11,9 +11,9 @@ import type {
   MockServerComponent,
   MockServerConfig,
   RestRequestArtifact,
-  WsFrame,
   WsInterceptorMeta,
-  WsRequestArtifact
+  WsRequestArtifact,
+  WsRequestInterceptorHandlerParams
 } from '@/utils/types';
 
 import { createDatabaseRoutes } from '@/core/database';
@@ -187,21 +187,6 @@ export const createMockServer = (
   server.listen = ((...args: Parameters<typeof originalListen>) => {
     const httpServer = originalListen(...args);
     httpServer.on('upgrade', async (request, socket, head) => {
-      // if (serverInterceptors) {
-      //   const broadcast = (data: unknown) => broadcastWsData(server, data);
-      //   const send = (data: unknown) => sendWsData(socket, data);
-      //
-      //   await callWsRequestInterceptors({
-      //     meta: {
-      //       type: 'ws',
-      //       event: 'open'
-      //     },
-      //     interceptors: serverInterceptors,
-      //     socket,
-      //     broadcast,
-      //     send
-      //   });
-      // }
       const [requestPathname] = request.url!.split('?');
       const shouldHandleUpgrade = [...wsBaseUrls].some((baseUrl) => {
         if (baseUrl === '/') return true;
@@ -226,11 +211,14 @@ export const createMockServer = (
       const broadcast = (data: unknown) => broadcastWsData(ws, data);
       const send = (data: unknown) => sendWsData(socket, data);
 
-      const callServerRequestInterceptors = (meta: WsInterceptorMeta, frame?: WsFrame) =>
+      const callServerRequestInterceptors = (
+        meta: WsInterceptorMeta,
+        params?: Pick<WsRequestInterceptorHandlerParams, 'code' | 'error' | 'frame' | 'reason'>
+      ) =>
         addTaskInWsQueue(socket, () =>
           callWsRequestInterceptors({
             meta,
-            frame,
+            ...params,
             interceptors: serverInterceptors,
             socket,
             broadcast,
@@ -249,12 +237,19 @@ export const createMockServer = (
             event: 'message',
             messageType: graphqlTransportWsInput ? 'graphql-ws' : 'raw'
           },
-          createWsFrame(raw, isBinary)
+          { frame: createWsFrame(raw, isBinary) }
         );
       });
 
-      socket.on('close', () => callServerRequestInterceptors({ type: 'ws', event: 'close' }));
-      socket.on('error', () => callServerRequestInterceptors({ type: 'ws', event: 'error' }));
+      socket.on('close', (code, reason) =>
+        callServerRequestInterceptors(
+          { type: 'ws', event: 'close' },
+          { code, reason: reason.toString() }
+        )
+      );
+      socket.on('error', (error) =>
+        callServerRequestInterceptors({ type: 'ws', event: 'error' }, { error })
+      );
 
       await callServerRequestInterceptors({ type: 'ws', event: 'open' });
     });

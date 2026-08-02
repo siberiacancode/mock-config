@@ -332,11 +332,11 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       sendGraphqlTransportWsData(socket, operationId, data as GraphqlTransportWsExecutionResult);
     };
 
-    const handleClose = async (code: number, reason: Buffer) => {
-      const closeParams = { code, reason: reason.toString() };
+    const handleClose = async (code: number, reasonBuffer: Buffer) => {
+      const reason = reasonBuffer.toString();
 
       const matchedArtifact = closeWsRequestArtifacts.find((artifact) =>
-        isCloseRequestMatchedByEntities(closeParams, artifact.config.entities)
+        isCloseRequestMatchedByEntities({ code, reason }, artifact.config.entities)
       );
 
       if (!matchedArtifact) return;
@@ -347,6 +347,8 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
             type: 'ws',
             event: 'close'
           },
+          code,
+          reason,
           interceptors: matchedArtifact.componentInterceptors,
           socket,
           broadcast,
@@ -357,7 +359,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       const params: WsCloseParams = {
         broadcast,
         code,
-        reason: closeParams.reason,
+        reason,
         request,
         socket,
         setDelay
@@ -371,6 +373,8 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           type: 'ws',
           event: 'close'
         },
+        code,
+        reason,
         componentInterceptors: matchedArtifact.componentInterceptors,
         serverInterceptors: matchedArtifact.serverInterceptors,
         socket,
@@ -442,7 +446,9 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       addTaskInWsQueue(socket, () => handleMessage(raw, isBinary))
     );
 
-    socket.on('close', (code, reason) => addTaskInWsQueue(socket, () => handleClose(code, reason)));
+    socket.on('close', (code, reasonBuffer) =>
+      addTaskInWsQueue(socket, () => handleClose(code, reasonBuffer))
+    );
 
     socket.on('error', (error) => addTaskInWsQueue(socket, () => handleError(error)));
 

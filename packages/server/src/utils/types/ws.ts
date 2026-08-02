@@ -35,7 +35,6 @@ export interface WsSettings {
   readonly delay?: number;
 }
 
-export type WsCloseEntityName = 'code' | 'reason';
 export interface WsCloseEntitiesByEntityName {
   code?: WsCloseCodeEntity;
   reason?: WsCloseReasonEntity;
@@ -46,7 +45,6 @@ export type WsConnectionEntitiesByEntityName = {
   [EntityName in WsConnectionEntityName]?: MappedEntity;
 };
 
-export type WsRawEntityName = 'data' | 'isBinary';
 export interface WsRawEntitiesByEntityName {
   data?: WsDataEntity;
   isBinary?: WsIsBinaryEntity;

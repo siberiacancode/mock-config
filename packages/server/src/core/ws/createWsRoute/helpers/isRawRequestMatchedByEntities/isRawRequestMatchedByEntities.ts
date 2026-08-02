@@ -6,8 +6,6 @@ import { isComparator, resolveEntityValues } from '@/utils/helpers';
 
 import { equals } from '../../../../entities';
 
-const toText = (raw: WsFrame['raw']) => (typeof raw === 'string' ? raw : raw.toString('utf-8'));
-
 export const isRawRequestMatchedByEntities = (
   frame: WsFrame,
   entities: RawWsRequestArtifact['config']['entities']
@@ -29,12 +27,8 @@ export const isRawRequestMatchedByEntities = (
       return Buffer.isBuffer(frame.raw) && frame.raw.equals(valueOrComparator);
     }
 
-    /**
-     * Expected string is compared with the frame text as is, everything else is compared
-     * with the decoded frame data, so both `data: 'ping'` for `ping` frame and
-     * `data: { type: 'ping' }` for `{"type":"ping"}` frame are matched
-     */
-    const actualData = typeof valueOrComparator === 'string' ? toText(frame.raw) : frame.data;
+    const actualData =
+      typeof valueOrComparator === 'string' ? frame.raw.toString('utf-8') : frame.data;
 
     const comparator = isComparator(valueOrComparator)
       ? valueOrComparator

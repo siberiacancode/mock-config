@@ -21,17 +21,16 @@ describe('createWsFrame', () => {
   });
 
   it('Should keep binary frame as buffer', () => {
-    const raw = Buffer.from('{"type":"ping"}');
-    const frame = createWsFrame(raw, true);
-
-    expect(frame.isBinary).toBe(true);
-    expect(frame.raw).toBe(raw);
-    expect(frame.data).toStrictEqual({ type: 'ping' });
+    expect(createWsFrame(Buffer.from('{"type":"ping"}'), true)).toStrictEqual({
+      data: { type: 'ping' },
+      isBinary: true,
+      raw: Buffer.from('{"type":"ping"}')
+    });
   });
 
   it('Should fall back to text when frame is not a json', () => {
     expect(createWsFrame(Buffer.from([0x01, 0x02]), true).data).toBe(
-      Buffer.from([0x01, 0x02]).toString('utf-8')
+      Buffer.from([0x01, 0x02]).toString()
     );
   });
 });

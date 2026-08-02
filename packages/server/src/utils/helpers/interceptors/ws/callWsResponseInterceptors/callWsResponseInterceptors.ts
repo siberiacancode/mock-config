@@ -4,6 +4,7 @@ import type {
   Data,
   HttpResponseInterceptorHandlerParams,
   Interceptor,
+  WsCloseParams,
   WsFrame,
   WsInterceptorMeta,
   WsResponseInterceptor,
@@ -15,10 +16,12 @@ import { INTERCEPTOR_NAME } from '@/utils/constants';
 import { sleep } from '../../../sleep';
 
 interface CallWsResponseInterceptorsParams {
+  code?: WsCloseParams['code'];
   componentInterceptors?: Interceptor[];
   data: Data;
   frame?: WsFrame;
   meta: WsInterceptorMeta;
+  reason?: WsCloseParams['reason'];
   serverInterceptors?: Interceptor[];
   socket: WebSocket;
   broadcast: (data: unknown) => void;
@@ -26,10 +29,12 @@ interface CallWsResponseInterceptorsParams {
 }
 
 export const callWsResponseInterceptors = async ({
+  code,
   componentInterceptors = [],
   data,
   frame,
   meta,
+  reason,
   serverInterceptors = [],
   socket,
   broadcast,
@@ -40,7 +45,9 @@ export const callWsResponseInterceptors = async ({
   };
 
   const responseInterceptorFnParams: WsResponseInterceptorHandlerParams = {
-    ...frame,
+    code,
+    frame,
+    reason,
     setDelay,
     socket,
     send,
