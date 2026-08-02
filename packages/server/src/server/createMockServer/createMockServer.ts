@@ -11,6 +11,7 @@ import type {
   MockServerComponent,
   MockServerConfig,
   RestRequestArtifact,
+  WsFrame,
   WsInterceptorMeta,
   WsRequestArtifact
 } from '@/utils/types';
@@ -40,6 +41,7 @@ import {
   broadcastWsData,
   calculateGraphqlTransportWsRouteConfigWeight,
   calculateWsRouteConfigWeight,
+  createWsFrame,
   createWsRoute,
   prepareWsRequestArtifacts,
   sendWsData
@@ -224,10 +226,11 @@ export const createMockServer = (
       const broadcast = (data: unknown) => broadcastWsData(ws, data);
       const send = (data: unknown) => sendWsData(socket, data);
 
-      const callServerRequestInterceptors = (meta: WsInterceptorMeta) =>
+      const callServerRequestInterceptors = (meta: WsInterceptorMeta, frame?: WsFrame) =>
         addTaskInWsQueue(socket, () =>
           callWsRequestInterceptors({
             meta,
+            frame,
             interceptors: serverInterceptors,
             socket,
             broadcast,
@@ -240,11 +243,14 @@ export const createMockServer = (
           ? undefined
           : getGraphqlTransportWsInput(raw.toString());
 
-        await callServerRequestInterceptors({
-          type: 'ws',
-          event: 'message',
-          messageType: graphqlTransportWsInput ? 'graphql-ws' : 'raw'
-        });
+        await callServerRequestInterceptors(
+          {
+            type: 'ws',
+            event: 'message',
+            messageType: graphqlTransportWsInput ? 'graphql-ws' : 'raw'
+          },
+          createWsFrame(raw, isBinary)
+        );
       });
 
       socket.on('close', () => callServerRequestInterceptors({ type: 'ws', event: 'close' }));

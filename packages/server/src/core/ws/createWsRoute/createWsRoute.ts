@@ -16,7 +16,6 @@ import type {
   WsCloseParams,
   WsConnectionParams,
   WsErrorParams,
-  WsFrame,
   WsMessageParams,
   WsRequestArtifact
 } from '@/utils/types';
@@ -35,6 +34,7 @@ import { equals } from '../../entities';
 import {
   addTaskInWsQueue,
   broadcastWsData,
+  createWsFrame,
   isCloseRequestMatchedByEntities,
   isConnectionRequestMatchedByEntities,
   isRawRequestMatchedByEntities,
@@ -140,9 +140,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
     };
 
     const handleMessage = async (raw: RawData, isBinary: boolean) => {
-      const frame: WsFrame = isBinary
-        ? { isBinary: true, raw: raw as Buffer }
-        : { isBinary: false, raw: raw.toString() };
+      const frame = createWsFrame(raw, isBinary);
 
       const wsParams: WsMessageParams = {
         ...frame,
@@ -171,6 +169,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
               event: 'message',
               messageType: 'raw'
             },
+            frame,
             interceptors: matchedRawArtifact.componentInterceptors,
             socket,
             broadcast,
@@ -186,6 +185,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
             event: 'message',
             messageType: 'raw'
           },
+          frame,
           componentInterceptors: matchedRawArtifact.componentInterceptors,
           serverInterceptors: matchedRawArtifact.serverInterceptors,
           socket,
@@ -275,6 +275,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
             event: 'message',
             messageType: 'graphql-ws'
           },
+          frame,
           interceptors: matchedArtifact.componentInterceptors,
           socket,
           broadcast,
@@ -314,6 +315,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           event: 'message',
           messageType: 'graphql-ws'
         },
+        frame,
         componentInterceptors: matchedArtifact.componentInterceptors,
         serverInterceptors: matchedArtifact.serverInterceptors,
         socket,

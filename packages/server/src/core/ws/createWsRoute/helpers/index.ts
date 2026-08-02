@@ -2,6 +2,7 @@ export * from './addTaskInWsQueue/addTaskInWsQueue';
 export * from './broadcastWsData/broadcastWsData';
 export * from './calculateGraphqlTransportWsRouteConfigWeight/calculateGraphqlTransportWsRouteConfigWeight';
 export * from './calculateWsRouteConfigWeight/calculateWsRouteConfigWeight';
+export * from './createWsFrame/createWsFrame';
 export * from './isCloseRequestMatchedByEntities/isCloseRequestMatchedByEntities';
 export * from './isConnectionRequestMatchedByEntities/isConnectionRequestMatchedByEntities';
 export * from './isRawRequestMatchedByEntities/isRawRequestMatchedByEntities';

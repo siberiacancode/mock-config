@@ -8,7 +8,7 @@ import type { Logger, LoggerTokens } from './logger';
 import type { RestMethod } from './rest';
 import type { ApiType } from './shared';
 import type { LeafKeys, MaybePromise } from './utils';
-import type { WsEvent, WsMessageType } from './ws';
+import type { WsEvent, WsFrame, WsMessageType } from './ws';
 
 type InterceptorCookieValue = string | undefined;
 type InterceptorHeaderValue = number | string | string[] | undefined;
@@ -50,6 +50,9 @@ export type HttpResponseInterceptorHandler<Data = any> = (
 ) => any;
 
 export interface WsRequestInterceptorHandlerParams {
+  data?: WsFrame['data'];
+  isBinary?: WsFrame['isBinary'];
+  raw?: WsFrame['raw'];
   socket: WebSocket;
   broadcast: <Response = unknown>(response: Response) => void;
   send: <Response = unknown>(response: Response) => void;
@@ -61,6 +64,9 @@ export type WsRequestInterceptorHandler = (
 ) => MaybePromise<void>;
 
 export interface WsResponseInterceptorHandlerParams {
+  data?: WsFrame['data'];
+  isBinary?: WsFrame['isBinary'];
+  raw?: WsFrame['raw'];
   socket: WebSocket;
   broadcast: <Response = unknown>(response: Response) => void;
   send: <Response = unknown>(response: Response) => void;

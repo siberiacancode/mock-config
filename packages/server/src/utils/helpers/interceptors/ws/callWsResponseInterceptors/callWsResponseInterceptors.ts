@@ -4,6 +4,7 @@ import type {
   Data,
   HttpResponseInterceptorHandlerParams,
   Interceptor,
+  WsFrame,
   WsInterceptorMeta,
   WsResponseInterceptor,
   WsResponseInterceptorHandlerParams
@@ -16,6 +17,7 @@ import { sleep } from '../../../sleep';
 interface CallWsResponseInterceptorsParams {
   componentInterceptors?: Interceptor[];
   data: Data;
+  frame?: WsFrame;
   meta: WsInterceptorMeta;
   serverInterceptors?: Interceptor[];
   socket: WebSocket;
@@ -26,6 +28,7 @@ interface CallWsResponseInterceptorsParams {
 export const callWsResponseInterceptors = async ({
   componentInterceptors = [],
   data,
+  frame,
   meta,
   serverInterceptors = [],
   socket,
@@ -37,6 +40,7 @@ export const callWsResponseInterceptors = async ({
   };
 
   const responseInterceptorFnParams: WsResponseInterceptorHandlerParams = {
+    ...frame,
     setDelay,
     socket,
     send,

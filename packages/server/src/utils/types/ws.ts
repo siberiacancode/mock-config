@@ -20,10 +20,12 @@ export type WsEvent = 'close' | 'error' | 'message' | 'open';
 export type WsMessageType = 'graphql-ws' | 'raw';
 
 export interface WsFrameBinary {
+  data: any;
   isBinary: true;
   raw: Buffer;
 }
 export interface WsFrameText {
+  data: any;
   isBinary: false;
   raw: string;
 }
