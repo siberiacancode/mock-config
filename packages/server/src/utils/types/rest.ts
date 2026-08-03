@@ -55,12 +55,22 @@ export interface RestParams<
   setStatusCode: (statusCode: number) => void;
 }
 
+export interface RestPollingItem<Method extends RestMethod = RestMethod> {
+  data: RestDataResponse<Method>;
+  time?: number;
+}
+
+export type RestDataResponseGenerator<Method extends RestMethod = RestMethod> = (
+  params: RestParams<Method>
+) => Generator<Data, Data | void, RestParams<Method>>;
+
 export type RestDataResponseFunction<Method extends RestMethod = RestMethod> = (
   params: RestParams<Method>
 ) => MaybePromise<Data>;
 export type RestDataResponse<Method extends RestMethod = RestMethod> =
   | Data
-  | RestDataResponseFunction<Method>;
+  | RestDataResponseFunction<Method>
+  | RestDataResponseGenerator<Method>;
 
 export type RestFileResponse = string;
 

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createQueueHandler } from './createQueueHandler';
+import { createPollingHandler } from './createPollingHandler';
 
 const createParams = () =>
   ({
@@ -11,16 +11,16 @@ const createParams = () =>
     next: vi.fn(() => null)
   }) as any;
 
-describe('createQueueHandler', () => {
+describe('createPollingHandler', () => {
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it('Should return 404 when queue is empty', async () => {
-    const queueHandler = createQueueHandler([]);
+  it('Should return 404 when polling is empty', async () => {
+    const pollingHandler = createPollingHandler([]);
     const params = createParams();
 
-    const result = await queueHandler(params);
+    const result = await pollingHandler(params);
 
     expect(params.next).toHaveBeenCalledTimes(1);
     expect(params.setStatusCode).not.toHaveBeenCalled();
@@ -28,16 +28,16 @@ describe('createQueueHandler', () => {
     expect(result).toBeNull();
   });
 
-  it('Should cycle through queue items without time', async () => {
-    const queueHandler = createQueueHandler([
+  it('Should cycle through polling items without time', async () => {
+    const pollingHandler = createPollingHandler([
       { data: { data: { value: 'first' } } },
       { data: { data: { value: 'second' } } }
     ]);
     const params = createParams();
 
-    const firstResult = await queueHandler(params);
-    const secondResult = await queueHandler(params);
-    const thirdResult = await queueHandler(params);
+    const firstResult = await pollingHandler(params);
+    const secondResult = await pollingHandler(params);
+    const thirdResult = await pollingHandler(params);
 
     expect(firstResult).toStrictEqual({ data: { value: 'first' } });
     expect(secondResult).toStrictEqual({ data: { value: 'second' } });
@@ -46,41 +46,41 @@ describe('createQueueHandler', () => {
 
   it('Should return the same timed item until timeout elapses', async () => {
     vi.useFakeTimers();
-    const queueHandler = createQueueHandler([
+    const pollingHandler = createPollingHandler([
       { data: { data: { value: 'first' } }, time: 2000 },
       { data: { data: { value: 'second' } } }
     ]);
     const params = createParams();
 
-    const firstResult = await queueHandler(params);
+    const firstResult = await pollingHandler(params);
 
     vi.advanceTimersByTime(1000);
-    const secondResult = await queueHandler(params);
+    const secondResult = await pollingHandler(params);
 
     vi.advanceTimersByTime(1000);
-    const thirdResult = await queueHandler(params);
+    const thirdResult = await pollingHandler(params);
 
     expect(firstResult).toStrictEqual({ data: { value: 'first' } });
     expect(secondResult).toStrictEqual({ data: { value: 'first' } });
     expect(thirdResult).toStrictEqual({ data: { value: 'second' } });
   });
 
-  it('Should not advance queue multiple times during one timeout window', async () => {
+  it('Should not advance polling multiple times during one timeout window', async () => {
     vi.useFakeTimers();
-    const queueHandler = createQueueHandler([
+    const pollingHandler = createPollingHandler([
       { data: { data: { value: 'first' } }, time: 1000 },
       { data: { data: { value: 'second' } } },
       { data: { data: { value: 'third' } } }
     ]);
     const params = createParams();
 
-    const firstResult = await queueHandler(params);
-    const secondResult = await queueHandler(params);
-    const thirdResult = await queueHandler(params);
+    const firstResult = await pollingHandler(params);
+    const secondResult = await pollingHandler(params);
+    const thirdResult = await pollingHandler(params);
 
     vi.advanceTimersByTime(1000);
-    const fourthResult = await queueHandler(params);
-    const fifthResult = await queueHandler(params);
+    const fourthResult = await pollingHandler(params);
+    const fifthResult = await pollingHandler(params);
 
     expect(firstResult).toStrictEqual({ data: { value: 'first' } });
     expect(secondResult).toStrictEqual({ data: { value: 'first' } });
@@ -89,19 +89,19 @@ describe('createQueueHandler', () => {
     expect(fifthResult).toStrictEqual({ data: { value: 'third' } });
   });
 
-  it('Should call function queue item with params and return its result', async () => {
-    const queueItemHandler = vi.fn().mockReturnValue({ value: 'handler' });
-    const queueHandler = createQueueHandler([
+  it('Should call function polling item with params and return its result', async () => {
+    const pollingItemHandler = vi.fn().mockReturnValue({ value: 'handler' });
+    const pollingHandler = createPollingHandler([
       {
-        data: queueItemHandler
+        data: pollingItemHandler
       }
     ]);
     const params = createParams();
 
-    const result = await queueHandler(params);
+    const result = await pollingHandler(params);
 
-    expect(queueItemHandler).toHaveBeenCalledWith(params);
-    expect(queueItemHandler).toHaveBeenCalledTimes(1);
+    expect(pollingItemHandler).toHaveBeenCalledWith(params);
+    expect(pollingItemHandler).toHaveBeenCalledTimes(1);
     expect(result).toStrictEqual({ value: 'handler' });
   });
 });
