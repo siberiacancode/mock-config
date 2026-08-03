@@ -1,113 +1,39 @@
 import { useParams } from '@tanstack/react-router';
-import { ArrowDownToDotIcon, ArrowUpFromDotIcon } from 'lucide-react';
+import { ArrowDownToDotIcon, ArrowUpFromDotIcon, PlayIcon } from 'lucide-react';
+import { useState } from 'react';
 
-import { MethodBadge, Tabs, TabsContent, TabsList, TabsTrigger, Typography } from '@/components';
+import {
+  EmptyState,
+  MethodBadge,
+  StatusBadge,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Typography
+} from '@/components';
 import { useConfig } from '@/utils/context';
-import { getConfigLabel, getConfigMethod } from '@/utils/helpers';
+import {
+  API_TYPE_LABELS,
+  getComponentName,
+  getConfigApiType,
+  getConfigLabel,
+  getConfigMethod,
+  getConfigTransport
+} from '@/utils/helpers';
 
-import { MatcherChip } from './MatcherChip';
+import type { RouteEntry } from './types';
 
-interface RouteEntry {
-  data?: unknown;
-  entities?: Record<string, unknown>;
-  interceptors?: { request?: unknown; response?: unknown };
-  settings?: { delay?: number; status?: number };
-}
-
-interface InterceptorEntry {
-  code: string;
-  level: string;
-  type: 'request' | 'response';
-}
-
-const isSerializedFunction = (value: unknown): value is string =>
-  typeof value === 'string' && value.includes('=>');
-
-interface RouteMatcher {
-  label: string;
-  value: string;
-}
-
-const getRouteMatchers = (route: RouteEntry): RouteMatcher[] => {
-  if (!route.entities) return [];
-
-  return Object.entries(route.entities).flatMap(([entityName, entityValue]) => {
-    if (isSerializedFunction(entityValue)) {
-      return [{ label: `${entityName} → comparator`, value: entityValue }];
-    }
-    if (typeof entityValue !== 'object' || entityValue === null) {
-      return [
-        {
-          label: `${entityName} = ${JSON.stringify(entityValue)}`,
-          value: JSON.stringify(entityValue, null, 2)
-        }
-      ];
-    }
-    if (entityName === 'body' || entityName === 'variables') {
-      return [
-        {
-          label: `${entityName} = ${JSON.stringify(entityValue)}`,
-          value: JSON.stringify(entityValue, null, 2)
-        }
-      ];
-    }
-
-    return Object.entries(entityValue).map(([key, value]) => {
-      if (isSerializedFunction(value)) {
-        return { label: `${entityName}.${key} → comparator`, value };
-      }
-      return {
-        label: `${entityName}.${key} = ${JSON.stringify(value)}`,
-        value: JSON.stringify(value, null, 2)
-      };
-    });
-  });
-};
-
-const formatRouteData = (data: unknown) => {
-  if (isSerializedFunction(data)) return data;
-  return JSON.stringify(data, null, 2) ?? 'undefined';
-};
-
-const getConfigApiType = (config: MockServerComponent['configs'][number]) => {
-  if ('method' in config) return 'rest';
-  if ('operationType' in config)
-    return config.operationType === 'subscription' ? 'graphql-ws' : 'graphql';
-  return 'ws';
-};
-
-const getInterceptorEntries = (
-  component: MockServerComponent,
-  config: MockServerComponent['configs'][number],
-  routes: RouteEntry[]
-) => {
-  const levels = [
-    { level: 'component', interceptors: component.interceptors },
-    { level: 'request', interceptors: 'interceptors' in config ? config.interceptors : undefined },
-    ...routes.map((route, routeIndex) => ({
-      level: `route #${routeIndex + 1}`,
-      interceptors: route.interceptors
-    }))
-  ];
-
-  return levels.flatMap((entry) => {
-    if (!entry.interceptors) return [];
-
-    return (['request', 'response'] as const)
-      .filter((type) => entry.interceptors?.[type])
-      .map(
-        (type): InterceptorEntry => ({
-          level: entry.level,
-          type,
-          code: String(entry.interceptors?.[type])
-        })
-      );
-  });
-};
+import { MatcherChip } from './components/MatcherChip/MatcherChip';
+import { SendRequestDrawer } from './components/SendRequestDrawer/SendRequestDrawer';
+import { formatRouteData, getInterceptorEntries, getRouteMatchers } from './helpers';
 
 export const RequestPage = () => {
   const { components } = useConfig();
   const { requestId } = useParams({ from: '/routes/$requestId' });
+
+  const [isSendOpen, setIsSendOpen] = useState(false);
+  const [sendRouteIndex, setSendRouteIndex] = useState(0);
 
   const [componentIndex, configIndex] = requestId.split('-').map(Number);
   const component = components[componentIndex];
@@ -115,30 +41,35 @@ export const RequestPage = () => {
 
   if (!component || !config) {
     return (
-      <div className='flex h-full flex-col items-center justify-center gap-1 text-center'>
-        <Typography variant='h1'>Request not found</Typography>
-        <Typography className='text-foreground-secondary'>
-          The config has changed — pick a request from the list again
-        </Typography>
-      </div>
+      <EmptyState
+        description='The config has changed — pick a request from the list again'
+        title='Request not found'
+      />
     );
   }
 
   const routes = config.routes as RouteEntry[];
+  const apiType = getConfigApiType(config);
+  const hasStatus = getConfigTransport(config)?.hasStatus ?? false;
   const interceptorEntries = getInterceptorEntries(component, config, routes);
+  const isRestConfig = 'method' in config;
 
   return (
     <div className='flex flex-col gap-l p-7'>
       <div className='flex flex-col gap-2'>
         <Typography affects='code-regular' className='text-foreground-secondary'>
-          {component.name ?? `component #${componentIndex}`} / {getConfigApiType(config)}
+          {getComponentName(component, componentIndex)} / {apiType}
         </Typography>
         <div className='flex items-center gap-3'>
-          <MethodBadge className='px-2.5 py-1 text-xs' method={getConfigMethod(config)} />
+          <MethodBadge
+            className='px-2.5 py-1 text-xs'
+            method={getConfigMethod(config)}
+            variant='active'
+          />
           <span className='font-code text-xl font-semibold'>{getConfigLabel(config)}</span>
         </div>
         <Typography affects='body-regular' className='text-foreground-secondary'>
-          {routes.length} {routes.length === 1 ? 'route' : 'routes'} · most specific match wins
+          {routes.length} {routes.length === 1 ? 'route' : 'routes'} · {API_TYPE_LABELS[apiType]}
         </Typography>
       </div>
 
@@ -146,13 +77,13 @@ export const RequestPage = () => {
         <TabsList>
           <TabsTrigger value='routes'>
             Routes
-            <span className='rounded-full bg-card px-1.5 text-[11px] text-foreground-secondary'>
+            <span className='rounded-full bg-card px-1.5 text-[11px] text-foreground-secondary group-data-active:bg-accent group-data-active:text-accent-foreground'>
               {routes.length}
             </span>
           </TabsTrigger>
           <TabsTrigger value='interceptors'>
             Interceptors
-            <span className='rounded-full bg-card px-1.5 text-[11px] text-foreground-secondary'>
+            <span className='rounded-full bg-card px-1.5 text-[11px] text-foreground-secondary group-data-active:bg-accent group-data-active:text-accent-foreground'>
               {interceptorEntries.length}
             </span>
           </TabsTrigger>
@@ -163,47 +94,83 @@ export const RequestPage = () => {
           <div className='flex flex-col gap-3.5'>
             {routes.map((route, routeIndex) => {
               const matchers = getRouteMatchers(route);
+              const status = route.settings?.status ?? (hasStatus ? 200 : undefined);
 
               return (
                 <div
                   key={routeIndex}
                   className='overflow-hidden rounded-xl border border-border bg-card'
                 >
-                  <div className='flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3'>
+                  <div className='flex items-center gap-2 border-b border-border/60 px-4 py-3'>
                     <span className='font-code text-[11px] text-foreground-secondary'>
                       #{routeIndex + 1}
                     </span>
 
-                    {matchers.map((matcher) => (
-                      <MatcherChip
-                        key={matcher.label}
-                        label={matcher.label}
-                        value={matcher.value}
-                      />
-                    ))}
+                    {!matchers.length && (
+                      <span className='flex items-center gap-1.5 rounded-sm border border-border bg-background-secondary px-1.5 py-0.5 font-code text-[10px] text-foreground-secondary'>
+                        <span className='size-1.5 rounded-full bg-accent' />
+                        fallback
+                      </span>
+                    )}
 
                     <span className='ml-auto flex items-center gap-2'>
-                      {!matchers.length && (
-                        <span className='flex items-center gap-1 font-code text-[11px] text-additional-success'>
-                          ● default
-                        </span>
-                      )}
-                      {route.settings?.status && (
-                        <span className='rounded-md bg-tag-2/15 px-2 py-0.5 font-code text-[11px] text-tag-2'>
-                          {route.settings.status}
-                        </span>
+                      {isRestConfig && (
+                        <button
+                          className='flex cursor-pointer items-center gap-1 rounded-md bg-accent px-2 py-0.5 font-code text-[11px] font-medium text-accent-foreground hover:bg-accent/90'
+                          type='button'
+                          onClick={() => {
+                            setSendRouteIndex(routeIndex);
+                            setIsSendOpen(true);
+                          }}
+                        >
+                          <PlayIcon className='size-3' />
+                          Send
+                        </button>
                       )}
                       {route.settings?.delay && (
-                        <span className='rounded-md bg-tag-5/15 px-2 py-0.5 font-code text-[11px] text-tag-5'>
+                        <span className='rounded-md border border-border bg-background-secondary px-2 py-0.5 font-code text-[11px] text-foreground-secondary'>
                           {route.settings.delay}ms
                         </span>
                       )}
+                      {status && <StatusBadge status={status} />}
                     </span>
                   </div>
 
-                  <pre className='overflow-x-auto px-4 py-3.5 font-code text-[12.5px] leading-relaxed text-foreground-secondary'>
-                    {formatRouteData(route.data)}
-                  </pre>
+                  {Boolean(matchers.length) && (
+                    <div className='flex flex-col gap-2 border-b border-border/60 px-4 py-3'>
+                      <span className='font-code text-[10px] uppercase tracking-wider text-foreground-secondary'>
+                        Match when request
+                      </span>
+                      {matchers.map((matcher) => (
+                        <div
+                          key={`${matcher.entity}-${matcher.key ?? ''}-${matcher.value}`}
+                          className='flex items-center gap-2 font-code text-xs'
+                        >
+                          <span className='rounded-sm border border-border bg-background-secondary px-1.5 py-0.5 text-[10px] text-foreground-secondary'>
+                            {matcher.entity}
+                          </span>
+                          {matcher.key && <span className='text-foreground'>{matcher.key}</span>}
+                          <span className='italic text-foreground-secondary'>
+                            {matcher.operator}
+                          </span>
+                          {matcher.preview ? (
+                            <MatcherChip label={matcher.value} value={matcher.preview} />
+                          ) : (
+                            <span className='text-accent'>{matcher.value}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className='px-4 pb-3.5 pt-3'>
+                    <div className='pb-2 font-code text-[10px] uppercase tracking-wider text-foreground-secondary'>
+                      Response
+                    </div>
+                    <pre className='overflow-x-auto font-code text-[12.5px] leading-relaxed text-foreground-secondary'>
+                      {formatRouteData(route.data)}
+                    </pre>
+                  </div>
                 </div>
               );
             })}
@@ -251,6 +218,18 @@ export const RequestPage = () => {
           </pre>
         </TabsContent>
       </Tabs>
+
+      {isRestConfig && (
+        <SendRequestDrawer
+          key={`${requestId}-${sendRouteIndex}`}
+          componentBaseUrl={component.baseUrl}
+          method={config.method}
+          open={isSendOpen}
+          path={String(config.path)}
+          route={routes[sendRouteIndex]}
+          onOpenChange={setIsSendOpen}
+        />
+      )}
     </div>
   );
 };
