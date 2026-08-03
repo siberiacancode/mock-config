@@ -52,31 +52,22 @@ export default mock(
     name: 'auth',
     configs: [
       rest.post('/auth/login', { message: 'Invalid credentials' }, { status: 401 }),
-      rest.post('/auth/login', {
-        response: {
+      rest.post(
+        '/auth/login',
+        {
           accessToken: ACCESS_TOKEN,
           refreshToken: 'mock-refresh-token',
           user: USERS[0]
         },
-        match: {
-          body: { email: 'john.doe@example.com', password: 'qwerty123' }
-        }
-      }),
+        { match: { body: { email: 'john.doe@example.com', password: 'qwerty123' } } }
+      ),
 
       rest.get('/auth/me', { message: 'Unauthorized' }, { status: 401 }),
-      rest.get('/auth/me', {
-        response: USERS[0],
-        match: {
-          cookies: { session: 'mock-session' }
-        }
-      }),
+      rest.get('/auth/me', USERS[0], { match: { cookies: { session: 'mock-session' } } }),
 
       rest.get('/auth/session', { message: 'Unauthorized' }, { status: 401 }),
-      rest.get('/auth/session', {
-        response: USERS[0],
-        match: {
-          headers: { authorization: startsWith('Bearer') }
-        }
+      rest.get('/auth/session', USERS[0], {
+        match: { headers: { authorization: startsWith('Bearer') } }
       }),
 
       rest.post('/auth/logout', null, { status: 204 })
@@ -92,34 +83,31 @@ export default mock(
     },
     configs: [
       rest.get('/users', { items: USERS, page: 1, limit: 10, total: USERS.length }),
-      rest.get('/users', {
-        response: { items: [USERS[2]], page: 2, limit: 2, total: USERS.length },
-        match: {
-          queries: { page: '2', limit: '2' }
-        }
-      }),
+      rest.get(
+        '/users',
+        { items: [USERS[2]], page: 2, limit: 2, total: USERS.length },
+        { match: { queries: { page: '2', limit: '2' } } }
+      ),
 
       rest.get('/users/search', { items: [], total: 0 }),
-      rest.get('/users/search', {
-        response: { items: [USERS[0]], total: 1 },
-        match: {
-          queries: {
-            role: oneOf(equals('admin'), equals('user')),
-            name: regExp(/^[A-Z][a-z]+$/)
+      rest.get(
+        '/users/search',
+        { items: [USERS[0]], total: 1 },
+        {
+          match: {
+            queries: {
+              role: oneOf(equals('admin'), equals('user')),
+              name: regExp(/^[A-Z][a-z]+$/)
+            }
           }
         }
-      }),
+      ),
 
       // the mock server cannot serve this one, sending it is expected to fail with a 500
       rest.get('/users/graph', john),
 
       rest.get('/users/:id', { message: 'User not found' }, { status: 404 }),
-      rest.get('/users/:id', {
-        response: USERS[0],
-        match: {
-          params: { id: '1' }
-        }
-      }),
+      rest.get('/users/:id', USERS[0], { match: { params: { id: '1' } } }),
 
       rest.post(
         '/users',
@@ -134,14 +122,11 @@ export default mock(
     name: 'graphql',
     configs: [
       graphql.query('GetUser', { data: { user: null } }),
-      graphql.query('GetUser', {
-        response: {
-          data: { user: { id: '1', name: 'John Doe', email: 'john.doe@example.com' } }
-        },
-        match: {
-          variables: { id: '1' }
-        }
-      }),
+      graphql.query(
+        'GetUser',
+        { data: { user: { id: '1', name: 'John Doe', email: 'john.doe@example.com' } } },
+        { match: { variables: { id: '1' } } }
+      ),
 
       graphql.mutation('CreateUser', { data: { createUser: { id: '4', name: 'New User' } } })
     ]
