@@ -119,6 +119,29 @@ export default mock(
     ]
   },
   {
+    name: 'events',
+    configs: [
+      rest.sse('/events/users', async ({ client }) => {
+        const notifications = [
+          { event: 'user-created', data: { id: 4, name: 'New User' } },
+          { event: 'user-updated', data: { id: 1, role: 'owner' } },
+          { event: 'user-deleted', data: { id: 3 } },
+          { event: 'digest', data: { total: USERS.length, pending: 0 } }
+        ];
+
+        for (const [index, notification] of notifications.entries()) {
+          await new Promise((resolve) => setTimeout(resolve, 600));
+          client.send(JSON.stringify(notification.data), {
+            event: notification.event,
+            id: String(index + 1)
+          });
+        }
+
+        client.close();
+      })
+    ]
+  },
+  {
     name: 'graphql',
     configs: [
       graphql.query('GetUser', { data: { user: null } }),
