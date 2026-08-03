@@ -5,52 +5,66 @@ import type { Method } from '@/components';
 import { Drawer, DrawerClose, DrawerContent, MethodBadge } from '@/components';
 
 import type { RouteEntry } from '../../types';
+import type { SendTarget } from './types';
 
-import { buildRestPayload } from './adapter';
+import { buildGraphqlPayload, buildRestPayload } from './adapter';
 import { EventStreamView } from './components/EventStreamView/EventStreamView';
+import { GraphqlDocumentForm } from './components/GraphqlDocumentForm/GraphqlDocumentForm';
 import { RequestForm } from './components/RequestForm/RequestForm';
 import { ResponseView } from './components/ResponseView/ResponseView';
-import { useRequestForm, useSendRequest } from './hooks';
+import { useGraphqlDocument, useRequestForm, useSendRequest } from './hooks';
 
 interface SendRequestDrawerProps {
   componentBaseUrl?: string;
-  method: Method;
   open: boolean;
-  path: string;
   route?: RouteEntry;
+  target: SendTarget;
   onOpenChange: (open: boolean) => void;
 }
 
 export const SendRequestDrawer = ({
-  method,
   open,
-  path,
   componentBaseUrl,
   route,
+  target,
   onOpenChange
 }: SendRequestDrawerProps) => {
-  const form = useRequestForm(route, method);
+  const form = useRequestForm(route, target);
+  const graphqlDocument = useGraphqlDocument(route, target);
   const sendRequest = useSendRequest();
 
   const stream = sendRequest.result?.stream;
 
-  const onSend = () =>
-    sendRequest.send(
+  const method = (target.type === 'graphql' ? target.operationType : target.method) as Method;
+  const label = target.type === 'graphql' ? target.identifier : target.path;
+
+  const onSend = () => {
+    if (graphqlDocument)
+      return sendRequest.send(
+        buildGraphqlPayload({
+          componentBaseUrl,
+          document: graphqlDocument.document,
+          entityRows: form.entityRows
+        })
+      );
+
+    return sendRequest.send(
       buildRestPayload({
         entityRows: form.entityRows,
         method,
-        path,
+        path: label,
         body: form.body,
         componentBaseUrl
       })
     );
+  };
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
         <div className='flex items-center gap-3 border-b border-border bg-background-secondary px-5 py-3'>
           <MethodBadge method={method} variant='active' />
-          <span className='font-code text-[15px] font-semibold'>{path}</span>
+          <span className='font-code text-[15px] font-semibold'>{label}</span>
 
           <div className='ml-auto flex items-center gap-2'>
             {stream?.isActive && (
@@ -86,6 +100,7 @@ export const SendRequestDrawer = ({
               Request
             </span>
 
+            {graphqlDocument && <GraphqlDocumentForm {...graphqlDocument} />}
             <RequestForm {...form} />
           </div>
 

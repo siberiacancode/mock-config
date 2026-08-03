@@ -1,6 +1,6 @@
 import type { EntityRow, RequestPayload } from '../types';
 
-import { joinPath, toRecord } from '../helpers';
+import { joinPath, toCookieHeader, toRecord } from '../helpers';
 
 interface BuildRequestPayloadOptions {
   body?: string;
@@ -16,7 +16,7 @@ export const buildRestPayload = (options: BuildRequestPayloadOptions): RequestPa
     options.path
   );
   const search = new URLSearchParams(toRecord(options.entityRows.queries)).toString();
-  const cookies = toRecord(options.entityRows.cookies);
+  const cookie = toCookieHeader(options.entityRows.cookies);
 
   return {
     method: options.method,
@@ -24,11 +24,7 @@ export const buildRestPayload = (options: BuildRequestPayloadOptions): RequestPa
     headers: {
       ...(options.body && { 'Content-Type': 'application/json' }),
       ...toRecord(options.entityRows.headers),
-      ...(Object.keys(cookies).length && {
-        Cookie: Object.entries(cookies)
-          .map(([key, value]) => `${key}=${value}`)
-          .join('; ')
-      })
+      ...(cookie && { Cookie: cookie })
     },
     ...(options.body && { body: options.body })
   };

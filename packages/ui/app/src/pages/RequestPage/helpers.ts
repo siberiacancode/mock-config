@@ -6,7 +6,23 @@ import {
   isSerializedFunction
 } from '@/utils/helpers';
 
+import type { SendTarget } from './components/SendRequestDrawer/types';
 import type { InterceptorEntry, RouteEntry, RouteMatcher } from './types';
+
+export const getSendTarget = (
+  config: MockServerComponent['configs'][number]
+): SendTarget | undefined => {
+  if ('method' in config) return { type: 'rest', method: config.method, path: String(config.path) };
+
+  if ('operationType' in config && config.operationType !== 'subscription')
+    return {
+      type: 'graphql',
+      identifier: String(config.identifier),
+      operationType: config.operationType
+    };
+
+  return undefined;
+};
 
 const WHOLE_VALUE_ENTITIES = ['body', 'variables'];
 

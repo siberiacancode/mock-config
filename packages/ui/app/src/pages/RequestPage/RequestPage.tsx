@@ -26,7 +26,7 @@ import type { RouteEntry } from './types';
 
 import { MatcherChip } from './components/MatcherChip/MatcherChip';
 import { SendRequestDrawer } from './components/SendRequestDrawer/SendRequestDrawer';
-import { formatRouteData, getInterceptorEntries, getRouteMatchers } from './helpers';
+import { formatRouteData, getInterceptorEntries, getRouteMatchers, getSendTarget } from './helpers';
 
 export const RequestPage = () => {
   const { components } = useConfig();
@@ -52,7 +52,7 @@ export const RequestPage = () => {
   const apiType = getConfigApiType(config);
   const hasStatus = getConfigTransport(config)?.hasStatus ?? false;
   const interceptorEntries = getInterceptorEntries(component, config, routes);
-  const isRestConfig = 'method' in config;
+  const sendTarget = getSendTarget(config);
 
   return (
     <div className='flex flex-col gap-l p-7'>
@@ -114,7 +114,7 @@ export const RequestPage = () => {
                     )}
 
                     <span className='ml-auto flex items-center gap-2'>
-                      {isRestConfig && (
+                      {sendTarget && (
                         <button
                           className='flex cursor-pointer items-center gap-1 rounded-md bg-accent px-2 py-0.5 font-code text-[11px] font-medium text-accent-foreground hover:bg-accent/90'
                           type='button'
@@ -219,14 +219,13 @@ export const RequestPage = () => {
         </TabsContent>
       </Tabs>
 
-      {isRestConfig && (
+      {sendTarget && (
         <SendRequestDrawer
           key={`${requestId}-${sendRouteIndex}`}
           componentBaseUrl={component.baseUrl}
-          method={config.method}
           open={isSendOpen}
-          path={String(config.path)}
           route={routes[sendRouteIndex]}
+          target={sendTarget}
           onOpenChange={setIsSendOpen}
         />
       )}

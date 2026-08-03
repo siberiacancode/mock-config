@@ -1,3 +1,15 @@
+/** What the drawer replays: a rest route by method and path, a graphql operation by identifier. */
+export type SendTarget =
+  | { identifier: string; operationType: 'mutation' | 'query'; type: 'graphql' }
+  | { method: string; path: string; type: 'rest' };
+
+export interface GraphqlDocument {
+  /** Query text sent as is; prefilled from the identifier and editable. */
+  query: string;
+  /** Variables text; prefilled from the `variables` matcher and editable. */
+  variables: string;
+}
+
 export interface EntityRow {
   /** Human readable comparator label, when the row comes from a comparator. */
   comparator?: string;

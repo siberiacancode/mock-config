@@ -6,12 +6,15 @@ import type { EntityRow, ResolvedRow, RowInput } from './types';
 
 export const BODY_METHODS = ['patch', 'post', 'put'];
 
-export const MAPPED_ENTITIES = [
-  { name: 'params', title: 'Path params' },
+const SHARED_ENTITIES = [
   { name: 'queries', title: 'Queries' },
   { name: 'headers', title: 'Headers' },
   { name: 'cookies', title: 'Cookies' }
 ];
+
+export const REST_ENTITIES = [{ name: 'params', title: 'Path params' }, ...SHARED_ENTITIES];
+
+export const GRAPHQL_ENTITIES = SHARED_ENTITIES;
 
 const FILLER = 'mock';
 
@@ -213,6 +216,15 @@ export const toRecord = (rows: EntityRow[]) =>
   Object.fromEntries(
     rows.flatMap((row) => (row.send === undefined ? [] : [[row.key, row.send] as const]))
   );
+
+export const toCookieHeader = (rows: EntityRow[]) => {
+  const cookies = toRecord(rows);
+  if (!Object.keys(cookies).length) return undefined;
+
+  return Object.entries(cookies)
+    .map(([key, value]) => `${key}=${value}`)
+    .join('; ');
+};
 
 const resolveBodyValue = (value: unknown, path: string, warnings: string[]): unknown => {
   if (isSerializedComparator(value)) {
