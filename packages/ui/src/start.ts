@@ -1,3 +1,5 @@
+import type { H3Event } from 'h3';
+
 import color from 'ansi-colors';
 import { getPort } from 'get-port-please';
 import { createApp, eventHandler, readBody, serveStatic, toNodeListener } from 'h3';
@@ -10,6 +12,7 @@ import open from 'open';
 
 import type { MockServerInspectorArgv } from './types';
 
+import { parseSseFrames } from './helpers/sse';
 import { stringify } from './helpers/stringify';
 import { createConfigWatcher } from './watch';
 import { createWsServer } from './ws';
@@ -33,6 +36,56 @@ const joinPath = (...parts: unknown[]) =>
     .flatMap((part) => String(part ?? '').split('/'))
     .filter(Boolean)
     .join('/')}`;
+
+const REQUEST_TIMEOUT_MS = 10_000;
+const EVENT_STREAM_TYPE = 'text/event-stream';
+
+const streamEvents = async (event: H3Event, response: Response, elapsedMs: () => number) => {
+  const writeLine = (line: unknown) => {
+    if (event.node.res.writableEnded || event.node.res.destroyed) return;
+    event.node.res.write(`${JSON.stringify(line)}\n`);
+  };
+
+  event.node.res.setHeader('Content-Type', 'application/x-ndjson');
+  event.node.res.setHeader('Cache-Control', 'no-cache');
+  event.node.res.flushHeaders();
+
+  writeLine({
+    kind: 'meta',
+    status: response.status,
+    statusText: response.statusText,
+    durationMs: elapsedMs(),
+    headers: Object.fromEntries(response.headers.entries())
+  });
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    writeLine({ kind: 'end' });
+    return event.node.res.end();
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const { events, rest } = parseSseFrames(buffer);
+      buffer = rest;
+
+      events.forEach((sseEvent) => writeLine({ kind: 'event', ...sseEvent, atMs: elapsedMs() }));
+    }
+
+    writeLine({ kind: 'end' });
+  } catch (error) {
+    writeLine({ kind: 'error', error: error instanceof Error ? error.message : 'Stream failed' });
+  }
+
+  return event.node.res.end();
+};
 
 const resolveMockServerUrl = (mockConfig: any, requestPath: string) => {
   const { baseUrl } = getMockServerSettings(mockConfig);
@@ -118,26 +171,45 @@ export const start = async (argv: MockServerInspectorArgv) => {
       }
 
       const startedAt = performance.now();
+      const elapsedMs = () => Math.round(performance.now() - startedAt);
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      event.node.res.on('close', () => {
+        if (!event.node.res.writableEnded) controller.abort();
+      });
 
       try {
         const response = await fetch(resolveMockServerUrl(watcher.getConfig(), requestPath), {
           method: String(method).toUpperCase(),
           headers,
           ...(body !== undefined && { body }),
-          signal: AbortSignal.timeout(10_000)
+          signal: controller.signal
         });
-        const responseBody = await response.text();
+        const responseHeaders = Object.fromEntries(response.headers.entries());
+        const isStream = (responseHeaders['content-type'] ?? '').includes(EVENT_STREAM_TYPE);
 
-        return event.node.res.end(
-          JSON.stringify({
-            status: response.status,
-            statusText: response.statusText,
-            durationMs: Math.round(performance.now() - startedAt),
-            headers: Object.fromEntries(response.headers.entries()),
-            body: responseBody
-          })
-        );
+        if (!isStream) {
+          const responseBody = await response.text();
+          clearTimeout(timeout);
+
+          return event.node.res.end(
+            JSON.stringify({
+              status: response.status,
+              statusText: response.statusText,
+              durationMs: elapsedMs(),
+              headers: responseHeaders,
+              body: responseBody
+            })
+          );
+        }
+
+        clearTimeout(timeout);
+        return streamEvents(event, response, elapsedMs);
       } catch (error) {
+        clearTimeout(timeout);
+        if (event.node.res.headersSent) return event.node.res.end();
+
         event.node.res.statusCode = 502;
         return event.node.res.end(
           JSON.stringify({ error: error instanceof Error ? error.message : 'Request failed' })
