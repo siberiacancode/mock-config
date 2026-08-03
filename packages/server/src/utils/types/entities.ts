@@ -1,9 +1,15 @@
-import type { IS_COMPARATOR_SYMBOL } from '@/utils/constants';
+import type { COMPARATOR_META_SYMBOL, IS_COMPARATOR_SYMBOL } from '@/utils/constants';
+
+export interface ComparatorMeta {
+  args: unknown[];
+  name: string;
+}
 
 export type Comparator<Actual = unknown, Expected = unknown> = ((
   actual: Actual,
   expected: Expected
 ) => boolean) & {
+  [COMPARATOR_META_SYMBOL]?: ComparatorMeta;
   [IS_COMPARATOR_SYMBOL]: true;
 };
 

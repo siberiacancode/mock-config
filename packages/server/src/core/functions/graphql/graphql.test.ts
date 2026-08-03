@@ -171,14 +171,7 @@ describe('graphql', () => {
       body: { body: string };
       params: { params: string };
       response: { data: { response: string } };
-    }>('GetUsers', (params) => {
-      const query = params.request.query.query;
-      const body = params.request.body.body;
-      const path = params.request.params.params;
-      console.log(query, body, path);
-
-      return { data: { response: 'value' } };
-    });
+    }>('GetUsers', () => ({ data: { response: 'value' } }));
 
     expect(result).toStrictEqual({
       identifier: 'GetUsers',

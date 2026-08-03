@@ -4,5 +4,6 @@ import { createComparator } from '@/utils/helpers';
 
 export const oneOf = (...comparators: Comparator[]) =>
   createComparator(
-    (actual, { fn }) => comparators.filter((comparator) => fn(actual, comparator)).length === 1
+    (actual, { fn }) => comparators.filter((comparator) => fn(actual, comparator)).length === 1,
+    { name: 'oneOf', args: comparators }
   );
