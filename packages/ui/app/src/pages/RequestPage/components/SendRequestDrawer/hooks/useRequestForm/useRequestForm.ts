@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import type { Method } from '@/components';
 
-import type { RouteEntry } from '../../types';
+import type { RouteEntry } from '../../../../types';
 
 import {
   BODY_METHODS,
@@ -11,7 +11,7 @@ import {
   MAPPED_ENTITIES,
   resolveBody,
   resolveRows
-} from './helpers';
+} from '../../helpers';
 
 export const useRequestForm = (route: RouteEntry | undefined, method: Method) => {
   const [drafts, setDrafts] = useState<Record<string, string>>({});

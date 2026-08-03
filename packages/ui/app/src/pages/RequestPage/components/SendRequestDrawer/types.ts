@@ -39,6 +39,7 @@ export interface RowInput {
 export interface SendResult {
   error?: string;
   response?: ProxyResponse;
+  stream?: StreamResult;
 }
 
 /** Everything the inspector proxy needs to replay a route. */
@@ -47,4 +48,40 @@ export interface RequestPayload {
   headers: Record<string, string>;
   method: string;
   path: string;
+}
+
+/** One line of the `application/x-ndjson` stream the inspector answers with for streaming routes. */
+export type StreamLine =
+  | { atMs: number; data: string; event?: string; id?: string; kind: 'event' }
+  | {
+      durationMs: number;
+      headers: Record<string, string>;
+      kind: 'meta';
+      status: number;
+      statusText: string;
+    }
+  | { error: string; kind: 'error' }
+  | { kind: 'end' };
+
+export interface StreamEvent {
+  /** Milliseconds between the start of the request and the arrival of the event. */
+  atMs: number;
+  data: string;
+  event?: string;
+  id?: string;
+}
+
+export interface StreamResult {
+  error?: string;
+  events: StreamEvent[];
+  /** `true` while the connection is open. */
+  isActive: boolean;
+  meta?: {
+    durationMs: number;
+    headers: Record<string, string>;
+    status: number;
+    statusText: string;
+  };
+  /** Set once the stream closed — how long the connection lived. */
+  totalMs?: number;
 }

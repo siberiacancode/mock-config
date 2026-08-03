@@ -2,7 +2,7 @@ import type { SerializedComparator } from '@/utils/helpers';
 
 import { formatComparator, isSerializedComparator, isSerializedFunction } from '@/utils/helpers';
 
-import type { EntityRow, RequestPayload, ResolvedRow, RowInput } from './types';
+import type { EntityRow, ResolvedRow, RowInput } from './types';
 
 export const BODY_METHODS = ['patch', 'post', 'put'];
 
@@ -34,10 +34,6 @@ const toPrimitiveString = (value: unknown) =>
     ? String(value)
     : undefined;
 
-/**
- * Header and cookie values lose edge whitespace in transport (rfc 9110), so `startsWith('Bearer ')`
- * cannot be satisfied by any value we send. Report it instead of quietly missing the route.
- */
 const transportable = (value: string) => (value === value.trim() ? value : undefined);
 
 const fromPrimitive = (value: unknown, map: (primitive: string) => string | undefined = String) => {
@@ -78,7 +74,6 @@ const deriveFirst = (args: unknown[], derive: Derive) =>
     })
     .at(0);
 
-/** Value satisfying each comparator, keyed by its name; a missing entry means it cannot be inferred. */
 const COMPARATOR_DERIVERS: Record<string, (args: unknown[], derive: Derive) => string | undefined> =
   {
     endsWith: ([value]) => fromPrimitive(value, transportable),
@@ -101,7 +96,6 @@ const COMPARATOR_DERIVERS: Record<string, (args: unknown[], derive: Derive) => s
     startsWith: ([value]) => fromPrimitive(value, transportable)
   };
 
-/** Returns a value satisfying the comparator, or `undefined` when it cannot be inferred. */
 export const deriveComparatorValue = (comparator: SerializedComparator): string | undefined =>
   COMPARATOR_DERIVERS[comparator.$comparator]?.(comparator.args, deriveComparatorValue);
 
@@ -257,36 +251,4 @@ export const resolveBody = (bodyEntity: unknown) => {
   if (resolved === undefined) return { warnings };
 
   return { body: JSON.stringify(resolved, null, 2), warnings };
-};
-
-interface BuildRequestPayloadOptions {
-  body?: string;
-  componentBaseUrl?: string;
-  entityRows: Record<string, EntityRow[]>;
-  method: string;
-  path: string;
-}
-
-export const buildRequestPayload = (options: BuildRequestPayloadOptions): RequestPayload => {
-  const requestPath = Object.entries(toRecord(options.entityRows.params)).reduce(
-    (accumulator, [name, value]) => accumulator.replaceAll(`:${name}`, encodeURIComponent(value)),
-    options.path
-  );
-  const search = new URLSearchParams(toRecord(options.entityRows.queries)).toString();
-  const cookies = toRecord(options.entityRows.cookies);
-
-  return {
-    method: options.method,
-    path: `${joinPath(options.componentBaseUrl, requestPath)}${search ? `?${search}` : ''}`,
-    headers: {
-      ...(options.body && { 'Content-Type': 'application/json' }),
-      ...toRecord(options.entityRows.headers),
-      ...(Object.keys(cookies).length && {
-        Cookie: Object.entries(cookies)
-          .map(([key, value]) => `${key}=${value}`)
-          .join('; ')
-      })
-    },
-    ...(options.body && { body: options.body })
-  };
 };
