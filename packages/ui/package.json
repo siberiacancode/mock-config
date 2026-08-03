@@ -45,7 +45,7 @@
     "mci:app": "vite",
     "mci:mock": "mcs --watch",
     "preview": "vite preview",
-    "type": "tsc --noEmit",
+    "type": "tsc --noEmit && tsc --noEmit -p app/tsconfig.app.json",
     "lint": "eslint . --fix",
     "lint-inspector": "npx @eslint/config-inspector",
     "format": "prettier --write .",

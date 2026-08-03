@@ -1,18 +1,15 @@
 import { Link, Outlet, useNavigate, useSearch } from '@tanstack/react-router';
-import { SearchIcon } from 'lucide-react';
 
-import { MethodBadge, Typography } from '@/components';
+import { MethodBadge, SearchInput } from '@/components';
 import { useConfig } from '@/utils/context';
-import { getConfigInterceptors, getConfigLabel, getConfigMethod } from '@/utils/helpers';
+import {
+  getComponentName,
+  getConfigInterceptors,
+  getConfigLabel,
+  getConfigMethod
+} from '@/utils/helpers';
 
-export const RoutesIndexPage = () => (
-  <div className='flex h-full flex-col items-center justify-center gap-1 text-center'>
-    <Typography variant='h1'>No request selected</Typography>
-    <Typography className='text-foreground-secondary'>
-      Pick a request from the list to inspect its routes
-    </Typography>
-  </div>
-);
+import { getRouteGroups } from './helpers';
 
 export const RoutesPage = () => {
   const { components } = useConfig();
@@ -21,44 +18,21 @@ export const RoutesPage = () => {
 
   const query = (search.query ?? '').toLowerCase();
 
-  const groups = components
-    .map((component, componentIndex) => ({
-      component,
-      componentIndex,
-      configs: component.configs
-        .map((config, configIndex) => ({ config, configIndex }))
-        .filter(({ config }) => {
-          if (!query) return true;
+  const groups = getRouteGroups(components, query);
 
-          const haystack =
-            `${component.name ?? ''} ${getConfigMethod(config)} ${getConfigLabel(config)}`.toLowerCase();
-          return haystack.includes(query);
-        })
-    }))
-    .filter((group) => group.configs.length > 0);
-
-  const onSearchChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    navigate({
-      to: '.',
-      search: { query: event.target.value ?? undefined },
-      replace: true
-    });
+  const onSearchChange = (value: string) =>
+    navigate({ to: '.', search: { query: value || undefined }, replace: true });
 
   return (
     <div className='flex h-full'>
       <div className='flex w-100 shrink-0 flex-col border-r border-border'>
         <div className='border-b border-border/60 p-3.5'>
-          <label className='flex items-center gap-2.5 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground-secondary focus-within:border-ring'>
-            <SearchIcon className='size-4 shrink-0' />
-            <input
-              aria-label='Search requests'
-              className='w-full bg-transparent text-foreground outline-hidden placeholder:text-foreground-secondary'
-              placeholder='Search by component, method, path…'
-              type='text'
-              value={search.query ?? ''}
-              onChange={onSearchChange}
-            />
-          </label>
+          <SearchInput
+            label='Search requests'
+            placeholder='Search route by method, path…'
+            value={search.query ?? ''}
+            onChange={onSearchChange}
+          />
         </div>
 
         <div className='flex-1 overflow-y-auto pb-4'>
@@ -70,9 +44,9 @@ export const RoutesPage = () => {
 
           {groups.map(({ component, componentIndex, configs }) => (
             <div key={component.name ?? componentIndex}>
-              <div className='sticky top-0 z-10 flex items-baseline gap-2 border-b border-border/60 bg-background px-4 pb-2 pt-3.5'>
+              <div className='sticky top-0 z-10 flex items-baseline justify-between border-b border-border/60 bg-background px-4 pb-2 pt-3.5'>
                 <span className='text-[13px] font-semibold text-foreground'>
-                  {component.name ?? `component #${componentIndex}`}
+                  {getComponentName(component, componentIndex)}
                 </span>
                 <span className='text-[11px] text-foreground-secondary'>
                   {configs.length} {configs.length === 1 ? 'request' : 'requests'}
@@ -85,8 +59,11 @@ export const RoutesPage = () => {
                 return (
                   <Link
                     key={configIndex}
-                    activeProps={{ className: 'bg-card shadow-[inset_2px_0_0] shadow-accent' }}
-                    className='flex items-center gap-2.5 px-4 py-2.5 font-code text-[13px] text-foreground'
+                    activeProps={{
+                      className: 'border-accent/50 bg-accent-secondary',
+                      'data-active': ''
+                    }}
+                    className='group mx-2 my-0.5 flex items-center gap-2.5 rounded-lg border border-transparent px-2.5 py-2 font-code text-[13px] text-foreground'
                     inactiveProps={{ className: 'hover:bg-card' }}
                     params={{ requestId: `${componentIndex}-${configIndex}` }}
                     search={(prev) => prev}
@@ -97,7 +74,7 @@ export const RoutesPage = () => {
                     <span className='ml-auto flex shrink-0 items-center gap-1.5'>
                       {Boolean(interceptors.count) && (
                         <span className='rounded-full border border-border bg-background-secondary px-2 py-0.5 text-[11px] font-medium text-foreground-secondary'>
-                          {interceptors.count}{' '}
+                          {interceptors.count}
                           {interceptors.count === 1 ? 'interceptor' : 'interceptors'}
                         </span>
                       )}
