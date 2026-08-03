@@ -1,6 +1,6 @@
 import type { ResponseInterceptorParams } from 'mock-config-server';
 
-import { graphql, mock, rest, startsWith, ws } from 'mock-config-server';
+import { equals, graphql, mock, oneOf, regExp, rest, startsWith, ws } from 'mock-config-server';
 
 const USERS = [
   {
@@ -65,9 +65,17 @@ export default mock(
 
       rest.get('/auth/me', { message: 'Unauthorized' }, { status: 401 }),
       rest.get('/auth/me', {
-        response: john,
+        response: USERS[0],
         match: {
-          headers: { authorization: startsWith('Bearer ') }
+          cookies: { session: 'mock-session' }
+        }
+      }),
+
+      rest.get('/auth/session', { message: 'Unauthorized' }, { status: 401 }),
+      rest.get('/auth/session', {
+        response: USERS[0],
+        match: {
+          headers: { authorization: startsWith('Bearer') }
         }
       }),
 
@@ -90,6 +98,20 @@ export default mock(
           queries: { page: '2', limit: '2' }
         }
       }),
+
+      rest.get('/users/search', { items: [], total: 0 }),
+      rest.get('/users/search', {
+        response: { items: [USERS[0]], total: 1 },
+        match: {
+          queries: {
+            role: oneOf(equals('admin'), equals('user')),
+            name: regExp(/^[A-Z][a-z]+$/)
+          }
+        }
+      }),
+
+      // the mock server cannot serve this one, sending it is expected to fail with a 500
+      rest.get('/users/graph', john),
 
       rest.get('/users/:id', { message: 'User not found' }, { status: 404 }),
       rest.get('/users/:id', {
