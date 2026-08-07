@@ -5,7 +5,6 @@ import express from 'express';
 
 import type { RestMockServerConfig } from '@/utils/types';
 
-import { createDatabaseRoutes } from '@/core/database';
 import {
   contextMiddleware,
   cookieParseMiddleware,
@@ -15,6 +14,7 @@ import {
   requestInterceptorMiddleware,
   staticMiddleware
 } from '@/core/middlewares';
+import { createDatabaseRoutes } from '@/core/playground';
 import { createRestRoutes } from '@/core/rest';
 import { validateApiMockServerConfig } from '@/utils/validate';
 

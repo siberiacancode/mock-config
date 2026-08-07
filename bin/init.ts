@@ -1,18 +1,18 @@
 import color from 'ansi-colors';
 import prompts from 'prompts';
 
-import type { MockServerConfigArgv } from '@/utils/types';
+import type { MockServerConfigInitArgv } from '@/utils/types';
 
 import { baseUrlSchema, portSchema, staticPathSchema } from '@/utils/validate';
 
 import { createTemplate } from './helpers';
 
-export const init = async (argv: MockServerConfigArgv) => {
+export const init = async (argv: MockServerConfigInitArgv) => {
   try {
     const response = await prompts(
       [
         {
-          name: 'withTypescript',
+          name: 'ts',
           type: 'toggle',
           message: 'Would you like to use TypeScript?',
           initial: true,

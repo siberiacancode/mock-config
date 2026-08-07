@@ -7,7 +7,7 @@ import request from 'supertest';
 
 import type { DatabaseConfig, MockServerConfig } from '@/utils/types';
 
-import { createDatabaseRoutes } from '@/core/database';
+import { createDatabaseRoutes } from '@/core/playground';
 import { createTmpDir } from '@/utils/helpers/tests';
 
 import { findIndexById } from './helpers';

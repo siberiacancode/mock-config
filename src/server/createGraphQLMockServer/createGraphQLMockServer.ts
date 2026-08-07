@@ -5,7 +5,6 @@ import express from 'express';
 
 import type { GraphQLMockServerConfig } from '@/utils/types';
 
-import { createDatabaseRoutes } from '@/core/database';
 import { createGraphQLRoutes } from '@/core/graphql';
 import {
   contextMiddleware,
@@ -16,6 +15,7 @@ import {
   requestInterceptorMiddleware,
   staticMiddleware
 } from '@/core/middlewares';
+import { createDatabaseRoutes } from '@/core/playground';
 import { validateApiMockServerConfig } from '@/utils/validate';
 
 export const createGraphQLMockServer = (

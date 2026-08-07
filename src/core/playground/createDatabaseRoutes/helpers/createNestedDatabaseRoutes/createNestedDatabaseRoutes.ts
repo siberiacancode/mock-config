@@ -6,10 +6,7 @@ import type { NestedDatabase } from '@/utils/types';
 import type { MemoryStorage } from '../../storages';
 
 import { createNewId, findIndexById } from '../array';
-import { filter } from '../filter/filter';
-import { pagination } from '../pagination/pagination';
-import { search } from '../search/search';
-import { sort } from '../sort/sort';
+import { embed, filter, pagination, search, sort } from '../functions';
 
 export const createNestedDatabaseRoutes = (
   router: IRouter,
@@ -31,7 +28,7 @@ export const createNestedDatabaseRoutes = (
         return response.json(data);
       }
 
-      const { _page, _limit, _begin, _end, _sort, _order, _q, ...filters } = request.query;
+      const { _embed, _page, _limit, _begin, _end, _sort, _order, _q, ...filters } = request.query;
 
       if (Object.keys(filters).length) {
         data = filter(data, filters as ParsedUrlQuery);
@@ -48,6 +45,10 @@ export const createNestedDatabaseRoutes = (
       if (_begin || _end) {
         data = data.slice(request.query._begin ?? 0, request.query._end);
         response.set('X-Total-Count', data.length);
+      }
+
+      if (_embed) {
+        data = embed(database, data, _embed as ParsedUrlQuery);
       }
 
       // ✅ important:
@@ -95,15 +96,24 @@ export const createNestedDatabaseRoutes = (
     router.route(itemPath).get((request, response, next) => {
       const currentResourceCollection = storage.read(key);
       const currentResourceIndex = findIndexById(currentResourceCollection, request.params.id);
+
       if (currentResourceIndex === -1) {
         return next();
+      }
+
+      let data = storage.read([key, currentResourceIndex]);
+
+      const { _embed } = request.query;
+
+      if (_embed) {
+        data = embed(database, data, _embed as ParsedUrlQuery);
       }
 
       // ✅ important:
       // set 'Cache-Control' header for explicit browsers response revalidate
       // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
       response.set('Cache-control', 'no-cache');
-      response.json(storage.read([key, currentResourceIndex]));
+      response.json(data);
     });
 
     router.route(itemPath).put((request, response, next) => {
