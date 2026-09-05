@@ -9,6 +9,7 @@ describe('callResponseLogger', () => {
     url: '/posts/2',
     method: 'POST',
     body: {},
+    api: { type: 'rest' },
     id: 1,
     timestamp: 1735623296789,
     graphQL: null,
@@ -16,7 +17,7 @@ describe('callResponseLogger', () => {
     get: (headerName: string) => headerName,
     protocol: 'http',
     originalUrl: '/api/rest/posts/2'
-  } as Request;
+  } as unknown as Request;
 
   const response = {
     statusCode: 200

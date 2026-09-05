@@ -2,17 +2,19 @@ import type { CookieOptions, Response as ExpressResponse, Request } from 'expres
 import type { ExecutionResult } from 'graphql';
 
 import type { MappedEntity, VariablesEntity } from './entities';
-import type { Interceptors } from './interceptors';
+import type { Interceptor } from './interceptors';
 import type { BaseUrl } from './server';
 import type { MaybePromise } from './utils';
 import type { PlainObject } from './values';
+
+export type GraphQLOperationType = 'mutation' | 'query';
+export type GraphQLTransportWsOperationType = 'subscription';
 
 export type GraphQLEntityName = 'cookies' | 'headers' | 'queries' | 'variables';
 
 export type GraphQLEntity<EntityName extends GraphQLEntityName = GraphQLEntityName> =
   EntityName extends 'variables' ? VariablesEntity : MappedEntity;
 
-export type GraphQLOperationType = 'mutation' | 'query';
 export type GraphQLIdentifier = string | RegExp;
 
 export type GraphQLEntitiesByEntityName = {
@@ -74,29 +76,21 @@ export type GraphQLDataResponse =
 export interface GraphQLRouteConfig {
   data: GraphQLDataResponse;
   entities?: GraphQLEntitiesByEntityName;
-  interceptors?: Interceptors<'graphql'>;
   settings?: GraphQLSettings;
 }
 
 export interface GraphQLRequestConfig {
   identifier: GraphQLIdentifier;
-  interceptors?: Interceptors<'graphql'>;
   operationType: GraphQLOperationType;
   routes: GraphQLRouteConfig[];
 }
 
 export interface GraphQLRequestArtifact {
   baseUrl: BaseUrl;
-  componentRequestInterceptor?: Interceptors<'graphql'>['request'];
-  componentResponseInterceptor?: Interceptors<'graphql'>['response'];
+  componentInterceptors?: Interceptor[];
   config: GraphQLRouteConfig;
   identifier: GraphQLIdentifier;
   operationType: GraphQLOperationType;
-  requestRequestInterceptor?: Interceptors<'graphql'>['request'];
-  requestResponseInterceptor?: Interceptors<'graphql'>['response'];
-  routeRequestInterceptor?: Interceptors<'graphql'>['request'];
-  routeResponseInterceptor?: Interceptors<'graphql'>['response'];
-  serverRequestInterceptor?: Interceptors<'graphql'>['request'];
-  serverResponseInterceptor?: Interceptors<'graphql'>['response'];
+  serverInterceptors?: Interceptor[];
   weight: number;
 }

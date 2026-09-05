@@ -9,6 +9,7 @@ describe('callRequestLogger', () => {
     url: '/posts/2',
     method: 'POST',
     body: {},
+    api: { type: 'rest' },
     id: 1,
     timestamp: 1735623296789,
     graphQL: null,
@@ -16,7 +17,7 @@ describe('callRequestLogger', () => {
     get: (headerName: string) => headerName,
     protocol: 'http',
     originalUrl: '/api/rest/posts/2'
-  } as Request;
+  } as unknown as Request;
 
   it('Should log default tokens if logger or options was not provided', () => {
     const consoleDir = vi.spyOn(console, 'dir');

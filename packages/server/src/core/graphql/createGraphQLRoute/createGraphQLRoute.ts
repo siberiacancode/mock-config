@@ -3,14 +3,15 @@ import type { Express } from 'express';
 import type {
   Entries,
   GraphQLEntitiesByEntityName,
+  GraphQLOperationType,
   GraphQLParams,
   GraphQLRequestArtifact
 } from '@/utils/types';
 
 import {
   asyncHandler,
-  callRequestInterceptor,
-  callResponseInterceptors,
+  callHttpRequestInterceptors,
+  callHttpResponseInterceptors,
   getGraphQLInput,
   isComparator,
   normalizeUrl,
@@ -38,7 +39,16 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
       const query = parseGraphQLQuery(graphQLInput.query);
       if (!query) return next();
 
-      request.queries = request.query;
+      if (graphQLRequestArtifacts[0].serverInterceptors?.length) {
+        await callHttpRequestInterceptors({
+          request,
+          interceptors: graphQLRequestArtifacts[0].serverInterceptors,
+          meta: {
+            type: 'graphql',
+            operationType: query.operationType as GraphQLOperationType
+          }
+        });
+      }
 
       const matchedRequestArtifacts = matchGraphQLRequestArtifacts({
         artifacts: graphQLRequestArtifacts,
@@ -100,27 +110,16 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
 
       if (!matchedRouteConfig) return next();
 
-      if (matchedRouteConfig.componentRequestInterceptor) {
-        await callRequestInterceptor({
+      if (matchedRouteConfig.componentInterceptors) {
+        await callHttpRequestInterceptors({
           request,
-          interceptor: matchedRouteConfig.componentRequestInterceptor
+          interceptors: matchedRouteConfig.componentInterceptors,
+          meta: {
+            type: 'graphql',
+            operationType: query.operationType as GraphQLOperationType
+          }
         });
       }
-
-      if (matchedRouteConfig.requestRequestInterceptor) {
-        await callRequestInterceptor({
-          request,
-          interceptor: matchedRouteConfig.requestRequestInterceptor
-        });
-      }
-
-      if (matchedRouteConfig.routeRequestInterceptor) {
-        await callRequestInterceptor({
-          request,
-          interceptor: matchedRouteConfig.routeRequestInterceptor
-        });
-      }
-
       const params: GraphQLParams = {
         request,
         response,
@@ -178,16 +177,16 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
         response.set('Cache-control', 'no-cache');
       }
 
-      const data = await callResponseInterceptors({
+      const data = await callHttpResponseInterceptors({
         data: resolvedData,
+        meta: {
+          type: 'graphql',
+          operationType: query.operationType as GraphQLOperationType
+        },
         request,
         response,
-        interceptors: {
-          routeInterceptor: matchedRouteConfig.routeResponseInterceptor,
-          componentInterceptor: matchedRouteConfig.componentResponseInterceptor,
-          requestInterceptor: matchedRouteConfig.requestResponseInterceptor,
-          serverInterceptor: matchedRouteConfig.serverResponseInterceptor
-        }
+        componentInterceptors: matchedRouteConfig.componentInterceptors,
+        serverInterceptors: matchedRouteConfig.serverInterceptors
       });
 
       if (matchedRouteConfig.config.settings?.delay) {

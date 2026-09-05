@@ -9,6 +9,7 @@
       "@/server": ["./src/server"],
       "@/core/database": ["./src/core/database"],
       "@/core/handlers": ["./src/core/handlers"],
+      "@/core/interceptors": ["./src/core/interceptors"],
       "@/core/rest": ["./src/core/rest"],
       "@/core/graphql": ["./src/core/graphql"],
       "@/core/ws": ["./src/core/ws"],
@@ -33,7 +34,8 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "ignoreDeprecations": "6.0"
   },
   "include": ["bin", "src", "./index.ts"],
   "exclude": ["./**/*.test.ts", "./bin/templates/*"]

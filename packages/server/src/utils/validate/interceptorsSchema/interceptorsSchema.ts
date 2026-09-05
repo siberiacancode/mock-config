@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
-export const interceptorsSchema = z.strictObject({
-  request: z.function().optional(),
-  response: z.function().optional()
-});
+import type { HttpRequestInterceptor, HttpResponseInterceptor } from '@/utils/types';
+
+import { isInterceptor } from '@/utils/helpers';
+
+export const interceptorsSchema = z.array(
+  z.custom<HttpRequestInterceptor | HttpResponseInterceptor>(isInterceptor)
+);

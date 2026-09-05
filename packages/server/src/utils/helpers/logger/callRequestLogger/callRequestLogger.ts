@@ -20,14 +20,24 @@ interface CallRequestLoggerParams {
 export const callRequestLogger = ({ logger, request }: CallRequestLoggerParams) => {
   const tokens: LoggerTokens<'request'> = {
     type: 'request',
+    apiType: request.api.type,
     id: request.id,
     timestamp: request.timestamp,
     method: request.method.toLowerCase() as RestMethod,
     url: decodeURI(`${request.protocol}://${request.get('host')}${request.originalUrl}`),
-    graphQLOperationType: request.graphQL?.operationType ?? null,
-    graphQLOperationName: request.graphQL?.operationName ?? null,
-    graphQLQuery: request.graphQL?.query ?? null,
-    variables: request.graphQL?.variables ?? null,
+    ...(request.api.type === 'graphql'
+      ? {
+          graphQLOperationType: request.api.operationType,
+          graphQLOperationName: request.api.operationName ?? null,
+          graphQLQuery: request.api.query,
+          variables: request.api.variables ?? null
+        }
+      : {
+          graphQLOperationType: null,
+          graphQLOperationName: null,
+          graphQLQuery: null,
+          variables: null
+        }),
     headers: request.headers,
     cookies: request.cookies,
     queries: request.query,

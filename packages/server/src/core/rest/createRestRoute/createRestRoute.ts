@@ -3,14 +3,15 @@ import type { Express } from 'express';
 import type {
   Entries,
   RestEntitiesByEntityName,
+  RestMethod,
   RestParams,
   RestRequestArtifact
 } from '@/utils/types';
 
 import {
   asyncHandler,
-  callRequestInterceptor,
-  callResponseInterceptors,
+  callHttpRequestInterceptors,
+  callHttpResponseInterceptors,
   isComparator,
   normalizeUrl,
   resolveEntityValues,
@@ -31,7 +32,6 @@ const extractPathParams = (artifact: RestRequestArtifact, path: string) => {
 
   const fullPath = urlJoin(artifact.baseUrl, artifact.path);
   const keys = fullPath.match(/:[^/]+/g)?.map((key) => key.slice(1)) ?? [];
-
   if (!keys.length) return {};
 
   const match = path.match(generatePathRegex(fullPath));
@@ -46,9 +46,18 @@ const extractPathParams = (artifact: RestRequestArtifact, path: string) => {
 export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRoutesParams) =>
   server.use(
     asyncHandler(async (request, response, next) => {
-      const requestMethod = request.method.toLowerCase();
+      const requestMethod = request.method.toLowerCase() as RestMethod;
 
-      request.queries = request.query;
+      if (restRequestArtifacts[0].serverInterceptors?.length) {
+        await callHttpRequestInterceptors({
+          request,
+          interceptors: restRequestArtifacts[0].serverInterceptors,
+          meta: {
+            type: 'rest',
+            method: requestMethod
+          }
+        });
+      }
 
       const previousParams = { ...request.params };
 
@@ -112,24 +121,14 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         return next();
       }
 
-      if (matchedRouteConfig.componentRequestInterceptor) {
-        await callRequestInterceptor({
+      if (matchedRouteConfig.componentInterceptors) {
+        await callHttpRequestInterceptors({
           request,
-          interceptor: matchedRouteConfig.componentRequestInterceptor
-        });
-      }
-
-      if (matchedRouteConfig.requestRequestInterceptor) {
-        await callRequestInterceptor({
-          request,
-          interceptor: matchedRouteConfig.requestRequestInterceptor
-        });
-      }
-
-      if (matchedRouteConfig.routeRequestInterceptor) {
-        await callRequestInterceptor({
-          request,
-          interceptor: matchedRouteConfig.routeRequestInterceptor
+          interceptors: matchedRouteConfig.componentInterceptors,
+          meta: {
+            type: 'rest',
+            method: requestMethod
+          }
         });
       }
 
@@ -190,16 +189,15 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
       if (response.headersSent) {
         return;
       }
-
-      const data = await callResponseInterceptors({
+      const data = await callHttpResponseInterceptors({
         data: resolvedData,
         request,
         response,
-        interceptors: {
-          routeInterceptor: matchedRouteConfig.routeResponseInterceptor,
-          requestInterceptor: matchedRouteConfig.requestResponseInterceptor,
-          componentInterceptor: matchedRouteConfig.componentResponseInterceptor,
-          serverInterceptor: matchedRouteConfig.serverResponseInterceptor
+        componentInterceptors: matchedRouteConfig.componentInterceptors,
+        serverInterceptors: matchedRouteConfig.serverInterceptors,
+        meta: {
+          type: 'rest',
+          method: requestMethod
         }
       });
 

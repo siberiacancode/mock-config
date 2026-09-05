@@ -52,4 +52,81 @@ describe('ws', () => {
       ]
     });
   });
+
+  it('Should build config for ws.message handler object with match', () => {
+    const handler = vi.fn();
+    const result = ws.message({
+      handler,
+      match: {
+        data: { type: 'ping' },
+        isBinary: false
+      }
+    });
+
+    expect(result).toStrictEqual({
+      type: 'raw',
+      routes: [
+        {
+          data: handler,
+          entities: {
+            data: { type: 'ping' },
+            isBinary: false
+          }
+        }
+      ]
+    });
+  });
+
+  it('Should build config for ws.close handler', () => {
+    const handler = vi.fn();
+    const result = ws.close(handler);
+
+    expect(result).toStrictEqual({
+      type: 'close',
+      routes: [{ data: handler }]
+    });
+  });
+
+  it('Should build config for ws.close handler object with match', () => {
+    const handler = vi.fn();
+    const result = ws.close({
+      handler,
+      match: {
+        code: 1000,
+        reason: 'normal closure'
+      }
+    });
+
+    expect(result).toStrictEqual({
+      type: 'close',
+      routes: [
+        {
+          data: handler,
+          entities: {
+            code: 1000,
+            reason: 'normal closure'
+          }
+        }
+      ]
+    });
+  });
+
+  it('Should build config for ws.error handler', () => {
+    const handler = vi.fn();
+    const result = ws.error(handler);
+
+    expect(result).toStrictEqual({
+      type: 'error',
+      routes: [{ data: handler }]
+    });
+  });
+
+  it('Should not add entities when match is not provided', () => {
+    const handler = vi.fn();
+
+    expect(ws.message({ handler })).toStrictEqual({
+      type: 'raw',
+      routes: [{ data: handler, entities: undefined }]
+    });
+  });
 });
