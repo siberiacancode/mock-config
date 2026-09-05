@@ -24,7 +24,7 @@ import type {
 import { ws as wsInterceptors } from '@/core/interceptors';
 import { parseCookie, parseQuery, urlJoin } from '@/utils/helpers';
 
-import { haveEntries } from '../../entities';
+import { haveEntries, regExp } from '../../entities';
 import { createWsRoute } from './createWsRoute';
 import {
   calculateGraphqlTransportWsRouteConfigWeight,
@@ -1107,7 +1107,7 @@ describe('createWsRoute: ws.error', () => {
   // ✅ important: text frame with invalid utf-8 is the simplest way to break the protocol
   const breakProtocol = (client: WebSocket) => {
     client.on('error', () => {});
-    client.send(Buffer.from([0xff, 0xfe, 0xfd]), { binary: false });
+    client.send(Buffer.from([0xFF, 0xFE, 0xFD]), { binary: false });
   };
 
   describe('content', () => {
@@ -1133,6 +1133,89 @@ describe('createWsRoute: ws.error', () => {
       expect(JSON.parse(response.toString())).toStrictEqual({
         message: 'Invalid WebSocket frame: invalid UTF-8 sequence'
       });
+    });
+  });
+
+  describe('entities', () => {
+    it('Should match route configuration by error message', async () => {
+      const { port } = await createServer({
+        ws: {
+          configs: [
+            {
+              type: 'error',
+              routes: [
+                {
+                  entities: { message: 'some other error' },
+                  data: () => ({ source: 'unmatched' })
+                },
+                {
+                  entities: { message: 'Invalid WebSocket frame: invalid UTF-8 sequence' },
+                  data: () => ({ source: 'matched' })
+                }
+              ]
+            }
+          ]
+        }
+      });
+      const observer = await connectClient(`ws://127.0.0.1:${port}/`);
+      const client = await connectClient(`ws://127.0.0.1:${port}/`);
+
+      const promise = once(observer, 'message');
+      breakProtocol(client);
+
+      const [response] = await promise;
+      expect(JSON.parse(response.toString())).toStrictEqual({ source: 'matched' });
+    });
+
+    it('Should match route configuration by error message comparator', async () => {
+      const { port } = await createServer({
+        ws: {
+          configs: [
+            {
+              type: 'error',
+              routes: [
+                {
+                  entities: { message: regExp(/invalid UTF-8/) },
+                  data: () => ({ source: 'matched' })
+                }
+              ]
+            }
+          ]
+        }
+      });
+      const observer = await connectClient(`ws://127.0.0.1:${port}/`);
+      const client = await connectClient(`ws://127.0.0.1:${port}/`);
+
+      const promise = once(observer, 'message');
+      breakProtocol(client);
+
+      const [response] = await promise;
+      expect(JSON.parse(response.toString())).toStrictEqual({ source: 'matched' });
+    });
+
+    it('Should not send response if no route configuration is matched by entities', async () => {
+      const { port } = await createServer({
+        ws: {
+          configs: [
+            {
+              type: 'error',
+              routes: [
+                {
+                  entities: { message: 'some other error' },
+                  data: () => ({ source: 'unmatched' })
+                }
+              ]
+            }
+          ]
+        }
+      });
+      const observer = await connectClient(`ws://127.0.0.1:${port}/`);
+      const client = await connectClient(`ws://127.0.0.1:${port}/`);
+
+      const messagesPromise = collectMessages(observer, 200);
+      breakProtocol(client);
+
+      expect(await messagesPromise).toStrictEqual([]);
     });
   });
 

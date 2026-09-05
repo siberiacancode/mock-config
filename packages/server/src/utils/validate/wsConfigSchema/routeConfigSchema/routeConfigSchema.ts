@@ -40,7 +40,12 @@ export const closeRouteConfigSchema = z.strictObject({
 });
 
 export const errorRouteConfigSchema = z.strictObject({
-  data: z.function()
+  data: z.function(),
+  entities: plainObjectSchema(
+    z.strictObject({
+      message: z.union([z.string(), comparatorSchema]).optional()
+    })
+  ).optional()
 });
 
 export const routeConfigSchema = z

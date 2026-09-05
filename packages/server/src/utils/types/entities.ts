@@ -23,12 +23,14 @@ type WsDataEntityValue =
   | boolean
   | number
   | string
-  | unknown[]
   | Buffer
   | Record<string, unknown>
+  | unknown[]
   | null;
 export type WsDataEntity = Comparator<WsDataEntityValue> | WsDataEntityValue;
 export type WsIsBinaryEntity = boolean | Comparator<boolean>;
 
 export type WsCloseCodeEntity = number | Comparator<number>;
 export type WsCloseReasonEntity = string | Comparator<string>;
+
+export type WsErrorMessageEntity = string | Comparator<string>;

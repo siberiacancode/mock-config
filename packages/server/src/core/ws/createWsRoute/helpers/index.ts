@@ -4,6 +4,7 @@ export * from './calculateWsRouteConfigWeight/calculateWsRouteConfigWeight';
 export * from './createWsFrame/createWsFrame';
 export * from './isCloseRequestMatchedByEntities/isCloseRequestMatchedByEntities';
 export * from './isConnectionRequestMatchedByEntities/isConnectionRequestMatchedByEntities';
+export * from './isErrorRequestMatchedByEntities/isErrorRequestMatchedByEntities';
 export * from './isRawRequestMatchedByEntities/isRawRequestMatchedByEntities';
 export * from './matchGraphqlTransportWsRequestArtifacts/matchGraphqlTransportWsRequestArtifacts';
 export * from './matchRawRequestArtifacts/matchRawRequestArtifacts';

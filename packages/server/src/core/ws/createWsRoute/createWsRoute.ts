@@ -40,6 +40,7 @@ import {
   createWsFrame,
   isCloseRequestMatchedByEntities,
   isConnectionRequestMatchedByEntities,
+  isErrorRequestMatchedByEntities,
   isRawRequestMatchedByEntities,
   matchGraphqlTransportWsRequestArtifacts,
   matchRawRequestArtifacts,
@@ -484,7 +485,9 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         }
       );
 
-      const [matchedArtifact] = errorWsRequestArtifacts;
+      const matchedArtifact = errorWsRequestArtifacts.find((artifact) =>
+        isErrorRequestMatchedByEntities(error, artifact.config.entities)
+      );
 
       if (!matchedArtifact) return;
 

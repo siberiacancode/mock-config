@@ -8,6 +8,7 @@ import type {
   WsCloseCodeEntity,
   WsCloseReasonEntity,
   WsDataEntity,
+  WsErrorMessageEntity,
   WsIsBinaryEntity
 } from './entities';
 import type { GraphQLIdentifier, GraphQLTransportWsOperationType } from './graphql';
@@ -48,6 +49,10 @@ export interface WsSettings {
 export interface WsCloseEntitiesByEntityName {
   code?: WsCloseCodeEntity;
   reason?: WsCloseReasonEntity;
+}
+
+export interface WsErrorEntitiesByEntityName {
+  message?: WsErrorMessageEntity;
 }
 
 export type WsConnectionEntityName = 'cookies' | 'headers' | 'queries';
@@ -113,6 +118,7 @@ export interface WsConnectionRouteConfig {
 }
 export interface WsErrorRouteConfig {
   data: WsErrorDataResponse;
+  entities?: WsErrorEntitiesByEntityName;
   settings?: WsSettings;
 }
 export interface WsRawRouteConfig {

@@ -121,6 +121,23 @@ describe('ws', () => {
     });
   });
 
+  it('Should build config for ws.error handler object with match', () => {
+    const handler = vi.fn();
+    const result = ws.error({ handler, match: { message: 'socket error' } });
+
+    expect(result).toStrictEqual({
+      type: 'error',
+      routes: [
+        {
+          data: handler,
+          entities: {
+            message: 'socket error'
+          }
+        }
+      ]
+    });
+  });
+
   it('Should not add entities when match is not provided', () => {
     const handler = vi.fn();
 

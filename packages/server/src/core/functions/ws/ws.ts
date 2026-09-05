@@ -7,7 +7,9 @@ import type {
   WsConnectionEntitiesByEntityName,
   WsConnectionParams,
   WsConnectionRouteConfig,
+  WsErrorEntitiesByEntityName,
   WsErrorParams,
+  WsErrorRouteConfig,
   WsMessageParams,
   WsRawEntitiesByEntityName,
   WsRawRouteConfig,
@@ -27,6 +29,11 @@ interface WsMessageHandlerObject {
 interface WsConnectionHandlerObject {
   handler: WsConnectionHandler;
   match?: WsConnectionEntitiesByEntityName;
+}
+
+interface WsErrorHandlerObject {
+  handler: WsErrorHandler;
+  match?: WsErrorEntitiesByEntityName;
 }
 
 interface WsCloseHandlerObject {
@@ -52,6 +59,21 @@ const createRawRouteConfig = (
 const createConnectionRouteConfig = (
   config: WsConnectionHandler | WsConnectionHandlerObject
 ): WsConnectionRouteConfig => {
+  if (typeof config === 'function') {
+    return {
+      data: config
+    };
+  }
+
+  return {
+    data: config.handler,
+    entities: config.match
+  };
+};
+
+const createErrorRouteConfig = (
+  config: WsErrorHandler | WsErrorHandlerObject
+): WsErrorRouteConfig => {
   if (typeof config === 'function') {
     return {
       data: config
@@ -101,14 +123,16 @@ export function createWsConnectionRequestConfig(
   };
 }
 
-export const createWsErrorRequestConfig = (handler: WsErrorHandler): WsRequestConfig => ({
-  type: 'error',
-  routes: [
-    {
-      data: handler
-    }
-  ]
-});
+export function createWsErrorRequestConfig(handler: WsErrorHandler): WsRequestConfig;
+export function createWsErrorRequestConfig(config: WsErrorHandlerObject): WsRequestConfig;
+export function createWsErrorRequestConfig(
+  config: WsErrorHandler | WsErrorHandlerObject
+): WsRequestConfig {
+  return {
+    type: 'error',
+    routes: [createErrorRouteConfig(config)]
+  };
+}
 
 export function createWsCloseRequestConfig(handler: WsCloseHandler): WsRequestConfig;
 export function createWsCloseRequestConfig(config: WsCloseHandlerObject): WsRequestConfig;
