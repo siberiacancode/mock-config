@@ -472,6 +472,33 @@ describe('createRestRoutes: content', () => {
     expect(response.body).toStrictEqual({ broadcasted: { message: 'hello' } });
   });
 
+  it('Should keep arbitrary request context per request', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                data: ({ request }) => {
+                  request.context.visits = (request.context.visits ?? 0) + 1;
+                  return { visits: request.context.visits };
+                }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const first = await request(server).get('/users');
+    const second = await request(server).get('/users');
+
+    expect(first.body).toStrictEqual({ visits: 1 });
+    expect(second.body).toStrictEqual({ visits: 1 });
+  });
+
   it('Should set the status code from the data function', async () => {
     const server = createServer({
       rest: {

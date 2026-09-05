@@ -19,6 +19,7 @@ import { getGraphQLInput, parseCookie, parseGraphQLQuery, parseQuery } from '@/u
 export interface RequestContext {
   orm: Partial<ReturnType<typeof createOrm>>;
   broadcast: (data: unknown) => void;
+  [key: string]: any;
 }
 
 declare module 'http' {
@@ -78,7 +79,7 @@ export const contextMiddleware = (
     requestId += 1;
     request.id = requestId;
     request.timestamp = Date.now();
-    request.context = context;
+    request.context = { ...context };
   };
 
   server.use((request, _response, next) => {
@@ -122,5 +123,6 @@ export const contextMiddleware = (
     connectionId += 1;
     wsSocket.id = connectionId;
     wsSocket.timestamp = Date.now();
+    wsSocket.context = {};
   });
 };

@@ -93,6 +93,7 @@ const createServer = async (
     connectionId += 1;
     wsSocket.id = connectionId;
     wsSocket.timestamp = Date.now();
+    wsSocket.context = {};
   });
 
   createWsRoute({
@@ -526,7 +527,14 @@ describe('createWsRoute: ws.raw', () => {
           configs: [
             {
               type: 'raw',
-              routes: [{ data: (({ event }) => ({ id: event.id, timestamp: event.timestamp })) as WsDataResponse }]
+              routes: [
+                {
+                  data: (({ event }) => ({
+                    id: event.id,
+                    timestamp: event.timestamp
+                  })) as WsDataResponse
+                }
+              ]
             }
           ]
         }
@@ -568,6 +576,42 @@ describe('createWsRoute: ws.raw', () => {
 
       const ids = ((await messagesPromise) as { id: number }[]).map(({ id }) => id);
       expect(new Set(ids).size).toBe(2);
+    });
+
+    it('Should keep arbitrary socket context per connection', async () => {
+      const { port } = await createServer({
+        ws: {
+          configs: [
+            {
+              type: 'raw',
+              routes: [
+                {
+                  data: (({ raw, socket }) => {
+                    socket.context.room = raw;
+                    return { room: socket.context.room, keys: Object.keys(socket.context) };
+                  }) as WsDataResponse
+                }
+              ]
+            }
+          ]
+        }
+      });
+      const firstClient = await connectClient(`ws://127.0.0.1:${port}/`);
+      const secondClient = await connectClient(`ws://127.0.0.1:${port}/`);
+
+      firstClient.send('public');
+      const [firstResponse] = await once(firstClient, 'message');
+      secondClient.send('private');
+      const [secondResponse] = await once(secondClient, 'message');
+
+      expect(JSON.parse(firstResponse.toString())).toStrictEqual({
+        room: 'public',
+        keys: ['room']
+      });
+      expect(JSON.parse(secondResponse.toString())).toStrictEqual({
+        room: 'private',
+        keys: ['room']
+      });
     });
 
     it('Should provide the same event context to interceptors and route handler', async () => {
@@ -1063,7 +1107,7 @@ describe('createWsRoute: ws.error', () => {
   // ✅ important: text frame with invalid utf-8 is the simplest way to break the protocol
   const breakProtocol = (client: WebSocket) => {
     client.on('error', () => {});
-    client.send(Buffer.from([0xFF, 0xFE, 0xFD]), { binary: false });
+    client.send(Buffer.from([0xff, 0xfe, 0xfd]), { binary: false });
   };
 
   describe('content', () => {

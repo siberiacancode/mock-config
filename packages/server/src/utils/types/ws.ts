@@ -21,6 +21,7 @@ import type { Data } from './values';
 // @types/ws exports WebSocket via `export =`, so `declare module 'ws'` cannot reach the
 // instance type — connection scoped fields are declared here and cast once in createWsRoute
 export interface WsSocket extends WebSocket {
+  context: Record<string, any>;
   id: number;
   timestamp: number;
 }
