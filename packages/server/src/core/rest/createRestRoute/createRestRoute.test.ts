@@ -8,7 +8,8 @@ import { describe, expect, it, vi } from 'vitest';
 import type {
   BaseServerConfig,
   BaseUrl,
-  Interceptor,
+  HttpRequestInterceptor,
+  HttpResponseInterceptor,
   RestMethod,
   RestRequestArtifact,
   RestRequestConfig
@@ -24,7 +25,7 @@ import { calculateRestRouteConfigWeight, prepareRestRequestArtifacts } from './h
 interface RestConfig {
   baseUrl?: BaseUrl;
   configs: RestRequestConfig[];
-  interceptors?: Interceptor[];
+  interceptors?: (HttpRequestInterceptor | HttpResponseInterceptor)[];
 }
 
 const createServer = (

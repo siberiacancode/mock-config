@@ -11,7 +11,8 @@ import type {
   GraphQLOperationType,
   GraphQLRequestArtifact,
   GraphQLRequestConfig,
-  Interceptor
+  HttpRequestInterceptor,
+  HttpResponseInterceptor
 } from '@/utils/types';
 
 import { graphql as graphqlInterceptors } from '@/core/interceptors';
@@ -24,7 +25,7 @@ import { calculateGraphQLRouteConfigWeight, prepareGraphQLRequestArtifacts } fro
 interface GraphqlConfig {
   baseUrl?: BaseUrl;
   configs: GraphQLRequestConfig[];
-  interceptors?: Interceptor[];
+  interceptors?: (HttpRequestInterceptor | HttpResponseInterceptor)[];
 }
 
 const createServer = (
