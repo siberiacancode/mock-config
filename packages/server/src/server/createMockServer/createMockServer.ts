@@ -1,5 +1,4 @@
 import type { Express } from 'express';
-import type { RawData } from 'ws';
 
 import bodyParser from 'body-parser';
 import express from 'express';
@@ -11,9 +10,7 @@ import type {
   MockServerComponent,
   MockServerConfig,
   RestRequestArtifact,
-  WsInterceptorMeta,
-  WsRequestArtifact,
-  WsRequestInterceptorHandlerParams
+  WsRequestArtifact
 } from '@/utils/types';
 
 import { createDatabaseRoutes } from '@/core/database';
@@ -28,7 +25,6 @@ import {
   corsMiddleware,
   errorMiddleware,
   noCorsMiddleware,
-  serverRequestInterceptorsMiddleware,
   staticMiddleware
 } from '@/core/middlewares';
 import {
@@ -37,16 +33,12 @@ import {
   prepareRestRequestArtifacts
 } from '@/core/rest';
 import {
-  addTaskInWsQueue,
-  broadcastWsData,
   calculateGraphqlTransportWsRouteConfigWeight,
   calculateWsRouteConfigWeight,
-  createWsFrame,
   createWsRoute,
-  prepareWsRequestArtifacts,
-  sendWsData
+  prepareWsRequestArtifacts
 } from '@/core/ws';
-import { callWsRequestInterceptors, getGraphqlTransportWsInput, urlJoin } from '@/utils/helpers';
+import { urlJoin } from '@/utils/helpers';
 import { validateMockServerConfig } from '@/utils/validate';
 
 export const createMockServer = (
@@ -80,13 +72,6 @@ export const createMockServer = (
   contextMiddleware(server, { database, ws });
 
   cookieParseMiddleware(server);
-
-  if (serverInterceptors) {
-    serverRequestInterceptorsMiddleware({
-      server,
-      interceptors: serverInterceptors
-    });
-  }
 
   if (cors) {
     corsMiddleware(server, cors);
@@ -205,55 +190,6 @@ export const createMockServer = (
     });
     return httpServer;
   }) as typeof server.listen;
-
-  if (serverInterceptors?.length) {
-    ws.on('connection', async (socket) => {
-      const broadcast = (data: unknown) => broadcastWsData(ws, data);
-      const send = (data: unknown) => sendWsData(socket, data);
-
-      const callServerRequestInterceptors = (
-        meta: WsInterceptorMeta,
-        params?: Pick<WsRequestInterceptorHandlerParams, 'code' | 'error' | 'frame' | 'reason'>
-      ) =>
-        addTaskInWsQueue(socket, () =>
-          callWsRequestInterceptors({
-            meta,
-            ...params,
-            interceptors: serverInterceptors,
-            socket,
-            broadcast,
-            send
-          })
-        );
-
-      socket.on('message', async (raw: RawData, isBinary: boolean) => {
-        const graphqlTransportWsInput = isBinary
-          ? undefined
-          : getGraphqlTransportWsInput(raw.toString());
-
-        await callServerRequestInterceptors(
-          {
-            type: 'ws',
-            event: 'message',
-            messageType: graphqlTransportWsInput ? 'graphql-ws' : 'raw'
-          },
-          { frame: createWsFrame(raw, isBinary) }
-        );
-      });
-
-      socket.on('close', (code, reason) =>
-        callServerRequestInterceptors(
-          { type: 'ws', event: 'close' },
-          { code, reason: reason.toString() }
-        )
-      );
-      socket.on('error', (error) =>
-        callServerRequestInterceptors({ type: 'ws', event: 'error' }, { error })
-      );
-
-      await callServerRequestInterceptors({ type: 'ws', event: 'open' });
-    });
-  }
 
   if (restRequestArtifacts.length) {
     createRestRoute({

@@ -1,4 +1,3 @@
-export * from './addTaskInWsQueue/addTaskInWsQueue';
 export * from './broadcastWsData/broadcastWsData';
 export * from './calculateGraphqlTransportWsRouteConfigWeight/calculateGraphqlTransportWsRouteConfigWeight';
 export * from './calculateWsRouteConfigWeight/calculateWsRouteConfigWeight';

@@ -16,8 +16,10 @@ import type {
   WsCloseParams,
   WsConnectionParams,
   WsErrorParams,
+  WsInterceptorMeta,
   WsMessageParams,
-  WsRequestArtifact
+  WsRequestArtifact,
+  WsRequestInterceptorHandlerParams
 } from '@/utils/types';
 
 import {
@@ -32,7 +34,6 @@ import {
 
 import { equals } from '../../entities';
 import {
-  addTaskInWsQueue,
   broadcastWsData,
   createWsFrame,
   isCloseRequestMatchedByEntities,
@@ -52,6 +53,28 @@ interface CreateWsRouteParams {
 
 export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParams) =>
   server.on('connection', async (socket, request) => {
+    const broadcast = (data: unknown) => broadcastWsData(server, data);
+    const send = (data: unknown) => sendWsData(socket, data);
+    const setDelay = async (delay: number) => {
+      await sleep(delay);
+    };
+
+    const callServerRequestInterceptors = async (
+      meta: WsInterceptorMeta,
+      params?: Pick<WsRequestInterceptorHandlerParams, 'code' | 'error' | 'frame' | 'reason'>
+    ) => {
+      if (wsRequestArtifacts[0].serverInterceptors?.length) {
+        await callWsRequestInterceptors({
+          meta,
+          ...params,
+          interceptors: wsRequestArtifacts[0].serverInterceptors,
+          socket,
+          broadcast,
+          send
+        });
+      }
+    };
+
     const completedSubscriptionIds = new Set<string>();
 
     const [requestPathname] = request.url!.split('?');
@@ -87,13 +110,12 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       }
     );
 
-    const broadcast = (data: unknown) => broadcastWsData(server, data);
-    const send = (data: unknown) => sendWsData(socket, data);
-    const setDelay = async (delay: number) => {
-      await sleep(delay);
-    };
-
     const handleOpen = async () => {
+      await callServerRequestInterceptors({
+        type: 'ws',
+        event: 'open'
+      });
+
       const matchedArtifact = connectionArtifacts.find((artifact) =>
         isConnectionRequestMatchedByEntities(request, artifact.config.entities)
       );
@@ -149,6 +171,15 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         send,
         setDelay
       };
+
+      await callServerRequestInterceptors(
+        {
+          type: 'ws',
+          event: 'message',
+          messageType: 'raw'
+        },
+        { frame: createWsFrame(raw, isBinary) }
+      );
 
       const matchedRawArtifacts = matchRawRequestArtifacts({
         artifacts: rawWsRequestArtifacts,
@@ -234,6 +265,15 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
       const query = parseGraphQLQuery(graphqlSubscriptionInput.payload.query);
       if (!query) return;
+
+      await callServerRequestInterceptors(
+        {
+          type: 'ws',
+          event: 'message',
+          messageType: 'graphql-ws'
+        },
+        { frame: createWsFrame(raw, isBinary) }
+      );
 
       const matchedGraphqlTransportWsRequestArtifacts = matchGraphqlTransportWsRequestArtifacts({
         artifacts: graphqlTransportWsRequestArtifacts,
@@ -335,6 +375,14 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
     const handleClose = async (code: number, reasonBuffer: Buffer) => {
       const reason = reasonBuffer.toString();
 
+      await callServerRequestInterceptors(
+        {
+          type: 'ws',
+          event: 'close'
+        },
+        { code, reason }
+      );
+
       const matchedArtifact = closeWsRequestArtifacts.find((artifact) =>
         isCloseRequestMatchedByEntities({ code, reason }, artifact.config.entities)
       );
@@ -390,6 +438,16 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
     };
 
     const handleError = async (error: Error) => {
+      await callServerRequestInterceptors(
+        {
+          type: 'ws',
+          event: 'error'
+        },
+        {
+          error
+        }
+      );
+
       const [matchedArtifact] = errorWsRequestArtifacts;
 
       if (!matchedArtifact) return;
@@ -443,15 +501,11 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       }
     };
 
-    socket.on('message', (raw, isBinary) =>
-      addTaskInWsQueue(socket, () => handleMessage(raw, isBinary))
-    );
+    socket.on('message', (raw, isBinary) => handleMessage(raw, isBinary));
 
-    socket.on('close', (code, reasonBuffer) =>
-      addTaskInWsQueue(socket, () => handleClose(code, reasonBuffer))
-    );
+    socket.on('close', (code, reasonBuffer) => handleClose(code, reasonBuffer));
 
-    socket.on('error', (error) => addTaskInWsQueue(socket, () => handleError(error)));
+    socket.on('error', (error) => handleError(error));
 
-    await addTaskInWsQueue(socket, handleOpen);
+    await handleOpen();
   });

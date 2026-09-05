@@ -32,7 +32,6 @@ const extractPathParams = (artifact: RestRequestArtifact, path: string) => {
 
   const fullPath = urlJoin(artifact.baseUrl, artifact.path);
   const keys = fullPath.match(/:[^/]+/g)?.map((key) => key.slice(1)) ?? [];
-  console.log('keys=', keys);
   if (!keys.length) return {};
 
   const match = path.match(generatePathRegex(fullPath));
@@ -48,6 +47,17 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
   server.use(
     asyncHandler(async (request, response, next) => {
       const requestMethod = request.method.toLowerCase() as RestMethod;
+
+      if (restRequestArtifacts[0].serverInterceptors?.length) {
+        await callHttpRequestInterceptors({
+          request,
+          interceptors: restRequestArtifacts[0].serverInterceptors,
+          meta: {
+            type: 'rest',
+            method: requestMethod
+          }
+        });
+      }
 
       const previousParams = { ...request.params };
 
@@ -179,7 +189,6 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
       if (response.headersSent) {
         return;
       }
-      console.log('matchedRouteConfig.serverInterceptors=', matchedRouteConfig.serverInterceptors);
       const data = await callHttpResponseInterceptors({
         data: resolvedData,
         request,
