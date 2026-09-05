@@ -1,14 +1,14 @@
-import type { WebSocket } from 'ws';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import type { WsFrame } from '@/utils/types';
+import type { WsFrame, WsSocket } from '@/utils/types';
 
 import { graphql, ws } from '@/core/interceptors';
 
 import { callWsRequestInterceptors } from './callWsRequestInterceptors';
 
-const socket = {} as WebSocket;
+const socket = {} as WsSocket;
+const wsEventContext = { id: 1, timestamp: Date.now() };
 const broadcast = vi.fn();
 const send = vi.fn();
 
@@ -24,6 +24,7 @@ describe('callWsRequestInterceptors: order of calls', () => {
     const secondInterceptor = vi.fn();
 
     await callWsRequestInterceptors({
+   event: wsEventContext,
       meta: { type: 'ws', event: 'open' },
       interceptors: [ws.request.all(firstInterceptor), ws.request.open(secondInterceptor)],
       socket,
@@ -46,6 +47,7 @@ describe('callWsRequestInterceptors: interceptors filtering', () => {
     const closeInterceptor = vi.fn();
 
     await callWsRequestInterceptors({
+   event: wsEventContext,
       meta: { type: 'ws', event: 'open' },
       interceptors: [
         ws.request.all(allInterceptor),
@@ -67,6 +69,7 @@ describe('callWsRequestInterceptors: interceptors filtering', () => {
     const subscriptionInterceptor = vi.fn();
 
     await callWsRequestInterceptors({
+   event: wsEventContext,
       meta: { type: 'ws', event: 'message', messageType: 'graphql-ws' },
       interceptors: [
         ws.request.message(messageInterceptor),
@@ -85,6 +88,7 @@ describe('callWsRequestInterceptors: interceptors filtering', () => {
     const subscriptionInterceptor = vi.fn();
 
     await callWsRequestInterceptors({
+   event: wsEventContext,
       meta: { type: 'ws', event: 'message', messageType: 'raw' },
       interceptors: [graphql.request.subscription(subscriptionInterceptor)],
       socket,
@@ -99,6 +103,7 @@ describe('callWsRequestInterceptors: interceptors filtering', () => {
     const responseInterceptor = vi.fn();
 
     await callWsRequestInterceptors({
+   event: wsEventContext,
       meta: { type: 'ws', event: 'open' },
       interceptors: [ws.response.open(responseInterceptor)],
       socket,
@@ -115,6 +120,7 @@ describe('callWsRequestInterceptors: params functions', () => {
     const interceptor = vi.fn();
 
     await callWsRequestInterceptors({
+   event: wsEventContext,
       meta: { type: 'ws', event: 'message', messageType: 'raw' },
       frame,
       interceptors: [ws.request.message(interceptor)],
@@ -130,6 +136,7 @@ describe('callWsRequestInterceptors: params functions', () => {
     const interceptor = vi.fn();
 
     await callWsRequestInterceptors({
+   event: wsEventContext,
       meta: { type: 'ws', event: 'close' },
       code: 1000,
       reason: 'normal closure',
@@ -150,6 +157,7 @@ describe('callWsRequestInterceptors: params functions', () => {
     const error = new Error('boom');
 
     await callWsRequestInterceptors({
+   event: wsEventContext,
       meta: { type: 'ws', event: 'error' },
       error,
       interceptors: [ws.request.error(interceptor)],
@@ -165,6 +173,7 @@ describe('callWsRequestInterceptors: params functions', () => {
     const interceptor = vi.fn();
 
     await callWsRequestInterceptors({
+   event: wsEventContext,
       meta: { type: 'ws', event: 'open' },
       interceptors: [ws.request.open(interceptor)],
       socket,
@@ -182,6 +191,7 @@ describe('callWsRequestInterceptors: params functions', () => {
     const interceptor = vi.fn();
 
     await callWsRequestInterceptors({
+   event: wsEventContext,
       meta: { type: 'ws', event: 'open' },
       interceptors: [ws.request.open(interceptor)],
       socket,

@@ -5,7 +5,13 @@ import type { WebSocketServer } from 'ws';
 import { Buffer } from 'node:buffer';
 import { WebSocket } from 'ws';
 
-import type { ApiContext, DatabaseConfig, GraphQLOperationType, RestMethod } from '@/utils/types';
+import type {
+  ApiContext,
+  DatabaseConfig,
+  GraphQLOperationType,
+  RestMethod,
+  WsSocket
+} from '@/utils/types';
 
 import { createOrm, createStorage } from '@/core/database';
 import { getGraphQLInput, parseCookie, parseGraphQLQuery, parseQuery } from '@/utils/helpers';
@@ -56,6 +62,7 @@ export const contextMiddleware = (
   };
 
   let requestId = 0;
+  let connectionId = 0;
   const context: RequestContext = {
     orm: {},
     broadcast: (payload: unknown) => broadcast(payload)
@@ -78,15 +85,14 @@ export const contextMiddleware = (
     addContext(request);
 
     request.queries = request.query as Record<string, string | string[]>;
+    request.api = {
+      type: 'rest',
+      method: request.method.toLowerCase() as RestMethod
+    };
 
     if (request.method === 'GET' || request.method === 'POST') {
       const graphQLInput = getGraphQLInput(request);
       const graphQLQuery = parseGraphQLQuery(graphQLInput.query ?? '');
-
-      request.api = {
-        type: 'rest',
-        method: request.method.toLowerCase() as RestMethod
-      };
 
       if (graphQLInput.query && graphQLQuery) {
         request.api = {
@@ -100,7 +106,6 @@ export const contextMiddleware = (
       }
     }
 
-    request.context = context;
     return next();
   });
 
@@ -110,14 +115,12 @@ export const contextMiddleware = (
     request.queries = parseQuery(request.url ?? '');
     request.cookies = parseCookie(request.headers.cookie ?? '');
 
-    socket.on('message', () => {
-      addContext(request);
-    });
-    socket.on('close', () => {
-      addContext(request);
-    });
-    socket.on('error', () => {
-      addContext(request);
-    });
+    // ✅ important:
+    // socket fields are connection scoped, so they are assigned once and never mutated by events
+    // per event id and timestamp are passed through route params instead
+    const wsSocket = socket as WsSocket;
+    connectionId += 1;
+    wsSocket.id = connectionId;
+    wsSocket.timestamp = Date.now();
   });
 };

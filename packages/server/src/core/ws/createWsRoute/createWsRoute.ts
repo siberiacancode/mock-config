@@ -16,10 +16,12 @@ import type {
   WsCloseParams,
   WsConnectionParams,
   WsErrorParams,
+  WsEventContext,
   WsInterceptorMeta,
   WsMessageParams,
   WsRequestArtifact,
-  WsRequestInterceptorHandlerParams
+  WsRequestInterceptorHandlerParams,
+  WsSocket
 } from '@/utils/types';
 
 import {
@@ -51,8 +53,16 @@ interface CreateWsRouteParams {
   wsRequestArtifacts: WsRequestArtifact[];
 }
 
-export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParams) =>
-  server.on('connection', async (socket, request) => {
+export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParams) => {
+  let eventId = 0;
+  const createWsEventContext = (): WsEventContext => {
+    eventId += 1;
+    return { id: eventId, timestamp: Date.now() };
+  };
+
+  return server.on('connection', async (rawSocket, request) => {
+    const socket = rawSocket as WsSocket;
+
     const broadcast = (data: unknown) => broadcastWsData(server, data);
     const send = (data: unknown) => sendWsData(socket, data);
     const setDelay = async (delay: number) => {
@@ -60,11 +70,13 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
     };
 
     const callServerRequestInterceptors = async (
+      wsEventContext: WsEventContext,
       meta: WsInterceptorMeta,
       params?: Pick<WsRequestInterceptorHandlerParams, 'code' | 'error' | 'frame' | 'reason'>
     ) => {
       if (wsRequestArtifacts[0].serverInterceptors?.length) {
         await callWsRequestInterceptors({
+          event: wsEventContext,
           meta,
           ...params,
           interceptors: wsRequestArtifacts[0].serverInterceptors,
@@ -111,7 +123,9 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
     );
 
     const handleOpen = async () => {
-      await callServerRequestInterceptors({
+      const wsEventContext = createWsEventContext();
+
+      await callServerRequestInterceptors(wsEventContext, {
         type: 'ws',
         event: 'open'
       });
@@ -124,6 +138,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
       if (matchedArtifact.componentInterceptors) {
         await callWsRequestInterceptors({
+          event: wsEventContext,
           meta: {
             type: 'ws',
             event: 'open'
@@ -136,6 +151,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       }
 
       const params: WsConnectionParams = {
+        event: wsEventContext,
         broadcast,
         request,
         socket,
@@ -146,6 +162,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       const resolvedData = await matchedArtifact.config.data(params);
 
       const data = await callWsResponseInterceptors({
+        event: wsEventContext,
         data: resolvedData,
         meta: {
           type: 'ws',
@@ -163,9 +180,12 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
     const handleMessage = async (raw: RawData, isBinary: boolean) => {
       const frame = createWsFrame(raw, isBinary);
+      const wsEventContext = createWsEventContext();
 
       const wsParams: WsMessageParams = {
+        event: wsEventContext,
         ...frame,
+        request,
         broadcast,
         socket,
         send,
@@ -173,6 +193,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       };
 
       await callServerRequestInterceptors(
+        wsEventContext,
         {
           type: 'ws',
           event: 'message',
@@ -195,6 +216,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       if (matchedRawArtifact) {
         if (matchedRawArtifact.componentInterceptors) {
           await callWsRequestInterceptors({
+            event: wsEventContext,
             meta: {
               type: 'ws',
               event: 'message',
@@ -210,6 +232,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
         const resolvedData = await matchedRawArtifact.config.data(wsParams);
         const data = await callWsResponseInterceptors({
+          event: wsEventContext,
           data: resolvedData,
           meta: {
             type: 'ws',
@@ -267,6 +290,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       if (!query) return;
 
       await callServerRequestInterceptors(
+        wsEventContext,
         {
           type: 'ws',
           event: 'message',
@@ -310,6 +334,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
       if (matchedArtifact.componentInterceptors) {
         await callWsRequestInterceptors({
+          event: wsEventContext,
           meta: {
             type: 'ws',
             event: 'message',
@@ -324,6 +349,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       }
 
       const graphqlTransportWsParams: GraphqlTransportWsParams = {
+        event: wsEventContext,
         complete: () => {
           if (completedSubscriptionIds.has(operationId)) return;
           completedSubscriptionIds.add(operationId);
@@ -338,6 +364,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         operationName: query.operationName,
         query: graphqlSubscriptionInput.payload.query,
         raw,
+        request,
         setDelay,
         socket,
         variables: graphqlSubscriptionInput.payload.variables ?? {}
@@ -349,6 +376,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           : matchedArtifact.config.data;
 
       const data = await callWsResponseInterceptors({
+        event: wsEventContext,
         data: resolvedData,
         meta: {
           type: 'ws',
@@ -374,8 +402,10 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
     const handleClose = async (code: number, reasonBuffer: Buffer) => {
       const reason = reasonBuffer.toString();
+      const wsEventContext = createWsEventContext();
 
       await callServerRequestInterceptors(
+        wsEventContext,
         {
           type: 'ws',
           event: 'close'
@@ -391,6 +421,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
       if (matchedArtifact.componentInterceptors) {
         await callWsRequestInterceptors({
+          event: wsEventContext,
           meta: {
             type: 'ws',
             event: 'close'
@@ -405,6 +436,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       }
 
       const params: WsCloseParams = {
+        event: wsEventContext,
         broadcast,
         code,
         reason,
@@ -416,6 +448,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       const resolvedData = await matchedArtifact.config.data(params);
 
       const data = await callWsResponseInterceptors({
+        event: wsEventContext,
         data: resolvedData,
         meta: {
           type: 'ws',
@@ -438,7 +471,10 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
     };
 
     const handleError = async (error: Error) => {
+      const wsEventContext = createWsEventContext();
+
       await callServerRequestInterceptors(
+        wsEventContext,
         {
           type: 'ws',
           event: 'error'
@@ -454,6 +490,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
       if (matchedArtifact.componentInterceptors) {
         await callWsRequestInterceptors({
+          event: wsEventContext,
           meta: {
             type: 'ws',
             event: 'error'
@@ -467,6 +504,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       }
 
       const params: WsErrorParams = {
+        event: wsEventContext,
         broadcast,
         error,
         request,
@@ -478,6 +516,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       const resolvedData = await matchedArtifact.config.data(params);
 
       const data = await callWsResponseInterceptors({
+        event: wsEventContext,
         data: resolvedData,
         meta: {
           type: 'ws',
@@ -509,3 +548,4 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
     await handleOpen();
   });
+};

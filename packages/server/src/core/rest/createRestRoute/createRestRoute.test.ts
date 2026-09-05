@@ -1,3 +1,5 @@
+import type { Mock } from 'vitest';
+
 import bodyParser from 'body-parser';
 import express from 'express';
 import request from 'supertest';
@@ -15,6 +17,7 @@ import type {
 import { rest as restInterceptors } from '@/core/interceptors';
 import { parseCookie, urlJoin } from '@/utils/helpers';
 
+import { haveEntries, regExp } from '../../entities';
 import { createRestRoute } from './createRestRoute';
 import { calculateRestRouteConfigWeight, prepareRestRequestArtifacts } from './helpers';
 
@@ -184,6 +187,81 @@ describe('createRestRoutes: routing', () => {
       expect(response.headers['cache-control']).toBe(undefined);
     });
   });
+
+  it('Should expose path params to the route', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users/:id',
+            method: 'get',
+            routes: [{ data: ({ request }) => ({ params: request.params }) }]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users/123');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toStrictEqual({ params: { id: '123' } });
+  });
+
+  it('Should decode URL-encoded path params', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users/:id',
+            method: 'get',
+            routes: [{ data: ({ request }) => ({ params: request.params }) }]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users/John%20Doe');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toStrictEqual({ params: { id: 'John Doe' } });
+  });
+
+  it('Should not extract path params when the request path has a trailing slash', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users/:id',
+            method: 'get',
+            routes: [{ data: ({ request }) => ({ params: request.params }) }]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users/123/');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toStrictEqual({ params: {} });
+  });
+
+  it('Should return 404 when no request config matches path', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [{ data: { name: 'John', surname: 'Doe' } }]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/posts');
+
+    expect(response.statusCode).toBe(404);
+  });
 });
 
 describe('createRestRoutes: content', () => {
@@ -221,6 +299,288 @@ describe('createRestRoutes: content', () => {
         key1: 'value1'
       }
     });
+  });
+
+  it('Should expose request header helpers to the data function', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                data: ({ getRequestHeader, getRequestHeaders }) => ({
+                  header: getRequestHeader('key1'),
+                  hasHeaderInList: 'key1' in getRequestHeaders()
+                })
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users').set({ key1: 'value1' });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toStrictEqual({ header: 'value1', hasHeaderInList: true });
+  });
+
+  it('Should set and read response headers from the data function', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                data: ({ setHeader, appendHeader, getResponseHeader, getResponseHeaders }) => {
+                  setHeader('key1', 'value1');
+                  appendHeader('key2', 'value2');
+
+                  return {
+                    header: getResponseHeader('key1'),
+                    hasHeaderInList: 'key2' in getResponseHeaders()
+                  };
+                }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users');
+
+    expect(response.headers.key1).toBe('value1');
+    expect(response.headers.key2).toBe('value2');
+    expect(response.body).toStrictEqual({ header: 'value1', hasHeaderInList: true });
+  });
+
+  it('Should set cookies from the data function', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                data: ({ setCookie }) => {
+                  setCookie('token', 'abc');
+                  setCookie('session', 'xyz', { maxAge: 1000 });
+
+                  return { name: 'John', surname: 'Doe' };
+                }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users');
+
+    expect(response.headers['set-cookie']).toStrictEqual([
+      expect.stringContaining('token=abc'),
+      expect.stringContaining('session=xyz')
+    ]);
+    expect(response.headers['set-cookie'][1]).toContain('Max-Age');
+  });
+
+  it('Should read and clear cookies from the data function', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                data: ({ getCookie, clearCookie }) => {
+                  clearCookie('token');
+
+                  return { token: getCookie('token') };
+                }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users').set('Cookie', 'token=abc');
+
+    expect(response.body).toStrictEqual({ token: 'abc' });
+    expect(response.headers['set-cookie'][0]).toContain('token=;');
+  });
+
+  it('Should attach a filename to the response', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                data: ({ attachment }) => {
+                  attachment('users.csv');
+
+                  return 'name,surname';
+                }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users');
+
+    expect(response.headers['content-disposition']).toBe('attachment; filename="users.csv"');
+    expect(response.text).toBe('name,surname');
+  });
+
+  it('Should broadcast payload from the data function', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                data: ({ request, broadcast }) => {
+                  broadcast({ message: 'hello' });
+
+                  return {
+                    broadcasted: (request.context.broadcast as unknown as Mock).mock.calls[0][0]
+                  };
+                }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users');
+
+    expect(response.body).toStrictEqual({ broadcasted: { message: 'hello' } });
+  });
+
+  it('Should set the status code from the data function', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                data: ({ setStatusCode }) => {
+                  setStatusCode(201);
+
+                  return { name: 'John', surname: 'Doe' };
+                }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users');
+
+    expect(response.statusCode).toBe(201);
+    expect(response.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+  });
+
+  it('Should delay the response from the data function', async () => {
+    const delay = 100;
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                data: async ({ setDelay }) => {
+                  await setDelay(delay);
+
+                  return { name: 'John', surname: 'Doe' };
+                }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const startTime = performance.now();
+    const response = await request(server).get('/users');
+    const endTime = performance.now();
+
+    expect(endTime - startTime).toBeGreaterThanOrEqual(delay);
+    expect(response.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+  });
+
+  it('Should not send data when the data function has already sent the response', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                data: ({ response }) => {
+                  response.send('from data');
+
+                  return { name: 'John', surname: 'Doe' };
+                }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.text).toBe('from data');
+  });
+
+  it('Should send raw data when a content type is already set', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                data: ({ setHeader }) => {
+                  setHeader('Content-Type', 'text/plain');
+
+                  return 'plain text';
+                }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users');
+
+    expect(response.headers['content-type']).toContain('text/plain');
+    expect(response.text).toBe('plain text');
   });
 });
 
@@ -455,6 +815,94 @@ describe('createRestRoutes: entities', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toStrictEqual({ name: 'John', surname: 'Doe' });
   });
+
+  it('Should match route configuration by params entity', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users/:id',
+            method: 'get',
+            routes: [
+              {
+                entities: {
+                  params: {
+                    id: '123'
+                  }
+                },
+                data: { name: 'John', surname: 'Doe' }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const matchedResponse = await request(server).get('/users/123');
+    expect(matchedResponse.statusCode).toBe(200);
+    expect(matchedResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+
+    const unmatchedResponse = await request(server).get('/users/456');
+    expect(unmatchedResponse.statusCode).toBe(404);
+  });
+
+  it('Should match entity by top-level comparator', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                entities: {
+                  queries: haveEntries({ key1: 'value1' })
+                },
+                data: { name: 'John', surname: 'Doe' }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const matchedResponse = await request(server).get('/users').query({ key1: 'value1' });
+    expect(matchedResponse.statusCode).toBe(200);
+    expect(matchedResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+
+    const unmatchedResponse = await request(server).get('/users').query({ key1: 'value2' });
+    expect(unmatchedResponse.statusCode).toBe(404);
+  });
+
+  it('Should match entity property by comparator', async () => {
+    const server = createServer({
+      rest: {
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [
+              {
+                entities: {
+                  headers: {
+                    key1: regExp(/^value/)
+                  }
+                },
+                data: { name: 'John', surname: 'Doe' }
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const matchedResponse = await request(server).get('/users').set({ key1: 'value1' });
+    expect(matchedResponse.statusCode).toBe(200);
+    expect(matchedResponse.body).toStrictEqual({ name: 'John', surname: 'Doe' });
+
+    const unmatchedResponse = await request(server).get('/users').set({ key1: 'other' });
+    expect(unmatchedResponse.statusCode).toBe(404);
+  });
 });
 
 describe('createRestRoutes: interceptors', () => {
@@ -551,5 +999,30 @@ describe('createRestRoutes: interceptors', () => {
     expect(componentResponseInterceptor.mock.invocationCallOrder[0]).toBeLessThan(
       serverResponseInterceptor.mock.invocationCallOrder[0]
     );
+  });
+
+  it('Should not send data when a response interceptor has already sent the response', async () => {
+    const server = createServer({
+      rest: {
+        interceptors: [
+          restInterceptors.response.get((data, { response }) => {
+            response.send('from interceptor');
+            return data;
+          })
+        ],
+        configs: [
+          {
+            path: '/users',
+            method: 'get',
+            routes: [{ data: { name: 'John', surname: 'Doe' } }]
+          }
+        ]
+      }
+    });
+
+    const response = await request(server).get('/users');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.text).toBe('from interceptor');
   });
 });

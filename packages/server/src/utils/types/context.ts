@@ -17,3 +17,8 @@ export interface GraphqlContext {
 }
 
 export type ApiContext = GraphqlContext | RestContext;
+
+export interface WsEventContext {
+  id: number;
+  timestamp: number;
+}

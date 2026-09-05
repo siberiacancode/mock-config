@@ -1,14 +1,14 @@
 import type { CookieOptions, Request, Response } from 'express';
-import type { WebSocket } from 'ws';
 
 import type { graphql, http, rest, ws } from '../../core/interceptors';
 import type { INTERCEPTOR_NAME } from '../constants';
+import type { WsEventContext } from './context';
 import type { GraphQLOperationType } from './graphql';
 import type { Logger, LoggerTokens } from './logger';
 import type { RestMethod } from './rest';
 import type { ApiType } from './shared';
 import type { LeafKeys, MaybePromise } from './utils';
-import type { WsCloseParams, WsErrorParams, WsEvent, WsFrame, WsMessageType } from './ws';
+import type { WsCloseParams, WsErrorParams, WsEvent, WsFrame, WsMessageType, WsSocket } from './ws';
 
 type InterceptorCookieValue = string | undefined;
 type InterceptorHeaderValue = number | string | string[] | undefined;
@@ -52,9 +52,10 @@ export type HttpResponseInterceptorHandler<Data = any> = (
 export interface WsRequestInterceptorHandlerParams {
   code?: WsCloseParams['code'];
   error?: WsErrorParams['error'];
+  event: WsEventContext;
   frame?: WsFrame;
   reason?: WsCloseParams['reason'];
-  socket: WebSocket;
+  socket: WsSocket;
   broadcast: <Response = unknown>(response: Response) => void;
   send: <Response = unknown>(response: Response) => void;
   setDelay: (delay: number) => Promise<void>;
@@ -66,9 +67,10 @@ export type WsRequestInterceptorHandler = (
 
 export interface WsResponseInterceptorHandlerParams {
   code?: WsCloseParams['code'];
+  event: WsEventContext;
   frame?: WsFrame;
   reason?: WsCloseParams['reason'];
-  socket: WebSocket;
+  socket: WsSocket;
   broadcast: <Response = unknown>(response: Response) => void;
   send: <Response = unknown>(response: Response) => void;
   setDelay: (delay: number) => Promise<void>;

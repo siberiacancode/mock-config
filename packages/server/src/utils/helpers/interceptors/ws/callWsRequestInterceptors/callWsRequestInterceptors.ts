@@ -1,13 +1,14 @@
-import type { WebSocket } from 'ws';
 
 import type {
   Interceptor,
   WsCloseParams,
   WsErrorParams,
+  WsEventContext,
   WsFrame,
   WsInterceptorMeta,
   WsRequestInterceptor,
-  WsRequestInterceptorHandlerParams
+  WsRequestInterceptorHandlerParams,
+  WsSocket
 } from '@/utils/types';
 
 import { INTERCEPTOR_NAME } from '@/utils/constants';
@@ -17,11 +18,12 @@ import { sleep } from '../../../sleep';
 interface CallWsRequestInterceptorsParams {
   code?: WsCloseParams['code'];
   error?: WsErrorParams['error'];
+  event: WsEventContext;
   frame?: WsFrame;
   interceptors: Interceptor[];
   meta: WsInterceptorMeta;
   reason?: WsCloseParams['reason'];
-  socket: WebSocket;
+  socket: WsSocket;
   broadcast: (data: unknown) => void;
   send: (data: unknown) => void;
 }
@@ -30,6 +32,7 @@ export const callWsRequestInterceptors = async ({
   code,
   error,
   frame,
+  event,
   interceptors,
   meta,
   reason,
@@ -44,6 +47,7 @@ export const callWsRequestInterceptors = async ({
   const requestInterceptorFnParams: WsRequestInterceptorHandlerParams = {
     code,
     frame,
+    event,
     reason,
     error,
     broadcast,
