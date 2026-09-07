@@ -33,4 +33,5 @@ export type WsIsBinaryEntity = boolean | Comparator<boolean>;
 export type WsCloseCodeEntity = number | Comparator<number>;
 export type WsCloseReasonEntity = string | Comparator<string>;
 
+export type WsErrorCodeEntity = string | Comparator<string>;
 export type WsErrorMessageEntity = string | Comparator<string>;

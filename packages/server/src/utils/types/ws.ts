@@ -8,6 +8,7 @@ import type {
   WsCloseCodeEntity,
   WsCloseReasonEntity,
   WsDataEntity,
+  WsErrorCodeEntity,
   WsErrorMessageEntity,
   WsIsBinaryEntity
 } from './entities';
@@ -52,6 +53,10 @@ export interface WsCloseEntitiesByEntityName {
 }
 
 export interface WsErrorEntitiesByEntityName {
+  // ✅ important:
+  // ws attaches a stable code to protocol errors (WS_ERR_INVALID_UTF8, ...)
+  // and socket errors carry the node one (ECONNRESET, ...), unlike the message text
+  code?: WsErrorCodeEntity;
   message?: WsErrorMessageEntity;
 }
 
@@ -87,7 +92,7 @@ export interface WsConnectionParams {
 export type WsConnectionDataResponse = (params: WsConnectionParams) => MaybePromise<Data>;
 
 export interface WsErrorParams {
-  error: Error;
+  error: NodeJS.ErrnoException;
   event: WsEventContext;
   request: IncomingMessage;
   socket: WsSocket;

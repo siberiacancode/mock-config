@@ -471,7 +471,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       broadcastWsData(server, data);
     };
 
-    const handleError = async (error: Error) => {
+    const handleError = async (error: NodeJS.ErrnoException) => {
       const wsEventContext = createWsEventContext();
 
       await callServerRequestInterceptors(

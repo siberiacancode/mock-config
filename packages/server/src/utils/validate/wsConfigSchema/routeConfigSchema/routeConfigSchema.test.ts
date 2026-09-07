@@ -103,7 +103,7 @@ describe('errorRouteConfigSchema: entities', () => {
   it('Should pass supported entities', () => {
     const parseResult = errorRouteConfigSchema.safeParse({
       data,
-      entities: { message: 'socket error' }
+      entities: { code: 'ECONNRESET', message: 'socket error' }
     });
     expect(parseResult.success).toBe(true);
   });
@@ -116,10 +116,18 @@ describe('errorRouteConfigSchema: entities', () => {
     expect(parseResult.success).toBe(false);
   });
 
-  it('Should return error on unsupported entity name', () => {
+  it('Should return error on invalid code entity', () => {
     const parseResult = errorRouteConfigSchema.safeParse({
       data,
       entities: { code: 1000 }
+    });
+    expect(parseResult.success).toBe(false);
+  });
+
+  it('Should return error on unsupported entity name', () => {
+    const parseResult = errorRouteConfigSchema.safeParse({
+      data,
+      entities: { reason: 'socket error' }
     });
     expect(parseResult.success).toBe(false);
   });

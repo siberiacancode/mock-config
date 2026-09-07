@@ -1168,6 +1168,37 @@ describe('createWsRoute: ws.error', () => {
       expect(JSON.parse(response.toString())).toStrictEqual({ source: 'matched' });
     });
 
+    it('Should match route configuration by error code', async () => {
+      const { port } = await createServer({
+        ws: {
+          configs: [
+            {
+              type: 'error',
+              routes: [
+                {
+                  entities: { code: 'ECONNRESET' },
+                  data: () => ({ source: 'unmatched' })
+                },
+                {
+                  // ✅ important: ws attaches this code to invalid utf-8 frames
+                  entities: { code: 'WS_ERR_INVALID_UTF8' },
+                  data: () => ({ source: 'matched' })
+                }
+              ]
+            }
+          ]
+        }
+      });
+      const observer = await connectClient(`ws://127.0.0.1:${port}/`);
+      const client = await connectClient(`ws://127.0.0.1:${port}/`);
+
+      const promise = once(observer, 'message');
+      breakProtocol(client);
+
+      const [response] = await promise;
+      expect(JSON.parse(response.toString())).toStrictEqual({ source: 'matched' });
+    });
+
     it('Should match route configuration by error message comparator', async () => {
       const { port } = await createServer({
         ws: {

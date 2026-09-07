@@ -43,6 +43,7 @@ export const errorRouteConfigSchema = z.strictObject({
   data: z.function(),
   entities: plainObjectSchema(
     z.strictObject({
+      code: z.union([z.string(), comparatorSchema]).optional(),
       message: z.union([z.string(), comparatorSchema]).optional()
     })
   ).optional()

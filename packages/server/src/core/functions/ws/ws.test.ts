@@ -123,7 +123,7 @@ describe('ws', () => {
 
   it('Should build config for ws.error handler object with match', () => {
     const handler = vi.fn();
-    const result = ws.error({ handler, match: { message: 'socket error' } });
+    const result = ws.error({ handler, match: { code: 'ECONNRESET', message: 'socket error' } });
 
     expect(result).toStrictEqual({
       type: 'error',
@@ -131,6 +131,7 @@ describe('ws', () => {
         {
           data: handler,
           entities: {
+            code: 'ECONNRESET',
             message: 'socket error'
           }
         }
