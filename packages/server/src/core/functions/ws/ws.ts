@@ -10,51 +10,19 @@ import type {
   WsErrorEntitiesByEntityName,
   WsErrorParams,
   WsErrorRouteConfig,
+  WsMessageEntitiesByEntityName,
   WsMessageParams,
-  WsRawEntitiesByEntityName,
-  WsRawRouteConfig,
+  WsMessageRouteConfig,
   WsRequestConfig
 } from '@/utils/types';
 
-type WsMessageHandler = (params: WsMessageParams) => MaybePromise<Data>;
+/* connection */
+
 type WsConnectionHandler = (params: WsConnectionParams) => MaybePromise<Data>;
-type WsErrorHandler = (params: WsErrorParams) => MaybePromise<Data>;
-type WsCloseHandler = (params: WsCloseParams) => MaybePromise<Data>;
-
-interface WsMessageHandlerObject {
-  handler: WsMessageHandler;
-  match?: WsRawEntitiesByEntityName;
-}
-
 interface WsConnectionHandlerObject {
   handler: WsConnectionHandler;
   match?: WsConnectionEntitiesByEntityName;
 }
-
-interface WsErrorHandlerObject {
-  handler: WsErrorHandler;
-  match?: WsErrorEntitiesByEntityName;
-}
-
-interface WsCloseHandlerObject {
-  handler: WsCloseHandler;
-  match?: WsCloseEntitiesByEntityName;
-}
-
-const createRawRouteConfig = (
-  config: WsMessageHandler | WsMessageHandlerObject
-): WsRawRouteConfig => {
-  if (typeof config === 'function') {
-    return {
-      data: config
-    };
-  }
-
-  return {
-    data: config.handler,
-    entities: config.match
-  };
-};
 
 const createConnectionRouteConfig = (
   config: WsConnectionHandler | WsConnectionHandlerObject
@@ -71,24 +39,28 @@ const createConnectionRouteConfig = (
   };
 };
 
-const createErrorRouteConfig = (
-  config: WsErrorHandler | WsErrorHandlerObject
-): WsErrorRouteConfig => {
-  if (typeof config === 'function') {
-    return {
-      data: config
-    };
-  }
-
+export function createWsConnectionRequestConfig(handler: WsConnectionHandler): WsRequestConfig;
+export function createWsConnectionRequestConfig(config: WsConnectionHandlerObject): WsRequestConfig;
+export function createWsConnectionRequestConfig(
+  config: WsConnectionHandler | WsConnectionHandlerObject
+): WsRequestConfig {
   return {
-    data: config.handler,
-    entities: config.match
+    type: 'connection',
+    routes: [createConnectionRouteConfig(config)]
   };
-};
+}
 
-const createCloseRouteConfig = (
-  config: WsCloseHandler | WsCloseHandlerObject
-): WsCloseRouteConfig => {
+/* message */
+
+type WsMessageHandler = (params: WsMessageParams) => MaybePromise<Data>;
+interface WsMessageHandlerObject {
+  handler: WsMessageHandler;
+  match?: WsMessageEntitiesByEntityName;
+}
+
+const createMessageRouteConfig = (
+  config: WsMessageHandler | WsMessageHandlerObject
+): WsMessageRouteConfig => {
   if (typeof config === 'function') {
     return {
       data: config
@@ -107,21 +79,33 @@ export function createWsMessageRequestConfig(
   config: WsMessageHandler | WsMessageHandlerObject
 ): WsRequestConfig {
   return {
-    type: 'raw',
-    routes: [createRawRouteConfig(config)]
+    type: 'message',
+    routes: [createMessageRouteConfig(config)]
   };
 }
 
-export function createWsConnectionRequestConfig(handler: WsConnectionHandler): WsRequestConfig;
-export function createWsConnectionRequestConfig(config: WsConnectionHandlerObject): WsRequestConfig;
-export function createWsConnectionRequestConfig(
-  config: WsConnectionHandler | WsConnectionHandlerObject
-): WsRequestConfig {
-  return {
-    type: 'connection',
-    routes: [createConnectionRouteConfig(config)]
-  };
+/* error */
+
+type WsErrorHandler = (params: WsErrorParams) => MaybePromise<Data>;
+interface WsErrorHandlerObject {
+  handler: WsErrorHandler;
+  match?: WsErrorEntitiesByEntityName;
 }
+
+const createErrorRouteConfig = (
+  config: WsErrorHandler | WsErrorHandlerObject
+): WsErrorRouteConfig => {
+  if (typeof config === 'function') {
+    return {
+      data: config
+    };
+  }
+
+  return {
+    data: config.handler,
+    entities: config.match
+  };
+};
 
 export function createWsErrorRequestConfig(handler: WsErrorHandler): WsRequestConfig;
 export function createWsErrorRequestConfig(config: WsErrorHandlerObject): WsRequestConfig;
@@ -133,6 +117,29 @@ export function createWsErrorRequestConfig(
     routes: [createErrorRouteConfig(config)]
   };
 }
+
+/* close */
+
+type WsCloseHandler = (params: WsCloseParams) => MaybePromise<Data>;
+interface WsCloseHandlerObject {
+  handler: WsCloseHandler;
+  match?: WsCloseEntitiesByEntityName;
+}
+
+const createCloseRouteConfig = (
+  config: WsCloseHandler | WsCloseHandlerObject
+): WsCloseRouteConfig => {
+  if (typeof config === 'function') {
+    return {
+      data: config
+    };
+  }
+
+  return {
+    data: config.handler,
+    entities: config.match
+  };
+};
 
 export function createWsCloseRequestConfig(handler: WsCloseHandler): WsRequestConfig;
 export function createWsCloseRequestConfig(config: WsCloseHandlerObject): WsRequestConfig;

@@ -14,35 +14,32 @@ import { callResponseLogger } from '../../../logger';
 import { sleep } from '../../../sleep';
 
 interface CallHttpResponseInterceptorsParams {
-  componentInterceptors?: Interceptor[];
   data: Data;
   meta: HttpInterceptorMeta;
   request: Request;
   response: Response;
+}
+
+interface CallHttpResponseInterceptors {
+  componentInterceptors?: Interceptor[];
   serverInterceptors?: Interceptor[];
 }
 
-export const callHttpResponseInterceptors = async ({
-  data,
-  meta,
-  request,
-  response,
-  componentInterceptors = [],
-  serverInterceptors = []
-}: CallHttpResponseInterceptorsParams) => {
-  const getRequestHeader: HttpResponseInterceptorHandlerParams['getRequestHeader'] = (
-    field: string
-  ) => request.headers[field];
+export const callHttpResponseInterceptors = async (
+  { data, meta, request, response }: CallHttpResponseInterceptorsParams,
+  { componentInterceptors = [], serverInterceptors = [] }: CallHttpResponseInterceptors
+) => {
+  const getRequestHeader: HttpResponseInterceptorHandlerParams['getRequestHeader'] = (field) =>
+    request.headers[field];
   const getRequestHeaders: HttpResponseInterceptorHandlerParams['getRequestHeaders'] = () =>
     request.headers;
 
-  const getResponseHeader: HttpResponseInterceptorHandlerParams['getResponseHeader'] = (
-    field: string
-  ) => response.getHeader(field);
+  const getResponseHeader: HttpResponseInterceptorHandlerParams['getResponseHeader'] = (field) =>
+    response.getHeader(field);
   const getResponseHeaders: HttpResponseInterceptorHandlerParams['getResponseHeaders'] = () =>
     response.getHeaders();
 
-  const setHeader = (field: string, value?: string | string[]) => {
+  const setHeader: HttpResponseInterceptorHandlerParams['setHeader'] = (field, value) => {
     response.set(field, value);
   };
   const appendHeader: HttpResponseInterceptorHandlerParams['appendHeader'] = (field, value) => {
@@ -96,11 +93,13 @@ export const callHttpResponseInterceptors = async ({
   };
 
   let updatedData = data;
-
-  const interceptorNames =
-    meta.type === 'graphql'
-      ? ['http.response.all', 'graphql.response.all', `graphql.response.${meta.operationType}`]
-      : ['http.response.all', 'rest.response.all', `rest.response.${meta.method}`];
+  const interceptorNames = [
+    'http.response.all',
+    ...(meta.type === 'rest' ? ['rest.response.all', `rest.response.${meta.method}`] : []),
+    ...(meta.type === 'graphql'
+      ? ['graphql.response.all', `graphql.response.${meta.operationType}`]
+      : [])
+  ];
 
   const responseInterceptors = [...componentInterceptors, ...serverInterceptors].filter(
     (interceptor): interceptor is HttpResponseInterceptor =>

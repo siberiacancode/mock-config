@@ -19,7 +19,7 @@ const getLength = (value: unknown) => {
 
 const isObjectLike = (value: unknown) => isPlainObject(value) || Array.isArray(value);
 
-const normalize = (value: any) => flatten<PlainObject | unknown[], PlainObject>(value);
+const normalize = (value: any) => flatten<any, PlainObject>(value);
 
 const comparePrimitive = (
   actual: unknown,

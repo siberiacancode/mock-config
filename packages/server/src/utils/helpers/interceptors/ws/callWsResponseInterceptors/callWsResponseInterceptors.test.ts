@@ -1,4 +1,3 @@
-
 import { describe, expect, it, vi } from 'vitest';
 
 import type { WsFrame, WsSocket } from '@/utils/types';
@@ -24,29 +23,36 @@ describe('callWsResponseInterceptors: order of calls', () => {
     const serverInterceptor = vi.fn((data) => `${data}serverInterceptor`);
 
     expect(
-      await callWsResponseInterceptors({
-   event: wsEventContext,
-        data: '',
-        meta: { type: 'ws', event: 'open' },
-        socket,
-        broadcast,
-        send
-      })
+      await callWsResponseInterceptors(
+        {
+          event: wsEventContext,
+          data: '',
+          meta: { type: 'ws', event: 'open' },
+          socket,
+          broadcast,
+          send
+        },
+        {}
+      )
     ).toBe('');
     expect(componentInterceptor).toBeCalledTimes(0);
     expect(serverInterceptor).toBeCalledTimes(0);
 
     expect(
-      await callWsResponseInterceptors({
-   event: wsEventContext,
-        data: '',
-        meta: { type: 'ws', event: 'open' },
-        componentInterceptors: [ws.response.open(componentInterceptor)],
-        serverInterceptors: [ws.response.open(serverInterceptor)],
-        socket,
-        broadcast,
-        send
-      })
+      await callWsResponseInterceptors(
+        {
+          event: wsEventContext,
+          data: '',
+          meta: { type: 'ws', event: 'open' },
+          socket,
+          broadcast,
+          send
+        },
+        {
+          componentInterceptors: [ws.response.open(componentInterceptor)],
+          serverInterceptors: [ws.response.open(serverInterceptor)]
+        }
+      )
     ).toBe('componentInterceptor;serverInterceptor');
     expect(componentInterceptor).toBeCalledTimes(1);
     expect(serverInterceptor).toBeCalledTimes(1);
@@ -62,19 +68,23 @@ describe('callWsResponseInterceptors: interceptors filtering', () => {
     const closeInterceptor = vi.fn((data) => data);
     const openInterceptor = vi.fn((data) => data);
 
-    await callWsResponseInterceptors({
-   event: wsEventContext,
-      data: { key: 'value' },
-      meta: { type: 'ws', event: 'close' },
-      componentInterceptors: [
-        ws.response.all(allInterceptor),
-        ws.response.close(closeInterceptor),
-        ws.response.open(openInterceptor)
-      ],
-      socket,
-      broadcast,
-      send
-    });
+    await callWsResponseInterceptors(
+      {
+        event: wsEventContext,
+        data: { key: 'value' },
+        meta: { type: 'ws', event: 'close' },
+        socket,
+        broadcast,
+        send
+      },
+      {
+        componentInterceptors: [
+          ws.response.all(allInterceptor),
+          ws.response.close(closeInterceptor),
+          ws.response.open(openInterceptor)
+        ]
+      }
+    );
 
     expect(allInterceptor).toBeCalledTimes(1);
     expect(closeInterceptor).toBeCalledTimes(1);
@@ -84,52 +94,58 @@ describe('callWsResponseInterceptors: interceptors filtering', () => {
   it('Should call graphql subscription interceptors for graphql-ws message', async () => {
     const subscriptionInterceptor = vi.fn((data) => data);
 
-    await callWsResponseInterceptors({
-   event: wsEventContext,
-      data: { key: 'value' },
-      meta: { type: 'ws', event: 'message', messageType: 'graphql-ws' },
-      componentInterceptors: [graphql.response.subscription(subscriptionInterceptor)],
-      socket,
-      broadcast,
-      send
-    });
+    await callWsResponseInterceptors(
+      {
+        event: wsEventContext,
+        data: { key: 'value' },
+        meta: { type: 'ws', event: 'message', messageType: 'graphql-ws' },
+        socket,
+        broadcast,
+        send
+      },
+      { componentInterceptors: [graphql.response.subscription(subscriptionInterceptor)] }
+    );
 
     expect(subscriptionInterceptor).toBeCalledTimes(1);
   });
 });
 
 describe('callWsResponseInterceptors: params functions', () => {
-  it('Should correctly provide frame for message event', async () => {
+  it('Should correctly provide params for message event', async () => {
     const interceptor = vi.fn((data) => data);
 
-    await callWsResponseInterceptors({
-   event: wsEventContext,
-      data: { key: 'value' },
-      meta: { type: 'ws', event: 'message', messageType: 'raw' },
-      frame,
-      componentInterceptors: [ws.response.message(interceptor)],
-      socket,
-      broadcast,
-      send
-    });
+    await callWsResponseInterceptors(
+      {
+        event: wsEventContext,
+        data: { key: 'value' },
+        meta: { type: 'ws', event: 'message', messageType: 'raw' },
+        frame,
+        socket,
+        broadcast,
+        send
+      },
+      { componentInterceptors: [ws.response.message(interceptor)] }
+    );
 
     expect(interceptor).toHaveBeenCalledWith({ key: 'value' }, expect.objectContaining({ frame }));
   });
 
-  it('Should correctly provide code and reason for close event', async () => {
+  it('Should correctly provide params for close event', async () => {
     const interceptor = vi.fn((data) => data);
 
-    await callWsResponseInterceptors({
-   event: wsEventContext,
-      data: { key: 'value' },
-      meta: { type: 'ws', event: 'close' },
-      code: 1000,
-      reason: 'normal closure',
-      componentInterceptors: [ws.response.close(interceptor)],
-      socket,
-      broadcast,
-      send
-    });
+    await callWsResponseInterceptors(
+      {
+        event: wsEventContext,
+        data: { key: 'value' },
+        meta: { type: 'ws', event: 'close' },
+        code: 1000,
+        reason: 'normal closure',
+        socket,
+        broadcast,
+        send
+      },
+      { componentInterceptors: [ws.response.close(interceptor)] }
+    );
 
     expect(interceptor).toHaveBeenCalledWith(
       { key: 'value' },
@@ -137,18 +153,20 @@ describe('callWsResponseInterceptors: params functions', () => {
     );
   });
 
-  it('Should correctly provide socket, send, broadcast and setDelay', async () => {
+  it('Should correctly provide params', async () => {
     const interceptor = vi.fn((data) => data);
 
-    await callWsResponseInterceptors({
-   event: wsEventContext,
-      data: { key: 'value' },
-      meta: { type: 'ws', event: 'open' },
-      componentInterceptors: [ws.response.open(interceptor)],
-      socket,
-      broadcast,
-      send
-    });
+    await callWsResponseInterceptors(
+      {
+        event: wsEventContext,
+        data: { key: 'value' },
+        meta: { type: 'ws', event: 'open' },
+        socket,
+        broadcast,
+        send
+      },
+      { componentInterceptors: [ws.response.open(interceptor)] }
+    );
 
     expect(interceptor).toHaveBeenCalledWith(
       { key: 'value' },

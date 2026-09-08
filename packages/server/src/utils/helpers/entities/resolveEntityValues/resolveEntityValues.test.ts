@@ -144,8 +144,6 @@ describe('resolveEntityValues', () => {
     expect(resolve('regExp', 12345, '\\d+')).toBe(true);
   });
 
-  // ✅ important:
-  // this is about https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/lastIndex#avoiding_side_effects
   it('Should be independent of RegExp lastIndex when the pattern uses the g flag', () => {
     const regExpWithGlobalFlag = /string/g;
 

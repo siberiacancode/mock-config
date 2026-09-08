@@ -39,16 +39,13 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
       const query = parseGraphQLQuery(graphQLInput.query);
       if (!query) return next();
 
-      if (graphQLRequestArtifacts[0].serverInterceptors?.length) {
-        await callHttpRequestInterceptors({
+      await callHttpRequestInterceptors(
+        {
           request,
-          interceptors: graphQLRequestArtifacts[0].serverInterceptors,
-          meta: {
-            type: 'graphql',
-            operationType: query.operationType as GraphQLOperationType
-          }
-        });
-      }
+          meta: { type: 'graphql', operationType: query.operationType as GraphQLOperationType }
+        },
+        graphQLRequestArtifacts[0].serverInterceptors ?? []
+      );
 
       const matchedRequestArtifacts = matchGraphQLRequestArtifacts({
         artifacts: graphQLRequestArtifacts,
@@ -110,16 +107,13 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
 
       if (!matchedRouteConfig) return next();
 
-      if (matchedRouteConfig.componentInterceptors) {
-        await callHttpRequestInterceptors({
+      await callHttpRequestInterceptors(
+        {
           request,
-          interceptors: matchedRouteConfig.componentInterceptors,
-          meta: {
-            type: 'graphql',
-            operationType: query.operationType as GraphQLOperationType
-          }
-        });
-      }
+          meta: { type: 'graphql', operationType: query.operationType as GraphQLOperationType }
+        },
+        matchedRouteConfig.componentInterceptors ?? []
+      );
       const params: GraphQLParams = {
         request,
         response,
@@ -177,17 +171,18 @@ export const createGraphQLRoute = ({ server, graphQLRequestArtifacts }: CreateGr
         response.set('Cache-control', 'no-cache');
       }
 
-      const data = await callHttpResponseInterceptors({
-        data: resolvedData,
-        meta: {
-          type: 'graphql',
-          operationType: query.operationType as GraphQLOperationType
+      const data = await callHttpResponseInterceptors(
+        {
+          data: resolvedData,
+          meta: { type: 'graphql', operationType: query.operationType as GraphQLOperationType },
+          request,
+          response
         },
-        request,
-        response,
-        componentInterceptors: matchedRouteConfig.componentInterceptors,
-        serverInterceptors: matchedRouteConfig.serverInterceptors
-      });
+        {
+          componentInterceptors: matchedRouteConfig.componentInterceptors,
+          serverInterceptors: matchedRouteConfig.serverInterceptors
+        }
+      );
 
       if (matchedRouteConfig.config.settings?.delay) {
         await sleep(matchedRouteConfig.config.settings.delay);

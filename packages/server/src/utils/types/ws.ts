@@ -19,6 +19,8 @@ import type { BaseUrl } from './server';
 import type { MaybePromise } from './utils';
 import type { Data } from './values';
 
+/* shared */
+
 // ✅ important:
 // @types/ws exports WebSocket via `export =`, so `declare module 'ws'` cannot reach the
 // instance type — connection scoped fields are declared here and cast once in createWsRoute
@@ -30,6 +32,10 @@ export interface WsSocket extends WebSocket {
 
 export type WsEvent = 'close' | 'error' | 'message' | 'open';
 export type WsMessageType = 'graphql-ws' | 'raw';
+
+export interface WsSettings {
+  readonly delay?: number;
+}
 
 export interface WsFrameBinary {
   data: any;
@@ -43,14 +49,75 @@ export interface WsFrameText {
 }
 export type WsFrame = WsFrameBinary | WsFrameText;
 
-export interface WsSettings {
-  readonly delay?: number;
+interface BaseWsRequestArtifact {
+  baseUrl: BaseUrl;
+  componentInterceptors?: Interceptor[];
+  serverInterceptors?: Interceptor[];
+  weight: number;
 }
 
-export interface WsCloseEntitiesByEntityName {
-  code?: WsCloseCodeEntity;
-  reason?: WsCloseReasonEntity;
+/* connection */
+
+export type WsConnectionEntityName = 'cookies' | 'headers' | 'queries';
+export type WsConnectionEntitiesByEntityName = {
+  [EntityName in WsConnectionEntityName]?: MappedEntity;
+};
+
+export interface WsConnectionParams {
+  event: WsEventContext;
+  handshake: IncomingMessage;
+  socket: WsSocket;
+  broadcast: <Response = unknown>(response: Response) => void;
+  send: <Response = unknown>(response: Response) => void;
+  setDelay: (delay: number) => Promise<void>;
 }
+export type WsConnectionDataResponse = (params: WsConnectionParams) => MaybePromise<Data>;
+
+export interface WsConnectionRouteConfig {
+  data: WsConnectionDataResponse;
+  entities?: WsConnectionEntitiesByEntityName;
+}
+interface WsConnectionRequestConfig {
+  routes: WsConnectionRouteConfig[];
+  type: 'connection';
+}
+export interface ConnectionWsRequestArtifact extends BaseWsRequestArtifact {
+  config: WsConnectionRouteConfig;
+  type: 'connection';
+}
+
+/* message */
+
+export interface WsMessageEntitiesByEntityName {
+  data?: WsDataEntity;
+  isBinary?: WsIsBinaryEntity;
+}
+
+export type WsMessageParams = WsFrame & {
+  event: WsEventContext;
+  handshake: IncomingMessage;
+  broadcast: <Response = unknown>(response: Response) => void;
+  socket: WsSocket;
+  send: <Response = unknown>(response: Response) => void;
+  setDelay: (delay: number) => Promise<void>;
+};
+export type WsMessageDataResponse = (params: WsMessageParams) => MaybePromise<Data>;
+
+export interface WsMessageRouteConfig {
+  data: WsMessageDataResponse;
+  entities?: WsMessageEntitiesByEntityName;
+  settings?: WsSettings;
+}
+interface WsMessageRequestConfig {
+  routes: WsMessageRouteConfig[];
+  type: 'message';
+}
+export interface MessageWsRequestArtifact extends BaseWsRequestArtifact {
+  config: WsMessageRouteConfig;
+  type: 'message';
+}
+
+/* error */
 
 export interface WsErrorEntitiesByEntityName {
   // ✅ important:
@@ -60,136 +127,89 @@ export interface WsErrorEntitiesByEntityName {
   message?: WsErrorMessageEntity;
 }
 
-export type WsConnectionEntityName = 'cookies' | 'headers' | 'queries';
-export type WsConnectionEntitiesByEntityName = {
-  [EntityName in WsConnectionEntityName]?: MappedEntity;
-};
+export interface WsErrorParams {
+  error: NodeJS.ErrnoException;
+  event: WsEventContext;
+  handshake: IncomingMessage;
+  socket: WsSocket;
+  broadcast: <Response = unknown>(response: Response) => void;
+  send: <Response = unknown>(response: Response) => void;
+  setDelay: (delay: number) => Promise<void>;
+}
+export type WsErrorDataResponse = (params: WsErrorParams) => MaybePromise<Data>;
 
-export interface WsRawEntitiesByEntityName {
-  data?: WsDataEntity;
-  isBinary?: WsIsBinaryEntity;
+export interface WsErrorRouteConfig {
+  data: WsErrorDataResponse;
+  entities?: WsErrorEntitiesByEntityName;
+  settings?: WsSettings;
+}
+interface WsErrorRequestConfig {
+  routes: WsErrorRouteConfig[];
+  type: 'error';
+}
+export interface ErrorWsRequestArtifact extends BaseWsRequestArtifact {
+  config: WsErrorRouteConfig;
+  type: 'error';
+}
+
+/* close */
+
+export interface WsCloseEntitiesByEntityName {
+  code?: WsCloseCodeEntity;
+  reason?: WsCloseReasonEntity;
 }
 
 export interface WsCloseParams {
   code: number;
   event: WsEventContext;
+  handshake: IncomingMessage;
   reason: string;
-  request: IncomingMessage;
   socket: WsSocket;
   broadcast: <Response = unknown>(response: Response) => void;
   setDelay: (delay: number) => Promise<void>;
 }
 export type WsCloseDataResponse = (params: WsCloseParams) => MaybePromise<Data>;
 
-export interface WsConnectionParams {
-  event: WsEventContext;
-  request: IncomingMessage;
-  socket: WsSocket;
-  broadcast: <Response = unknown>(response: Response) => void;
-  send: <Response = unknown>(response: Response) => void;
-  setDelay: (delay: number) => Promise<void>;
-}
-export type WsConnectionDataResponse = (params: WsConnectionParams) => MaybePromise<Data>;
-
-export interface WsErrorParams {
-  error: NodeJS.ErrnoException;
-  event: WsEventContext;
-  request: IncomingMessage;
-  socket: WsSocket;
-  broadcast: <Response = unknown>(response: Response) => void;
-  send: <Response = unknown>(response: Response) => void;
-  setDelay: (delay: number) => Promise<void>;
-}
-type WsErrorDataResponse = (params: WsErrorParams) => MaybePromise<Data>;
-
-export type WsMessageParams = WsFrame & {
-  event: WsEventContext;
-  request: IncomingMessage;
-  broadcast: <Response = unknown>(response: Response) => void;
-  socket: WsSocket;
-  send: <Response = unknown>(response: Response) => void;
-  setDelay: (delay: number) => Promise<void>;
-};
-export type WsDataResponse = (params: WsMessageParams) => MaybePromise<Data>;
-
 export interface WsCloseRouteConfig {
   data: WsCloseDataResponse;
   entities?: WsCloseEntitiesByEntityName;
   settings?: WsSettings;
 }
-export interface WsConnectionRouteConfig {
-  data: WsConnectionDataResponse;
-  entities?: WsConnectionEntitiesByEntityName;
-}
-export interface WsErrorRouteConfig {
-  data: WsErrorDataResponse;
-  entities?: WsErrorEntitiesByEntityName;
-  settings?: WsSettings;
-}
-export interface WsRawRouteConfig {
-  data: WsDataResponse;
-  entities?: WsRawEntitiesByEntityName;
-  settings?: WsSettings;
-}
-export type WsRouteConfig =
-  | WsCloseRouteConfig
-  | WsConnectionRouteConfig
-  | WsErrorRouteConfig
-  | WsRawRouteConfig;
-
 interface WsCloseRequestConfig {
   routes: WsCloseRouteConfig[];
   type: 'close';
-}
-interface WsConnectionRequestConfig {
-  routes: WsConnectionRouteConfig[];
-  type: 'connection';
-}
-interface WsErrorRequestConfig {
-  routes: WsErrorRouteConfig[];
-  type: 'error';
-}
-interface WsRawRequestConfig {
-  routes: WsRawRouteConfig[];
-  type: 'raw';
-}
-export type WsRequestConfig =
-  | WsCloseRequestConfig
-  | WsConnectionRequestConfig
-  | WsErrorRequestConfig
-  | WsRawRequestConfig;
-
-interface BaseWsRequestArtifact {
-  baseUrl: BaseUrl;
-  componentInterceptors?: Interceptor[];
-  serverInterceptors?: Interceptor[];
-  weight: number;
 }
 export interface CloseWsRequestArtifact extends BaseWsRequestArtifact {
   config: WsCloseRouteConfig;
   type: 'close';
 }
-export interface ConnectionWsRequestArtifact extends BaseWsRequestArtifact {
-  config: WsConnectionRouteConfig;
-  type: 'connection';
-}
-export interface ErrorWsRequestArtifact extends BaseWsRequestArtifact {
-  config: WsErrorRouteConfig;
-  type: 'error';
-}
+
+/* graphql-ws */
+
 export interface GraphqlTransportWsRequestArtifact extends BaseWsRequestArtifact {
   config: GraphqlTransportWsRouteConfig;
   identifier: GraphQLIdentifier;
   operationType: GraphQLTransportWsOperationType;
   type: 'graphql-ws';
 }
-export interface RawWsRequestArtifact extends BaseWsRequestArtifact {
-  config: WsRawRouteConfig;
-  type: 'raw';
-}
+
+/* unions */
+
+export type WsRouteConfig =
+  | WsCloseRouteConfig
+  | WsConnectionRouteConfig
+  | WsErrorRouteConfig
+  | WsMessageRouteConfig;
+
+export type WsRequestConfig =
+  | WsCloseRequestConfig
+  | WsConnectionRequestConfig
+  | WsErrorRequestConfig
+  | WsMessageRequestConfig;
+
 export type WsRequestArtifact =
   | CloseWsRequestArtifact
   | ConnectionWsRequestArtifact
   | ErrorWsRequestArtifact
   | GraphqlTransportWsRequestArtifact
-  | RawWsRequestArtifact;
+  | MessageWsRequestArtifact;

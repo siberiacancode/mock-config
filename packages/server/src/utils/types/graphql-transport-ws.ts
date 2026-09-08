@@ -80,10 +80,10 @@ export interface GraphqlTransportWsParams {
   entities: GraphqlTransportWsEntitiesByEntityName;
   event: WsEventContext;
   eventName?: string;
+  handshake: IncomingMessage;
   operationName?: string;
   query?: string;
   raw: RawData;
-  request: IncomingMessage;
   socket: WsSocket;
   variables?: PlainObject;
   complete: () => void;

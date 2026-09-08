@@ -8,7 +8,7 @@ describe('ws', () => {
     const result = ws.message(handler);
 
     expect(result).toStrictEqual({
-      type: 'raw',
+      type: 'message',
       routes: [
         {
           data: handler
@@ -64,7 +64,7 @@ describe('ws', () => {
     });
 
     expect(result).toStrictEqual({
-      type: 'raw',
+      type: 'message',
       routes: [
         {
           data: handler,
@@ -143,7 +143,7 @@ describe('ws', () => {
     const handler = vi.fn();
 
     expect(ws.message({ handler })).toStrictEqual({
-      type: 'raw',
+      type: 'message',
       routes: [{ data: handler, entities: undefined }]
     });
   });

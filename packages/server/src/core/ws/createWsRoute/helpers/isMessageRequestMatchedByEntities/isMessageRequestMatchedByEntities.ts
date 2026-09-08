@@ -1,14 +1,14 @@
 import { Buffer } from 'node:buffer';
 
-import type { Entries, RawWsRequestArtifact, WsFrame } from '@/utils/types';
+import type { Entries, MessageWsRequestArtifact, WsFrame } from '@/utils/types';
 
 import { isComparator, resolveEntityValues } from '@/utils/helpers';
 
 import { equals } from '../../../../entities';
 
-export const isRawRequestMatchedByEntities = (
+export const isMessageRequestMatchedByEntities = (
   frame: WsFrame,
-  entities: RawWsRequestArtifact['config']['entities']
+  entities: MessageWsRequestArtifact['config']['entities']
 ) => {
   if (!entities) return true;
 

@@ -13,9 +13,9 @@ import type {
   GraphqlTransportWsRouteConfig,
   WsCloseRouteConfig,
   WsConnectionRouteConfig,
-  WsDataResponse,
   WsErrorRouteConfig,
-  WsRawRouteConfig,
+  WsMessageDataResponse,
+  WsMessageRouteConfig,
   WsRequestArtifact,
   WsRequestInterceptor,
   WsResponseInterceptor,
@@ -34,8 +34,8 @@ import {
 } from './helpers';
 
 export interface WsRawRequestConfig {
-  routes: WsRawRouteConfig[];
-  type: 'raw';
+  routes: WsMessageRouteConfig[];
+  type: 'message';
 }
 
 export interface WsConnectionRequestConfig {
@@ -244,8 +244,8 @@ describe('createWsRoute: ws.connection', () => {
               type: 'connection',
               routes: [
                 {
-                  data: ({ request }) => ({
-                    url: request.url
+                  data: ({ handshake }) => ({
+                    url: handshake.url
                   })
                 }
               ]
@@ -452,8 +452,8 @@ describe('createWsRoute: ws.raw', () => {
           baseUrl: '/raw',
           configs: [
             {
-              type: 'raw',
-              routes: [{ data: (() => ({ source: 'raw' })) as WsDataResponse }]
+              type: 'message',
+              routes: [{ data: (() => ({ source: 'raw' })) as WsMessageDataResponse }]
             }
           ]
         }
@@ -472,8 +472,8 @@ describe('createWsRoute: ws.raw', () => {
         ws: {
           configs: [
             {
-              type: 'raw',
-              routes: [{ data: (({ raw }) => ({ message: raw })) as WsDataResponse }]
+              type: 'message',
+              routes: [{ data: (({ raw }) => ({ message: raw })) as WsMessageDataResponse }]
             }
           ]
         }
@@ -492,12 +492,12 @@ describe('createWsRoute: ws.raw', () => {
         ws: {
           configs: [
             {
-              type: 'raw',
+              type: 'message',
               routes: [
                 {
                   data: (({ broadcast, raw }) => {
                     broadcast({ message: raw });
-                  }) as WsDataResponse
+                  }) as WsMessageDataResponse
                 }
               ]
             }
@@ -527,13 +527,13 @@ describe('createWsRoute: ws.raw', () => {
         ws: {
           configs: [
             {
-              type: 'raw',
+              type: 'message',
               routes: [
                 {
                   data: (({ event }) => ({
                     id: event.id,
                     timestamp: event.timestamp
-                  })) as WsDataResponse
+                  })) as WsMessageDataResponse
                 }
               ]
             }
@@ -556,13 +556,13 @@ describe('createWsRoute: ws.raw', () => {
         ws: {
           configs: [
             {
-              type: 'raw',
+              type: 'message',
               routes: [
                 {
                   data: (async ({ event, setDelay }) => {
                     await setDelay(50);
                     return { id: event.id };
-                  }) as WsDataResponse
+                  }) as WsMessageDataResponse
                 }
               ]
             }
@@ -584,13 +584,13 @@ describe('createWsRoute: ws.raw', () => {
         ws: {
           configs: [
             {
-              type: 'raw',
+              type: 'message',
               routes: [
                 {
                   data: (({ raw, socket }) => {
                     socket.context.room = raw;
                     return { room: socket.context.room, keys: Object.keys(socket.context) };
-                  }) as WsDataResponse
+                  }) as WsMessageDataResponse
                 }
               ]
             }
@@ -627,8 +627,8 @@ describe('createWsRoute: ws.raw', () => {
         ws: {
           configs: [
             {
-              type: 'raw',
-              routes: [{ data: (({ event }) => ({ id: event.id })) as WsDataResponse }]
+              type: 'message',
+              routes: [{ data: (({ event }) => ({ id: event.id })) as WsMessageDataResponse }]
             }
           ],
           interceptors: [
@@ -653,13 +653,13 @@ describe('createWsRoute: ws.raw', () => {
         ws: {
           configs: [
             {
-              type: 'raw',
+              type: 'message',
               routes: [
                 {
                   data: (({ socket }) => ({
                     connectionId: socket.id,
                     hasTimestamp: typeof socket.timestamp === 'number'
-                  })) as WsDataResponse
+                  })) as WsMessageDataResponse
                 }
               ]
             }
@@ -697,7 +697,7 @@ describe('createWsRoute: ws.raw', () => {
         ws: {
           configs: [
             {
-              type: 'raw',
+              type: 'message',
               routes: [{ data: () => ({ source: 'raw' }) }]
             }
           ],
@@ -731,7 +731,7 @@ describe('createWsRoute: ws.raw', () => {
         ws: {
           configs: [
             {
-              type: 'raw',
+              type: 'message',
               routes: [{ data: () => ({ source: 'raw' }) }]
             }
           ],
@@ -765,7 +765,7 @@ describe('createWsRoute: ws.raw', () => {
         ws: {
           configs: [
             {
-              type: 'raw',
+              type: 'message',
               routes: [
                 {
                   entities: { data: { event: 'ping' } },
@@ -789,7 +789,7 @@ describe('createWsRoute: ws.raw', () => {
         ws: {
           configs: [
             {
-              type: 'raw',
+              type: 'message',
               routes: [
                 {
                   entities: { data: { event: 'ping' } },
@@ -813,7 +813,7 @@ describe('createWsRoute: ws.raw', () => {
         ws: {
           configs: [
             {
-              type: 'raw',
+              type: 'message',
               routes: [
                 {
                   entities: { isBinary: true },
@@ -848,7 +848,7 @@ describe('createWsRoute: ws.raw', () => {
         ws: {
           configs: [
             {
-              type: 'raw',
+              type: 'message',
               routes: [
                 { data: () => ({ source: 'any' }) },
                 {
@@ -876,11 +876,11 @@ describe('createWsRoute: ws.raw', () => {
         ws: {
           configs: [
             {
-              type: 'raw',
+              type: 'message',
               routes: [
                 {
                   settings: { delay },
-                  data: (({ raw }) => ({ message: raw })) as WsDataResponse
+                  data: (({ raw }) => ({ message: raw })) as WsMessageDataResponse
                 }
               ]
             }
@@ -910,7 +910,7 @@ describe('createWsRoute: ws.close', () => {
           configs: [
             {
               type: 'close',
-              routes: [{ data: ({ code, reason }) => ({ code, reason }) }]
+              routes: [{ data: ({ code, reason, broadcast }) => broadcast({ code, reason }) }]
             }
           ]
         }
@@ -940,7 +940,7 @@ describe('createWsRoute: ws.close', () => {
               routes: [
                 {
                   entities: { code: 4000 },
-                  data: () => ({ source: 'matched' })
+                  data: ({ broadcast }) => broadcast({ source: 'matched' })
                 }
               ]
             }
@@ -968,7 +968,7 @@ describe('createWsRoute: ws.close', () => {
               routes: [
                 {
                   entities: { code: 4001 },
-                  data: () => ({ source: 'matched' })
+                  data: ({ broadcast }) => broadcast({ source: 'matched' })
                 }
               ]
             }
@@ -993,7 +993,7 @@ describe('createWsRoute: ws.close', () => {
               routes: [
                 {
                   entities: { reason: 'user left' },
-                  data: () => ({ source: 'matched' })
+                  data: ({ broadcast }) => broadcast({ source: 'matched' })
                 }
               ]
             }
@@ -1019,10 +1019,10 @@ describe('createWsRoute: ws.close', () => {
             {
               type: 'close',
               routes: [
-                { data: () => ({ source: 'any' }) },
+                { data: ({ broadcast }) => broadcast({ source: 'any' }) },
                 {
                   entities: { code: 4000 },
-                  data: () => ({ source: 'specific' })
+                  data: ({ broadcast }) => broadcast({ source: 'specific' })
                 }
               ]
             }
@@ -1049,7 +1049,14 @@ describe('createWsRoute: ws.close', () => {
           configs: [
             {
               type: 'close',
-              routes: [{ data: () => ({ source: 'close' }) }]
+              routes: [
+                {
+                  data: ({ broadcast }) => {
+                    broadcast({ source: 'close' });
+                    return { source: 'close' };
+                  }
+                }
+              ]
             }
           ],
           interceptors: [
@@ -1083,7 +1090,9 @@ describe('createWsRoute: ws.close', () => {
           configs: [
             {
               type: 'close',
-              routes: [{ settings: { delay }, data: () => ({ source: 'close' }) }]
+              routes: [
+                { settings: { delay }, data: ({ broadcast }) => broadcast({ source: 'close' }) }
+              ]
             }
           ]
         }
@@ -1108,7 +1117,7 @@ describe('createWsRoute: ws.error', () => {
   // ✅ important: text frame with invalid utf-8 is the simplest way to break the protocol
   const breakProtocol = (client: WebSocket) => {
     client.on('error', () => {});
-    client.send(Buffer.from([0xFF, 0xFE, 0xFD]), { binary: false });
+    client.send(Buffer.from([255, 254, 253]), { binary: false });
   };
 
   describe('content', () => {
@@ -1118,7 +1127,7 @@ describe('createWsRoute: ws.error', () => {
           configs: [
             {
               type: 'error',
-              routes: [{ data: ({ error }) => ({ message: error.message }) }]
+              routes: [{ data: ({ error, broadcast }) => broadcast({ message: error.message }) }]
             }
           ]
         }
@@ -1147,11 +1156,11 @@ describe('createWsRoute: ws.error', () => {
               routes: [
                 {
                   entities: { message: 'some other error' },
-                  data: () => ({ source: 'unmatched' })
+                  data: ({ broadcast }) => broadcast({ source: 'unmatched' })
                 },
                 {
                   entities: { message: 'Invalid WebSocket frame: invalid UTF-8 sequence' },
-                  data: () => ({ source: 'matched' })
+                  data: ({ broadcast }) => broadcast({ source: 'matched' })
                 }
               ]
             }
@@ -1177,12 +1186,12 @@ describe('createWsRoute: ws.error', () => {
               routes: [
                 {
                   entities: { code: 'ECONNRESET' },
-                  data: () => ({ source: 'unmatched' })
+                  data: ({ broadcast }) => broadcast({ source: 'unmatched' })
                 },
                 {
                   // ✅ important: ws attaches this code to invalid utf-8 frames
                   entities: { code: 'WS_ERR_INVALID_UTF8' },
-                  data: () => ({ source: 'matched' })
+                  data: ({ broadcast }) => broadcast({ source: 'matched' })
                 }
               ]
             }
@@ -1208,7 +1217,7 @@ describe('createWsRoute: ws.error', () => {
               routes: [
                 {
                   entities: { message: regExp(/invalid UTF-8/) },
-                  data: () => ({ source: 'matched' })
+                  data: ({ broadcast }) => broadcast({ source: 'matched' })
                 }
               ]
             }
@@ -1234,7 +1243,7 @@ describe('createWsRoute: ws.error', () => {
               routes: [
                 {
                   entities: { message: 'some other error' },
-                  data: () => ({ source: 'unmatched' })
+                  data: ({ broadcast }) => broadcast({ source: 'unmatched' })
                 }
               ]
             }
@@ -1260,7 +1269,7 @@ describe('createWsRoute: ws.error', () => {
           configs: [
             {
               type: 'error',
-              routes: [{ data: () => ({ source: 'error' }) }]
+              routes: [{ data: ({ broadcast }) => broadcast({ source: 'error' }) }]
             }
           ],
           interceptors: [wsInterceptors.request.error(componentRequestInterceptor)]
@@ -1287,7 +1296,9 @@ describe('createWsRoute: ws.error', () => {
           configs: [
             {
               type: 'error',
-              routes: [{ settings: { delay }, data: () => ({ source: 'error' }) }]
+              routes: [
+                { settings: { delay }, data: ({ broadcast }) => broadcast({ source: 'error' }) }
+              ]
             }
           ]
         }
@@ -1315,7 +1326,7 @@ describe('createWsRoute: ws.error', () => {
           configs: [
             {
               type: 'error',
-              routes: [{ data: ({ error }) => ({ message: error.message }) }]
+              routes: [{ data: ({ error, broadcast }) => broadcast({ message: error.message }) }]
             }
           ]
         }
@@ -1336,7 +1347,7 @@ describe('createWsRoute: ws.error', () => {
         ws: {
           configs: [
             {
-              type: 'raw',
+              type: 'message',
               routes: [{ data: () => ({ source: 'raw' }) }]
             }
           ]

@@ -1,21 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
-import type { RawWsRequestArtifact } from '@/utils/types';
+import type { MessageWsRequestArtifact } from '@/utils/types';
 
-import { matchRawRequestArtifacts } from './matchRawRequestArtifacts';
+import { matchMessageRequestArtifacts } from './matchMessageRequestArtifacts';
 
-const makeArtifact = (overrides: Partial<RawWsRequestArtifact>) =>
+const makeArtifact = (overrides: Partial<MessageWsRequestArtifact>) =>
   ({
     type: 'raw',
     baseUrl: '/',
     config: { data: () => ({ ok: true }) },
     weight: 0,
     ...overrides
-  }) as RawWsRequestArtifact;
+  }) as MessageWsRequestArtifact;
 
-describe('matchRawRequestArtifacts', () => {
+describe('matchMessageRequestArtifacts', () => {
   it('Should match route configuration by baseUrl', () => {
-    const matched = matchRawRequestArtifacts({
+    const matched = matchMessageRequestArtifacts({
       artifacts: [makeArtifact({ baseUrl: '/chat' })],
       meta: {
         path: '/chat'
@@ -25,7 +25,7 @@ describe('matchRawRequestArtifacts', () => {
   });
 
   it('Should match route configuration by baseUrl prefix', () => {
-    const matched = matchRawRequestArtifacts({
+    const matched = matchMessageRequestArtifacts({
       artifacts: [makeArtifact({ baseUrl: '/chat' })],
       meta: {
         path: '/chat/room-1'
@@ -35,7 +35,7 @@ describe('matchRawRequestArtifacts', () => {
   });
 
   it('Should not match when path differs from baseUrl', () => {
-    const matched = matchRawRequestArtifacts({
+    const matched = matchMessageRequestArtifacts({
       artifacts: [makeArtifact({ baseUrl: '/chat' })],
       meta: {
         path: '/other'

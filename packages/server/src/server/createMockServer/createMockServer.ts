@@ -171,7 +171,7 @@ export const createMockServer = (
   const originalListen = server.listen.bind(server);
   server.listen = ((...args: Parameters<typeof originalListen>) => {
     const httpServer = originalListen(...args);
-    httpServer.on('upgrade', async (request, socket, head) => {
+    httpServer.on('upgrade', (request, socket, head) => {
       const [requestPathname] = request.url!.split('?');
       const shouldHandleUpgrade = [...wsBaseUrls].some((baseUrl) => {
         if (baseUrl === '/') return true;

@@ -19,11 +19,13 @@ describe('callHttpRequestInterceptors: order of calls', () => {
     const firstInterceptor = vi.fn();
     const secondInterceptor = vi.fn();
 
-    await callHttpRequestInterceptors({
-      request: createRequest({}),
-      meta: { type: 'rest', method: 'get' },
-      interceptors: [http.request.all(firstInterceptor), rest.request.get(secondInterceptor)]
-    });
+    await callHttpRequestInterceptors(
+      {
+        request: createRequest({}),
+        meta: { type: 'rest', method: 'get' }
+      },
+      [http.request.all(firstInterceptor), rest.request.get(secondInterceptor)]
+    );
 
     expect(firstInterceptor).toBeCalledTimes(1);
     expect(secondInterceptor).toBeCalledTimes(1);
@@ -39,15 +41,17 @@ describe('callHttpRequestInterceptors: interceptors filtering', () => {
     const getInterceptor = vi.fn();
     const postInterceptor = vi.fn();
 
-    await callHttpRequestInterceptors({
-      request: createRequest({}),
-      meta: { type: 'rest', method: 'get' },
-      interceptors: [
+    await callHttpRequestInterceptors(
+      {
+        request: createRequest({}),
+        meta: { type: 'rest', method: 'get' }
+      },
+      [
         rest.request.all(allInterceptor),
         rest.request.get(getInterceptor),
         rest.request.post(postInterceptor)
       ]
-    });
+    );
 
     expect(allInterceptor).toBeCalledTimes(1);
     expect(getInterceptor).toBeCalledTimes(1);
@@ -59,15 +63,17 @@ describe('callHttpRequestInterceptors: interceptors filtering', () => {
     const mutationInterceptor = vi.fn();
     const restInterceptor = vi.fn();
 
-    await callHttpRequestInterceptors({
-      request: createRequest({}),
-      meta: { type: 'graphql', operationType: 'query' },
-      interceptors: [
+    await callHttpRequestInterceptors(
+      {
+        request: createRequest({}),
+        meta: { type: 'graphql', operationType: 'query' }
+      },
+      [
         graphql.request.query(queryInterceptor),
         graphql.request.mutation(mutationInterceptor),
         rest.request.get(restInterceptor)
       ]
-    });
+    );
 
     expect(queryInterceptor).toBeCalledTimes(1);
     expect(mutationInterceptor).toBeCalledTimes(0);
@@ -77,11 +83,13 @@ describe('callHttpRequestInterceptors: interceptors filtering', () => {
   it('Should not call response interceptors', async () => {
     const responseInterceptor = vi.fn();
 
-    await callHttpRequestInterceptors({
-      request: createRequest({}),
-      meta: { type: 'rest', method: 'get' },
-      interceptors: [rest.response.get(responseInterceptor)]
-    });
+    await callHttpRequestInterceptors(
+      {
+        request: createRequest({}),
+        meta: { type: 'rest', method: 'get' }
+      },
+      [rest.response.get(responseInterceptor)]
+    );
 
     expect(responseInterceptor).toBeCalledTimes(0);
   });
@@ -94,11 +102,13 @@ describe('callHttpRequestInterceptors: params functions', () => {
       expect(getHeader('name')).toBe('value');
     });
 
-    await callHttpRequestInterceptors({
-      request,
-      meta: { type: 'rest', method: 'get' },
-      interceptors: [rest.request.get(interceptor)]
-    });
+    await callHttpRequestInterceptors(
+      {
+        request,
+        meta: { type: 'rest', method: 'get' }
+      },
+      [rest.request.get(interceptor)]
+    );
 
     expect(interceptor).toBeCalledTimes(1);
   });
@@ -109,11 +119,13 @@ describe('callHttpRequestInterceptors: params functions', () => {
       expect(getHeaders()).toStrictEqual({ name: 'value' });
     });
 
-    await callHttpRequestInterceptors({
-      request,
-      meta: { type: 'rest', method: 'get' },
-      interceptors: [rest.request.get(interceptor)]
-    });
+    await callHttpRequestInterceptors(
+      {
+        request,
+        meta: { type: 'rest', method: 'get' }
+      },
+      [rest.request.get(interceptor)]
+    );
 
     expect(interceptor).toBeCalledTimes(1);
   });
@@ -124,11 +136,13 @@ describe('callHttpRequestInterceptors: params functions', () => {
       expect(getCookie('name')).toBe('value');
     });
 
-    await callHttpRequestInterceptors({
-      request,
-      meta: { type: 'rest', method: 'get' },
-      interceptors: [rest.request.get(interceptor)]
-    });
+    await callHttpRequestInterceptors(
+      {
+        request,
+        meta: { type: 'rest', method: 'get' }
+      },
+      [rest.request.get(interceptor)]
+    );
 
     expect(interceptor).toBeCalledTimes(1);
   });
@@ -137,11 +151,13 @@ describe('callHttpRequestInterceptors: params functions', () => {
     const request = createRequest({});
     const interceptor = vi.fn();
 
-    await callHttpRequestInterceptors({
-      request,
-      meta: { type: 'rest', method: 'get' },
-      interceptors: [rest.request.get(interceptor)]
-    });
+    await callHttpRequestInterceptors(
+      {
+        request,
+        meta: { type: 'rest', method: 'get' }
+      },
+      [rest.request.get(interceptor)]
+    );
 
     const params = interceptor.mock.calls[0][0];
     expect(params.request).toBe(request);

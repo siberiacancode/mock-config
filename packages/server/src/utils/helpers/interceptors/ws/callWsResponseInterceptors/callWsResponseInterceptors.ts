@@ -17,31 +17,35 @@ import { sleep } from '../../../sleep';
 
 interface CallWsResponseInterceptorsParams {
   code?: WsCloseParams['code'];
-  componentInterceptors?: Interceptor[];
   data: Data;
   event: WsEventContext;
   frame?: WsFrame;
   meta: WsInterceptorMeta;
   reason?: WsCloseParams['reason'];
-  serverInterceptors?: Interceptor[];
   socket: WsSocket;
   broadcast: (data: unknown) => void;
   send: (data: unknown) => void;
 }
 
-export const callWsResponseInterceptors = async ({
-  code,
-  componentInterceptors = [],
-  data,
-  frame,
-  event,
-  meta,
-  reason,
-  serverInterceptors = [],
-  socket,
-  broadcast,
-  send
-}: CallWsResponseInterceptorsParams) => {
+interface CallWsResponseInterceptors {
+  componentInterceptors?: Interceptor[];
+  serverInterceptors?: Interceptor[];
+}
+
+export const callWsResponseInterceptors = async (
+  {
+    code,
+    data,
+    event,
+    frame,
+    meta,
+    reason,
+    socket,
+    broadcast,
+    send
+  }: CallWsResponseInterceptorsParams,
+  { componentInterceptors = [], serverInterceptors = [] }: CallWsResponseInterceptors
+) => {
   const setDelay: HttpResponseInterceptorHandlerParams['setDelay'] = async (delay) => {
     await sleep(delay);
   };
@@ -59,13 +63,14 @@ export const callWsResponseInterceptors = async ({
 
   let updatedData = data;
 
-  const interceptorNames = ['ws.response.all', `ws.response.${meta.event}`];
-  if (meta.event === 'message' && meta.messageType === 'raw') {
-    interceptorNames.push('ws.response.raw');
-  }
-  if (meta.event === 'message' && meta.messageType === 'graphql-ws') {
-    interceptorNames.push('graphql.response.subscription');
-  }
+  const interceptorNames = [
+    'ws.response.all',
+    `ws.response.${meta.event}`,
+    ...(meta.event === 'message' && meta.messageType === 'raw' ? ['ws.response.raw'] : []),
+    ...(meta.event === 'message' && meta.messageType === 'graphql-ws'
+      ? ['graphql.response.subscription']
+      : [])
+  ];
 
   const responseInterceptors = [...componentInterceptors, ...serverInterceptors].filter(
     (interceptor): interceptor is WsResponseInterceptor =>

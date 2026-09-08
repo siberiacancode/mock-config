@@ -6,14 +6,12 @@ import { isComparator, isPlainObject } from '@/utils/helpers';
 
 import { mappedEntitySchema, plainObjectSchema } from '../../utils';
 
-const comparatorSchema = z.custom<Comparator>(isComparator);
-
-export const rawRouteConfigSchema = z.strictObject({
+export const messageRouteConfigSchema = z.strictObject({
   data: z.function(),
   entities: plainObjectSchema(
     z.strictObject({
       data: z.any().optional(),
-      isBinary: z.union([z.boolean(), comparatorSchema]).optional()
+      isBinary: z.union([z.boolean(), z.custom<Comparator>(isComparator)]).optional()
     })
   ).optional()
 });
@@ -33,8 +31,8 @@ export const closeRouteConfigSchema = z.strictObject({
   data: z.function(),
   entities: plainObjectSchema(
     z.strictObject({
-      code: z.union([z.number(), comparatorSchema]).optional(),
-      reason: z.union([z.string(), comparatorSchema]).optional()
+      code: z.union([z.number(), z.custom<Comparator>(isComparator)]).optional(),
+      reason: z.union([z.string(), z.custom<Comparator>(isComparator)]).optional()
     })
   ).optional()
 });
@@ -43,12 +41,12 @@ export const errorRouteConfigSchema = z.strictObject({
   data: z.function(),
   entities: plainObjectSchema(
     z.strictObject({
-      code: z.union([z.string(), comparatorSchema]).optional(),
-      message: z.union([z.string(), comparatorSchema]).optional()
+      code: z.union([z.string(), z.custom<Comparator>(isComparator)]).optional(),
+      message: z.union([z.string(), z.custom<Comparator>(isComparator)]).optional()
     })
   ).optional()
 });
 
 export const routeConfigSchema = z
   .custom((value) => isPlainObject(value) && 'data' in value)
-  .pipe(rawRouteConfigSchema);
+  .pipe(messageRouteConfigSchema);

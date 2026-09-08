@@ -1,17 +1,15 @@
 import type { WsRouteConfig } from '@/utils/types';
 
-import { isComparator, isPlainObject } from '@/utils/helpers';
-
-const calculateEntityWeight = (entity: unknown) => {
-  if (isComparator(entity) || !isPlainObject(entity)) return 1;
-  return Object.keys(entity).length;
-};
+import { isPlainObject } from '@/utils/helpers';
 
 export const calculateWsRouteConfigWeight = (wsRouteConfig: WsRouteConfig) => {
   const entities = 'entities' in wsRouteConfig ? wsRouteConfig.entities : undefined;
+  if (!entities) return 0;
 
-  return Object.values(entities ?? {}).reduce<number>(
-    (weight, entity) => weight + calculateEntityWeight(entity),
-    0
-  );
+  let routeConfigWeight = 0;
+  Object.values(entities).forEach((entityValue) => {
+    routeConfigWeight += isPlainObject(entityValue) ? Object.keys(entityValue).length : 1;
+  });
+
+  return routeConfigWeight;
 };

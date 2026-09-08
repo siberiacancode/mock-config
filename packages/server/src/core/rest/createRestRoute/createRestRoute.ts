@@ -48,16 +48,10 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
     asyncHandler(async (request, response, next) => {
       const requestMethod = request.method.toLowerCase() as RestMethod;
 
-      if (restRequestArtifacts[0].serverInterceptors?.length) {
-        await callHttpRequestInterceptors({
-          request,
-          interceptors: restRequestArtifacts[0].serverInterceptors,
-          meta: {
-            type: 'rest',
-            method: requestMethod
-          }
-        });
-      }
+      await callHttpRequestInterceptors(
+        { request, meta: { type: 'rest', method: requestMethod } },
+        restRequestArtifacts[0].serverInterceptors ?? []
+      );
 
       const previousParams = { ...request.params };
 
@@ -121,16 +115,10 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
         return next();
       }
 
-      if (matchedRouteConfig.componentInterceptors) {
-        await callHttpRequestInterceptors({
-          request,
-          interceptors: matchedRouteConfig.componentInterceptors,
-          meta: {
-            type: 'rest',
-            method: requestMethod
-          }
-        });
-      }
+      await callHttpRequestInterceptors(
+        { request, meta: { type: 'rest', method: requestMethod } },
+        matchedRouteConfig.componentInterceptors ?? []
+      );
 
       if (matchedRouteConfig.config.settings?.status) {
         response.statusCode = matchedRouteConfig.config.settings.status;
@@ -189,17 +177,18 @@ export const createRestRoute = ({ server, restRequestArtifacts }: CreateRestRout
       if (response.headersSent) {
         return;
       }
-      const data = await callHttpResponseInterceptors({
-        data: resolvedData,
-        request,
-        response,
-        componentInterceptors: matchedRouteConfig.componentInterceptors,
-        serverInterceptors: matchedRouteConfig.serverInterceptors,
-        meta: {
-          type: 'rest',
-          method: requestMethod
+      const data = await callHttpResponseInterceptors(
+        {
+          data: resolvedData,
+          request,
+          response,
+          meta: { type: 'rest', method: requestMethod }
+        },
+        {
+          componentInterceptors: matchedRouteConfig.componentInterceptors,
+          serverInterceptors: matchedRouteConfig.serverInterceptors
         }
-      });
+      );
 
       if (matchedRouteConfig.config.settings?.delay) {
         await sleep(matchedRouteConfig.config.settings.delay);

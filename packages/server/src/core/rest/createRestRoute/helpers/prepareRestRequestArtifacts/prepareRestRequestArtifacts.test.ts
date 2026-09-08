@@ -4,15 +4,14 @@ import type { RestRequestArtifact } from '@/utils/types';
 
 import { prepareRestRequestArtifacts } from './prepareRestRequestArtifacts';
 
-const makeArtifact = (overrides: Partial<RestRequestArtifact>): RestRequestArtifact =>
-  ({
-    baseUrl: '/',
-    method: 'get',
-    path: '/users',
-    config: { data: { ok: true } },
-    weight: 0,
-    ...overrides
-  });
+const makeArtifact = (overrides: Partial<RestRequestArtifact>): RestRequestArtifact => ({
+  baseUrl: '/',
+  method: 'get',
+  path: '/users',
+  config: { data: { ok: true } },
+  weight: 0,
+  ...overrides
+});
 
 describe('prepareRestRequestArtifacts', () => {
   it('Should sort by weight descending', () => {

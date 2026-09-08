@@ -4,15 +4,14 @@ import type { RestRequestArtifact } from '@/utils/types';
 
 import { matchRestRequestArtifacts } from './matchRestRequestArtifacts';
 
-const makeArtifact = (overrides: Partial<RestRequestArtifact>): RestRequestArtifact =>
-  ({
-    baseUrl: '/',
-    method: 'get',
-    path: '/users',
-    config: { data: { ok: true } },
-    weight: 0,
-    ...overrides
-  });
+const makeArtifact = (overrides: Partial<RestRequestArtifact>): RestRequestArtifact => ({
+  baseUrl: '/',
+  method: 'get',
+  path: '/users',
+  config: { data: { ok: true } },
+  weight: 0,
+  ...overrides
+});
 
 describe('matchRestRequestArtifacts', () => {
   it('Should not match request path to artifact baseUrl segment', () => {

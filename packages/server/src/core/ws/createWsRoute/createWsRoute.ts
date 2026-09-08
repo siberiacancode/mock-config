@@ -1,8 +1,6 @@
 import type { Buffer } from 'node:buffer';
 import type { RawData, WebSocketServer } from 'ws';
 
-import { WebSocket } from 'ws';
-
 import type {
   CloseWsRequestArtifact,
   ConnectionWsRequestArtifact,
@@ -12,15 +10,13 @@ import type {
   GraphqlTransportWsExecutionResult,
   GraphqlTransportWsParams,
   GraphqlTransportWsRequestArtifact,
-  RawWsRequestArtifact,
+  MessageWsRequestArtifact,
   WsCloseParams,
   WsConnectionParams,
   WsErrorParams,
   WsEventContext,
-  WsInterceptorMeta,
   WsMessageParams,
   WsRequestArtifact,
-  WsRequestInterceptorHandlerParams,
   WsSocket
 } from '@/utils/types';
 
@@ -41,9 +37,9 @@ import {
   isCloseRequestMatchedByEntities,
   isConnectionRequestMatchedByEntities,
   isErrorRequestMatchedByEntities,
-  isRawRequestMatchedByEntities,
+  isMessageRequestMatchedByEntities,
   matchGraphqlTransportWsRequestArtifacts,
-  matchRawRequestArtifacts,
+  matchMessageRequestArtifacts,
   sendGraphqlTransportWsComplete,
   sendGraphqlTransportWsData,
   sendWsData
@@ -61,7 +57,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
     return { id: eventId, timestamp: Date.now() };
   };
 
-  return server.on('connection', async (rawSocket, request) => {
+  return server.on('connection', async (rawSocket, handshake) => {
     const socket = rawSocket as WsSocket;
 
     const broadcast = (data: unknown) => broadcastWsData(server, data);
@@ -70,27 +66,10 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       await sleep(delay);
     };
 
-    const callServerRequestInterceptors = async (
-      wsEventContext: WsEventContext,
-      meta: WsInterceptorMeta,
-      params?: Pick<WsRequestInterceptorHandlerParams, 'code' | 'error' | 'frame' | 'reason'>
-    ) => {
-      if (wsRequestArtifacts[0].serverInterceptors?.length) {
-        await callWsRequestInterceptors({
-          event: wsEventContext,
-          meta,
-          ...params,
-          interceptors: wsRequestArtifacts[0].serverInterceptors,
-          socket,
-          broadcast,
-          send
-        });
-      }
-    };
-
+    const serverInterceptors = wsRequestArtifacts[0].serverInterceptors ?? [];
     const completedSubscriptionIds = new Set<string>();
 
-    const [requestPathname] = request.url!.split('?');
+    const [requestPathname] = handshake.url!.split('?');
     const matchedRequestArtifacts = wsRequestArtifacts.filter((artifact) => {
       if (artifact.baseUrl === '/') return true;
       return (
@@ -101,14 +80,14 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
     const {
       connectionArtifacts,
       graphqlTransportWsRequestArtifacts,
-      rawWsRequestArtifacts,
+      messageWsRequestArtifacts,
       closeWsRequestArtifacts,
       errorWsRequestArtifacts
     } = matchedRequestArtifacts.reduce(
       (acc, artifact) => {
         if (artifact.type === 'connection') acc.connectionArtifacts.push(artifact);
         if (artifact.type === 'graphql-ws') acc.graphqlTransportWsRequestArtifacts.push(artifact);
-        if (artifact.type === 'raw') acc.rawWsRequestArtifacts.push(artifact);
+        if (artifact.type === 'message') acc.messageWsRequestArtifacts.push(artifact);
         if (artifact.type === 'close') acc.closeWsRequestArtifacts.push(artifact);
         if (artifact.type === 'error') acc.errorWsRequestArtifacts.push(artifact);
 
@@ -117,44 +96,33 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       {
         connectionArtifacts: [] as ConnectionWsRequestArtifact[],
         graphqlTransportWsRequestArtifacts: [] as GraphqlTransportWsRequestArtifact[],
-        rawWsRequestArtifacts: [] as RawWsRequestArtifact[],
+        messageWsRequestArtifacts: [] as MessageWsRequestArtifact[],
         closeWsRequestArtifacts: [] as CloseWsRequestArtifact[],
         errorWsRequestArtifacts: [] as ErrorWsRequestArtifact[]
       }
     );
 
     const handleOpen = async () => {
-      const wsEventContext = createWsEventContext();
+      const event = createWsEventContext();
+      const meta = { type: 'ws', event: 'open' } as const;
 
-      await callServerRequestInterceptors(wsEventContext, {
-        type: 'ws',
-        event: 'open'
-      });
+      await callWsRequestInterceptors({ event, meta, socket, broadcast, send }, serverInterceptors);
 
       const matchedArtifact = connectionArtifacts.find((artifact) =>
-        isConnectionRequestMatchedByEntities(request, artifact.config.entities)
+        isConnectionRequestMatchedByEntities(handshake, artifact.config.entities)
       );
 
       if (!matchedArtifact) return;
 
-      if (matchedArtifact.componentInterceptors) {
-        await callWsRequestInterceptors({
-          event: wsEventContext,
-          meta: {
-            type: 'ws',
-            event: 'open'
-          },
-          interceptors: matchedArtifact.componentInterceptors,
-          socket,
-          broadcast,
-          send
-        });
-      }
+      await callWsRequestInterceptors(
+        { event, meta, socket, broadcast, send },
+        matchedArtifact.componentInterceptors ?? []
+      );
 
       const params: WsConnectionParams = {
-        event: wsEventContext,
+        event,
         broadcast,
-        request,
+        handshake,
         socket,
         send,
         setDelay
@@ -162,94 +130,65 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
       const resolvedData = await matchedArtifact.config.data(params);
 
-      const data = await callWsResponseInterceptors({
-        event: wsEventContext,
-        data: resolvedData,
-        meta: {
-          type: 'ws',
-          event: 'open'
-        },
-        componentInterceptors: matchedArtifact.componentInterceptors,
-        serverInterceptors: matchedArtifact.serverInterceptors,
-        socket,
-        broadcast,
-        send
-      });
+      const data = await callWsResponseInterceptors(
+        { event, data: resolvedData, meta, socket, broadcast, send },
+        {
+          componentInterceptors: matchedArtifact.componentInterceptors,
+          serverInterceptors: matchedArtifact.serverInterceptors
+        }
+      );
 
       sendWsData(socket, data);
     };
 
     const handleMessage = async (raw: RawData, isBinary: boolean) => {
       const frame = createWsFrame(raw, isBinary);
-      const wsEventContext = createWsEventContext();
+      const event = createWsEventContext();
+      const meta = { type: 'ws', event: 'message', messageType: 'raw' } as const;
 
       const wsParams: WsMessageParams = {
-        event: wsEventContext,
+        event,
         ...frame,
-        request,
+        handshake,
         broadcast,
         socket,
         send,
         setDelay
       };
 
-      await callServerRequestInterceptors(
-        wsEventContext,
-        {
-          type: 'ws',
-          event: 'message',
-          messageType: 'raw'
-        },
-        { frame: createWsFrame(raw, isBinary) }
+      await callWsRequestInterceptors(
+        { event, meta, frame, socket, broadcast, send },
+        serverInterceptors
       );
 
-      const matchedRawArtifacts = matchRawRequestArtifacts({
-        artifacts: rawWsRequestArtifacts,
+      const matchedMessageArtifacts = matchMessageRequestArtifacts({
+        artifacts: messageWsRequestArtifacts,
         meta: {
           path: requestPathname
         }
       });
 
-      const matchedRawArtifact = matchedRawArtifacts.find((artifact) =>
-        isRawRequestMatchedByEntities(frame, artifact.config.entities)
+      const matchedMessageArtifact = matchedMessageArtifacts.find((artifact) =>
+        isMessageRequestMatchedByEntities(frame, artifact.config.entities)
       );
 
-      if (matchedRawArtifact) {
-        if (matchedRawArtifact.componentInterceptors) {
-          await callWsRequestInterceptors({
-            event: wsEventContext,
-            meta: {
-              type: 'ws',
-              event: 'message',
-              messageType: 'raw'
-            },
-            frame,
-            interceptors: matchedRawArtifact.componentInterceptors,
-            socket,
-            broadcast,
-            send
-          });
-        }
+      if (matchedMessageArtifact) {
+        await callWsRequestInterceptors(
+          { event, meta, frame, socket, broadcast, send },
+          matchedMessageArtifact.componentInterceptors ?? []
+        );
 
-        const resolvedData = await matchedRawArtifact.config.data(wsParams);
-        const data = await callWsResponseInterceptors({
-          event: wsEventContext,
-          data: resolvedData,
-          meta: {
-            type: 'ws',
-            event: 'message',
-            messageType: 'raw'
-          },
-          frame,
-          componentInterceptors: matchedRawArtifact.componentInterceptors,
-          serverInterceptors: matchedRawArtifact.serverInterceptors,
-          socket,
-          broadcast,
-          send
-        });
+        const resolvedData = await matchedMessageArtifact.config.data(wsParams);
+        const data = await callWsResponseInterceptors(
+          { event, data: resolvedData, meta, frame, socket, broadcast, send },
+          {
+            componentInterceptors: matchedMessageArtifact.componentInterceptors,
+            serverInterceptors: matchedMessageArtifact.serverInterceptors
+          }
+        );
 
-        if (matchedRawArtifact.config.settings?.delay) {
-          await sleep(matchedRawArtifact.config.settings.delay);
+        if (matchedMessageArtifact.config.settings?.delay) {
+          await sleep(matchedMessageArtifact.config.settings.delay);
         }
 
         sendWsData(socket, data);
@@ -290,14 +229,15 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
       const query = parseGraphQLQuery(graphqlSubscriptionInput.payload.query);
       if (!query) return;
 
-      await callServerRequestInterceptors(
-        wsEventContext,
-        {
-          type: 'ws',
-          event: 'message',
-          messageType: 'graphql-ws'
-        },
-        { frame: createWsFrame(raw, isBinary) }
+      const graphqlTransportWsMeta = {
+        type: 'ws',
+        event: 'message',
+        messageType: 'graphql-ws'
+      } as const;
+
+      await callWsRequestInterceptors(
+        { event, meta: graphqlTransportWsMeta, frame, socket, broadcast, send },
+        serverInterceptors
       );
 
       const matchedGraphqlTransportWsRequestArtifacts = matchGraphqlTransportWsRequestArtifacts({
@@ -333,24 +273,13 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
       if (!matchedArtifact) return;
 
-      if (matchedArtifact.componentInterceptors) {
-        await callWsRequestInterceptors({
-          event: wsEventContext,
-          meta: {
-            type: 'ws',
-            event: 'message',
-            messageType: 'graphql-ws'
-          },
-          frame,
-          interceptors: matchedArtifact.componentInterceptors,
-          socket,
-          broadcast,
-          send
-        });
-      }
+      await callWsRequestInterceptors(
+        { event, meta: graphqlTransportWsMeta, frame, socket, broadcast, send },
+        matchedArtifact.componentInterceptors ?? []
+      );
 
       const graphqlTransportWsParams: GraphqlTransportWsParams = {
-        event: wsEventContext,
+        event,
         complete: () => {
           if (completedSubscriptionIds.has(operationId)) return;
           completedSubscriptionIds.add(operationId);
@@ -358,6 +287,7 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         },
         entities: matchedArtifact.config.entities ?? {},
         eventName: query.eventName,
+        handshake,
         next: (payload) => {
           if (completedSubscriptionIds.has(operationId)) return;
           sendGraphqlTransportWsData(socket, operationId, payload);
@@ -365,7 +295,6 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
         operationName: query.operationName,
         query: graphqlSubscriptionInput.payload.query,
         raw,
-        request,
         setDelay,
         socket,
         variables: graphqlSubscriptionInput.payload.variables ?? {}
@@ -376,21 +305,21 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
           ? await matchedArtifact.config.data(graphqlTransportWsParams)
           : matchedArtifact.config.data;
 
-      const data = await callWsResponseInterceptors({
-        event: wsEventContext,
-        data: resolvedData,
-        meta: {
-          type: 'ws',
-          event: 'message',
-          messageType: 'graphql-ws'
+      const data = await callWsResponseInterceptors(
+        {
+          event,
+          data: resolvedData,
+          meta: graphqlTransportWsMeta,
+          frame,
+          socket,
+          broadcast,
+          send
         },
-        frame,
-        componentInterceptors: matchedArtifact.componentInterceptors,
-        serverInterceptors: matchedArtifact.serverInterceptors,
-        socket,
-        broadcast,
-        send
-      });
+        {
+          componentInterceptors: matchedArtifact.componentInterceptors,
+          serverInterceptors: matchedArtifact.serverInterceptors
+        }
+      );
 
       if (matchedArtifact.config.settings?.delay) {
         await sleep(matchedArtifact.config.settings.delay);
@@ -403,15 +332,12 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
     const handleClose = async (code: number, reasonBuffer: Buffer) => {
       const reason = reasonBuffer.toString();
-      const wsEventContext = createWsEventContext();
+      const event = createWsEventContext();
+      const meta = { type: 'ws', event: 'close' } as const;
 
-      await callServerRequestInterceptors(
-        wsEventContext,
-        {
-          type: 'ws',
-          event: 'close'
-        },
-        { code, reason }
+      await callWsRequestInterceptors(
+        { event, meta, code, reason, socket, broadcast, send },
+        serverInterceptors
       );
 
       const matchedArtifact = closeWsRequestArtifacts.find((artifact) =>
@@ -420,69 +346,47 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
       if (!matchedArtifact) return;
 
-      if (matchedArtifact.componentInterceptors) {
-        await callWsRequestInterceptors({
-          event: wsEventContext,
-          meta: {
-            type: 'ws',
-            event: 'close'
-          },
-          code,
-          reason,
-          interceptors: matchedArtifact.componentInterceptors,
-          socket,
-          broadcast,
-          send
-        });
-      }
+      await callWsRequestInterceptors(
+        { event, meta, code, reason, socket, broadcast, send },
+        matchedArtifact.componentInterceptors ?? []
+      );
 
       const params: WsCloseParams = {
-        event: wsEventContext,
+        event,
         broadcast,
         code,
+        handshake,
         reason,
-        request,
         socket,
         setDelay
       };
 
-      const resolvedData = await matchedArtifact.config.data(params);
-
-      const data = await callWsResponseInterceptors({
-        event: wsEventContext,
-        data: resolvedData,
-        meta: {
-          type: 'ws',
-          event: 'close'
-        },
-        code,
-        reason,
-        componentInterceptors: matchedArtifact.componentInterceptors,
-        serverInterceptors: matchedArtifact.serverInterceptors,
-        socket,
-        broadcast,
-        send
-      });
-
+      // ✅ important:
+      // close and error responses are not sent automatically, the socket is already gone,
+      // handlers and response interceptors call broadcast themselves when they need to,
+      // so the delay is applied before the handler runs instead of before a send
       if (matchedArtifact.config.settings?.delay) {
         await sleep(matchedArtifact.config.settings.delay);
       }
 
-      broadcastWsData(server, data);
+      const resolvedData = await matchedArtifact.config.data(params);
+
+      await callWsResponseInterceptors(
+        { event, data: resolvedData, meta, code, reason, socket, broadcast, send },
+        {
+          componentInterceptors: matchedArtifact.componentInterceptors,
+          serverInterceptors: matchedArtifact.serverInterceptors
+        }
+      );
     };
 
     const handleError = async (error: NodeJS.ErrnoException) => {
-      const wsEventContext = createWsEventContext();
+      const event = createWsEventContext();
+      const meta = { type: 'ws', event: 'error' } as const;
 
-      await callServerRequestInterceptors(
-        wsEventContext,
-        {
-          type: 'ws',
-          event: 'error'
-        },
-        {
-          error
-        }
+      await callWsRequestInterceptors(
+        { event, meta, error, socket, broadcast, send },
+        serverInterceptors
       );
 
       const matchedArtifact = errorWsRequestArtifacts.find((artifact) =>
@@ -491,56 +395,34 @@ export const createWsRoute = ({ server, wsRequestArtifacts }: CreateWsRouteParam
 
       if (!matchedArtifact) return;
 
-      if (matchedArtifact.componentInterceptors) {
-        await callWsRequestInterceptors({
-          event: wsEventContext,
-          meta: {
-            type: 'ws',
-            event: 'error'
-          },
-          error,
-          interceptors: matchedArtifact.componentInterceptors,
-          socket,
-          broadcast,
-          send
-        });
-      }
+      await callWsRequestInterceptors(
+        { event, meta, error, socket, broadcast, send },
+        matchedArtifact.componentInterceptors ?? []
+      );
 
       const params: WsErrorParams = {
-        event: wsEventContext,
+        event,
         broadcast,
         error,
-        request,
+        handshake,
         socket,
         send,
         setDelay
       };
 
-      const resolvedData = await matchedArtifact.config.data(params);
-
-      const data = await callWsResponseInterceptors({
-        event: wsEventContext,
-        data: resolvedData,
-        meta: {
-          type: 'ws',
-          event: 'error'
-        },
-        componentInterceptors: matchedArtifact.componentInterceptors,
-        serverInterceptors: matchedArtifact.serverInterceptors,
-        socket,
-        broadcast,
-        send
-      });
-
       if (matchedArtifact.config.settings?.delay) {
         await sleep(matchedArtifact.config.settings.delay);
       }
 
-      if (socket.readyState === WebSocket.OPEN) {
-        sendWsData(socket, data);
-      } else {
-        broadcastWsData(server, data);
-      }
+      const resolvedData = await matchedArtifact.config.data(params);
+
+      await callWsResponseInterceptors(
+        { event, data: resolvedData, meta, socket, broadcast, send },
+        {
+          componentInterceptors: matchedArtifact.componentInterceptors,
+          serverInterceptors: matchedArtifact.serverInterceptors
+        }
+      );
     };
 
     socket.on('message', (raw, isBinary) => handleMessage(raw, isBinary));

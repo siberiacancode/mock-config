@@ -2,10 +2,12 @@ import type { IncomingMessage } from 'node:http';
 
 import { describe, expect, it } from 'vitest';
 
+import type { PlainObject } from '@/utils/types';
+
 import { equals } from '../../../../entities';
 import { isConnectionRequestMatchedByEntities } from './isConnectionRequestMatchedByEntities';
 
-const createRequest = (value: object) =>
+const createRequest = (value: PlainObject = {}) =>
   ({
     headers: {},
     cookies: {},
@@ -15,7 +17,7 @@ const createRequest = (value: object) =>
 
 describe('isConnectionRequestMatchedByEntities', () => {
   it('Should match route configuration without entities', () => {
-    expect(isConnectionRequestMatchedByEntities(createRequest({}), undefined)).toBe(true);
+    expect(isConnectionRequestMatchedByEntities(createRequest(), undefined)).toBe(true);
   });
 
   it('Should match by headers', () => {
@@ -34,10 +36,8 @@ describe('isConnectionRequestMatchedByEntities', () => {
   });
 
   it('Should be case-insensitive for header keys', () => {
-    const request = createRequest({ headers: { uppercase: 'value' } });
-
     expect(
-      isConnectionRequestMatchedByEntities(request, {
+      isConnectionRequestMatchedByEntities(createRequest({ headers: { uppercase: 'value' } }), {
         headers: { UPPERCASE: 'value' }
       })
     ).toBe(true);

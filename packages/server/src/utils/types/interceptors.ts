@@ -81,12 +81,12 @@ export type WsResponseInterceptorHandler<Data = any> = (
   params: WsResponseInterceptorHandlerParams
 ) => any;
 
-interface RestInterceptorMeta {
+export interface RestInterceptorMeta {
   method: RestMethod;
   type: Extract<ApiType, 'rest'>;
 }
 
-interface GraphqlInterceptorMeta {
+export interface GraphqlInterceptorMeta {
   operationType: GraphQLOperationType;
   type: Extract<ApiType, 'graphql'>;
 }

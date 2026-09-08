@@ -6,9 +6,23 @@ export default eslint(
   },
   {
     name: 'mock-config-server/md',
-    files: ['**/*.md'],
+    // ✅ important: markdown code blocks are linted as virtual files inside the md path
+    files: ['**/*.md', '**/*.md/**'],
     rules: {
-      'style/max-len': 'off'
+      'style/max-len': 'off',
+      // ✅ important: readme snippets show config shape, not node import boilerplate
+      'node/prefer-global/buffer': 'off'
+    }
+  },
+  {
+    // ✅ important:
+    // @siberiacancode/eslint enables these js only unicorn rules without a files filter,
+    // and eslint 10 errors out when a rule does not support the json language
+    name: 'mock-config-server/json',
+    files: ['**/*.json', '**/*.json5', '**/*.jsonc'],
+    rules: {
+      'unicorn/no-typeof-undefined': 'off',
+      'unicorn/no-useless-spread': 'off'
     }
   },
   {

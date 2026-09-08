@@ -5,7 +5,7 @@ import { getValidationMessageFromPath } from '../../getValidationMessageFromPath
 import {
   closeRouteConfigSchema,
   errorRouteConfigSchema,
-  rawRouteConfigSchema,
+  messageRouteConfigSchema,
   routeConfigSchema
 } from './routeConfigSchema';
 
@@ -43,13 +43,13 @@ describe('routeConfigSchema: data resolving properties combinations', () => {
   );
 });
 
-describe('rawRouteConfigSchema: entities', () => {
+describe('messageRouteConfigSchema: entities', () => {
   it('Should pass route config without entities', () => {
-    expect(rawRouteConfigSchema.safeParse({ data }).success).toBe(true);
+    expect(messageRouteConfigSchema.safeParse({ data }).success).toBe(true);
   });
 
   it('Should pass supported entities', () => {
-    const parseResult = rawRouteConfigSchema.safeParse({
+    const parseResult = messageRouteConfigSchema.safeParse({
       data,
       entities: { data: { type: 'ping' }, isBinary: false }
     });
@@ -57,7 +57,7 @@ describe('rawRouteConfigSchema: entities', () => {
   });
 
   it('Should return error on invalid isBinary entity', () => {
-    const parseResult = rawRouteConfigSchema.safeParse({
+    const parseResult = messageRouteConfigSchema.safeParse({
       data,
       entities: { isBinary: 'false' }
     });
@@ -65,7 +65,7 @@ describe('rawRouteConfigSchema: entities', () => {
   });
 
   it('Should return error on unsupported entity name', () => {
-    const parseResult = rawRouteConfigSchema.safeParse({
+    const parseResult = messageRouteConfigSchema.safeParse({
       data,
       entities: { raw: 'ping' }
     });

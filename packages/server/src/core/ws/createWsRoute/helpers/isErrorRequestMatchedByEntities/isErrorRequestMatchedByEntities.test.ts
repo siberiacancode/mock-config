@@ -32,7 +32,9 @@ describe('isErrorRequestMatchedByEntities', () => {
   });
 
   it('Should match by comparator', () => {
-    expect(isErrorRequestMatchedByEntities(error, { message: equals('socket hang up') })).toBe(true);
+    expect(isErrorRequestMatchedByEntities(error, { message: equals('socket hang up') })).toBe(
+      true
+    );
     expect(isErrorRequestMatchedByEntities(error, { message: regExp(/hang up$/) })).toBe(true);
     expect(isErrorRequestMatchedByEntities(error, { message: regExp(/^hang up/) })).toBe(false);
   });
