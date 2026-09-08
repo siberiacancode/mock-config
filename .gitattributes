@@ -1,0 +1,2 @@
+# prettier writes lf, keep the working tree matching it regardless of core.autocrlf
+* text=auto eol=lf
