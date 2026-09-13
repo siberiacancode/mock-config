@@ -14,9 +14,7 @@ export type RestEntity<EntityName extends RestEntityName = RestEntityName> =
   EntityName extends 'body' ? BodyEntity : MappedEntity;
 
 export type RestEntityNamesByMethod = {
-  [key in RestMethod]: key extends 'delete' | 'get' | 'options'
-    ? Exclude<RestEntityName, 'body'>
-    : RestEntityName;
+  [key in RestMethod]: RestEntityName;
 };
 export type RestEntitiesByEntityName<Method extends RestMethod = RestMethod> = {
   [EntityName in RestEntityNamesByMethod[Method]]?: RestEntity<EntityName>;
