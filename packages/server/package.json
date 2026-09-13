@@ -43,7 +43,7 @@
     "prepublishOnly": "git diff --exit-code",
     "lint-staged": "lint-staged",
     "prepare": "husky && pnpm build",
-    "build": "tsdown",
+    "build": "yarn type && tsdown",
     "start": "pnpm build && node ./dist/bin/bin.mjs",
     "dev": "nodemon --watch src --watch bin --watch mock-server.config.* -e js,ts --exec \"pnpm start\"",
     "type": "tsc --noEmit",
