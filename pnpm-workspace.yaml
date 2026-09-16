@@ -1,10 +1,13 @@
 packages:
   - 'packages/*'
+shellEmulator: true
 allowBuilds:
+  '@swc/core': true
   '@tailwindcss/oxide': true
   esbuild: true
   sharp: true
 minimumReleaseAgeExclude:
+  - '@siberiacancode/reactuse@1.0.9'
   - '@types/react-dom@19.2.4'
   - '@types/react@19.2.18'
   - fumadocs-core@16.14.0

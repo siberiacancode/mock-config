@@ -1,4 +1,7 @@
 import { createComparator } from '@/utils/helpers';
 
 export const maxLength = (expected: number) =>
-  createComparator((actual, { maxLength }) => maxLength(actual, expected));
+  createComparator((actual, { maxLength }) => maxLength(actual, expected), {
+    name: 'maxLength',
+    args: [expected]
+  });
