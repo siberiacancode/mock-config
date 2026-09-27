@@ -169,6 +169,9 @@ importers:
       '@types/prompts':
         specifier: ^2.4.9
         version: 2.4.9
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       '@types/yargs':
         specifier: ^17.0.33
         version: 17.0.35
@@ -215,9 +218,6 @@ importers:
       '@types/supertest':
         specifier: ^6.0.3
         version: 6.0.3
-      '@types/ws':
-        specifier: ^8.18.1
-        version: 8.18.1
       '@vitest/coverage-v8':
         specifier: ^4.1.8
         version: 4.1.11(vitest@4.1.8)
