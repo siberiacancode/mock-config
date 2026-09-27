@@ -11,8 +11,7 @@
     "lint": "eslint . --fix",
     "format": "prettier --write .",
     "type": "tsc --noEmit",
-    "pretty": "pnpm type && pnpm lint && pnpm format",
-    "lint-staged": "lint-staged"
+    "pretty": "pnpm type && pnpm lint && pnpm format"
   },
   "dependencies": {
     "@siberiacancode/reactuse": "^1.0.11",
@@ -37,11 +36,5 @@
     "postcss": "^8.5.25",
     "serve-handler": "^6.1.7",
     "tailwindcss": "^4.3.3"
-  },
-  "lint-staged": {
-    "*.{js,ts,md,mdx,tsx,mjs}": [
-      "eslint --fix",
-      "prettier --write"
-    ]
   }
 }

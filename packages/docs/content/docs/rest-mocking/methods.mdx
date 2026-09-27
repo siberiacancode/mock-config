@@ -3,7 +3,7 @@ title: Methods
 description: HTTP methods available in the rest namespace.
 ---
 
-The `rest` namespace exposes a method for each supported HTTP verb plus two streaming variants. Every method follows the same call signature — the only difference is the HTTP method it intercepts and whether a request body is available.
+The `rest` namespace exposes a method for each supported HTTP verb plus two streaming variants. Every method follows the same call signature — the only difference is the HTTP method it intercepts.
 
 ```ts
 rest.get(path, config, settings?)
@@ -16,8 +16,6 @@ rest.options(path, config, settings?)
 rest.sse(path, config, settings?)
 rest.stream(path, config, settings?)
 ```
-
-`body` is available in resolvers and matchers for `post`, `put`, and `patch`. It is not available for `get`, `delete`, and `options`.
 
 <Callout type='info'>
   For the full parameter descriptions, config variants, and types see the [REST API

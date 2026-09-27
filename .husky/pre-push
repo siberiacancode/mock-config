@@ -1,2 +1,0 @@
-pnpm unit-test --run
-pnpm build

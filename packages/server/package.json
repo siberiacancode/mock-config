@@ -41,9 +41,8 @@
   },
   "scripts": {
     "prepublishOnly": "git diff --exit-code",
-    "lint-staged": "lint-staged",
-    "prepare": "husky && pnpm build",
-    "build": "tsdown",
+    "prepare": "pnpm build",
+    "build": "pnpm type && tsdown",
     "start": "pnpm build && node ./dist/bin/bin.mjs",
     "dev": "nodemon --watch src --watch bin --watch mock-server.config.* -e js,ts --exec \"pnpm start\"",
     "type": "tsc --noEmit",
@@ -83,14 +82,5 @@
     "supertest": "^7.2.2",
     "tsdown": "^0.22.2",
     "vitest": "^4.1.8"
-  },
-  "lint-staged": {
-    "*.js": [
-      "prettier --write"
-    ],
-    "*.ts": [
-      "eslint --no-error-on-unmatched-pattern --fix",
-      "prettier --write"
-    ]
   }
 }

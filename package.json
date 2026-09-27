@@ -27,15 +27,15 @@
     "format": "pnpm -r run format",
     "pretty": "pnpm -r run pretty",
     "unit-test": "pnpm -r run unit-test",
-    "prepare": "husky"
+    "prepare": "lefthook install --reset-hooks-path"
   },
   "devDependencies": {
     "@siberiacancode/eslint": "^2.18.0",
+    "@siberiacancode/lefthook": "1.0.2",
     "@siberiacancode/prettier": "^1.8.0",
     "@types/node": "^26.1.1",
-    "husky": "^9.1.7",
-    "lint-staged": "^17.0.8",
     "@typescript/native": "npm:typescript@^7.0.2",
+    "lefthook": "^2.1.10",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   }
 }

@@ -146,20 +146,7 @@ HTTP methods supported by REST configs
 <a id='RestEntitiesByEntityName'></a>
 ## RestEntitiesByEntityName{'<'}Method{'>'}
 
-A record type that maps entity names to their corresponding entity definitions. The available entity names depend on the HTTP method.
-
-**For GET, DELETE, and OPTIONS requests (methods without request body)**:
-
-```typescript
-{
-  cookies?: RestEntity<'cookies'>;
-  headers?: RestEntity<'headers'>;
-  params?: RestEntity<'params'>;
-  queries?: RestEntity<'queries'>;
-}
-```
-
-**For POST, PUT, and PATCH requests (methods with request body)**:
+A record type that maps entity names to their corresponding entity definitions.
 
 ```typescript
 {

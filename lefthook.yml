@@ -1,0 +1,10 @@
+extends:
+  - ./node_modules/@siberiacancode/lefthook/dist/lefthook.yml
+
+pre-push:
+  jobs:
+    - name: unit-test
+      run: pnpm unit-test --run
+
+    - name: build
+      run: pnpm build

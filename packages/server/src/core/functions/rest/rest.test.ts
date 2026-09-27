@@ -152,7 +152,7 @@ describe('rest', () => {
     const methods = ['delete', 'get', 'options', 'patch', 'post', 'put'] as const;
 
     methods.forEach((method) => {
-      const result = rest[method]('/users', { ok: true } as any);
+      const result = (rest[method] as any)('/users', { ok: true });
 
       expect(result).toStrictEqual({
         method,
