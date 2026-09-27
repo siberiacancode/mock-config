@@ -44,7 +44,7 @@ rest.get<Options>(path, config, settings?)
 
 ## rest.post
 
-Intercepts `POST` requests. Identical signature to `rest.get`. The `body` entity is available in the config and resolver params.
+Intercepts `POST` requests. Identical signature to `rest.get`.
 
 ```ts
 rest.post<Options>(path, config, settings?)
@@ -52,7 +52,7 @@ rest.post<Options>(path, config, settings?)
 
 ## rest.put
 
-Intercepts `PUT` requests. `body` entity is available.
+Intercepts `PUT` requests.
 
 ```ts
 rest.put<Options>(path, config, settings?)
@@ -60,7 +60,7 @@ rest.put<Options>(path, config, settings?)
 
 ## rest.patch
 
-Intercepts `PATCH` requests. `body` entity is available.
+Intercepts `PATCH` requests.
 
 ```ts
 rest.patch<Options>(path, config, settings?)
@@ -68,7 +68,7 @@ rest.patch<Options>(path, config, settings?)
 
 ## rest.delete
 
-Intercepts `DELETE` requests. No `body` entity.
+Intercepts `DELETE` requests.
 
 ```ts
 rest.delete<Options>(path, config, settings?)
@@ -76,7 +76,7 @@ rest.delete<Options>(path, config, settings?)
 
 ## rest.options
 
-Intercepts `OPTIONS` requests. No `body` entity.
+Intercepts `OPTIONS` requests.
 
 ```ts
 rest.options<Options>(path, config, settings?)
@@ -301,7 +301,7 @@ All `rest.*` methods accept an optional generic `Options` to type the request an
 rest.get<{
   params: { id: string };
   query: { locale: string };
-  body: { name: string };    // POST/PUT/PATCH only
+  body: { name: string };
   response: User;
 }>('/users/:id', ({ request, entities }) => { ... });
 ```
@@ -319,7 +319,7 @@ rest.get<{
       default: 'Record<string, unknown>'
     },
     body: {
-      description: 'Type of the request body. Available in POST, PUT, and PATCH handlers.',
+      description: 'Type of the request body.',
       type: 'Record<string, unknown>',
       default: 'Record<string, unknown>'
     },

@@ -61,8 +61,7 @@
     "type": "tsc --noEmit",
     "format": "prettier --write .",
     "pretty": "pnpm type && pnpm lint && pnpm format",
-    "unit-test": "vitest",
-    "lint-staged": "lint-staged"
+    "unit-test": "vitest"
   },
   "dependencies": {
     "@types/express": "^4.17.25",
@@ -86,11 +85,5 @@
     "tsdown": "^0.22.2",
     "vite": "^8.0.1",
     "vitest": "^4.1.0"
-  },
-  "lint-staged": {
-    "*.{js,ts}": [
-      "prettier --write",
-      "eslint --fix"
-    ]
   }
 }
