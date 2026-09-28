@@ -2,6 +2,8 @@ import type { ParsedUrlQuery } from 'node:querystring';
 
 import { flatten } from 'flat';
 
+import type { PlainObject } from '@/shared/types';
+
 type Order = 'asc' | 'desc';
 const DEFAULT_ORDER = 'asc';
 
@@ -10,25 +12,23 @@ const getOrder = (order?: string) => {
   return DEFAULT_ORDER;
 };
 
-const sortArray = (array: any[], key: string, order: Order) =>
+const sortArray = (array: PlainObject[], key: string, order: Order) =>
   array.sort((a, b) => {
-    const flattenedA = flatten<any, any>(a);
-    const flattenedB = flatten<any, any>(b);
+    const flattenedA = flatten<PlainObject, PlainObject>(a);
+    const flattenedB = flatten<PlainObject, PlainObject>(b);
+    const valueA = flattenedA[key];
+    const valueB = flattenedB[key];
 
-    if (!flattenedA[key] || !flattenedB[key]) return 0;
+    if (valueA === undefined || valueB === undefined) return 0;
 
-    if (typeof flattenedA[key] === 'string' && typeof flattenedB[key] === 'string') {
-      return order === 'asc'
-        ? flattenedA[key].localeCompare(flattenedB[key])
-        : flattenedB[key].localeCompare(flattenedA[key]);
+    if (typeof valueA === 'string' && typeof valueB === 'string') {
+      return order === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
     }
 
-    return order === 'asc'
-      ? Number(flattenedA[key]) - Number(flattenedB[key])
-      : Number(flattenedB[key]) - Number(flattenedA[key]);
+    return order === 'asc' ? Number(valueA) - Number(valueB) : Number(valueB) - Number(valueA);
   });
 
-export const sort = (array: any[], queries: ParsedUrlQuery) => {
+export const sort = (array: PlainObject[], queries: ParsedUrlQuery) => {
   const { _sort, _order = DEFAULT_ORDER } = queries;
   if (!_sort) return array;
 

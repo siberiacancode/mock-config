@@ -1,6 +1,6 @@
 import { flatten } from 'flat';
 
-import type { Database, NestedOrm, Orm, ShallowOrm, Storage } from '@/utils/types';
+import type { Database, NestedOrm, Orm, PlainObject, ShallowOrm, Storage } from '@/utils/types';
 
 import {
   createNewId,
@@ -59,9 +59,9 @@ export const createOrm = <Data extends Database = Database>(storage: Storage) =>
 
           if (!filters) return collection;
 
-          const flattenedFilters = flatten<any, any>(filters);
-          return collection.filter((resource: Record<string, unknown>) => {
-            const flattenedResource = flatten<any, any>(resource);
+          const flattenedFilters = flatten<PlainObject, PlainObject>(filters);
+          return collection.filter((resource: PlainObject) => {
+            const flattenedResource = flatten<PlainObject, PlainObject>(resource);
             return Object.entries(flattenedFilters).every(
               ([key, value]) => flattenedResource[key] === value
             );
@@ -72,9 +72,9 @@ export const createOrm = <Data extends Database = Database>(storage: Storage) =>
 
           if (!filters) return collection[0];
 
-          const flattenedFilters = flatten<any, any>(filters);
-          return collection.find((resource: Record<string, unknown>) => {
-            const flattenedResource = flatten<any, any>(resource);
+          const flattenedFilters = flatten<PlainObject, PlainObject>(filters);
+          return collection.find((resource: PlainObject) => {
+            const flattenedResource = flatten<PlainObject, PlainObject>(resource);
             return Object.entries(flattenedFilters).every(
               ([key, value]) => flattenedResource[key] === value
             );
@@ -83,9 +83,9 @@ export const createOrm = <Data extends Database = Database>(storage: Storage) =>
         exists: (filters) => {
           const collection = storage.read(key);
 
-          const flattenedFilters = flatten<any, any>(filters);
-          return collection.some((resource: Record<string, unknown>) => {
-            const flattenedResource = flatten<any, any>(resource);
+          const flattenedFilters = flatten<PlainObject, PlainObject>(filters);
+          return collection.some((resource: PlainObject) => {
+            const flattenedResource = flatten<PlainObject, PlainObject>(resource);
             return Object.entries(flattenedFilters).every(
               ([key, value]) => flattenedResource[key] === value
             );
