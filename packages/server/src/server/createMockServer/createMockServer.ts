@@ -2,6 +2,7 @@ import type { Express } from 'express';
 
 import bodyParser from 'body-parser';
 import express from 'express';
+import multer from 'multer';
 import { WebSocketServer } from 'ws';
 
 import type {
@@ -68,6 +69,19 @@ export const createMockServer = (
   server.set('json spaces', 2);
 
   server.use(bodyParser.text());
+
+  server.use(
+    multer({
+      storage: multer.memoryStorage(),
+      limits: {
+        fileSize: 10 * 1024 * 1024,
+        files: 10,
+        fields: 100,
+        parts: 110,
+        fieldSize: 1024 * 1024
+      }
+    }).any()
+  );
 
   contextMiddleware(server, { database, ws });
 

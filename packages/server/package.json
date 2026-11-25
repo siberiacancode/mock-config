@@ -1,6 +1,6 @@
 {
   "name": "mock-config-server",
-  "version": "5.0.0-beta.6",
+  "version": "5.0.0-beta.7",
   "description": "Tool that easily and quickly imitates server operation, create full fake api in few steps",
   "author": {
     "name": "SIBERIA CAN CODE 🧊",
@@ -67,6 +67,7 @@
     "express-urlrewrite": "^2.0.3",
     "flat": "^6.0.1",
     "graphql": "^16.10.0",
+    "multer": "^2.5.0",
     "please-upgrade-node": "^3.2.0",
     "prompts": "^2.4.2",
     "ws": "^8.20.0",
@@ -75,6 +76,7 @@
   },
   "devDependencies": {
     "@siberiacancode/vitest": "^2.4.1",
+    "@types/multer": "^2.3.0",
     "@types/supertest": "^6.0.3",
     "@vitest/coverage-v8": "^4.1.8",
     "nodemon": "^3.1.14",
