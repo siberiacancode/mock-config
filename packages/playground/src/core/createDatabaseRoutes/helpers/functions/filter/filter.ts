@@ -3,19 +3,20 @@ import type { ParsedUrlQuery } from 'node:querystring';
 import { flatten } from 'flat';
 
 const OPERATORS = {
-  eq: (a: any, b: any) => `${a}` === `${b}`,
-  neq: (a: any, b: any) => `${a}` !== `${b}`,
-  gt: (a: any, b: any) => +a > +b,
-  gte: (a: any, b: any) => +a >= +b,
-  lt: (a: any, b: any) => +a < +b,
-  lte: (a: any, b: any) => +a <= +b,
-  cn: (a: any, b: any) => a.includes(b),
-  ncn: (a: any, b: any) => !a.includes(b),
-  sw: (a: any, b: any) => a.startsWith(b),
-  nsw: (a: any, b: any) => !a.startsWith(b),
-  ew: (a: any, b: any) => a.endsWith(b),
-  new: (a: any, b: any) => !a.endsWith(b),
-  some: (a: any[], b: any) => a.some((element: any) => `${element}` === `${b}`)
+  eq: (a: unknown, b: unknown) => `${a}` === `${b}`,
+  neq: (a: unknown, b: unknown) => `${a}` !== `${b}`,
+  gt: (a: unknown, b: unknown) => Number(a) > Number(b),
+  gte: (a: unknown, b: unknown) => Number(a) >= Number(b),
+  lt: (a: unknown, b: unknown) => Number(a) < Number(b),
+  lte: (a: unknown, b: unknown) => Number(a) <= Number(b),
+  cn: (a: unknown, b: unknown) => String(a).includes(String(b)),
+  ncn: (a: unknown, b: unknown) => !String(a).includes(String(b)),
+  sw: (a: unknown, b: unknown) => String(a).startsWith(String(b)),
+  nsw: (a: unknown, b: unknown) => !String(a).startsWith(String(b)),
+  ew: (a: unknown, b: unknown) => String(a).endsWith(String(b)),
+  new: (a: unknown, b: unknown) => !String(a).endsWith(String(b)),
+  some: (a: unknown, b: unknown) =>
+    Array.isArray(a) && a.some((element: unknown) => `${element}` === `${b}`)
 } as const;
 
 const OPERATORS_KEYS = Object.keys(OPERATORS);

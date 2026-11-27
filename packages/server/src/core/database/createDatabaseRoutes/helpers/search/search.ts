@@ -1,5 +1,7 @@
 import type { ParsedUrlQuery } from 'node:querystring';
 
+import type { PlainObject } from '@/utils/types';
+
 export const searchInNestedObjects = (obj: any, searchText: string) => {
   for (const key in obj) {
     if (typeof obj[key] === 'object' && obj[key] !== null) {
@@ -13,7 +15,7 @@ export const searchInNestedObjects = (obj: any, searchText: string) => {
   return false;
 };
 
-export const search = (array: any[], searchText: ParsedUrlQuery) =>
+export const search = (array: PlainObject[], searchText: ParsedUrlQuery) =>
   array.filter((element) => {
     if (typeof searchText === 'string') {
       return searchInNestedObjects(element, searchText);
